@@ -247,6 +247,7 @@ public class GraphBuilder implements Runnable {
             osmModule.staticBikeParkAndRide = builderParams.staticBikeParkAndRide;
             osmModule.staticParkAndRide = builderParams.staticParkAndRide;
             graphBuilder.addModule(osmModule);
+            graphBuilder.addModule(new PruneFloatingIslands());
         }
         if ( hasGTFS ) {
             List<GtfsBundle> gtfsBundles = Lists.newArrayList();
@@ -276,10 +277,10 @@ public class GraphBuilder implements Runnable {
         graphBuilder.addModule(new StreetLinkerModule());
 
         
-        if(hasOSM) {
+        //if(hasOSM) {
             // Do not prune before transit stops are read
-            graphBuilder.addModule(new PruneFloatingIslands());
-        }
+        //    graphBuilder.addModule(new PruneFloatingIslands());
+        //}
         
         // Load elevation data and apply it to the streets.
         // We want to do run this module after loading the OSM street network but before finding transfers.
