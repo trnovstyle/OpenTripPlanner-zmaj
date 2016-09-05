@@ -1,6 +1,12 @@
 package org.opentripplanner.routing.graph;
 
 import com.google.common.collect.ArrayListMultimap;
+import java.util.BitSet;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.Calendar;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -50,7 +56,6 @@ import org.opentripplanner.routing.trippattern.FrequencyEntry;
 import org.opentripplanner.routing.trippattern.TripTimes;
 import org.opentripplanner.routing.vertextype.TransitStation;
 import org.opentripplanner.routing.vertextype.TransitStop;
-import org.opentripplanner.standalone.OTPServer;
 import org.opentripplanner.standalone.Router;
 import org.opentripplanner.updater.alerts.GtfsRealtimeAlertsUpdater;
 import org.slf4j.Logger;
@@ -64,6 +69,7 @@ import java.nio.file.attribute.FileAttribute;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -328,8 +334,8 @@ public class GraphIndex {
         rr.from = new GenericLocation(lat, lon);
         // FIXME requires destination to be set, not necessary for analyst
         rr.to = new GenericLocation(lat, lon);
-        rr.setRoutingContext(graph);
         rr.batch = true;
+        rr.setRoutingContext(graph);
         rr.walkSpeed = 1;
         rr.dominanceFunction = new DominanceFunction.LeastWalk();
         // RR dateTime defaults to currentTime.
@@ -424,97 +430,143 @@ public class GraphIndex {
     }
 
     /**
-     * Fetch upcoming vehicle departures from a stop.
-     * It goes though all patterns passing the stop for the previous, current and next service date.
-     * It uses a priority queue to keep track of the next departures. The queue is shared between all dates, as services
-     * from the previous service date can visit the stop later than the current service date's services. This happens
+     * Fetch upcoming vehicle departures from a stop. It goes though all patterns passing the stop
+     * for the previous, current and next service date. It uses a priority queue to keep track of
+     * the next departures. The queue is shared between all dates, as services from the previous
+     * service date can visit the stop later than the current service date's services. This happens
      * eg. with sleeper trains.
      *
-     * TODO: Add frequency based trips
      * @param stop Stop object to perform the search for
      * @param startTime Start time for the search. Seconds from UNIX epoch
      * @param timeRange Searches forward for timeRange seconds from startTime
      * @param numberOfDepartures Number of departures to fetch per pattern
      * @return
      */
-    public List<StopTimesInPattern> stopTimesForStop(Stop stop, long startTime, int timeRange, int numberOfDepartures) {
+    public List<StopTimesInPattern> stopTimesForStop(final Stop stop, final long startTime, final int timeRange, final int numberOfDepartures) {
+   
+        final List<StopTimesInPattern> ret = new ArrayList<>();
 
-        if (startTime == 0) {
-            startTime = System.currentTimeMillis() / 1000;
-        }
-        List<StopTimesInPattern> ret = new ArrayList<>();
-        TimetableSnapshot snapshot = null;
-        if (graph.timetableSnapshotSource != null) {
-            snapshot = graph.timetableSnapshotSource.getTimetableSnapshot();
-        }
-        ServiceDate[] serviceDates = {new ServiceDate().previous(), new ServiceDate(), new ServiceDate().next()};
+        for (final TripPattern pattern : patternsForStop.get(stop)) {
+            
+            final List<TripTimeShort> stopTimesForStop = stopTimesForPattern(stop, pattern, startTime, timeRange, numberOfDepartures);
 
-        for (TripPattern pattern : patternsForStop.get(stop)) {
-
-            // Use the Lucene PriorityQueue, which has a fixed size
-            PriorityQueue<TripTimeShort> pq = new PriorityQueue<TripTimeShort>(numberOfDepartures) {
-                @Override
-                protected boolean lessThan(TripTimeShort tripTimeShort, TripTimeShort t1) {
-                    // Calculate exact timestamp
-                    return (tripTimeShort.serviceDay + tripTimeShort.realtimeDeparture) >
-                            (t1.serviceDay + t1.realtimeDeparture);
-                }
-            };
-
-            // Loop through all possible days
-            for (ServiceDate serviceDate : serviceDates) {
-                ServiceDay sd = new ServiceDay(graph, serviceDate, calendarService, pattern.route.getAgency().getId());
-                Timetable tt;
-                if (snapshot != null){
-                    tt = snapshot.resolve(pattern, serviceDate);
-                } else {
-                    tt = pattern.scheduledTimetable;
-                }
-
-                if (!tt.temporallyViable(sd, startTime, timeRange, true)) continue;
-
-                int secondsSinceMidnight = sd.secondsSinceMidnight(startTime);
-                int sidx = 0;
-                for (Stop currStop : pattern.stopPattern.stops) {
-                    if (currStop == stop) {
-                        for (TripTimes t : tt.tripTimes) {
-                            if (!sd.serviceRunning(t.serviceCode)) continue;
-                            if (t.getDepartureTime(sidx) != -1 &&
-                                    t.getDepartureTime(sidx) >= secondsSinceMidnight) {
-                                pq.insertWithOverflow(new TripTimeShort(t, sidx, stop, sd));
-                            }
-                        }
-
-                        // TODO: This needs to be adapted after #1647 is merged
-                        for (FrequencyEntry freq : tt.frequencyEntries) {
-                            if (!sd.serviceRunning(freq.tripTimes.serviceCode)) continue;
-                            int departureTime = freq.nextDepartureTime(sidx, secondsSinceMidnight);
-                            if (departureTime == -1) continue;
-                            int lastDeparture = freq.endTime + freq.tripTimes.getArrivalTime(sidx) -
-                                    freq.tripTimes.getDepartureTime(0);
-                            int i = 0;
-                            while (departureTime <= lastDeparture && i < numberOfDepartures) {
-                                pq.insertWithOverflow(new TripTimeShort(freq.materialize(sidx, departureTime, true), sidx, stop, sd));
-                                departureTime += freq.headway;
-                                i++;
-                            }
-                        }
-                    }
-                    sidx++;
-                }
-            }
-
-            if (pq.size() != 0) {
-                StopTimesInPattern stopTimes = new StopTimesInPattern(pattern);
-                while (pq.size() != 0) {
-                    stopTimes.times.add(0, pq.pop());
-                }
+            
+            if (stopTimesForStop.size() >0) {
+                final StopTimesInPattern stopTimes = new StopTimesInPattern(pattern);
+                stopTimes.times.addAll(stopTimesForStop);
                 ret.add(stopTimes);
             }
         }
         return ret;
     }
+    
+    /**
+     * Fetch next n upcoming vehicle departures for a stop of pattern. It goes
+     * though the previous, current and next service date. It uses a priority
+     * queue to keep track of the next departures. The queue is shared between
+     * all dates, as services from the previous service date can visit the stop
+     * later than the current service date's services. This happens eg. with
+     * sleeper trains.
+     *
+     * @param stop
+     *            Stop object to perform the search for
+     * @param startTime
+     *            Start time for the search. Seconds from UNIX epoch
+     * @param TripPattern
+     *            The selected pattern. If null an empty list is returned.
+     * @param timeRange
+     *            Searches forward for timeRange seconds from startTime
+     * @param numberOfDepartures
+     *            Number of departures to fetch per pattern
+     * @return
+     */
+    public List<TripTimeShort> stopTimesForPattern(final Stop stop, final TripPattern pattern, long startTime, final int timeRange,
+            int numberOfDepartures) {
 
+        if (pattern == null) { 
+            return Collections.emptyList();
+        }
+
+        if (startTime == 0) {
+            startTime = System.currentTimeMillis() / 1000;
+        }
+
+        final PriorityQueue<TripTimeShort> ret = new PriorityQueue<TripTimeShort>(numberOfDepartures) {
+            
+            @Override
+            protected boolean lessThan(final TripTimeShort t1, final TripTimeShort t2) {
+                return (t1.serviceDay + t1.realtimeDeparture) > (t2.serviceDay
+                        + t2.realtimeDeparture);
+            }
+        };
+
+        final TimetableSnapshot snapshot = (graph.timetableSnapshotSource != null)
+            ? graph.timetableSnapshotSource.getTimetableSnapshot() : null;
+            
+        final ServiceDate[] serviceDates = { new ServiceDate().previous(), new ServiceDate(),
+                new ServiceDate().next() };
+
+        // Loop through all possible days
+        for (final ServiceDate serviceDate : serviceDates) {
+            final ServiceDay sd = new ServiceDay(graph, serviceDate, calendarService,
+                    pattern.route.getAgency().getId());
+            Timetable tt;
+
+            if (snapshot != null) {
+                tt = snapshot.resolve(pattern, serviceDate);
+            } else {
+                tt = pattern.scheduledTimetable;
+            }
+
+            if (!tt.temporallyViable(sd, startTime, timeRange, true))
+                continue;
+
+            final int starttimeSecondsSinceMidnight = sd.secondsSinceMidnight(startTime);
+            int stopIndex = 0;
+
+            // loop through all stops of pattern
+            for (final Stop currStop : pattern.stopPattern.stops) {
+                if (currStop.equals(stop)) {
+                    for (final TripTimes triptimes : tt.tripTimes) {
+                        if (!sd.serviceRunning(triptimes.serviceCode))
+                            continue;
+                        int stopDepartureTime = triptimes.getDepartureTime(stopIndex);
+                        if (stopDepartureTime != -1 && stopDepartureTime >= starttimeSecondsSinceMidnight) {
+                            ret.insertWithOverflow(new TripTimeShort(triptimes, stopIndex, currStop, sd));
+                        }
+                    }
+
+                    // TODO: This needs to be adapted after #1647 is merged
+                    for (final FrequencyEntry freq : tt.frequencyEntries) {
+                        if (!sd.serviceRunning(freq.tripTimes.serviceCode))
+                            continue;
+                        int departureTime = freq.nextDepartureTime(stopIndex, starttimeSecondsSinceMidnight);
+                        if (departureTime == -1)
+                            continue;
+                        final int lastDeparture = freq.endTime + freq.tripTimes.getArrivalTime(stopIndex)
+                                - freq.tripTimes.getDepartureTime(0);
+
+                        while (departureTime <= lastDeparture && ret.size() < numberOfDepartures) {
+                            ret.insertWithOverflow(new TripTimeShort(freq.materialize(stopIndex, departureTime, true),
+                                    stopIndex, currStop, sd));
+                            departureTime += freq.headway;
+                        }
+                    }
+                }
+
+                stopIndex++;
+            }
+        }
+
+        final List<TripTimeShort> result = new ArrayList<>();
+        while(ret.size()>0) {
+            result.add(0, ret.pop());
+        }
+        
+        return result; 
+    }
+  
+    
     /**
      * Get a list of all trips that pass through a stop during a single ServiceDate. Useful when creating complete stop
      * timetables for a single day.
@@ -564,6 +616,22 @@ public class GraphIndex {
             }
         }
         return stopTreeCache;
+    }
+
+    /**
+     * Get the most up-to-date timetable for the given TripPattern, as of right now.
+     * There should probably be a less awkward way to do this that just gets the latest entry from the resolver without
+     * making a fake routing request.
+     */
+    public Timetable currentUpdatedTimetableForTripPattern (TripPattern tripPattern) {
+        RoutingRequest req = new RoutingRequest();
+        req.setRoutingContext(graph, (Vertex)null, (Vertex)null);
+        // The timetableSnapshot will be null if there's no real-time data being applied.
+        if (req.rctx.timetableSnapshot == null) return tripPattern.scheduledTimetable;
+        // Get the updated times for right now, which is the only reasonable default since no date is supplied.
+        Calendar calendar = Calendar.getInstance();
+        ServiceDate serviceDate = new ServiceDate(calendar.getTime());
+        return req.rctx.timetableSnapshot.resolve(tripPattern, serviceDate);
     }
 
     /**
