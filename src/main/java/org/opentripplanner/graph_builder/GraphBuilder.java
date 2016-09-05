@@ -241,8 +241,7 @@ public class GraphBuilder implements Runnable {
             streetEdgeFactory.useElevationData = builderParams.fetchElevationUS || (demFile != null);
             osmModule.edgeFactory = streetEdgeFactory;
             osmModule.customNamer = builderParams.customNamer;
-            DefaultWayPropertySetSource defaultWayPropertySetSource = new DefaultWayPropertySetSource();
-            osmModule.setDefaultWayPropertySetSource(defaultWayPropertySetSource);
+            osmModule.setDefaultWayPropertySetSource(builderParams.wayPropertySet);
             osmModule.skipVisibility = !builderParams.areaVisibility;
             osmModule.staticBikeRental = builderParams.staticBikeRental;
             osmModule.staticBikeParkAndRide = builderParams.staticBikeParkAndRide;
@@ -276,6 +275,13 @@ public class GraphBuilder implements Runnable {
         // This module is outside the hasGTFS conditional block because it also links things like bike rental
         // which need to be handled even when there's no transit.
         graphBuilder.addModule(new StreetLinkerModule());
+
+        
+        //if(hasOSM) {
+            // Do not prune before transit stops are read
+        //    graphBuilder.addModule(new PruneFloatingIslands());
+        //}
+        
         // Load elevation data and apply it to the streets.
         // We want to do run this module after loading the OSM street network but before finding transfers.
         if (builderParams.elevationBucket != null) {
