@@ -124,16 +124,12 @@ public class ShareBikeRentalDataSource extends GenericJsonBikeRentalDataSource {
 			if(u.getQuery() != null) {
 				// Has query params
 				urlParameters = splitQuery(u);
-				setUrl(url.substring(0,url.indexOf('?')));
-			} else {
-				// No query params
-				super.setUrl(url);
 			}
 		} catch (UnsupportedEncodingException | MalformedURLException e) {
 			log.error("Unable to extract 'SystemID' query parameter from sharebike url, will use random",e);
-			networkID = UUID.randomUUID().toString();
-			super.setUrl(url);
 		}
+		log.info("Setting url to {}", url);
+		super.setUrl(url);
 	}
 	
 	
