@@ -569,7 +569,7 @@ public abstract class GraphPathToTripPlanConverter {
             leg.agencyId = agency.getId();
             leg.agencyName = agency.getName();
             leg.agencyUrl = agency.getUrl();
-            leg.headsign = states[states.length - 1].getBackDirection();
+            leg.headsign = states[1].getBackDirection();
             leg.route = states[states.length - 1].getBackEdge().getName(requestedLocale);
             leg.routeColor = route.getColor();
             leg.routeId = route.getId();
@@ -686,7 +686,13 @@ public abstract class GraphPathToTripPlanConverter {
             LOG.trace("Added bike share Id {} to place", place.bikeShareId);
             place.vertexType = VertexType.BIKESHARE;
         } else if (vertex instanceof BikeParkVertex) {
+            place.bikeParkId = ((BikeParkVertex) vertex).getId();
+            LOG.trace("Added bike parking Id {} to place", place.bikeParkId);
             place.vertexType = VertexType.BIKEPARK;
+        } else if (vertex instanceof ParkAndRideVertex) {
+            place.carParkId = ((ParkAndRideVertex) vertex).getId();
+            LOG.trace("Added bike parking Id {} to place", place.bikeParkId);
+            place.vertexType = VertexType.PARKANDRIDE;
         } else {
             place.vertexType = VertexType.NORMAL;
         }
