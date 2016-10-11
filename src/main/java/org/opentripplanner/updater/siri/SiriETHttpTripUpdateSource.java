@@ -26,6 +26,7 @@ import javax.xml.bind.JAXBException;
 import java.io.InputStream;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.UUID;
 
 public class SiriETHttpTripUpdateSource implements EstimatedTimetableSource, JsonConfigurable {
     private static final Logger LOG =
@@ -52,7 +53,13 @@ public class SiriETHttpTripUpdateSource implements EstimatedTimetableSource, Jso
         if (url == null) {
             throw new IllegalArgumentException("Missing mandatory 'url' parameter");
         }
-        this.url = url;
+
+        String uniquenessParameter = "?";
+        if (url.contains("?")) {
+            uniquenessParameter = "&";
+        }
+        uniquenessParameter += "requestorId="+ UUID.randomUUID().toString();
+        this.url = url + uniquenessParameter;
         this.feedId = config.path("feedId").asText();
 
         try {
