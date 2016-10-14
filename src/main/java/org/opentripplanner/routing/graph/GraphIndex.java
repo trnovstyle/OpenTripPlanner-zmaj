@@ -89,6 +89,7 @@ import org.opentripplanner.routing.vertextype.TransitStation;
 import org.opentripplanner.routing.vertextype.TransitStop;
 import org.opentripplanner.standalone.Router;
 import org.opentripplanner.updater.alerts.GtfsRealtimeAlertsUpdater;
+import org.opentripplanner.updater.alerts.SiriSXUpdater;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -972,12 +973,22 @@ public class GraphIndex {
         if (graph.updaterManager == null) {
             return Stream.empty();
         }
-        return graph.updaterManager.getUpdaterList().stream()
-            .filter(GtfsRealtimeAlertsUpdater.class::isInstance)
-            .map(GtfsRealtimeAlertsUpdater.class::cast)
-            .map(GtfsRealtimeAlertsUpdater::getAlertPatchService)
-            .map(AlertPatchService::getAllAlertPatches)
-            .flatMap(Collection::stream);
+
+        Stream<AlertPatch> gtfsAlertPatchStream = graph.updaterManager.getUpdaterList().stream()
+                .filter(GtfsRealtimeAlertsUpdater.class::isInstance)
+                .map(GtfsRealtimeAlertsUpdater.class::cast)
+                .map(GtfsRealtimeAlertsUpdater::getAlertPatchService)
+                .map(AlertPatchService::getAllAlertPatches)
+                .flatMap(Collection::stream);
+
+        Stream<AlertPatch> siriAlertPatchSteam = graph.updaterManager.getUpdaterList().stream()
+                .filter(SiriSXUpdater.class::isInstance)
+                .map(SiriSXUpdater.class::cast)
+                .map(SiriSXUpdater::getAlertPatchService)
+                .map(AlertPatchService::getAllAlertPatches)
+                .flatMap(Collection::stream);
+
+        return Stream.concat(gtfsAlertPatchStream, siriAlertPatchSteam);
     }
 
     public List<AlertPatch> getAlerts() {
