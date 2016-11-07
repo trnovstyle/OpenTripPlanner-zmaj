@@ -119,6 +119,7 @@ public class GtfsModule implements GraphBuilderModule {
 
                 hf.subwayAccessTime = gtfsBundle.subwayAccessTime;
                 hf.maxInterlineDistance = gtfsBundle.maxInterlineDistance;
+                hf.allowDuplicateStops = gtfsBundle.allowDuplicateStops;
                 hf.run(graph);
 
                 if (gtfsBundle.doesTransfersTxtDefineStationPaths()) {

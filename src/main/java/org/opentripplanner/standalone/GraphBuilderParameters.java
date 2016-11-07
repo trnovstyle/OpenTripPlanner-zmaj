@@ -122,6 +122,12 @@ public class GraphBuilderParameters {
      * Maximal distance between stops in meters that will connect consecutive trips that are made with same vehicle
      */
     public int maxInterlineDistance = 200;
+    
+    /**
+     * Do not warn about duplicate stop identifiers across gtfs files. This is useful where gtfs files are referring to a common
+     * stop register
+     */
+    public boolean allowDuplicateStops = false;
 
     /**
      * Set all parameters from the given Jackson JSON tree, applying defaults.
@@ -151,6 +157,7 @@ public class GraphBuilderParameters {
         staticBikeParkAndRide = config.path("staticBikeParkAndRide").asBoolean(false);
         maxHtmlAnnotationsPerFile = config.path("maxHtmlAnnotationsPerFile").asInt(1000);
         maxInterlineDistance = config.path("maxInterlineDistance").asInt(200);
+        allowDuplicateStops = config.path("allowDuplicateStops").asBoolean(false);
     }
 
 }

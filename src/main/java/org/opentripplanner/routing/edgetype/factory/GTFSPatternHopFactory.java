@@ -311,6 +311,8 @@ public class GTFSPatternHopFactory {
     private double maxStopToShapeSnapDistance = 150;
 
     public int maxInterlineDistance = 200;
+    
+    public boolean allowDuplicateStops;
 
     public GTFSPatternHopFactory(GtfsContext context) {
         this._feedId = context.getFeedId();
@@ -917,7 +919,9 @@ public class GTFSPatternHopFactory {
     private void loadStops(Graph graph) {
         for (Stop stop : _dao.getAllStops()) {
             if (context.stops.contains(stop.getId())) {
-                LOG.error("Skipping stop {} because we already loaded an identical ID.", stop.getId());
+                if(!allowDuplicateStops) {
+                	LOG.error("Skipping stop {} because we already loaded an identical ID.", stop.getId());
+                }
                 continue;
             }
             context.stops.add(stop.getId());
