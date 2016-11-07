@@ -65,6 +65,8 @@ public class GtfsBundle {
     private double maxStopToShapeSnapDistance = 150;
 
     public int maxInterlineDistance;
+    
+    public boolean allowDuplicateStops;
 
     public Boolean useCached = null; // null means use global default from GtfsGB || true
 
