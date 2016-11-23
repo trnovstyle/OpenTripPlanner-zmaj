@@ -721,7 +721,7 @@
         <dependency>
             <groupId>com.graphql-java</groupId>
             <artifactId>graphql-java</artifactId>
-            <version>execution-limits</version>
+            <version>2.2.0</version>
         </dependency>
 
         <!-- Support for OTP scripting -->
