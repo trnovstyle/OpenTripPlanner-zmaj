@@ -15,6 +15,7 @@ package org.opentripplanner.index;
 
 import com.beust.jcommander.internal.Lists;
 import com.beust.jcommander.internal.Sets;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Collections2;
@@ -54,6 +55,7 @@ import org.slf4j.LoggerFactory;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
+import javax.ws.rs.HeaderParam;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -64,6 +66,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriInfo;
+import java.io.IOException;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -71,6 +74,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 // TODO move to org.opentripplanner.api.resource, this is a Jersey resource class
 
@@ -92,6 +99,7 @@ public class IndexAPI {
 
     private final GraphIndex index;
     private final StreetVertexIndexService streetIndex;
+    private final ObjectMapper deserializer = new ObjectMapper();
 
     public IndexAPI (@Context OTPServer otpServer, @PathParam("routerId") String routerId) {
         router = otpServer.getRouter(routerId);
@@ -584,21 +592,27 @@ public class IndexAPI {
     @POST
     @Path("/graphql")
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response getGraphQL (HashMap<String, Object> query) {
-        Map<String, Object> variables;
+    public Response getGraphQL (HashMap<String, Object> query, @HeaderParam("OTPTimeout") @DefaultValue("10000") int timeout, @HeaderParam("OTPMaxResolves") @DefaultValue("1000000") long maxResolves) {
+        Map<String, Object> variables = null;
         if (query.get("variables") instanceof Map) {
             variables = (Map) query.get("variables");
-        } else {
-            variables = new HashMap<>();
+        } else if (query.get("variables") instanceof String && ((String) query.get("variables")).length() > 0) {
+            try {
+                variables = deserializer.readValue((String) query.get("variables"), Map.class);
+            } catch (IOException e) {
+                LOG.error("Variables must be a valid json object");
+                return Response.status(Status.BAD_REQUEST).entity(MSG_400).build();
+            }
         }
-        return index.getGraphQLResponse((String) query.get("query"), router, variables);
+        String operationName = (String) query.getOrDefault("operationName", null);
+        return index.getGraphQLResponse((String) query.get("query"), router, variables, operationName, timeout, maxResolves);
     }
 
     @POST
     @Path("/graphql")
     @Consumes("application/graphql")
-    public Response getGraphQL (String query) {
-        return index.getGraphQLResponse(query, router, new HashMap<>());
+    public Response getGraphQL (String query, @HeaderParam("OTPTimeout") @DefaultValue("10000") int timeout, @HeaderParam("OTPMaxResolves") @DefaultValue("1000000") long maxResolves) {
+        return index.getGraphQLResponse(query, router, null, null, timeout, maxResolves);
     }
 
 //    @GET
@@ -607,6 +621,48 @@ public class IndexAPI {
 //                                @QueryParam("variables") HashMap<String, Object> variables) {
 //        return index.getGraphQLResponse(query, variables == null ? new HashMap<>() : variables);
 //    }
+
+    @POST
+    @Path("/graphql/batch")
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response getGraphQLBatch (List<HashMap<String, Object>> queries, @HeaderParam("OTPTimeout") @DefaultValue("10000") int timeout, @HeaderParam("OTPMaxResolves") @DefaultValue("1000000") long maxResolves) {
+        List<Map<String, Object>> responses = new ArrayList<>();
+        List<Callable<Map>> futures = new ArrayList();
+
+        for (HashMap<String, Object> query : queries) {
+            Map<String, Object> variables;
+            if (query.get("variables") instanceof Map) {
+                variables = (Map) query.get("variables");
+            } else if (query.get("variables") instanceof String && ((String) query.get("variables")).length() > 0) {
+                try {
+                    variables = deserializer.readValue((String) query.get("variables"), Map.class);
+                } catch (IOException e) {
+                    LOG.error("Variables must be a valid json object");
+                    return Response.status(Status.BAD_REQUEST).entity(MSG_400).build();
+                }
+            } else {
+                variables = null;
+            }
+            String operationName = (String) query.getOrDefault("operationName", null);
+
+            futures.add(() -> index.getGraphQLExecutionResult((String) query.get("query"), router,
+                variables, operationName, timeout, maxResolves));
+        }
+
+        try {
+            List<Future<Map>> results = index.threadPool.invokeAll(futures);
+
+            for (int i = 0; i < queries.size(); i++) {
+                HashMap<String, Object> response = new HashMap<>();
+                response.put("id", queries.get(i).get("id"));
+                response.put("payload", results.get(i).get());
+                responses.add(response);
+            }
+        } catch (CancellationException | ExecutionException |InterruptedException e) {
+            return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+        }
+        return Response.status(Status.OK).entity(responses).build();
+    }
 
     /** Represents a transfer from a stop */
     private static class Transfer {
