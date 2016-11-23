@@ -365,14 +365,13 @@
             <name>Conveyal Maven Repository</name>
             <url>http://maven.conveyal.com/</url>
         </repository>
-        <!-- Needed  for graphql-java-->
         <repository>
             <snapshots>
                 <enabled>false</enabled>
             </snapshots>
-            <id>bintray-andimarek-graphql-java</id>
+            <id>bintray-macroz-graphql-java</id>
             <name>bintray</name>
-            <url>http://dl.bintray.com/andimarek/graphql-java</url>
+            <url>http://dl.bintray.com/macroz/graphql-java</url>
         </repository>
     </repositories>
 
@@ -722,7 +721,7 @@
         <dependency>
             <groupId>com.graphql-java</groupId>
             <artifactId>graphql-java</artifactId>
-            <version>2016-07-27T16-49-23</version>
+            <version>execution-limits</version>
         </dependency>
 
         <!-- Support for OTP scripting -->

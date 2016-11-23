@@ -8,38 +8,44 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.attribute.FileAttribute;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.BitSet;
 import java.util.BitSet;
 import java.util.Calendar;
-import java.util.Collection;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.List;
-import java.util.Map;
 import java.util.Map;
 import java.util.Set;
-import java.util.Set;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import javax.ws.rs.core.Response;
 
+import graphql.schema.GraphQLSchema;
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.Sets;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import com.vividsolutions.jts.geom.Coordinate;
+import com.vividsolutions.jts.geom.Envelope;
+import graphql.ExecutionResult;
+import graphql.GraphQL;
 import org.apache.lucene.util.PriorityQueue;
 import org.joda.time.LocalDate;
 import org.onebusaway.gtfs.model.Agency;
 import org.onebusaway.gtfs.model.AgencyAndId;
 import org.onebusaway.gtfs.model.Route;
 import org.onebusaway.gtfs.model.Stop;
-import org.onebusaway.gtfs.model.StopTime;
 import org.onebusaway.gtfs.model.Trip;
 import org.onebusaway.gtfs.model.calendar.ServiceDate;
 import org.onebusaway.gtfs.services.calendar.CalendarService;
-import org.opentripplanner.api.parameter.QualifiedModeSet;
 import org.opentripplanner.common.LuceneIndex;
 import org.opentripplanner.common.geometry.HashGridSpatialIndex;
 import org.opentripplanner.common.geometry.SphericalDistanceLibrary;
@@ -47,6 +53,7 @@ import org.opentripplanner.common.model.GenericLocation;
 import org.opentripplanner.common.model.P2;
 import org.opentripplanner.gtfs.GtfsLibrary;
 import org.opentripplanner.index.IndexGraphQLSchema;
+import org.opentripplanner.index.ResourceConstrainedExecutorServiceExecutionStrategy;
 import org.opentripplanner.index.model.StopTimesInPattern;
 import org.opentripplanner.index.model.TripTimeShort;
 import org.opentripplanner.profile.ProfileTransfer;
@@ -60,23 +67,17 @@ import org.opentripplanner.routing.algorithm.TraverseVisitor;
 import org.opentripplanner.routing.algorithm.strategies.SearchTerminationStrategy;
 import org.opentripplanner.routing.bike_park.BikePark;
 import org.opentripplanner.routing.bike_rental.BikeRentalStation;
-import org.opentripplanner.routing.bike_rental.BikeRentalStationService;
 import org.opentripplanner.routing.car_park.CarPark;
 import org.opentripplanner.routing.core.RoutingRequest;
 import org.opentripplanner.routing.core.ServiceDay;
 import org.opentripplanner.routing.core.State;
-import org.opentripplanner.routing.core.StateEditor;
 import org.opentripplanner.routing.core.TraverseMode;
-import org.opentripplanner.routing.core.TraverseModeSet;
-import org.opentripplanner.routing.edgetype.BikeParkEdge;
 import org.opentripplanner.routing.edgetype.ParkAndRideLinkEdge;
 import org.opentripplanner.routing.edgetype.StreetBikeParkLink;
-import org.opentripplanner.routing.edgetype.StreetBikeRentalLink;
 import org.opentripplanner.routing.edgetype.TablePatternEdge;
 import org.opentripplanner.routing.edgetype.Timetable;
 import org.opentripplanner.routing.edgetype.TimetableSnapshot;
 import org.opentripplanner.routing.edgetype.TripPattern;
-import org.opentripplanner.routing.graph.GraphIndex.PlaceType;
 import org.opentripplanner.routing.services.AlertPatchService;
 import org.opentripplanner.routing.spt.DominanceFunction;
 import org.opentripplanner.routing.spt.ShortestPathTree;
@@ -92,20 +93,6 @@ import org.opentripplanner.updater.alerts.GtfsRealtimeAlertsUpdater;
 import org.opentripplanner.updater.alerts.SiriSXUpdater;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Multimap;
-import com.google.common.collect.Sets;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import com.vividsolutions.jts.geom.Coordinate;
-import com.vividsolutions.jts.geom.Envelope;
-
-import graphql.ExecutionResult;
-import graphql.GraphQL;
-import graphql.execution.ExecutorServiceExecutionStrategy;
 
 /**
  * This class contains all the transient indexes of graph elements -- those that are not
@@ -156,10 +143,12 @@ public class GraphIndex {
     /** Used for finding first/last trip of the day. This is the time at which service ends for the day. */
     public final int overnightBreak = 60 * 60 * 2; // FIXME not being set, this was done in transitIndex
 
-    public GraphQL graphQL;
-
     /** Store distances from each stop to all nearby street intersections. Useful in speeding up analyst requests. */
     private transient StopTreeCache stopTreeCache = null;
+
+    final GraphQLSchema indexSchema;
+
+    public final ExecutorService threadPool;
 
     public GraphIndex (Graph graph) {
         LOG.info("Indexing graph...");
@@ -227,12 +216,13 @@ public class GraphIndex {
         calendarService = graph.getCalendarService();
         serviceCodes = graph.serviceCodes;
         this.graph = graph;
-        graphQL = new GraphQL(
-            new IndexGraphQLSchema(this).indexSchema,
-            new ExecutorServiceExecutionStrategy(Executors.newCachedThreadPool(
-                new ThreadFactoryBuilder().setNameFormat("GraphQLExecutor-" + graph.routerId + "-%d").build()
-            ))
+        threadPool = Executors.newCachedThreadPool(
+            new ThreadFactoryBuilder().setNameFormat("GraphQLExecutor-" + graph.routerId + "-%d")
+                .build()
         );
+
+        indexSchema = new IndexGraphQLSchema(this).indexSchema;
+        getLuceneIndex();
         LOG.info("Done indexing graph.");
     }
 
@@ -501,7 +491,7 @@ public class GraphIndex {
         }
 
         private static String toId(Stop stop, TripPattern pattern) {
-            return stop.getId().getAgencyId() + ":" + stop.getId().getId() + ":" + pattern.code;
+            return stop.getId().getAgencyId() + ";" + stop.getId().getId() + ";" + pattern.code;
         }
 
         public List<TripTimeShort> getStoptimes(GraphIndex index, long startTime, int timeRange, int numberOfDepartures) {
@@ -509,7 +499,7 @@ public class GraphIndex {
         }
 
         public static DepartureRow fromId(GraphIndex index, String id) {
-            String[] parts = id.split(":");
+            String[] parts = id.split(";", 3);
             AgencyAndId stopId = new AgencyAndId(parts[0], parts[1]);
             String code = parts[2];
             return new DepartureRow(index.stopForId.get(stopId), index.patternForId.get(code));
@@ -746,7 +736,7 @@ public class GraphIndex {
      *            Stop object to perform the search for
      * @param startTime
      *            Start time for the search. Seconds from UNIX epoch
-     * @param TripPattern
+     * @param pattern
      *            The selected pattern. If null an empty list is returned.
      * @param timeRange
      *            Searches forward for timeRange seconds from startTime
@@ -954,19 +944,37 @@ public class GraphIndex {
         }
     }
 
-    public Response getGraphQLResponse(String query, Router router, Map<String, Object> variables) {
-        ExecutionResult executionResult = graphQL.execute(query, null, router, variables);
+    public Response getGraphQLResponse(String query, Router router, Map<String, Object> variables, String operationName, int timeout, long maxResolves) {
         Response.ResponseBuilder res = Response.status(Response.Status.OK);
-        HashMap<String, Object> content = new HashMap<>();
-        if (!executionResult.getErrors().isEmpty()) {
-            // TODO: Put correct error code, eg. 400 for synax error
+        HashMap<String, Object> content = getGraphQLExecutionResult(query, router, variables,
+            operationName, timeout, maxResolves);
+        if (content.get("errors") != null) {
+            // TODO: Put correct error code, eg. 400 for syntax error
             res = Response.status(Response.Status.INTERNAL_SERVER_ERROR);
-            content.put("errors", executionResult.getErrors());
-        }
-        if (executionResult.getData() != null ) {
-            content.put("data", executionResult.getData());
         }
         return res.entity(content).build();
+    }
+
+    public HashMap<String, Object> getGraphQLExecutionResult(String query, Router router,
+        Map<String, Object> variables, String operationName, int timeout, long maxResolves) {
+        GraphQL graphQL = new GraphQL(
+            indexSchema,
+            new ResourceConstrainedExecutorServiceExecutionStrategy(threadPool, timeout, TimeUnit.MILLISECONDS, maxResolves)
+        );
+
+        if (variables == null) {
+            variables = new HashMap<>();
+        }
+
+        ExecutionResult executionResult = graphQL.execute(query, operationName, router, variables);
+        HashMap<String, Object> content = new HashMap<>();
+        if (!executionResult.getErrors().isEmpty()) {
+            content.put("errors", executionResult.getErrors());
+        }
+        if (executionResult.getData() != null) {
+            content.put("data", executionResult.getData());
+        }
+        return content;
     }
 
     private Stream<AlertPatch> getAlertPatchStream() {

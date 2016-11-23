@@ -7,6 +7,7 @@ import com.vividsolutions.jts.geom.LineString;
 import graphql.Scalars;
 import graphql.relay.Relay;
 import graphql.relay.SimpleListConnection;
+import graphql.schema.DataFetcher;
 import graphql.schema.DataFetchingEnvironment;
 import graphql.schema.GraphQLArgument;
 import graphql.schema.GraphQLEnumType;
@@ -21,6 +22,7 @@ import graphql.schema.GraphQLOutputType;
 import graphql.schema.GraphQLSchema;
 import graphql.schema.GraphQLType;
 import graphql.schema.GraphQLTypeReference;
+import graphql.schema.PropertyDataFetcher;
 import graphql.schema.TypeResolver;
 import org.onebusaway.gtfs.model.Agency;
 import org.onebusaway.gtfs.model.AgencyAndId;
@@ -28,7 +30,6 @@ import org.onebusaway.gtfs.model.Route;
 import org.onebusaway.gtfs.model.Stop;
 import org.onebusaway.gtfs.model.Trip;
 import org.onebusaway.gtfs.model.calendar.ServiceDate;
-import org.opentripplanner.api.adapters.RouteType;
 import org.opentripplanner.api.common.Message;
 import org.opentripplanner.api.model.Itinerary;
 import org.opentripplanner.api.model.Leg;
@@ -49,18 +50,19 @@ import org.opentripplanner.routing.bike_rental.BikeRentalStationService;
 import org.opentripplanner.routing.car_park.CarPark;
 import org.opentripplanner.routing.car_park.CarParkService;
 import org.opentripplanner.routing.core.Fare;
+import org.opentripplanner.routing.core.FareComponent;
 import org.opentripplanner.routing.core.Money;
 import org.opentripplanner.routing.core.OptimizeType;
 import org.opentripplanner.routing.core.ServiceDay;
 import org.opentripplanner.routing.core.TraverseMode;
 import org.opentripplanner.routing.edgetype.SimpleTransfer;
 import org.opentripplanner.routing.edgetype.Timetable;
+import org.opentripplanner.routing.edgetype.TimetableSnapshot;
 import org.opentripplanner.routing.edgetype.TripPattern;
 import org.opentripplanner.routing.error.VertexNotFoundException;
 import org.opentripplanner.routing.graph.GraphIndex;
 import org.opentripplanner.routing.graph.GraphIndex.PlaceAndDistance;
 import org.opentripplanner.routing.trippattern.RealTimeState;
-import org.opentripplanner.routing.vertextype.ParkAndRideVertex;
 import org.opentripplanner.routing.vertextype.TransitVertex;
 import org.opentripplanner.updater.GtfsRealtimeFuzzyTripMatcher;
 import org.opentripplanner.updater.stoptime.TimetableSnapshotSource;
@@ -153,7 +155,7 @@ public class IndexGraphQLSchema {
         .build();
 
     public static GraphQLEnumType optimizeTypeEnum = GraphQLEnumType.newEnum()
-        .name("OptimizeTtpe")
+        .name("OptimizeType")
         .value("QUICK", OptimizeType.QUICK, "QUICK")
         .value("SAFE", OptimizeType.SAFE, "SAFE")
         .value("FLAT", OptimizeType.FLAT, "FLAT")
@@ -244,6 +246,9 @@ public class IndexGraphQLSchema {
             }
             if (o instanceof GraphIndex.DepartureRow) {
                 return (GraphQLObjectType) departureRowType;
+            }
+            if (o instanceof PlaceAndDistance) {
+                return (GraphQLObjectType) placeAtDistanceType;
             }
             return null;
         }
@@ -824,7 +829,24 @@ public class IndexGraphQLSchema {
 
         placeAtDistanceType = GraphQLObjectType.newObject()
             .name("placeAtDistance")
-            //.withInterface(nodeInterface)
+            .withInterface(nodeInterface)
+            .field(GraphQLFieldDefinition.newFieldDefinition()
+                .name("id")
+                .type(new GraphQLNonNull(Scalars.GraphQLID))
+                .dataFetcher(environment -> {
+                    Object place = ((PlaceAndDistance) environment.getSource()).place;
+                    return relay.toGlobalId(placeAtDistanceType.getName(),
+                        Integer.toString(((PlaceAndDistance) environment.getSource()).distance) + ";" +
+                            placeInterface.getTypeResolver()
+                                .getType(place)
+                                .getFieldDefinition("id")
+                                .getDataFetcher()
+                                .get(new DataFetchingEnvironment(place, null, null,
+                                    null, null, placeAtDistanceType, null))
+
+                    );
+                })
+                .build())
             .field(GraphQLFieldDefinition.newFieldDefinition()
                 .name("place")
                 .type(placeInterface)
@@ -1358,11 +1380,14 @@ public class IndexGraphQLSchema {
                         final ServiceDay serviceDay = new ServiceDay(index.graph, serviceDate,
                             index.graph.getCalendarService(), trip.getRoute().getAgency().getId());
                         TimetableSnapshotSource timetableSnapshotSource = index.graph.timetableSnapshotSource;
-                        Timetable timetable;
+                        Timetable timetable = null;
                         if (timetableSnapshotSource != null) {
-                            timetable = timetableSnapshotSource.getTimetableSnapshot().resolve(
-                                index.patternForTrip.get(trip), serviceDate);
-                        } else {
+                            TimetableSnapshot timetableSnapshot = timetableSnapshotSource.getTimetableSnapshot();
+                            if (timetableSnapshot != null) {
+                                timetable = timetableSnapshot.resolve(index.patternForTrip.get(trip), serviceDate);
+                            }
+                        }
+                        if (timetable == null) {
                             timetable = index.patternForTrip.get(trip).scheduledTimetable;
                         }
                         return TripTimeShort.fromTripTimes(timetable, trip, serviceDay);
@@ -1830,17 +1855,21 @@ public class IndexGraphQLSchema {
                 .build())
             .build();
 
-        queryType = GraphQLObjectType.newObject()
-            .name("QueryType")
-            .field(relay.nodeField(nodeInterface, environment -> {
-                Relay.ResolvedGlobalId id = relay.fromGlobalId(environment.getArgument("id"));
+        DataFetcher nodeDataFetcher = new DataFetcher() {
+            @Override public Object get(DataFetchingEnvironment environment) {
+                return getObject(environment.getArgument("id"));
+            }
+
+            private Object getObject(String idString) {
+                Relay.ResolvedGlobalId id = relay.fromGlobalId(idString);
                 if (id.type.equals(clusterType.getName())) {
                     return index.stopClusterForId.get(id.id);
                 }
                 if (id.type.equals(stopAtDistanceType.getName())) {
+                    String[] parts = id.id.split(";", 2);
                     return new GraphIndex.StopAndDistance(
-                        index.stopForId.get(GtfsLibrary.convertIdFromString(id.id.split(";", 2)[1])),
-                        Integer.parseInt(id.id.split(";", 2)[0], 10));
+                        index.stopForId.get(GtfsLibrary.convertIdFromString(parts[1])),
+                        Integer.parseInt(parts[0], 10));
                 }
                 if (id.type.equals(stopType.getName())) {
                     return index.stopForId.get(GtfsLibrary.convertIdFromString(id.id));
@@ -1890,8 +1919,17 @@ public class IndexGraphQLSchema {
                         .findFirst()
                         .orElse(null);
                 }
+                if (id.type.equals(placeAtDistanceType.getName())) {
+                    String[] parts = id.id.split(";", 2);
+                    return new PlaceAndDistance(getObject(parts[1]), Integer.parseInt(parts[0], 10));
+                }
                 return null;
-            }))
+            }
+        };
+
+        queryType = GraphQLObjectType.newObject()
+            .name("QueryType")
+            .field(relay.nodeField(nodeInterface, nodeDataFetcher))
             .field(GraphQLFieldDefinition.newFieldDefinition()
                 .name("agencies")
                 .description("Get all agencies for the specified graph")
@@ -2591,6 +2629,57 @@ public class IndexGraphQLSchema {
                 .build())
             .build();
 
+        GraphQLObjectType fareType = GraphQLObjectType.newObject()
+            .name("fare")
+            .field(GraphQLFieldDefinition.newFieldDefinition()
+                .name("type")
+                .type(Scalars.GraphQLString)
+                .dataFetcher(new PropertyDataFetcher("name"))
+                .build())
+            .field(GraphQLFieldDefinition.newFieldDefinition()
+                .name("currency")
+                .type(Scalars.GraphQLString)
+                .dataFetcher(environment -> ((Money)((Map<String, Object>) environment.getSource()).get("fare")).getCurrency().getCurrencyCode())
+                .build())
+            .field(GraphQLFieldDefinition.newFieldDefinition()
+                .name("cents")
+                .type(Scalars.GraphQLInt)
+                .dataFetcher(environment -> ((Money)((Map<String, Object>) environment.getSource()).get("fare")).getCents())
+                .build())
+            .field(GraphQLFieldDefinition.newFieldDefinition()
+                .name("components")
+                .type(new GraphQLList(GraphQLObjectType.newObject()
+                    .name("fareComponent")
+                    .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("fareId")
+                        .type(Scalars.GraphQLString)
+                        .dataFetcher(environment -> GtfsLibrary
+                            .convertIdToString(((FareComponent) environment.getSource()).fareId))
+                        .build())
+                    .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("currency")
+                        .type(Scalars.GraphQLString)
+                        .dataFetcher(environment -> ((FareComponent) environment.getSource()).price.getCurrency().getCurrencyCode())
+                        .build())
+                    .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("cents")
+                        .type(Scalars.GraphQLInt)
+                        .dataFetcher(environment -> ((FareComponent) environment.getSource()).price.getCents())
+                        .build())
+                    .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("routes")
+                        .type(new GraphQLList(routeType))
+                        .dataFetcher(environment -> ((FareComponent) environment.getSource())
+                            .routes
+                            .stream()
+                            .map(index.routeForId::get)
+                            .collect(Collectors.toList()))
+                        .build())
+                    .build()))
+                .dataFetcher(new PropertyDataFetcher("details"))
+                .build())
+            .build();
+
         final GraphQLObjectType itineraryType = GraphQLObjectType.newObject()
             .name("Itinerary")
             .field(GraphQLFieldDefinition.newFieldDefinition()
@@ -2638,26 +2727,21 @@ public class IndexGraphQLSchema {
             .field(GraphQLFieldDefinition.newFieldDefinition()
                 .name("fares")
                 .description("Information about the fares for this itinerary")
-                .type(new GraphQLList(GraphQLObjectType.newObject()
-                    .name("fare")
-                    .field(GraphQLFieldDefinition.newFieldDefinition()
-                        .name("type")
-                        .type(Scalars.GraphQLString)
-                        .dataFetcher(environment -> ((Map.Entry<Fare.FareType,Money>) environment.getSource()).getKey().name())
-                        .build())
-                    .field(GraphQLFieldDefinition.newFieldDefinition()
-                        .name("currency")
-                        .type(Scalars.GraphQLString)
-                        .dataFetcher(environment -> ((Map.Entry<Fare.FareType,Money>) environment.getSource()).getValue().getCurrency().getCurrencyCode())
-                        .build())
-                    .field(GraphQLFieldDefinition.newFieldDefinition()
-                        .name("cents")
-                        .type(Scalars.GraphQLInt)
-                        .dataFetcher(environment -> ((Map.Entry<Fare.FareType,Money>) environment.getSource()).getValue().getCents())
-                        .build())
-                    .build()))
-                .dataFetcher(environment -> ((Itinerary)environment.getSource()).fare != null ?
-                    new ArrayList<>(((Itinerary)environment.getSource()).fare.fare.entrySet()) : null)
+                .type(new GraphQLList(fareType))
+                .dataFetcher(environment -> {
+                    Fare fare = ((Itinerary)environment.getSource()).fare;
+                    if (fare == null) {
+                        return null;
+                    }
+                    List<Map<String, Object>> results = fare.fare.keySet().stream().map(fareKey -> {
+                        Map<String, Object> result = new HashMap<>();
+                        result.put("name", fareKey);
+                        result.put("fare", fare.getFare(fareKey));
+                        result.put("details", fare.getDetails(fareKey));
+                        return result;
+                    }).collect(Collectors.toList());
+                    return results;
+                })
                 .build())
             .build();
 
