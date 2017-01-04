@@ -129,6 +129,19 @@ public class GraphBuilderParameters {
      */
     public boolean allowDuplicateStops = false;
 
+    /** 
+     * This field indicates the pruning threshold for islands without stops.
+     * Any such island under this size will be pruned.
+     */
+    public final int pruningThresholdIslandWithoutStops;
+    
+    /**
+     * This field indicates the pruning threshold for islands with stops.
+     * Any such island under this size will be pruned.
+     */
+    public final int pruningThresholdIslandWithStops;
+
+
     /**
      * Set all parameters from the given Jackson JSON tree, applying defaults.
      * Supplying MissingNode.getInstance() will cause all the defaults to be applied.
@@ -158,6 +171,8 @@ public class GraphBuilderParameters {
         maxHtmlAnnotationsPerFile = config.path("maxHtmlAnnotationsPerFile").asInt(1000);
         maxInterlineDistance = config.path("maxInterlineDistance").asInt(200);
         allowDuplicateStops = config.path("allowDuplicateStops").asBoolean(false);
+        pruningThresholdIslandWithoutStops = config.path("islandWithoutStopsMaxSize").asInt(40);
+        pruningThresholdIslandWithStops = config.path("islandWithStopsMaxSize").asInt(5);
     }
 
 }
