@@ -16,6 +16,7 @@ package org.opentripplanner.updater.siri;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.opentripplanner.routing.graph.Graph;
 import org.opentripplanner.updater.JsonConfigurable;
+import org.opentripplanner.updater.SiriHelper;
 import org.opentripplanner.util.HttpUtils;
 import org.rutebanken.siri20.util.SiriXml;
 import org.slf4j.Logger;
@@ -85,7 +86,7 @@ public class SiriETHttpTripUpdateSource implements EstimatedTimetableSource, Jso
         long t1 = System.currentTimeMillis();
         try {
 
-            InputStream is = HttpUtils.postData(url, SiriXml.toXml(createETServiceRequest(requestorRef)), timeout);
+            InputStream is = HttpUtils.postData(url, SiriHelper.createETServiceRequestAsXml(requestorRef), timeout);
             if (is != null) {
                 // Decode message
                 LOG.info("Fetching ET-data took {} ms", (System.currentTimeMillis()-t1));
@@ -110,32 +111,6 @@ public class SiriETHttpTripUpdateSource implements EstimatedTimetableSource, Jso
             LOG.warn("Failed to parse SIRI-ET feed from " + url + ":", e);
         }
         return null;
-    }
-
-    private Siri createETServiceRequest(String requestorRefValue) {
-        Siri request = new Siri();
-        request.setVersion("2.0");
-
-        ServiceRequest serviceRequest = new ServiceRequest();
-        serviceRequest.setRequestTimestamp(ZonedDateTime.now());
-
-        RequestorRef requestorRef = new RequestorRef();
-        requestorRef.setValue(requestorRefValue);
-        serviceRequest.setRequestorRef(requestorRef);
-
-        EstimatedTimetableRequestStructure etRequest = new EstimatedTimetableRequestStructure();
-        etRequest.setRequestTimestamp(ZonedDateTime.now());
-        etRequest.setVersion("2.0");
-
-        MessageQualifierStructure messageIdentifier = new MessageQualifierStructure();
-        messageIdentifier.setValue(UUID.randomUUID().toString());
-
-        etRequest.setMessageIdentifier(messageIdentifier);
-        serviceRequest.getEstimatedTimetableRequests().add(etRequest);
-
-        request.setServiceRequest(serviceRequest);
-
-        return request;
     }
 
     @Override

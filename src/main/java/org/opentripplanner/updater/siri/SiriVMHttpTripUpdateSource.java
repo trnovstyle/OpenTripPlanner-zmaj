@@ -16,8 +16,8 @@ package org.opentripplanner.updater.siri;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.opentripplanner.routing.graph.Graph;
 import org.opentripplanner.updater.JsonConfigurable;
+import org.opentripplanner.updater.SiriHelper;
 import org.opentripplanner.util.HttpUtils;
-import org.rutebanken.siri20.util.SiriXml;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.org.siri.siri20.*;
@@ -84,7 +84,7 @@ public class SiriVMHttpTripUpdateSource implements VehicleMonitoringSource, Json
         long t1 = System.currentTimeMillis();
         fullDataset = false;
         try {
-            InputStream is = HttpUtils.postData(url, SiriXml.toXml(createVMServiceRequest(requestorRef)), timeout);
+            InputStream is = HttpUtils.postData(url, SiriHelper.createVMServiceRequestAsXml(requestorRef), timeout);
             if (is != null) {
                 // Decode message
                 LOG.info("Fetching VM-data took {} ms", (System.currentTimeMillis()-t1));
@@ -106,33 +106,6 @@ public class SiriVMHttpTripUpdateSource implements VehicleMonitoringSource, Json
             LOG.warn("Failed to parse SIRI-VM feed from " + url + ":", e);
         }
         return null;
-    }
-
-
-    private Siri createVMServiceRequest(String requestorRefValue) {
-        Siri request = new Siri();
-        request.setVersion("2.0");
-
-        ServiceRequest serviceRequest = new ServiceRequest();
-        serviceRequest.setRequestTimestamp(ZonedDateTime.now());
-
-        RequestorRef requestorRef = new RequestorRef();
-        requestorRef.setValue(requestorRefValue);
-        serviceRequest.setRequestorRef(requestorRef);
-
-        VehicleMonitoringRequestStructure vmRequest = new VehicleMonitoringRequestStructure();
-        vmRequest.setRequestTimestamp(ZonedDateTime.now());
-        vmRequest.setVersion("2.0");
-
-        MessageQualifierStructure messageIdentifier = new MessageQualifierStructure();
-        messageIdentifier.setValue(UUID.randomUUID().toString());
-
-        vmRequest.setMessageIdentifier(messageIdentifier);
-        serviceRequest.getVehicleMonitoringRequests().add(vmRequest);
-
-        request.setServiceRequest(serviceRequest);
-
-        return request;
     }
 
     @Override
