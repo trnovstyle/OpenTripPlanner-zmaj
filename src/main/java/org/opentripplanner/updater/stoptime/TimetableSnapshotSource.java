@@ -1517,7 +1517,7 @@ public class TimetableSnapshotSource {
                     for (TripTimes times : pattern.scheduledTimetable.tripTimes) {
                         if (stopNumber < times.getNumStops() &&
                                 times.getScheduledDepartureTime(stopNumber-1) == calculateSecondsSinceMidnight(date)) {
-                            return times.trip;
+                            return trip;
                         }
                     }
                 }
