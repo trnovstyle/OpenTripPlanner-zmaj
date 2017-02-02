@@ -20,18 +20,6 @@ public class SiriHelper {
         Siri request = new Siri();
         request.setVersion("2.0");
 
-        try {
-            Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
-            Element idMappingElement = doc.createElement("IdMapping");
-            idMappingElement.setAttribute("useOriginalId", "true");
-
-            Extensions idMappingExtension = new Extensions();
-            idMappingExtension.getAnies().add(idMappingElement);
-            request.setExtensions(idMappingExtension);
-        } catch (Throwable t) {
-            LOG.error("Could not add IdMapping-extension - ignoring", t);
-        }
-
         return request;
     }
 
