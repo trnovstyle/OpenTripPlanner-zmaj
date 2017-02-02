@@ -16,10 +16,12 @@ package org.opentripplanner.updater.siri;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.opentripplanner.routing.graph.Graph;
 import org.opentripplanner.updater.JsonConfigurable;
+import org.opentripplanner.updater.SiriHelper;
 import org.opentripplanner.util.HttpUtils;
+import org.rutebanken.siri20.util.SiriXml;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.org.siri.siri20.Siri;
+import uk.org.siri.siri20.*;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
@@ -47,20 +49,28 @@ public class SiriETHttpTripUpdateSource implements EstimatedTimetableSource, Jso
 
     private ZonedDateTime lastTimestamp = ZonedDateTime.now().minusMonths(1);
 
+    private String requestorRef;
+
+    private int timeout;
+
     @Override
     public void configure(Graph graph, JsonNode config) throws Exception {
         String url = config.path("url").asText();
         if (url == null) {
             throw new IllegalArgumentException("Missing mandatory 'url' parameter");
         }
+        this.url = url;
 
-        String uniquenessParameter = "?";
-        if (url.contains("?")) {
-            uniquenessParameter = "&";
+        this.requestorRef = config.path("requestorRef").asText();
+        if (requestorRef == null || requestorRef.isEmpty()) {
+            requestorRef = UUID.randomUUID().toString();
         }
-        uniquenessParameter += "requestorId="+ UUID.randomUUID().toString();
-        this.url = url + uniquenessParameter;
         this.feedId = config.path("feedId").asText();
+
+        int timeoutSec = config.path("timeoutSec").asInt();
+        if (timeoutSec > 0) {
+            this.timeout = 1000*timeoutSec;
+        }
 
         try {
             jaxbContext = JAXBContext.newInstance(Siri.class);
@@ -73,16 +83,16 @@ public class SiriETHttpTripUpdateSource implements EstimatedTimetableSource, Jso
 
     @Override
     public List getUpdates() {
-        Siri siri;
-        fullDataset = true;
+        long t1 = System.currentTimeMillis();
         try {
-            long t1 = System.currentTimeMillis();
-            InputStream is = HttpUtils.getData(url);
+
+            InputStream is = HttpUtils.postData(url, SiriHelper.createETServiceRequestAsXml(requestorRef), timeout);
             if (is != null) {
                 // Decode message
                 LOG.info("Fetching ET-data took {} ms", (System.currentTimeMillis()-t1));
                 t1 = System.currentTimeMillis();
-                siri = (Siri) jaxbContext.createUnmarshaller().unmarshal(is);
+
+                Siri siri = (Siri) jaxbContext.createUnmarshaller().unmarshal(is);
                 LOG.info("Unmarshalling ET-data took {} ms", (System.currentTimeMillis()-t1));
 
                 if (siri.getServiceDelivery().getResponseTimestamp().isBefore(lastTimestamp)) {
@@ -91,10 +101,13 @@ public class SiriETHttpTripUpdateSource implements EstimatedTimetableSource, Jso
                 }
                 lastTimestamp = siri.getServiceDelivery().getResponseTimestamp();
 
+                //All subsequent requests will return changes since last request
+                fullDataset = false;
                 return siri.getServiceDelivery().getEstimatedTimetableDeliveries();
 
             }
         } catch (Exception e) {
+            LOG.info("Failed after {} ms", (System.currentTimeMillis()-t1));
             LOG.warn("Failed to parse SIRI-ET feed from " + url + ":", e);
         }
         return null;
