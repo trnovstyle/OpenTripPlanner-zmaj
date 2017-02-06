@@ -384,7 +384,6 @@ public class TimetableSnapshotSource {
                 buffer.clear(SIRI_FEED_ID);
             }
 
-
             for (EstimatedTimetableDeliveryStructure etDelivery : updates) {
 
                 List<EstimatedVersionFrameStructure> estimatedJourneyVersions = etDelivery.getEstimatedJourneyVersionFrames();
@@ -464,11 +463,25 @@ public class TimetableSnapshotSource {
             return false;
         }
 
-        final TripPattern pattern = getPatternForTrip(trips, activity.getMonitoredVehicleJourney());
+        final Set<TripPattern> patterns = getPatternsForTrip(trips, activity.getMonitoredVehicleJourney());
 
-        if (pattern == null) {
+        if (patterns == null) {
             return false;
         }
+        boolean success = false;
+        for (TripPattern pattern : patterns) {
+            if (handleTripPatternUpdate(graph, pattern, activity, trip, serviceDate)) {
+                success = true;
+            }
+        }
+
+        if (!success) {
+            LOG.info("Pattern not updated for trip " + trip.getId());
+        }
+        return success;
+    }
+
+    private boolean handleTripPatternUpdate(Graph graph, TripPattern pattern, VehicleActivityStructure activity, Trip trip, ServiceDate serviceDate) {
 
         // Apply update on the *scheduled* time table and set the updated trip times in the buffer
         final TripTimes updatedTripTimes = pattern.scheduledTimetable.createUpdatedTripTimes(activity, timeZone, trip.getId());
@@ -483,11 +496,6 @@ public class TimetableSnapshotSource {
         final List<StopTime> stopTimes = new ArrayList<>(updatedTripTimes.getNumStops());
 
         int accumulatedDelayTime = 0;
-
-
-        // Calculate seconds since epoch on GTFS midnight (noon minus 12h) of service date
-        final Calendar serviceCalendar = serviceDate.getAsCalendar(timeZone);
-        final long midnightSecondsSinceEpoch = serviceCalendar.getTimeInMillis() / MILLIS_PER_SECOND;
 
         VehicleActivityStructure.MonitoredVehicleJourney monitoredVehicleJourney = activity.getMonitoredVehicleJourney();
 
@@ -508,7 +516,7 @@ public class TimetableSnapshotSource {
 
                     if (stop.getId().getId().equals(monitoredCall.getStopPointRef().getValue())) {
                         if (delay != null) {
-                            accumulatedDelayTime += delay.getHours() *3600 + delay.getMinutes() *60 + delay.getSeconds();
+                            accumulatedDelayTime += delay.getSign()*(delay.getHours() *3600 + delay.getMinutes() *60 + delay.getSeconds());
                         }
                         //If we get realtime data for a stop, flag as realtime also when delay == null
                         updatedTripTimes.updateArrivalDelay(index, accumulatedDelayTime);
@@ -543,35 +551,6 @@ public class TimetableSnapshotSource {
             }
 
         }
-
-        // TODO: filter/interpolate stop times like in GTFSPatternHopFactory?
-
-        // Create StopPattern
-        final StopPattern stopPattern = new StopPattern(stopTimes);
-
-        // Get cached trip pattern or create one if it doesn't exist yet
-        final TripPattern updatedPattern = tripPatternCache.getOrCreateTripPattern(stopPattern, trip.getRoute(), graph);
-
-        // Add service code to bitset of pattern if needed (using copy on write)
-        final int serviceCode = graph.serviceCodes.get(trip.getServiceId());
-        if (!updatedPattern.getServices().get(serviceCode)) {
-            final BitSet services = (BitSet) updatedPattern.getServices().clone();
-            services.set(serviceCode);
-            pattern.setServices(services);
-        }
-
-        // Create new trip times
-        final TripTimes newTripTimes = new TripTimes(trip, stopTimes, graph.deduplicator);
-
-        // Update all times to mark trip times as realtime
-        // TODO: should we incorporate the delay field if present?
-        for (int stopIndex = 0; stopIndex < newTripTimes.getNumStops(); stopIndex++) {
-            updatedTripTimes.updateArrivalTime(stopIndex, newTripTimes.getScheduledArrivalTime(stopIndex));
-            updatedTripTimes.updateDepartureTime(stopIndex, newTripTimes.getScheduledDepartureTime(stopIndex));
-        }
-
-        // Set service code of new trip times
-        updatedTripTimes.serviceCode = serviceCode;
 
         // Make sure that updated trip times have the correct real time state
         updatedTripTimes.setRealTimeState(RealTimeState.UPDATED);
@@ -641,12 +620,27 @@ public class TimetableSnapshotSource {
         final List<Stop> stops = pattern.getStops();
 
         // Create StopTimes
-        final List<StopTime> stopTimes = new ArrayList<>(updatedTripTimes.getNumStops());
+        final List<StopTime> stopTimes = new ArrayList<>(stops.size());
 
-        for (int index = 0; index < updatedTripTimes.getNumStops(); ++index) {
+        boolean atLeastOneCancellation = false;
+
+        for (int i = 0; i < stops.size(); i++) {
+
+            EstimatedCall estimatedCall = estimatedCalls.getEstimatedCalls().get(i);
+
+            int index = -1;
+            if (estimatedCall.getOrder() != null) {
+                index = estimatedCall.getOrder().intValue() - 1;
+            } else if (estimatedCall.getVisitNumber() != null) {
+                index = estimatedCall.getVisitNumber().intValue() - 1;
+            }
 
             final Stop stop = stops.get(index);
-            EstimatedCall estimatedCall = estimatedCalls.getEstimatedCalls().get(index);
+            if (!stop.getId().getId().equals(estimatedCall.getStopPointRef().getValue())) {
+                //continue;
+                LOG.warn("ID for stop with index {} does not match.", i);
+            }
+
             boolean isCancellation = estimatedCall.isCancellation() != null ? estimatedCall.isCancellation():false;
 
             // Create stop time
@@ -661,17 +655,23 @@ public class TimetableSnapshotSource {
 
             // Set pickup type
             // Set different pickup type for last stop
-            if (isCancellation || index == updatedTripTimes.getNumStops() - 1) {
-                stopTime.setPickupType(1); // No pickup available
+            if (index == updatedTripTimes.getNumStops() - 1) {
+                stopTime.setPickupType(TripPattern.NO_PICKUP); // No pickup available
             } else {
                 stopTime.setPickupType(0); // Regularly scheduled pickup
             }
             // Set drop off type
             // Set different drop off type for first stop
-            if (isCancellation || index == 0) {
-                stopTime.setDropOffType(1); // No drop off available
+            if (index == 0) {
+                stopTime.setDropOffType(TripPattern.NO_PICKUP); // No drop off available
             } else {
                 stopTime.setDropOffType(0); // Regularly scheduled drop off
+            }
+
+            if (isCancellation) {
+                atLeastOneCancellation = true;
+                stopTime.setPickupType(TripPattern.NO_PICKUP);
+                stopTime.setDropOffType(TripPattern.NO_PICKUP);
             }
 
             // Add stop time to list
@@ -679,40 +679,14 @@ public class TimetableSnapshotSource {
         }
 
 
-        // TODO: filter/interpolate stop times like in GTFSPatternHopFactory?
-
-        // Create StopPattern
-        final StopPattern stopPattern = new StopPattern(stopTimes);
-
-        // Get cached trip pattern or create one if it doesn't exist yet
-        final TripPattern updatedPattern = tripPatternCache.getOrCreateTripPattern(stopPattern, trip.getRoute(), graph);
-
-        // Add service code to bitset of pattern if needed (using copy on write)
-        final int serviceCode = graph.serviceCodes.get(trip.getServiceId());
-        if (!updatedPattern.getServices().get(serviceCode)) {
-            final BitSet services = (BitSet) updatedPattern.getServices().clone();
-            services.set(serviceCode);
-            pattern.setServices(services);
-        }
-
-        // Create new trip times
-        final TripTimes newTripTimes = new TripTimes(trip, stopTimes, graph.deduplicator);
-
-        // Update all times to mark trip times as realtime
-        // TODO: should we incorporate the delay field if present?
-        for (int stopIndex = 0; stopIndex < newTripTimes.getNumStops(); stopIndex++) {
-            updatedTripTimes.updateArrivalTime(stopIndex, newTripTimes.getScheduledArrivalTime(stopIndex));
-            updatedTripTimes.updateDepartureTime(stopIndex, newTripTimes.getScheduledDepartureTime(stopIndex));
-        }
-
-        // Set service code of new trip times
-        updatedTripTimes.serviceCode = serviceCode;
-
         // Make sure that updated trip times have the correct real time state
-        updatedTripTimes.setRealTimeState(RealTimeState.UPDATED);
+        if (atLeastOneCancellation) {
+            updatedTripTimes.setRealTimeState(RealTimeState.MODIFIED);
+        }else {
+            updatedTripTimes.setRealTimeState(RealTimeState.UPDATED);
+        }
 
-        final boolean success = buffer.update(SIRI_FEED_ID, pattern, updatedTripTimes, serviceDate);
-        return success;
+        return buffer.update(SIRI_FEED_ID, pattern, updatedTripTimes, serviceDate);
     }
 
     private int calculateSecondsSinceMidnight(ZonedDateTime dateTime) {
@@ -1386,7 +1360,7 @@ public class TimetableSnapshotSource {
         return graphIndex.patternForTrip.get(trip);
     }
 
-    private TripPattern getPatternForTrip(Set<Trip> matches, VehicleActivityStructure.MonitoredVehicleJourney monitoredVehicleJourney) {
+    private Set<TripPattern> getPatternsForTrip(Set<Trip> matches, VehicleActivityStructure.MonitoredVehicleJourney monitoredVehicleJourney) {
 
         if (monitoredVehicleJourney.getOriginRef() == null) {
             return null;
@@ -1432,12 +1406,7 @@ public class TimetableSnapshotSource {
 
 
         }
-        if (patterns.size() == 1) {
-            return patterns.iterator().next();
-        } else if (patterns.size() > 1) {
-            LOG.warn("TripPattern not found uniquely - found {} matching patterns.", patterns.size());
-        }
-        return null;
+        return patterns;
     }
 
     private TripPattern getPatternForTrip(Trip trip, EstimatedVehicleJourney journey) {
@@ -1548,7 +1517,7 @@ public class TimetableSnapshotSource {
                     for (TripTimes times : pattern.scheduledTimetable.tripTimes) {
                         if (stopNumber < times.getNumStops() &&
                                 times.getScheduledDepartureTime(stopNumber-1) == calculateSecondsSinceMidnight(date)) {
-                            return times.trip;
+                            return trip;
                         }
                     }
                 }
