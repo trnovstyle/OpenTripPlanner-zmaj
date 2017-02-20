@@ -244,7 +244,7 @@ public class OpenStreetMapModule implements GraphBuilderModule {
             buildWalkableAreas(skipVisibility, platformEntriesLinking);
 
             if(platformEntriesLinking){
-                linkPlatformEntries();
+                linkPlatformEntries(edgeFactory, customNamer);
             }
 
             if (staticParkAndRide) {
@@ -737,8 +737,8 @@ public class OpenStreetMapModule implements GraphBuilderModule {
             }
         }
 
-        private void linkPlatformEntries() {
-            PlatformLinker platformLinker = new PlatformLinker(graph, osmdb);
+        private void linkPlatformEntries(StreetEdgeFactory factory, CustomNamer customNamer) {
+            PlatformLinker platformLinker = new PlatformLinker(graph, osmdb, factory, customNamer);
             platformLinker.linkEntriesToPlatforms();
 
         }
