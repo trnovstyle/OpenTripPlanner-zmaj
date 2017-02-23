@@ -110,7 +110,7 @@ public class SiriETUpdater extends PollingGraphUpdater {
         if (config.path("fuzzyTripMatching").asBoolean(true)) {
             this.siriFuzzyTripMatcher = new SiriFuzzyTripMatcher(graph.index);
         }
-        LOG.info("Creating stop time updater (SIRI VM) running every {} seconds : {}", frequencySec, updateSource);
+        LOG.info("Creating stop time updater (SIRI ET) running every {} seconds : {}", frequencySec, updateSource);
     }
 
     @Override
@@ -168,6 +168,6 @@ public class SiriETUpdater extends PollingGraphUpdater {
 
     public String toString() {
         String s = (updateSource == null) ? "NONE" : updateSource.toString();
-        return "Polling SIRI VM updater with update source = " + s;
+        return "Polling SIRI ET updater with update source = " + s;
     }
 }
