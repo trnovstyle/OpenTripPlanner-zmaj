@@ -628,7 +628,7 @@ public class TimetableSnapshotSource {
 
             EstimatedCall estimatedCall = estimatedCalls.getEstimatedCalls().get(i);
 
-            int index = -1;
+            int index = i; //Using counter as index if not explicitly set
             if (estimatedCall.getOrder() != null) {
                 index = estimatedCall.getOrder().intValue() - 1;
             } else if (estimatedCall.getVisitNumber() != null) {
@@ -1419,14 +1419,11 @@ public class TimetableSnapshotSource {
 
         //Determine which stop is the first with reported update
         EstimatedCall firstCall =estimatedCalls.get(0);
-        int stopNumber;
+        int stopNumber = 1;
         if (firstCall.getOrder() != null) {
             stopNumber = firstCall.getOrder().intValue();
         } else if (firstCall.getVisitNumber() != null) {
             stopNumber = firstCall.getVisitNumber().intValue();
-        } else {
-            //Not defined which stop-point update is referring to
-            return null;
         }
 
         if (stopNumber > tripPattern.getStops().size()) {
@@ -1490,13 +1487,11 @@ public class TimetableSnapshotSource {
     private Trip getTripForJourney(Set<Trip> trips, EstimatedVehicleJourney journey) {
 
         EstimatedCall firstCall = journey.getEstimatedCalls().getEstimatedCalls().get(0);
-        int stopNumber;
+        int stopNumber = 1;
         if (firstCall.getOrder() != null) {
             stopNumber = firstCall.getOrder().intValue();
         } else if (firstCall.getVisitNumber() != null) {
             stopNumber = firstCall.getVisitNumber().intValue();
-        } else {
-            return null;
         }
 
         ZonedDateTime date = firstCall.getAimedDepartureTime();
