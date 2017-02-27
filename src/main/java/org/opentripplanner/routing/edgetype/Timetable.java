@@ -15,6 +15,7 @@ package org.opentripplanner.routing.edgetype;
 
 import java.io.Serializable;
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 import com.beust.jcommander.internal.Lists;
@@ -31,6 +32,7 @@ import org.opentripplanner.routing.core.StopTransfer;
 import org.opentripplanner.routing.core.TransferTable;
 import org.opentripplanner.routing.trippattern.Deduplicator;
 import org.opentripplanner.routing.trippattern.FrequencyEntry;
+import org.opentripplanner.routing.trippattern.RealTimeState;
 import org.opentripplanner.routing.trippattern.TripTimes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -562,20 +564,38 @@ public class Timetable implements Serializable {
 
         //Setting scheduled arrivals/departures
         List<StopTime> stopTimes = new ArrayList<>();
+        ZonedDateTime departureDate = null;
+        int callCounter = 1;
         for (EstimatedCall estimatedCall : estimatedCalls) {
+
+            if (departureDate == null) {
+                departureDate = estimatedCall.getAimedDepartureTime();
+            }
 
             StopTime stopTime = new StopTime();
             if (estimatedCall.getAimedArrivalTime() != null) {
-                stopTime.setArrivalTime(calculateSecondsSinceMidnight(estimatedCall.getAimedArrivalTime()));
+                stopTime.setArrivalTime(calculateSecondsSinceMidnight(departureDate, estimatedCall.getAimedArrivalTime()));
             } else if (estimatedCall.getExpectedArrivalTime() != null) {
-                stopTime.setArrivalTime(calculateSecondsSinceMidnight(estimatedCall.getExpectedArrivalTime()));
+                stopTime.setArrivalTime(calculateSecondsSinceMidnight(departureDate, estimatedCall.getExpectedArrivalTime()));
             }
+
             if (estimatedCall.getAimedDepartureTime() != null) {
-                stopTime.setDepartureTime(calculateSecondsSinceMidnight(estimatedCall.getAimedDepartureTime()));
+                stopTime.setDepartureTime(calculateSecondsSinceMidnight(departureDate, estimatedCall.getAimedDepartureTime()));
             } else if (estimatedCall.getExpectedDepartureTime() != null) {
-                stopTime.setDepartureTime(calculateSecondsSinceMidnight(estimatedCall.getExpectedDepartureTime()));
+                stopTime.setDepartureTime(calculateSecondsSinceMidnight(departureDate, estimatedCall.getExpectedDepartureTime()));
             }
-            int stopNumber = -1;
+
+            // Simulating arrival on first stop
+            if (stopTime.getArrivalTime() < 0 && stopTime.getDepartureTime() >= 0) {
+                stopTime.setArrivalTime(stopTime.getDepartureTime());
+            }
+
+            // Simulating departure from last stop
+            if (stopTime.getDepartureTime() < 0 && stopTime.getArrivalTime() >= 0) {
+                stopTime.setDepartureTime(stopTime.getArrivalTime());
+            }
+
+            int stopNumber = callCounter++;
             if (estimatedCall.getVisitNumber() != null) {
                 stopNumber = estimatedCall.getVisitNumber().intValue();
             } else if (estimatedCall.getOrder() != null) {
@@ -599,61 +619,11 @@ public class Timetable implements Serializable {
         TripTimes newTimes = new TripTimes(oldTimes.trip, stopTimes, new Deduplicator());
         newTimes.serviceCode = oldTimes.serviceCode;
 
-        List<Integer> visitedStops = new ArrayList<>();
-        for (EstimatedCall estimatedCall : estimatedCalls) {
+        newTimes.setRealTimeState(RealTimeState.UPDATED);
 
-            String stopPointRef = estimatedCall.getStopPointRef().getValue();
-            int stopPointIndex = -1;
-
-            if (estimatedCall.getOrder() != null) {
-                // StopIndex is set in ET-data - first stop has order=1
-                stopPointIndex = estimatedCall.getOrder().intValue()-1;
-            } else if (estimatedCall.getVisitNumber() != null) {
-                // StopIndex is set in ET-data - first stop has order=1
-                stopPointIndex = estimatedCall.getVisitNumber().intValue()-1;
-            } else {
-                // Find first stop with same reference
-                int stopsCounter = 0;
-                for (Stop stop : stops) {
-                    if (stop.getId().getId().equals(stopPointRef)) {
-                        //Same StopPointRef
-                        if (!visitedStops.contains(stopPointIndex)) {
-                            //Stop has not yet been visited in this pattern/ca
-                            stopPointIndex = stopsCounter;
-                            break;
-                        }
-                    }
-                    stopsCounter++;
-                }
-            }
-            visitedStops.add(stopPointIndex);
-
-            if (stopPointIndex >= 0 && stopPointIndex < newTimes.getNumStops()) {
-
-                // Estimated Arrival
-                if (stopPointIndex == 0  && estimatedCall.getExpectedDepartureTime() != null){
-                    //First stop has no arrival - using departure
-                    newTimes.updateArrivalTime(stopPointIndex, calculateSecondsSinceMidnight(estimatedCall.getExpectedDepartureTime()));
-                } else if (estimatedCall.getExpectedArrivalTime() != null) {
-                    // Using realtime-data
-                    newTimes.updateArrivalTime(stopPointIndex, calculateSecondsSinceMidnight(estimatedCall.getExpectedArrivalTime()));
-                } else if (estimatedCall.getAimedArrivalTime() != null) {
-                    //Realtime-data does not exist - use original data
-                    newTimes.updateArrivalTime(stopPointIndex, calculateSecondsSinceMidnight(estimatedCall.getAimedArrivalTime()));
-                }
-
-                // Estimated Departure
-                if (stopPointIndex == stops.size()-1 && estimatedCall.getExpectedArrivalTime() != null){
-                    //last stop has no departure - using arrival
-                    newTimes.updateDepartureTime(stopPointIndex, calculateSecondsSinceMidnight(estimatedCall.getExpectedArrivalTime()));
-                } else if (estimatedCall.getExpectedDepartureTime() != null) {
-                    //Using realtime-data
-                    newTimes.updateDepartureTime(stopPointIndex, calculateSecondsSinceMidnight(estimatedCall.getExpectedDepartureTime()));
-                } else  if (estimatedCall.getAimedDepartureTime() != null) {
-                    //Realtime-data does not exist - use original data
-                    newTimes.updateDepartureTime(stopPointIndex, calculateSecondsSinceMidnight(estimatedCall.getAimedDepartureTime()));
-                }
-            }
+        for (int i = 0;i< newTimes.getNumStops();i++) {
+            newTimes.updateArrivalTime(i, newTimes.getArrivalTime(i));
+            newTimes.updateDepartureTime(i, newTimes.getDepartureTime(i));
         }
 
         if (!newTimes.timesIncreasing()) {
@@ -665,8 +635,18 @@ public class Timetable implements Serializable {
         return newTimes;
     }
 
-    private int calculateSecondsSinceMidnight(ZonedDateTime dateTime) {
-        return dateTime.toLocalTime().toSecondOfDay();
+    private int calculateSecondsSinceMidnight(ZonedDateTime departureDate, ZonedDateTime dateTime) {
+
+        int daysBetween = 0;
+        if (departureDate.getDayOfMonth() != dateTime.getDayOfMonth()) {
+            ZonedDateTime midnightOnDepartureDate = departureDate.withHour(0).withMinute(0).withSecond(0);
+            ZonedDateTime midnightOnCurrentStop = dateTime.withHour(0).withMinute(0).withSecond(0);
+            daysBetween = (int) ChronoUnit.DAYS.between(midnightOnDepartureDate, midnightOnCurrentStop);
+        }
+        // If first departure was 'yesterday' - add 24h
+        int daysSinceDeparture = daysBetween * (24*60*60);
+
+        return dateTime.toLocalTime().toSecondOfDay() + daysSinceDeparture;
     }
 
     /**
