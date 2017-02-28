@@ -587,11 +587,11 @@ public class TimetableSnapshotSource {
         //Values used in logging
         Boolean isMonitored = estimatedVehicleJourney.isMonitored();
         String lineRef = estimatedVehicleJourney.getLineRef().getValue();
-        String vehicleRef = (estimatedVehicleJourney.getVehicleJourneyRef() != null ? estimatedVehicleJourney.getVehicleJourneyRef().getValue():null);
+        String vehicleJourneyRef = (estimatedVehicleJourney.getVehicleJourneyRef() != null ? estimatedVehicleJourney.getVehicleJourneyRef().getValue():null);
         String operatorRef = (estimatedVehicleJourney.getOperatorRef() != null ? estimatedVehicleJourney.getOperatorRef().getValue():null);
 
         if (trips == null || trips.isEmpty()) {
-            LOG.info("No trips found for EstimatedVehicleJourney (firstStopId, lastStopId, departureTime). [operator={}, isMonitored={}, lineRef={}, vehicleRef={}]", operatorRef, isMonitored, lineRef, vehicleRef);
+            LOG.info("No trips found for EstimatedVehicleJourney (firstStopId, lastStopId, departureTime). [operator={}, isMonitored={}, lineRef={}, vehicleJourneyRef={}]", operatorRef, isMonitored, lineRef, vehicleJourneyRef);
             return false;
         }
 
@@ -599,14 +599,14 @@ public class TimetableSnapshotSource {
         Trip trip = getTripForJourney(trips, estimatedVehicleJourney);
 
         if (trip == null) {
-            LOG.info("None of the trips match EstimatedVehicleJourney  (serviceDate, departureTime). [operator={}, isMonitored={}, lineRef={}, vehicleRef={}]", operatorRef, isMonitored, lineRef, vehicleRef);
+            LOG.info("None of the trips match EstimatedVehicleJourney  (serviceDate, departureTime). [operator={}, isMonitored={}, lineRef={}, vehicleJourneyRef={}]", operatorRef, isMonitored, lineRef, vehicleJourneyRef);
             return false;
         }
 
         final TripPattern pattern = getPatternForTrip(trip, estimatedVehicleJourney);
 
         if (pattern == null) {
-            LOG.info("No pattern found for matching trip (firstStopId, lastStopId, numberOfStops). [operator={}, isMonitored={}, lineRef={}, vehicleRef={}]", operatorRef, isMonitored, lineRef, vehicleRef);
+            LOG.info("No pattern found for matching trip (firstStopId, lastStopId, numberOfStops). [operator={}, isMonitored={}, lineRef={}, vehicleJourneyRef={}]", operatorRef, isMonitored, lineRef, vehicleJourneyRef);
             return false;
         }
 
@@ -617,74 +617,7 @@ public class TimetableSnapshotSource {
             return false;
         }
 
-        final List<Stop> stops = pattern.getStops();
-
-        // Create StopTimes
-        final List<StopTime> stopTimes = new ArrayList<>(stops.size());
-
-        boolean atLeastOneCancellation = false;
-
-        for (int i = 0; i < stops.size(); i++) {
-
-            EstimatedCall estimatedCall = estimatedCalls.getEstimatedCalls().get(i);
-
-            int index = i; //Using counter as index if not explicitly set
-            if (estimatedCall.getOrder() != null) {
-                index = estimatedCall.getOrder().intValue() - 1;
-            } else if (estimatedCall.getVisitNumber() != null) {
-                index = estimatedCall.getVisitNumber().intValue() - 1;
-            }
-
-            final Stop stop = stops.get(index);
-            if (!stop.getId().getId().equals(estimatedCall.getStopPointRef().getValue())) {
-                //continue;
-                LOG.warn("ID for stop with index {} does not match.", i);
-            }
-
-            boolean isCancellation = estimatedCall.isCancellation() != null ? estimatedCall.isCancellation():false;
-
-            // Create stop time
-            final StopTime stopTime = new StopTime();
-            stopTime.setTrip(trip);
-            stopTime.setStop(stop);
-
-            stopTime.setArrivalTime(updatedTripTimes.getArrivalTime(index));
-            stopTime.setDepartureTime(updatedTripTimes.getDepartureTime(index));
-
-            stopTime.setTimepoint(1); // Exact time
-
-            // Set pickup type
-            // Set different pickup type for last stop
-            if (index == updatedTripTimes.getNumStops() - 1) {
-                stopTime.setPickupType(TripPattern.NO_PICKUP); // No pickup available
-            } else {
-                stopTime.setPickupType(0); // Regularly scheduled pickup
-            }
-            // Set drop off type
-            // Set different drop off type for first stop
-            if (index == 0) {
-                stopTime.setDropOffType(TripPattern.NO_PICKUP); // No drop off available
-            } else {
-                stopTime.setDropOffType(0); // Regularly scheduled drop off
-            }
-
-            if (isCancellation) {
-                atLeastOneCancellation = true;
-                stopTime.setPickupType(TripPattern.NO_PICKUP);
-                stopTime.setDropOffType(TripPattern.NO_PICKUP);
-            }
-
-            // Add stop time to list
-            stopTimes.add(stopTime);
-        }
-
-
-        // Make sure that updated trip times have the correct real time state
-        if (atLeastOneCancellation) {
-            updatedTripTimes.setRealTimeState(RealTimeState.MODIFIED);
-        }else {
-            updatedTripTimes.setRealTimeState(RealTimeState.UPDATED);
-        }
+        updatedTripTimes.setRealTimeState(RealTimeState.UPDATED);
 
         return buffer.update(SIRI_FEED_ID, pattern, updatedTripTimes, serviceDate);
     }
