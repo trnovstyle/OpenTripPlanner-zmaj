@@ -617,7 +617,20 @@ public class TimetableSnapshotSource {
             return false;
         }
 
-        updatedTripTimes.setRealTimeState(RealTimeState.UPDATED);
+        for (Stop stop : pattern.getStops()) {
+            for (EstimatedCall updated : estimatedCalls.getEstimatedCalls()) {
+                if (stop.getId().getId().equals(updated.getStopPointRef().getValue())) {
+                    String platformCode = stop.getPlatformCode();
+                    if (updated.getDeparturePlatformName() != null) {
+                        platformCode = updated.getDeparturePlatformName().getValue();
+                    } else if (updated.getArrivalPlatformName() != null) {
+                        platformCode = updated.getArrivalPlatformName().getValue();
+                    }
+                    stop.setPlatformCode(platformCode);
+                }
+            }
+        }
+
 
         return buffer.update(SIRI_FEED_ID, pattern, updatedTripTimes, serviceDate);
     }
