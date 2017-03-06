@@ -22,6 +22,7 @@ import org.opentripplanner.updater.bike_rental.BikeRentalUpdater;
 import org.opentripplanner.updater.example.ExampleGraphUpdater;
 import org.opentripplanner.updater.example.ExamplePollingGraphUpdater;
 import org.opentripplanner.updater.siri.SiriETUpdater;
+import org.opentripplanner.updater.siri.SiriLiteETUpdater;
 import org.opentripplanner.updater.stoptime.PollingStoptimeUpdater;
 import org.opentripplanner.updater.siri.SiriVMUpdater;
 import org.opentripplanner.updater.stoptime.WebsocketGtfsRealtimeUpdater;
@@ -122,6 +123,9 @@ public abstract class GraphUpdaterConfigurator {
                 }
                 else if (type.equals("siri-et-updater")) {
                     updater = new SiriETUpdater();
+                }
+                else if (type.equals("siri-lite-et-updater")) {
+                    updater = new SiriLiteETUpdater();
                 }
             }
 
