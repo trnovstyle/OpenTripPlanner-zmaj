@@ -179,7 +179,7 @@ public class PlatformLinker {
             return intersects(b, a, P);
 
         if (P[1] == a[1] || P[1] == b[1])
-            P[1] += 0.0001;
+            P[1] += 0.000000000000010;
 
         if (P[1] > b[1] || P[1] < a[1] || P[0] > max(a[0], b[0]))
             return false;
