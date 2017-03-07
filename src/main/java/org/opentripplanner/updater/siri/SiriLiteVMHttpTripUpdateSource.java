@@ -27,9 +27,9 @@ import java.io.InputStream;
 import java.time.ZonedDateTime;
 import java.util.List;
 
-public class SiriLiteETHttpTripUpdateSource implements EstimatedTimetableSource, JsonConfigurable {
+public class SiriLiteVMHttpTripUpdateSource implements VehicleMonitoringSource, JsonConfigurable {
     private static final Logger LOG =
-            LoggerFactory.getLogger(SiriLiteETHttpTripUpdateSource.class);
+            LoggerFactory.getLogger(SiriLiteVMHttpTripUpdateSource.class);
 
     /**
      * True iff the last list with updates represent all updates that are active right now, i.e. all
@@ -74,10 +74,10 @@ public class SiriLiteETHttpTripUpdateSource implements EstimatedTimetableSource,
         long t1 = System.currentTimeMillis();
         try {
 
-            InputStream is = HttpUtils.getData(url, "Accept", "application/"+contentType);
+            InputStream is = HttpUtils.getData(url, "Accept", "application/" + contentType);
             if (is != null) {
                 // Decode message
-                LOG.info("Fetching ET-data took {} ms", (System.currentTimeMillis()-t1));
+                LOG.info("Fetching VM-data took {} ms", (System.currentTimeMillis()-t1));
                 t1 = System.currentTimeMillis();
 
                 Siri siri;
@@ -94,14 +94,12 @@ public class SiriLiteETHttpTripUpdateSource implements EstimatedTimetableSource,
                 }
                 lastTimestamp = siri.getServiceDelivery().getResponseTimestamp();
 
-                //All subsequent requests will return changes since last request
-                fullDataset = false;
-                return siri.getServiceDelivery().getEstimatedTimetableDeliveries();
+                return siri.getServiceDelivery().getVehicleMonitoringDeliveries();
 
             }
         } catch (Exception e) {
             LOG.info("Failed after {} ms", (System.currentTimeMillis()-t1));
-            LOG.warn("Failed to parse SIRI Lite ET feed from " + url + ":", e);
+            LOG.warn("Failed to parse SIRI Lite VM feed from " + url + ":", e);
         }
         return null;
     }
@@ -112,7 +110,7 @@ public class SiriLiteETHttpTripUpdateSource implements EstimatedTimetableSource,
     }
     
     public String toString() {
-        return "SiriLiteETHttpTripUpdateSource(" + url + ")";
+        return "SiriLiteVMHttpTripUpdateSource(" + url + ")";
     }
 
     @Override
