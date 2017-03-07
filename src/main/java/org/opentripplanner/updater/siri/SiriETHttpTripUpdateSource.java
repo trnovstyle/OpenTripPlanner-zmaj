@@ -18,13 +18,13 @@ import org.opentripplanner.routing.graph.Graph;
 import org.opentripplanner.updater.JsonConfigurable;
 import org.opentripplanner.updater.SiriHelper;
 import org.opentripplanner.util.HttpUtils;
-import org.rutebanken.siri20.util.SiriXml;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.org.siri.siri20.*;
+import uk.org.siri.siri20.Siri;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
+import java.io.IOException;
 import java.io.InputStream;
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -106,6 +106,9 @@ public class SiriETHttpTripUpdateSource implements EstimatedTimetableSource, Jso
                 return siri.getServiceDelivery().getEstimatedTimetableDeliveries();
 
             }
+        } catch (IOException e) {
+            LOG.info("Failed after {} ms", (System.currentTimeMillis()-t1));
+            LOG.warn("Could not get SIRI-ET data from {}, caused by {}", url, e.getMessage());
         } catch (Exception e) {
             LOG.info("Failed after {} ms", (System.currentTimeMillis()-t1));
             LOG.warn("Failed to parse SIRI-ET feed from " + url + ":", e);
