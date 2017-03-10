@@ -141,6 +141,8 @@ public class IndexGraphQLSchema {
 
     public GraphQLOutputType alertType = new GraphQLTypeReference("Alert");
 
+    public GraphQLOutputType serviceTimeRangeType = new GraphQLTypeReference("ServiceTimeRange");
+
     public GraphQLOutputType bikeRentalStationType = new GraphQLTypeReference("BikeRentalStation");
 
     public GraphQLOutputType bikeParkType = new GraphQLTypeReference("BikePark");
@@ -298,6 +300,11 @@ public class IndexGraphQLSchema {
                 .name("lon")
                 .description("The longitude of the place.")
                 .type(new GraphQLNonNull(Scalars.GraphQLFloat))
+                .build())
+            .field(GraphQLInputObjectField.newInputObjectField()
+                .name("address")
+                .description("The name of the place.")
+                .type(Scalars.GraphQLString)
                 .build())
             .build();
 
@@ -597,6 +604,7 @@ public class IndexGraphQLSchema {
             .build();
 
         fuzzyTripMatcher = new GtfsRealtimeFuzzyTripMatcher(index);
+        index.clusterStopsAsNeeded();
 
         translatedStringType = GraphQLObjectType.newObject()
             .name("TranslatedString")
@@ -712,6 +720,24 @@ public class IndexGraphQLSchema {
                     Alert alert = ((AlertPatch) environment.getSource()).getAlert();
                     return alert.effectiveEndDate != null ? alert.effectiveEndDate.getTime() / 1000 : null;
                 })
+                .build())
+            .build();
+
+
+        serviceTimeRangeType = GraphQLObjectType.newObject()
+            .name("serviceTimeRange")
+            .description("Time range covered by the routing graph")
+            .field(GraphQLFieldDefinition.newFieldDefinition()
+                .name("start")
+                .type(Scalars.GraphQLLong)
+                .description("Beginning of service time range")
+                .dataFetcher(environment -> index.graph.getTransitServiceStarts())
+                .build())
+            .field(GraphQLFieldDefinition.newFieldDefinition()
+                .name("end")
+                .type(Scalars.GraphQLLong)
+                .description("End of service time range")
+                .dataFetcher(environment -> index.graph.getTransitServiceEnds())
                 .build())
             .build();
 
@@ -1235,7 +1261,13 @@ public class IndexGraphQLSchema {
                 .name("stopHeadsign")
                 .type(Scalars.GraphQLString)
                 .dataFetcher(environment -> ((TripTimeShort) environment.getSource()).headsign)
+                .deprecate("Use headsign instead, will be removed in the future")
                 .build())
+            .field(GraphQLFieldDefinition.newFieldDefinition()
+                .name("headsign")
+              	.type(Scalars.GraphQLString)
+              	.dataFetcher(environment -> ((TripTimeShort) environment.getSource()).headsign)
+              	.build())
             .build();
 
         tripType = GraphQLObjectType.newObject()
@@ -2317,6 +2349,12 @@ public class IndexGraphQLSchema {
                 .dataFetcher(dataFetchingEnvironment -> index.getAlerts())
                 .build())
             .field(GraphQLFieldDefinition.newFieldDefinition()
+                .name("serviceTimeRange")
+                .description("Get start and end time for publict transit services present in the graph")
+                .type(serviceTimeRangeType)
+                .dataFetcher(environment -> index.graph)
+                .build())
+            .field(GraphQLFieldDefinition.newFieldDefinition()
                 .name("bikeRentalStations")
                 .type(new GraphQLList(bikeRentalStationType))
                 .dataFetcher(dataFetchingEnvironment -> new ArrayList<>(index.graph.getService(BikeRentalStationService.class).getBikeRentalStations()))
@@ -2608,6 +2646,12 @@ public class IndexGraphQLSchema {
                         .filter(stop -> stop != null)
                         .collect(Collectors.toList());
                 })
+                .build())
+            .field(GraphQLFieldDefinition.newFieldDefinition()
+                .name("intermediatePlace")
+                .description("Do we continue from a specified intermediate place")
+                .type(Scalars.GraphQLBoolean)
+                .dataFetcher(environment -> ((Leg) environment.getSource()).intermediatePlace)
                 .build())
             .build();
 
