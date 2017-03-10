@@ -7,35 +7,11 @@ import com.vividsolutions.jts.geom.LineString;
 import graphql.Scalars;
 import graphql.relay.Relay;
 import graphql.relay.SimpleListConnection;
-import graphql.schema.DataFetcher;
-import graphql.schema.DataFetchingEnvironment;
-import graphql.schema.GraphQLArgument;
-import graphql.schema.GraphQLEnumType;
-import graphql.schema.GraphQLFieldDefinition;
-import graphql.schema.GraphQLInputObjectField;
-import graphql.schema.GraphQLInputObjectType;
-import graphql.schema.GraphQLInterfaceType;
-import graphql.schema.GraphQLList;
-import graphql.schema.GraphQLNonNull;
-import graphql.schema.GraphQLObjectType;
-import graphql.schema.GraphQLOutputType;
-import graphql.schema.GraphQLSchema;
-import graphql.schema.GraphQLType;
-import graphql.schema.GraphQLTypeReference;
-import graphql.schema.PropertyDataFetcher;
-import graphql.schema.TypeResolver;
-import org.onebusaway.gtfs.model.Agency;
-import org.onebusaway.gtfs.model.AgencyAndId;
-import org.onebusaway.gtfs.model.Route;
-import org.onebusaway.gtfs.model.Stop;
-import org.onebusaway.gtfs.model.Trip;
+import graphql.schema.*;
+import org.onebusaway.gtfs.model.*;
 import org.onebusaway.gtfs.model.calendar.ServiceDate;
 import org.opentripplanner.api.common.Message;
-import org.opentripplanner.api.model.Itinerary;
-import org.opentripplanner.api.model.Leg;
-import org.opentripplanner.api.model.Place;
-import org.opentripplanner.api.model.TripPlan;
-import org.opentripplanner.api.model.VertexType;
+import org.opentripplanner.api.model.*;
 import org.opentripplanner.api.parameter.QualifiedModeSet;
 import org.opentripplanner.gtfs.GtfsLibrary;
 import org.opentripplanner.index.model.StopTimesInPattern;
@@ -49,12 +25,7 @@ import org.opentripplanner.routing.bike_rental.BikeRentalStation;
 import org.opentripplanner.routing.bike_rental.BikeRentalStationService;
 import org.opentripplanner.routing.car_park.CarPark;
 import org.opentripplanner.routing.car_park.CarParkService;
-import org.opentripplanner.routing.core.Fare;
-import org.opentripplanner.routing.core.FareComponent;
-import org.opentripplanner.routing.core.Money;
-import org.opentripplanner.routing.core.OptimizeType;
-import org.opentripplanner.routing.core.ServiceDay;
-import org.opentripplanner.routing.core.TraverseMode;
+import org.opentripplanner.routing.core.*;
 import org.opentripplanner.routing.edgetype.SimpleTransfer;
 import org.opentripplanner.routing.edgetype.Timetable;
 import org.opentripplanner.routing.edgetype.TimetableSnapshot;
@@ -2571,6 +2542,18 @@ public class IndexGraphQLSchema {
                 .description("Whether there is real-time data about this Leg")
                 .type(Scalars.GraphQLBoolean)
                 .dataFetcher(environment -> ((Leg)environment.getSource()).realTime)
+                .build())
+            .field(GraphQLFieldDefinition.newFieldDefinition()
+                .name("arrivalDelay")
+                .description("Arrivaldelay - in seconds - for this Leg")
+                .type(Scalars.GraphQLInt)
+                .dataFetcher(environment -> ((Leg)environment.getSource()).arrivalDelay)
+                .build())
+            .field(GraphQLFieldDefinition.newFieldDefinition()
+                .name("departureDelay")
+                .description("Departuredelay - in seconds - for this Leg")
+                .type(Scalars.GraphQLInt)
+                .dataFetcher(environment -> ((Leg)environment.getSource()).departureDelay)
                 .build())
             .field(GraphQLFieldDefinition.newFieldDefinition()
                 .name("distance")
