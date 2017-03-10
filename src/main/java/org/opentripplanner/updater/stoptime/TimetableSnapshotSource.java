@@ -13,17 +13,11 @@
 
 package org.opentripplanner.updater.stoptime;
 
-import java.text.ParseException;
-import java.time.ZonedDateTime;
-import java.util.*;
-import java.util.concurrent.locks.ReentrantLock;
-
-import org.onebusaway.gtfs.model.Agency;
-import org.onebusaway.gtfs.model.AgencyAndId;
-import org.onebusaway.gtfs.model.Route;
-import org.onebusaway.gtfs.model.Stop;
-import org.onebusaway.gtfs.model.StopTime;
-import org.onebusaway.gtfs.model.Trip;
+import com.google.common.base.Preconditions;
+import com.google.transit.realtime.GtfsRealtime.TripDescriptor;
+import com.google.transit.realtime.GtfsRealtime.TripUpdate;
+import com.google.transit.realtime.GtfsRealtime.TripUpdate.StopTimeUpdate;
+import org.onebusaway.gtfs.model.*;
 import org.onebusaway.gtfs.model.calendar.ServiceDate;
 import org.opentripplanner.model.StopPattern;
 import org.opentripplanner.routing.edgetype.Timetable;
@@ -37,14 +31,13 @@ import org.opentripplanner.updater.GtfsRealtimeFuzzyTripMatcher;
 import org.opentripplanner.updater.SiriFuzzyTripMatcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.google.common.base.Preconditions;
-import com.google.transit.realtime.GtfsRealtime.TripDescriptor;
-import com.google.transit.realtime.GtfsRealtime.TripUpdate;
-import com.google.transit.realtime.GtfsRealtime.TripUpdate.StopTimeUpdate;
 import uk.org.siri.siri20.*;
 
 import javax.xml.datatype.Duration;
+import java.text.ParseException;
+import java.time.ZonedDateTime;
+import java.util.*;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * This class should be used to create snapshots of lookup tables of realtime data. This is
@@ -611,7 +604,7 @@ public class TimetableSnapshotSource {
         }
 
         // Apply update on the *scheduled* time table and set the updated trip times in the buffer
-        final TripTimes updatedTripTimes = pattern.scheduledTimetable.createUpdatedTripTimes(estimatedVehicleJourney, timeZone, trip.getId());
+        final TripTimes updatedTripTimes = pattern.scheduledTimetable.createUpdatedTripTimes(graph, estimatedVehicleJourney, timeZone, trip.getId());
 
         if (updatedTripTimes == null) {
             return false;
@@ -631,6 +624,25 @@ public class TimetableSnapshotSource {
             }
         }
 
+        if (!updatedTripTimes.isCanceled() && updatedTripTimes.getRealTimeState() == RealTimeState.MODIFIED)  {
+
+            cancelScheduledTrip(SIRI_FEED_ID, trip.getId().getId(), serviceDate);
+
+            // Check whether trip id has been used for previously ADDED/MODIFIED trip message and cancel
+            // previously created trip
+            cancelPreviouslyAddedTrip(SIRI_FEED_ID, trip.getId().getId(), serviceDate);
+
+            // Calculate modified stop-pattern
+            List<Stop> modifiedStops = pattern.scheduledTimetable.createModifiedStops(estimatedVehicleJourney);
+            List<StopTime> modifiedStopTimes = pattern.scheduledTimetable.createModifiedStopTimes(updatedTripTimes, estimatedVehicleJourney, trip);
+
+            if (modifiedStops != null && modifiedStops.isEmpty()) {
+                updatedTripTimes.cancel();
+            } else {
+                // Add new trip
+                return addTripToGraphAndBuffer(SIRI_FEED_ID, graph, trip, modifiedStopTimes, modifiedStops, updatedTripTimes, serviceDate);
+            }
+        }
 
         return buffer.update(SIRI_FEED_ID, pattern, updatedTripTimes, serviceDate);
     }
@@ -1085,6 +1097,53 @@ public class TimetableSnapshotSource {
 
         // Add new trip times to the buffer
         final boolean success = buffer.update(feedId, pattern, newTripTimes, serviceDate);
+        return success;
+    }
+
+
+    /**
+     * Add a (new) trip to the graph and the buffer
+     *
+     * @return true if successful
+     */
+    private boolean addTripToGraphAndBuffer(final String feedId, final Graph graph, final Trip trip,
+                                            final List<StopTime> stopTimes, final List<Stop> stops, TripTimes updatedTripTimes,
+                                            final ServiceDate serviceDate) {
+
+        // Preconditions
+        Preconditions.checkNotNull(stops);
+        Preconditions.checkArgument(stopTimes.size() == stops.size(),
+                "number of stop should match the number of stop time updates");
+
+        // Create StopPattern
+        final StopPattern stopPattern = new StopPattern(stopTimes);
+
+        // Get cached trip pattern or create one if it doesn't exist yet
+        final TripPattern pattern = tripPatternCache.getOrCreateTripPattern(stopPattern, trip.getRoute(), graph);
+
+        // Add service code to bitset of pattern if needed (using copy on write)
+        final int serviceCode = graph.serviceCodes.get(trip.getServiceId());
+        if (!pattern.getServices().get(serviceCode)) {
+            final BitSet services = (BitSet) pattern.getServices().clone();
+            services.set(serviceCode);
+            pattern.setServices(services);
+        }
+
+        // Add to buffer as-is to include it in the 'lastAddedTripPattern'
+        buffer.update(feedId, pattern, updatedTripTimes, serviceDate);
+
+        /*
+         * Update pattern with triptimes so that routing is possible.
+         * New patterns only affects a single trip, previously added tripTimes is no longer valid, and is therefore removed
+         */
+        pattern.scheduledTimetable.tripTimes.clear();
+        pattern.scheduledTimetable.addTripTimes(updatedTripTimes);
+        pattern.scheduledTimetable.finish();
+
+        //TODO: Add pattern to index?
+
+        // Add new trip times to the buffer
+        final boolean success = buffer.update(feedId, pattern, updatedTripTimes, serviceDate);
         return success;
     }
 

@@ -76,19 +76,25 @@ public class SiriFuzzyTripMatcher {
      * Matches EstimatedVehicleJourney to a set of possible Trips based on tripId
      */
     public Set<Trip> match(EstimatedVehicleJourney journey) {
-
-        List<EstimatedCall> estimatedCalls = journey.getEstimatedCalls().getEstimatedCalls();
-        EstimatedCall lastStop = estimatedCalls.get(estimatedCalls.size()-1);
-
-        String lastStopPoint = lastStop.getStopPointRef().getValue();
-
-        ZonedDateTime arrivalTime = lastStop.getAimedArrivalTime() != null ?lastStop.getAimedArrivalTime():lastStop.getAimedDepartureTime();
-
-        Set<Trip> trips = start_stop_tripCache.get(createStartStopKey(lastStopPoint, arrivalTime.toLocalTime().toSecondOfDay()));
+        Set<Trip> trips = null;
+        if (journey.getCourseOfJourneyRef() != null) {
+            //TripId is provided in VM-delivery
+            trips = getCachedTripsBySiriId(journey.getCourseOfJourneyRef().getValue());
+        }
         if (trips == null) {
-            //Attempt to fetch trips that started yesterday - i.e. add 24 hours to arrival-time
-            int lastStopArrivalTime = arrivalTime.toLocalTime().toSecondOfDay() + (24*60*60);
-            trips = start_stop_tripCache.get(createStartStopKey(lastStopPoint, lastStopArrivalTime));
+            List<EstimatedCall> estimatedCalls = journey.getEstimatedCalls().getEstimatedCalls();
+            EstimatedCall lastStop = estimatedCalls.get(estimatedCalls.size() - 1);
+
+            String lastStopPoint = lastStop.getStopPointRef().getValue();
+
+            ZonedDateTime arrivalTime = lastStop.getAimedArrivalTime() != null ? lastStop.getAimedArrivalTime() : lastStop.getAimedDepartureTime();
+
+            trips = start_stop_tripCache.get(createStartStopKey(lastStopPoint, arrivalTime.toLocalTime().toSecondOfDay()));
+            if (trips == null) {
+                //Attempt to fetch trips that started yesterday - i.e. add 24 hours to arrival-time
+                int lastStopArrivalTime = arrivalTime.toLocalTime().toSecondOfDay() + (24 * 60 * 60);
+                trips = start_stop_tripCache.get(createStartStopKey(lastStopPoint, lastStopArrivalTime));
+            }
         }
         return trips;
     }

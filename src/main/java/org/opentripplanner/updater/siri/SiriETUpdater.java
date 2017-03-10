@@ -45,7 +45,7 @@ public class SiriETUpdater extends PollingGraphUpdater {
     /**
      * Parent update manager. Is used to execute graph writer runnables.
      */
-    private GraphUpdaterManager updaterManager;
+    protected GraphUpdaterManager updaterManager;
 
     /**
      * Update streamer
