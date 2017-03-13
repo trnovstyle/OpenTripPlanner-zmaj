@@ -518,6 +518,13 @@
             <version>0.11</version>
         </dependency>
 
+        <!-- SIRI -->
+        <dependency>
+            <groupId>org.apache.activemq</groupId>
+            <artifactId>activemq-client</artifactId>
+            <version>5.13.4</version>
+        </dependency>
+
         <!-- TESTING -->
         <dependency>
             <groupId>junit</groupId>
