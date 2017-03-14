@@ -610,6 +610,7 @@ public class TimetableSnapshotSource {
             return false;
         }
 
+        //Update platformCode
         for (Stop stop : pattern.getStops()) {
             for (EstimatedCall updated : estimatedCalls.getEstimatedCalls()) {
                 if (stop.getId().getId().equals(updated.getStopPointRef().getValue())) {
@@ -619,7 +620,10 @@ public class TimetableSnapshotSource {
                     } else if (updated.getArrivalPlatformName() != null) {
                         platformCode = updated.getArrivalPlatformName().getValue();
                     }
-                    stop.setPlatformCode(platformCode);
+                    if (platformCode != null && !platformCode.equals(stop.getPlatformCode())) {
+                        stop.setPlatformCode(platformCode);
+                        graphIndex.stopForId.put(stop.getId(), stop);
+                    }
                 }
             }
         }
