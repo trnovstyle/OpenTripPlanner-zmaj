@@ -31,6 +31,7 @@ import uk.org.ifopt.siri20.StopPlaceRef;
 import uk.org.siri.siri20.*;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * This updater only includes GTFS-Realtime Service Alert feeds.
@@ -73,14 +74,16 @@ public class AlertsUpdateHandler {
         for (SituationExchangeDeliveryStructure sxDelivery : delivery.getSituationExchangeDeliveries()) {
             SituationExchangeDeliveryStructure.Situations situations = sxDelivery.getSituations();
             if (situations != null) {
+                AtomicInteger alertCounter = new AtomicInteger(0);
                 for (PtSituationElement sxElement : situations.getPtSituationElements()) {
-                    handleAlert(sxElement);
+                    handleAlert(sxElement, alertCounter);
                 }
+                log.info("Added {} alerts based on {} situations", alertCounter.intValue(), situations.getPtSituationElements().size());
             }
         }
     }
 
-    private void handleAlert(PtSituationElement situation) {
+    private void handleAlert(PtSituationElement situation, AtomicInteger alertCounter) {
         Alert alert = new Alert();
 
         if (situation.getDescriptions() != null && !situation.getDescriptions().isEmpty()) {
@@ -122,9 +125,15 @@ public class AlertsUpdateHandler {
         }
 
         String situationNumber = null;
+        String paddedSituationNumber = null;
         if (situation.getSituationNumber() != null) {
-            situationNumber = situation.getSituationNumber().getValue() + ":";
+            situationNumber = situation.getSituationNumber().getValue();
+            paddedSituationNumber = situationNumber + "-";
         }
+
+        Set<String> idsToExpire = new HashSet<>();
+        boolean expireSituation = (situation.getProgress() != null &&
+                situation.getProgress().equals(WorkflowStatusEnumeration.CLOSED));
 
         List<AlertPatch> patches = new ArrayList<>();
         AffectsScopeStructure affectsStructure = situation.getAffects();
@@ -141,12 +150,17 @@ public class AlertsUpdateHandler {
 
                 String operator = operatorRef.getValue();
 
-                AlertPatch alertPatch = new AlertPatch();
-                alertPatch.setAgencyId(operator);
-                alertPatch.setTimePeriods(periods);
-                alertPatch.setAlert(alert);
-                alertPatch.setId(situationNumber + operator);
-                patches.add(alertPatch);
+                String id = paddedSituationNumber + operator;
+                if (expireSituation) {
+                    idsToExpire.add(id);
+                } else {
+                    AlertPatch alertPatch = new AlertPatch();
+                    alertPatch.setAgencyId(operator);
+                    alertPatch.setTimePeriods(periods);
+                    alertPatch.setAlert(alert);
+                    alertPatch.setId(id);
+                    patches.add(alertPatch);
+                }
             }
         }
 
@@ -164,12 +178,18 @@ public class AlertsUpdateHandler {
                 Set<Route> affectedRoutes = siriFuzzyTripMatcher.getRoutesForStop(stopId);
 
                 for (Route route : affectedRoutes) {
-                    AlertPatch alertPatch = new AlertPatch();
-                    alertPatch.setRoute(route.getId());
-                    alertPatch.setStop(stopId);
-                    alertPatch.setTimePeriods(periods);
-                    alertPatch.setId(situationNumber + route.getId());
-                    patches.add(alertPatch);
+
+                    String id = paddedSituationNumber + route.getId();
+                    if (expireSituation) {
+                        idsToExpire.add(id);
+                    } else {
+                        AlertPatch alertPatch = new AlertPatch();
+                        alertPatch.setRoute(route.getId());
+                        alertPatch.setStop(stopId);
+                        alertPatch.setTimePeriods(periods);
+                        alertPatch.setId(id);
+                        patches.add(alertPatch);
+                    }
                 }
             }
         }
@@ -192,11 +212,16 @@ public class AlertsUpdateHandler {
                         Set<Route> affectedRoutes = siriFuzzyTripMatcher.getRoutes(lineRef.getValue());
                         for (Route route : affectedRoutes) {
 
-                            AlertPatch alertPatch = new AlertPatch();
-                            alertPatch.setRoute(route.getId());
-                            alertPatch.setTimePeriods(periods);
-                            alertPatch.setId(situationNumber + route.getId());
-                            patches.add(alertPatch);
+                            String id = paddedSituationNumber + route.getId();
+                            if (expireSituation) {
+                                idsToExpire.add(id);
+                            } else {
+                                AlertPatch alertPatch = new AlertPatch();
+                                alertPatch.setRoute(route.getId());
+                                alertPatch.setTimePeriods(periods);
+                                alertPatch.setId(id);
+                                patches.add(alertPatch);
+                            }
                         }
                     }
                 }
@@ -206,10 +231,14 @@ public class AlertsUpdateHandler {
                 }
                 String networkId = networkRef.getValue();
 
-                AlertPatch alertPatch = new AlertPatch();
-                alertPatch.setTrip(new AgencyAndId(feedId, networkId));
-                alertPatch.setId(situationNumber);
-                patches.add(alertPatch);
+                String id = paddedSituationNumber + networkId;
+                if (expireSituation) {
+                    idsToExpire.add(id);
+                } else {
+                    AlertPatch alertPatch = new AlertPatch();
+                    alertPatch.setId(id);
+                    patches.add(alertPatch);
+                }
             }
         }
 
@@ -227,11 +256,17 @@ public class AlertsUpdateHandler {
                 Set<Route> affectedRoutes = siriFuzzyTripMatcher.getRoutesForStop(stopId);
 
                 for (Route route : affectedRoutes) {
-                    AlertPatch alertPatch = new AlertPatch();
-                    alertPatch.setRoute(route.getId());
-                    alertPatch.setStop(stopId);
-                    alertPatch.setId(situationNumber + route.getId());
-                    patches.add(alertPatch);
+
+                    String id = paddedSituationNumber + route.getId();
+                    if (expireSituation) {
+                        idsToExpire.add(id);
+                    } else {
+                        AlertPatch alertPatch = new AlertPatch();
+                        alertPatch.setRoute(route.getId());
+                        alertPatch.setStop(stopId);
+                        alertPatch.setId(id);
+                        patches.add(alertPatch);
+                    }
                 }
             }
         }
@@ -257,10 +292,15 @@ public class AlertsUpdateHandler {
 
                         Set<Route> affectedRoutes = siriFuzzyTripMatcher.getRoutes(lineRef);
                         for (Route route : affectedRoutes) {
-                            AgencyAndId routeId = route.getId();
-                            AlertPatch alertPatch = new AlertPatch();
-                            alertPatch.setRoute(routeId);
-                            patches.add(alertPatch);
+                            String id = paddedSituationNumber + route.getId();
+                            if (expireSituation) {
+                                idsToExpire.add(id);
+                            } else {
+                                AlertPatch alertPatch = new AlertPatch();
+                                alertPatch.setRoute(route.getId());
+                                alertPatch.setId(id);
+                                patches.add(alertPatch);
+                            }
                         }
                     }
                 } else if (hasTripRefs && hasStopRefs) {
@@ -274,11 +314,17 @@ public class AlertsUpdateHandler {
                             Set<Route> routeId = siriFuzzyTripMatcher.getRoutesForStop(stopId);
 
                             for (Route route : routeId) {
-                                AlertPatch alertPatch = new AlertPatch();
-                                alertPatch.setRoute(route.getId());
-                                alertPatch.setTrip(tripId);
-                                alertPatch.setStop(stopId);
-                                patches.add(alertPatch);
+                                String id = paddedSituationNumber + route.getId();
+                                if (expireSituation) {
+                                    idsToExpire.add(id);
+                                } else {
+                                    AlertPatch alertPatch = new AlertPatch();
+                                    alertPatch.setRoute(route.getId());
+                                    alertPatch.setTrip(tripId);
+                                    alertPatch.setStop(stopId);
+                                    alertPatch.setId(id);
+                                    patches.add(alertPatch);
+                                }
                             }
                         }
                     }
@@ -287,10 +333,16 @@ public class AlertsUpdateHandler {
 
                         AgencyAndId tripId = siriFuzzyTripMatcher.getTripId(vjRef.getValue());
                         if (tripId != null) {
-                            AlertPatch alertPatch = new AlertPatch();
-                            alertPatch.setRoute(new AgencyAndId(feedId, lineRef));
-                            alertPatch.setTrip(tripId);
-                            patches.add(alertPatch);
+
+                            String id = paddedSituationNumber + vjRef.getValue();
+                            if (expireSituation) {
+                                idsToExpire.add(id);
+                            } else {
+                                AlertPatch alertPatch = new AlertPatch();
+                                alertPatch.setTrip(tripId);
+                                alertPatch.setId(id);
+                                patches.add(alertPatch);
+                            }
                         }
                     }
                 } else {
@@ -299,21 +351,34 @@ public class AlertsUpdateHandler {
                         Set<Route> routeId = siriFuzzyTripMatcher.getRoutesForStop(stopId);
 
                         for (Route route : routeId) {
-                            AlertPatch alertPatch = new AlertPatch();
-                            alertPatch.setRoute(route.getId());
-                            alertPatch.setStop(stopId);
-                            patches.add(alertPatch);
+
+                            String id = paddedSituationNumber + route.getId().getId();
+                            if (expireSituation) {
+                                idsToExpire.add(id);
+                            } else {
+                                AlertPatch alertPatch = new AlertPatch();
+                                alertPatch.setRoute(route.getId());
+                                alertPatch.setStop(stopId);
+                                alertPatch.setId(id);
+                                patches.add(alertPatch);
+                            }
                         }
                     }
                 }
             }
         }
 
-        for (AlertPatch patch:patches) {
-            patch.setTimePeriods(periods);
-            patch.setAlert(alert);
-            patchIds.add(patch.getId());
-            alertPatchService.apply(patch);
+        if (patches.size() > 0 | !idsToExpire.isEmpty()) {
+            for (AlertPatch patch : patches) {
+                patch.setTimePeriods(periods);
+                patch.setAlert(alert);
+                patchIds.add(patch.getId());
+                alertPatchService.apply(patch);
+                alertCounter.incrementAndGet();
+            }
+            alertPatchService.expire(idsToExpire);
+        } else {
+            log.info("No match found for Alert - ignoring situation with situationNumber {}", situationNumber);
         }
 
     }
