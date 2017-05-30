@@ -70,10 +70,10 @@ otp.config = {
 
     baseLayers: [
         {
-             name: 'Rutebanken OSM',
-             tileUrl: 'https://test.rutebanken.org/api/map/1.0/{z}/{x}/{y}.png',
-             attribution: 'Data from <a href="http://www.openstreetmap.org/" target="_blank">OpenStreetMap</a> and contributors.'
-         },
+            name: 'Rutebanken OSM',
+            tileUrl: 'https://www-test.entur.org/api/map/1.0/{z}/{x}/{y}.png',
+            attribution: 'Data from <a href="http://www.openstreetmap.org/" target="_blank">OpenStreetMap</a> and contributors.'
+        },
         {
             name: 'Stamen Terrain',
             tileUrl: 'http://tile.stamen.com/terrain/{z}/{x}/{y}.png',
