@@ -153,6 +153,12 @@ public class OpenStreetMapModule implements GraphBuilderModule {
     }
 
     /**
+     * Whether ways tagged foot/bicycle=discouraged should be marked as inaccessible
+     */
+    public boolean banDiscouragedWalking = false;
+    public boolean banDiscouragedBiking = false;
+
+    /**
      * Construct and set providers all at once.
      */
     public OpenStreetMapModule(List<OpenStreetMapProvider> providers) {
@@ -566,7 +572,7 @@ public class OpenStreetMapModule implements GraphBuilderModule {
                 setWayName(way);
 
                 StreetTraversalPermission permissions = OSMFilter.getPermissionsForWay(way,
-                        wayData.getPermission(), graph);
+                        wayData.getPermission(), graph, banDiscouragedWalking, banDiscouragedBiking);
                 if (!OSMFilter.isWayRoutable(way) || permissions.allowsNothing())
                     continue;
 

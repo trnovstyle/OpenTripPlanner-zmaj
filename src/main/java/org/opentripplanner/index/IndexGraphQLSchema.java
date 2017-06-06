@@ -7,8 +7,29 @@ import com.vividsolutions.jts.geom.LineString;
 import graphql.Scalars;
 import graphql.relay.Relay;
 import graphql.relay.SimpleListConnection;
-import graphql.schema.*;
-import org.onebusaway.gtfs.model.*;
+import graphql.schema.DataFetcher;
+import graphql.schema.DataFetchingEnvironment;
+import graphql.schema.DataFetchingEnvironmentImpl;
+import graphql.schema.GraphQLArgument;
+import graphql.schema.GraphQLEnumType;
+import graphql.schema.GraphQLFieldDefinition;
+import graphql.schema.GraphQLInputObjectField;
+import graphql.schema.GraphQLInputObjectType;
+import graphql.schema.GraphQLInterfaceType;
+import graphql.schema.GraphQLList;
+import graphql.schema.GraphQLNonNull;
+import graphql.schema.GraphQLObjectType;
+import graphql.schema.GraphQLOutputType;
+import graphql.schema.GraphQLSchema;
+import graphql.schema.GraphQLType;
+import graphql.schema.GraphQLTypeReference;
+import graphql.schema.PropertyDataFetcher;
+import graphql.schema.TypeResolver;
+import org.onebusaway.gtfs.model.Agency;
+import org.onebusaway.gtfs.model.AgencyAndId;
+import org.onebusaway.gtfs.model.Route;
+import org.onebusaway.gtfs.model.Stop;
+import org.onebusaway.gtfs.model.Trip;
 import org.onebusaway.gtfs.model.calendar.ServiceDate;
 import org.opentripplanner.api.common.Message;
 import org.opentripplanner.api.model.*;
@@ -446,6 +467,11 @@ public class IndexGraphQLSchema {
                 .type(Scalars.GraphQLFloat)
                 .build())
             .argument(GraphQLArgument.newArgument()
+                .name("walkOnStreetReluctance")
+                .description("How much more reluctant is the user to walk on streets with car traffic allowed")
+                .type(Scalars.GraphQLFloat)
+                .build())
+            .argument(GraphQLArgument.newArgument()
                 .name("waitReluctance")
                 .description("How much worse is waiting for a transit vehicle than being on a transit vehicle, as a multiplier. The default value treats wait and on-vehicle time as the same. It may be tempting to set this higher than walkReluctance (as studies often find this kind of preferences among riders) but the planner will take this literally and walk down a transit line to avoid waiting at a stop. This used to be set less than 1 (0.95) which would make waiting offboard preferable to waiting onboard in an interlined trip. That is also undesirable. If we only tried the shortest possible transfer at each stop to neighboring stop patterns, this problem could disappear.")
                 .type(Scalars.GraphQLFloat)
@@ -668,7 +694,7 @@ public class IndexGraphQLSchema {
                 .type(new GraphQLNonNull(new GraphQLList(new GraphQLNonNull(translatedStringType))))
                 .description("Headers of alert in all different translations available notnull")
                 .dataFetcher(environment -> {
-                    AlertPatch alertPatch = (AlertPatch) environment.getSource();
+                    AlertPatch alertPatch = environment.getSource();
                     Alert alert = alertPatch.getAlert();
                     if (alert.alertHeaderText instanceof TranslatedString) {
                         return ((TranslatedString) alert.alertHeaderText).getTranslations();
@@ -688,7 +714,7 @@ public class IndexGraphQLSchema {
                 .type(new GraphQLNonNull(new GraphQLList(new GraphQLNonNull(translatedStringType))))
                 .description("Long descriptions of alert in all different translations available notnull")
                 .dataFetcher(environment -> {
-                    AlertPatch alertPatch = (AlertPatch) environment.getSource();
+                    AlertPatch alertPatch = environment.getSource();
                     Alert alert = alertPatch.getAlert();
                     if (alert.alertDescriptionText instanceof TranslatedString) {
                         return ((TranslatedString) alert.alertDescriptionText).getTranslations();
@@ -800,7 +826,7 @@ public class IndexGraphQLSchema {
                     .name("startTime")
                     .description("What is the start time for the times. Default is to use current time. (0)")
                     .type(Scalars.GraphQLLong)
-                    .defaultValue(0l) // Default value is current time
+                    .defaultValue(0L) // Default value is current time
                     .build())
                 .argument(GraphQLArgument.newArgument()
                     .name("timeRange")
@@ -815,7 +841,7 @@ public class IndexGraphQLSchema {
                     .defaultValue(1)
                     .build())
                 .dataFetcher(environment -> {
-                    GraphIndex.DepartureRow departureRow = (GraphIndex.DepartureRow)environment.getSource();
+                    GraphIndex.DepartureRow departureRow = environment.getSource();
                     long startTime = environment.getArgument("startTime");
                     int timeRange = environment.getArgument("timeRange");
                     int maxDepartures = environment.getArgument("numberOfDepartures");
@@ -838,7 +864,7 @@ public class IndexGraphQLSchema {
                                 .getType(place)
                                 .getFieldDefinition("id")
                                 .getDataFetcher()
-                                .get(new DataFetchingEnvironment(place, null, null,
+                                .get(new DataFetchingEnvironmentImpl(place, null, null,
                                     null, null, placeAtDistanceType, null))
 
                     );
@@ -942,7 +968,7 @@ public class IndexGraphQLSchema {
                     .defaultValue(2)
                     .build())
                 .dataFetcher(environment ->
-                    index.stopTimesForPattern((Stop) environment.getSource(),
+                    index.stopTimesForPattern(environment.getSource(),
                         index.patternForId.get(environment.getArgument("id")),
                         environment.getArgument("startTime"),
                         environment.getArgument("timeRange"),
@@ -1019,8 +1045,7 @@ public class IndexGraphQLSchema {
             .field(GraphQLFieldDefinition.newFieldDefinition()
                 .name("cluster")
                 .type(clusterType)
-                .dataFetcher(environment -> index.stopClusterForStop
-                    .get((Stop) environment.getSource()))
+                .dataFetcher(environment -> index.stopClusterForStop.get(environment.getSource()))
                 .build())
             .field(GraphQLFieldDefinition.newFieldDefinition()
                 .name("stops")
@@ -1032,7 +1057,7 @@ public class IndexGraphQLSchema {
                 .name("routes")
                 .type(new GraphQLList(new GraphQLNonNull(routeType)))
                 .dataFetcher(environment -> index.patternsForStop
-                    .get((Stop) environment.getSource())
+                    .get(environment.getSource())
                     .stream()
                     .map(pattern -> pattern.route)
                     .distinct()
@@ -1041,8 +1066,7 @@ public class IndexGraphQLSchema {
             .field(GraphQLFieldDefinition.newFieldDefinition()
                 .name("patterns")
                 .type(new GraphQLList(patternType))
-                .dataFetcher(environment -> index.patternsForStop
-                    .get((Stop) environment.getSource()))
+                .dataFetcher(environment -> index.patternsForStop.get(environment.getSource()))
                 .build())
             .field(GraphQLFieldDefinition.newFieldDefinition()
                 .name("transfers")               //TODO: add max distance as parameter?
@@ -1072,7 +1096,7 @@ public class IndexGraphQLSchema {
                     } catch (ParseException e) {
                         return null;
                     }
-                    Stop stop = (Stop) environment.getSource();
+                    Stop stop = environment.getSource();
                     if (stop.getLocationType() == 1) {
                         // Merge all stops if this is a station
                         return index.stopsForParentStation
@@ -1103,7 +1127,7 @@ public class IndexGraphQLSchema {
                     .defaultValue(5)
                     .build())
                 .dataFetcher(environment -> {
-                    Stop stop = (Stop) environment.getSource();
+                    Stop stop = environment.getSource();
                     if (stop.getLocationType() == 1) {
                         // Merge all stops if this is a station
                         return index.stopsForParentStation
@@ -1144,7 +1168,7 @@ public class IndexGraphQLSchema {
                     .defaultValue(5)
                     .build())
                 .dataFetcher(environment -> {
-                    Stop stop = (Stop) environment.getSource();
+                    Stop stop = environment.getSource();
                     Stream<StopTimesInPattern> stream;
                     if (stop.getLocationType() == 1) {
                         stream = index.stopsForParentStation
@@ -1160,7 +1184,7 @@ public class IndexGraphQLSchema {
                     }
                     else {
                         stream = index.stopTimesForStop(
-                            (Stop) environment.getSource(),
+                            environment.getSource(),
                             environment.getArgument("startTime"),
                             environment.getArgument("timeRange"),
                             environment.getArgument("numberOfDepartures")
@@ -1345,26 +1369,26 @@ public class IndexGraphQLSchema {
                 .name("pattern")
                 .type(patternType)
                 .dataFetcher(
-                    environment -> index.patternForTrip.get((Trip) environment.getSource()))
+                    environment -> index.patternForTrip.get(environment.getSource()))
                 .build())
             .field(GraphQLFieldDefinition.newFieldDefinition()
                 .name("stops")
                 .type(new GraphQLNonNull(new GraphQLList(new GraphQLNonNull(stopType))))
                 .dataFetcher(environment -> index.patternForTrip
-                    .get((Trip) environment.getSource()).getStops())
+                    .get(environment.getSource()).getStops())
                 .build())
             .field(GraphQLFieldDefinition.newFieldDefinition()
                 .name("semanticHash")
                 .type(new GraphQLNonNull(new GraphQLList(new GraphQLNonNull(stopType))))
-                .dataFetcher(environment -> index.patternForTrip.get((Trip) environment.getSource())
-                    .semanticHashString((Trip) environment.getSource()))
+                .dataFetcher(environment -> index.patternForTrip.get(environment.getSource())
+                    .semanticHashString(environment.getSource()))
                 .build())
             .field(GraphQLFieldDefinition.newFieldDefinition()
                 .name("stoptimes")
                 .type(new GraphQLList(stoptimeType))
                 .dataFetcher(environment -> TripTimeShort.fromTripTimes(
                     index.patternForTrip.get((Trip) environment.getSource()).scheduledTimetable,
-                    (Trip) environment.getSource()))
+                    environment.getSource()))
                 .build())
             .field(GraphQLFieldDefinition.newFieldDefinition()
                 .name("stoptimesForDate")
@@ -1376,7 +1400,7 @@ public class IndexGraphQLSchema {
                     .build())
                 .dataFetcher(environment -> {
                     try {
-                        final Trip trip = (Trip) environment.getSource();
+                        final Trip trip = environment.getSource();
                         final String argServiceDay = environment.getArgument("serviceDay");
                         final ServiceDate serviceDate = argServiceDay != null
                             ? ServiceDate.parseString(argServiceDay) : new ServiceDate();
@@ -1404,7 +1428,7 @@ public class IndexGraphQLSchema {
                 .type(new GraphQLList(new GraphQLList(Scalars.GraphQLFloat))) //TODO: Should be geometry
                 .dataFetcher(environment -> {
                     LineString geometry = index.patternForTrip
-                            .get((Trip) environment.getSource())
+                            .get(environment.getSource())
                             .geometry;
                     if (geometry == null) {return null;}
                     return Arrays.stream(geometry.getCoordinateSequence().toCoordinateArray())
@@ -1417,7 +1441,8 @@ public class IndexGraphQLSchema {
                 .name("alerts")
                 .description("Get all alerts active for the trip")
                 .type(new GraphQLList(alertType))
-                .dataFetcher(dataFetchingEnvironment -> index.getAlertsForTrip((Trip) dataFetchingEnvironment.getSource()))
+                .dataFetcher(dataFetchingEnvironment -> index.getAlertsForTrip(
+                    dataFetchingEnvironment.getSource()))
                 .build())
             .build();
 
@@ -1524,7 +1549,8 @@ public class IndexGraphQLSchema {
                 .name("alerts")
                 .description("Get all alerts active for the pattern")
                 .type(new GraphQLList(alertType))
-                .dataFetcher(dataFetchingEnvironment -> index.getAlertsForPattern((TripPattern) dataFetchingEnvironment.getSource()))
+                .dataFetcher(dataFetchingEnvironment -> index.getAlertsForPattern(
+                    dataFetchingEnvironment.getSource()))
                 .build())
             .build();
 
@@ -1561,14 +1587,13 @@ public class IndexGraphQLSchema {
                 .name("mode")
                 .type(Scalars.GraphQLString)
                 .dataFetcher(environment -> GtfsLibrary.getTraverseMode(
-                    (Route) environment.getSource()))
+                    environment.getSource()))
                 .build())
             .field(GraphQLFieldDefinition.newFieldDefinition()
                 .name("type")
-                .type(Scalars.GraphQLString)
-                .dataFetcher(environment -> GtfsLibrary.getTraverseMode(
-                    (Route) environment.getSource())) //TODO: Remove the data fetcher to export proper type when upgrading to v2 of the HSL scheme
-                .deprecate("The meaning of the type field will be changed to v2. Please use the mode-field instead. Type will export the raw type integer form the GTFS source.")
+                .type(Scalars.GraphQLInt)
+                .dataFetcher(environment -> ((Route) environment.getSource()).getType())
+                .description("The raw type integer form the GTFS source.")
                 .build())
             .field(GraphQLFieldDefinition.newFieldDefinition()
                 .name("desc")
@@ -1594,13 +1619,13 @@ public class IndexGraphQLSchema {
                 .name("patterns")
                 .type(new GraphQLList(patternType))
                 .dataFetcher(environment -> index.patternsForRoute
-                    .get((Route) environment.getSource()))
+                    .get(environment.getSource()))
                 .build())
             .field(GraphQLFieldDefinition.newFieldDefinition()
                 .name("stops")
                 .type(new GraphQLList(stopType))
                 .dataFetcher(environment -> index.patternsForRoute
-                    .get((Route) environment.getSource())
+                    .get(environment.getSource())
                     .stream()
                     .map(TripPattern::getStops)
                     .flatMap(Collection::stream)
@@ -1611,7 +1636,7 @@ public class IndexGraphQLSchema {
                 .name("trips")
                 .type(new GraphQLList(tripType))
                 .dataFetcher(environment -> index.patternsForRoute
-                    .get((Route) environment.getSource())
+                    .get(environment.getSource())
                     .stream()
                     .map(TripPattern::getTrips)
                     .flatMap(Collection::stream)
@@ -1622,7 +1647,8 @@ public class IndexGraphQLSchema {
                 .name("alerts")
                 .description("Get all alerts active for the route")
                 .type(new GraphQLList(alertType))
-                .dataFetcher(dataFetchingEnvironment -> index.getAlertsForRoute((Route) dataFetchingEnvironment.getSource()))
+                .dataFetcher(dataFetchingEnvironment -> index.getAlertsForRoute(
+                    dataFetchingEnvironment.getSource()))
                 .build())
             .build();
 
@@ -1678,7 +1704,8 @@ public class IndexGraphQLSchema {
                 .name("alerts")
                 .description("Get all alerts active for the agency")
                 .type(new GraphQLList(alertType))
-                .dataFetcher(dataFetchingEnvironment -> index.getAlertsForAgency((Agency) dataFetchingEnvironment.getSource()))
+                .dataFetcher(dataFetchingEnvironment -> index.getAlertsForAgency(
+                    dataFetchingEnvironment.getSource()))
                 .build())
             .build();
 
@@ -2122,7 +2149,7 @@ public class IndexGraphQLSchema {
                     List<String> filterByBikeParks = null;
                     List<String> filterByCarParks = null;
                     @SuppressWarnings("rawtypes")
-                    Map filterByIds = (Map)environment.getArgument("filterByIds");
+                    Map filterByIds = environment.getArgument("filterByIds");
                     if (filterByIds != null) {
                         filterByStops = toIdList(((List<String>) filterByIds.get("stops")));
                         filterByRoutes = toIdList(((List<String>) filterByIds.get("routes")));
@@ -2434,7 +2461,7 @@ public class IndexGraphQLSchema {
             .field(planFieldType)
             .build();
 
-        Set<GraphQLType> dictionary = new HashSet<GraphQLType>();
+        Set<GraphQLType> dictionary = new HashSet<>();
         dictionary.add(placeInterface);
 
         indexSchema = GraphQLSchema.newSchema()
@@ -2639,13 +2666,11 @@ public class IndexGraphQLSchema {
                 .name("intermediateStops")
                 .description("For transit legs, intermediate stops between the Place where the leg originates and the Place where the leg ends. For non-transit legs, null.")
                 .type(new GraphQLList(stopType))
-                .dataFetcher(environment -> {
-                    return ((Leg)environment.getSource()).stop.stream()
-                        .filter(place -> place.stopId != null)
-                        .map(placeWithStop -> index.stopForId.get(placeWithStop.stopId))
-                        .filter(stop -> stop != null)
-                        .collect(Collectors.toList());
-                })
+                .dataFetcher(environment -> ((Leg)environment.getSource()).stop.stream()
+                    .filter(place -> place.stopId != null)
+                    .map(placeWithStop -> index.stopForId.get(placeWithStop.stopId))
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList()))
                 .build())
             .field(GraphQLFieldDefinition.newFieldDefinition()
                 .name("intermediatePlace")
@@ -2802,7 +2827,7 @@ public class IndexGraphQLSchema {
                 .description("A list of possible error messages as enum")
                 .type(new GraphQLNonNull(new GraphQLList(Scalars.GraphQLString)))
                 .dataFetcher(environment -> ((List<Message>)((Map)environment.getSource()).get("messages"))
-                    .stream().map(message -> message.name()).collect(Collectors.toList()))
+                    .stream().map(Enum::name).collect(Collectors.toList()))
                 .build())
             .field(GraphQLFieldDefinition.newFieldDefinition()
                 .name("messageStrings")
