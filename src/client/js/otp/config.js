@@ -100,6 +100,11 @@ otp.config = {
             name: 'OSM Standard Tiles',
             tileUrl: 'https://a.tile.openstreetmap.org/{z}/{x}/{y}.png',
             attribution : 'Map data and tiles © OpenStreetMap contributors'
+        },
+        {
+            name: 'Kartverket',
+            tileUrl: 'http://opencache.statkart.no/gatekeeper/gk/gk.open_gmaps?layers=topo2&zoom={z}&x={x}&y={y}',
+            attribution : '<a href="http://www.kartverket.no/">Kartverket</a>'
         }
     ],
     
