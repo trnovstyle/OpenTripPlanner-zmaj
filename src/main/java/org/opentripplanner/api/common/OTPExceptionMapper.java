@@ -14,8 +14,13 @@ public class OTPExceptionMapper implements ExceptionMapper<Exception> {
     public Response toResponse(Exception ex) {
         // Show the exception in the server log
         LOG.error("Unhandled exception", ex);
+
+        int statusCode = Response.Status.INTERNAL_SERVER_ERROR.getStatusCode();
+        if (ex instanceof WebApplicationException)
+            statusCode = ((WebApplicationException)ex).getResponse().getStatus();
+
         // Return the short form message to the client
-        return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+        return Response.status(statusCode)
                 .entity(ex.toString() + " " + ex.getMessage())
                 .type("text/plain").build();
     }
