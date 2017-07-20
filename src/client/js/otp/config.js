@@ -110,6 +110,23 @@ otp.config = {
             name: 'Kartverket',
             tileUrl: 'http://opencache.statkart.no/gatekeeper/gk/gk.open_gmaps?layers=topo2&zoom={z}&x={x}&y={y}',
             attribution : '<a href="http://www.kartverket.no/">Kartverket</a>'
+        },
+        {
+            name: 'Kartverket Ortofoto',
+            tileUrl: 'https://gatekeeper1.geonorge.no/BaatGatekeeper/gk/gk.nib_web_mercator_wmts_v2',
+            attribution : '<a href="http://www.kartverket.no/">Kartverket</a>',
+            wmtsOptions: {
+                layer: 'toporaster2',
+                gkt: '32B275F0FC9ACBFA78DA7BFDC52761E52E37EEFEB351F0BA00E03ADF949DB6B62BA02B4F42655FB7AD80259431C6AFC61BC7BE433273D3DB8D018F0853CD0DA1',
+                style: "normal",
+                tilematrixSet: "PM",
+                format: "image/png",
+                version: '1.1.1',
+                transparent: 'false',
+                style: 'default',
+                tilematrixSet: 'default028mm',
+                attribution: '<a href="http://www.kartverket.no/">Kartverket</a>'
+            }
         }
     ],
 
