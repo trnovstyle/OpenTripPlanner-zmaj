@@ -43,9 +43,7 @@ otp.core.Map = otp.Class({
             if(layerConfig.attribution) layerProps['attribution'] = layerConfig.attribution;
             if(layerConfig.subdomains) layerProps['subdomains'] = layerConfig.subdomains;
 
-            var layer;
-            if (layerConfig.wmtsOptions) layer = new L.TileLayer.WMTS(layerConfig.tileUrl, layerConfig.wmtsOptions);
-            else layer = new L.TileLayer(layerConfig.tileUrl, layerProps);
+            var layer = new L.TileLayer(layerConfig.tileUrl, layerProps);
 
 	        this.baseLayers[layerConfig.name] = layer;
             if(i == 0) defaultBaseLayer = layer;            
