@@ -770,8 +770,8 @@
         <dependency>
             <groupId>crosby.binary</groupId>
             <artifactId>osmpbf</artifactId>
-            <version>1.3.4</version>
-            <classifier>20150914.191218-1</classifier>
+            <version>1.3.4-SNAPSHOT</version>
+            <!--classifier>20150914.191218-1</classifier-->
             <!-- Specifying snapshot -->
         </dependency>
         <!-- Command line parameter parsing -->
@@ -855,9 +855,9 @@
         <dependency>
             <groupId>com.conveyal</groupId>
             <artifactId>r5</artifactId>
-            <version>0.1</version>
-            <classifier>20160307.111216-85</classifier>
-            <!--version>0.1-SNAPSHOT</version-->
+            <!--<version>0.1</version>-->
+            <!--<classifier>20160307.111216-85</classifier>-->
+            <version>0.1-SNAPSHOT</version>
             <exclusions>
                 <exclusion>
                     <artifactId>slf4j-simple</artifactId>
@@ -870,9 +870,9 @@
         <dependency>
             <groupId>com.conveyal</groupId>
             <artifactId>gtfs-lib</artifactId>
-            <version>0.2</version>
-            <classifier>20160307.194541-8</classifier>
-            <!--version>0.2-SNAPSHOT</version-->
+            <!--version>0.2</version-->
+            <!--classifier>20160307.194541-8</classifier-->
+            <version>0.2-SNAPSHOT</version>
         </dependency>
 
         <!-- Transitive dependency to com.conveyal:r5 needed to be manually
