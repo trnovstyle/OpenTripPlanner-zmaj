@@ -25,8 +25,8 @@
       "type": "real-time-alerts",
       "frequencySec": 30,
       "url": "http://beta.digitransit.fi/hslalert/",
-      "fuzzyTripMatching": true
-      "feedId": "hsl-alerts",
+      "fuzzyTripMatching": true,
+      "feedId": "hsl-alerts"
     }
   ],
   boardTimes: {
@@ -34,6 +34,8 @@
   },
   alightTimes: {
     AIRPLANE: 1200
+  },
+  kartverketTokenUrl: {
+    url: "https://stoppested.entur.org/token"
   }
 }
-

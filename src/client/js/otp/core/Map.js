@@ -44,7 +44,10 @@ otp.core.Map = otp.Class({
             if(layerConfig.subdomains) layerProps['subdomains'] = layerConfig.subdomains;
 
             var layer;
-            if (layerConfig.wmtsOptions) layer = new L.TileLayer.WMTS(layerConfig.tileUrl, layerConfig.wmtsOptions);
+            if (layerConfig.wmtsOptions) {
+                layerConfig.wmtsOptions.gkt = this.getToken(layerConfig.tokenUrl);
+                layer = new L.TileLayer.WMTS(layerConfig.tileUrl, layerConfig.wmtsOptions);
+            }
             else layer = new L.TileLayer(layerConfig.tileUrl, layerProps);
 
 	        this.baseLayers[layerConfig.name] = layer;
@@ -188,7 +191,20 @@ otp.core.Map = otp.Class({
     {
     	this.lmap.fitBounds(bounds);
     },
-    
+
+    getToken : function(url) {
+        var jsonResponse;
+        $.ajax({
+          url: url,
+          dataType: 'json',
+          async: false,
+          success: function(data) {
+            jsonResponse = data;
+          }
+        });
+        return jsonResponse["gkt"];
+    },
+
     $ : function() {
         return $("#map");
     },

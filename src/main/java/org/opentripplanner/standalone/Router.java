@@ -9,6 +9,7 @@ import ch.qos.logback.core.FileAppender;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.opentripplanner.analyst.request.*;
 import org.opentripplanner.analyst.scenario.ScenarioStore;
+import org.opentripplanner.api.resource.KartverketToken;
 import org.opentripplanner.inspector.TileRendererManager;
 import org.opentripplanner.reflect.ReflectiveInitializer;
 import org.opentripplanner.routing.core.RoutingRequest;
@@ -61,6 +62,8 @@ public class Router {
 
     /** Storage for non-destructive alternatives analysis scenarios. */
     public ScenarioStore scenarioStore = new ScenarioStore();
+
+    public String KartverketToken;
 
     public Router(String id, Graph graph) {
         this.id = id;
@@ -168,6 +171,11 @@ public class Router {
             graph.stopClusterMode = stopClusterMode.asText();    
         } else {
             graph.stopClusterMode = "proximity";
+        }
+
+        JsonNode tokenUrl = config.get("kartverketTokenUrl");
+        if (tokenUrl != null && tokenUrl.has("url")) {
+            this.KartverketToken = tokenUrl.get("url").asText();
         }
         
         /* Create Graph updater modules from JSON config. */
