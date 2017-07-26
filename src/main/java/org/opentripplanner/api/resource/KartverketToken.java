@@ -32,8 +32,11 @@ import java.util.Date;
 
 import java.net.URLConnection;
 
+<<<<<<< HEAD
 import org.opentripplanner.standalone.Router;
 
+=======
+>>>>>>> 8ad82d13534d3bfb851fdf0df2b94c5cf92d31ba
 /**
  * Fetch Kartverket token from server
  */
@@ -57,6 +60,7 @@ public class KartverketToken extends RoutingResource {
         }
 
         if (expired) {
+<<<<<<< HEAD
             try {
                 String url = otpServer.getRouter(routerId).KartverketToken;
                 URLConnection connection = new URL(url).openConnection();
@@ -67,6 +71,12 @@ public class KartverketToken extends RoutingResource {
             catch (Exception e) {
                 LOG.debug("Could not connect to Kartverket token server");
             }
+=======
+            URLConnection connection = new URL("https://stoppested.entur.org/token").openConnection();
+            JSONParser jsonParser = new JSONParser();
+            token = (JSONObject)jsonParser.parse(
+                    new InputStreamReader(connection.getInputStream(), "UTF-8"));
+>>>>>>> 8ad82d13534d3bfb851fdf0df2b94c5cf92d31ba
         }
 
         return Response.status(200).entity(token.toString()).build();
