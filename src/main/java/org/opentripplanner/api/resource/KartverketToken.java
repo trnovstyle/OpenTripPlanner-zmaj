@@ -56,7 +56,7 @@ public class KartverketToken extends RoutingResource {
 
         if (expired) {
             try {
-                String url = otpServer.getRouter(routerId).KartverketToken;
+                String url = otpServer.getRouter(routerId).kartverketToken;
                 URLConnection connection = new URL(url).openConnection();
                 JSONParser jsonParser = new JSONParser();
                 token = (JSONObject) jsonParser.parse(
