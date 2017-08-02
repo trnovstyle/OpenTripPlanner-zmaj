@@ -129,180 +129,183 @@ public class AlertsUpdateHandler {
         List<AlertPatch> patches = new ArrayList<>();
         AffectsScopeStructure affectsStructure = situation.getAffects();
 
-        AffectsScopeStructure.Operators operators = affectsStructure.getOperators();
+        if (affectsStructure != null) {
 
-        if (operators != null && !isListNullOrEmpty(operators.getAffectedOperators())) {
-            for (AffectedOperatorStructure affectedOperator : operators.getAffectedOperators()) {
+            AffectsScopeStructure.Operators operators = affectsStructure.getOperators();
 
-                OperatorRefStructure operatorRef = affectedOperator.getOperatorRef();
-                if (operatorRef == null || operatorRef.getValue() == null) {
-                    continue;
-                }
+            if (operators != null && !isListNullOrEmpty(operators.getAffectedOperators())) {
+                for (AffectedOperatorStructure affectedOperator : operators.getAffectedOperators()) {
 
-                String operator = operatorRef.getValue();
+                    OperatorRefStructure operatorRef = affectedOperator.getOperatorRef();
+                    if (operatorRef == null || operatorRef.getValue() == null) {
+                        continue;
+                    }
 
-                AlertPatch alertPatch = new AlertPatch();
-                alertPatch.setAgencyId(operator);
-                alertPatch.setTimePeriods(periods);
-                alertPatch.setAlert(alert);
-                alertPatch.setId(situationNumber + operator);
-                patches.add(alertPatch);
-            }
-        }
+                    String operator = operatorRef.getValue();
 
-        AffectsScopeStructure.StopPoints stopPoints = affectsStructure.getStopPoints();
-
-        if (stopPoints != null && !isListNullOrEmpty(stopPoints.getAffectedStopPoints())) {
-
-            for (AffectedStopPointStructure stopPoint : stopPoints.getAffectedStopPoints()) {
-                StopPointRef stopPointRef = stopPoint.getStopPointRef();
-                if (stopPointRef == null || stopPointRef.getValue() == null) {
-                    continue;
-                }
-
-                AgencyAndId stopId = siriFuzzyTripMatcher.getStop(stopPointRef.getValue());
-                Set<Route> affectedRoutes = siriFuzzyTripMatcher.getRoutesForStop(stopId);
-
-                for (Route route : affectedRoutes) {
                     AlertPatch alertPatch = new AlertPatch();
-                    alertPatch.setRoute(route.getId());
-                    alertPatch.setStop(stopId);
+                    alertPatch.setAgencyId(operator);
                     alertPatch.setTimePeriods(periods);
-                    alertPatch.setId(situationNumber + route.getId());
+                    alertPatch.setAlert(alert);
+                    alertPatch.setId(situationNumber + operator);
                     patches.add(alertPatch);
                 }
             }
-        }
 
-        AffectsScopeStructure.Networks networks = affectsStructure.getNetworks();
+            AffectsScopeStructure.StopPoints stopPoints = affectsStructure.getStopPoints();
 
-        if (networks != null && !isListNullOrEmpty(networks.getAffectedNetworks())) {
+            if (stopPoints != null && !isListNullOrEmpty(stopPoints.getAffectedStopPoints())) {
 
-            for (AffectsScopeStructure.Networks.AffectedNetwork affectedNetwork : networks.getAffectedNetworks()) {
-                List<AffectedLineStructure> affectedLines = affectedNetwork.getAffectedLines();
-                if (affectedLines != null && !isListNullOrEmpty(affectedLines)) {
-                    for (AffectedLineStructure line : affectedLines) {
+                for (AffectedStopPointStructure stopPoint : stopPoints.getAffectedStopPoints()) {
+                    StopPointRef stopPointRef = stopPoint.getStopPointRef();
+                    if (stopPointRef == null || stopPointRef.getValue() == null) {
+                        continue;
+                    }
 
-                        LineRef lineRef = line.getLineRef();
+                    AgencyAndId stopId = siriFuzzyTripMatcher.getStop(stopPointRef.getValue());
+                    Set<Route> affectedRoutes = siriFuzzyTripMatcher.getRoutesForStop(stopId);
 
-                        if (lineRef == null || lineRef.getValue() == null) {
-                            continue;
-                        }
-
-                        Set<Route> affectedRoutes = siriFuzzyTripMatcher.getRoutes(lineRef.getValue());
-                        for (Route route : affectedRoutes) {
-
-                            AlertPatch alertPatch = new AlertPatch();
-                            alertPatch.setRoute(route.getId());
-                            alertPatch.setTimePeriods(periods);
-                            alertPatch.setId(situationNumber + route.getId());
-                            patches.add(alertPatch);
-                        }
+                    for (Route route : affectedRoutes) {
+                        AlertPatch alertPatch = new AlertPatch();
+                        alertPatch.setRoute(route.getId());
+                        alertPatch.setStop(stopId);
+                        alertPatch.setTimePeriods(periods);
+                        alertPatch.setId(situationNumber + route.getId());
+                        patches.add(alertPatch);
                     }
                 }
-                NetworkRefStructure networkRef = affectedNetwork.getNetworkRef();
-                if (networkRef == null || networkRef.getValue() == null) {
-                    continue;
-                }
-                String networkId = networkRef.getValue();
-
-                AlertPatch alertPatch = new AlertPatch();
-                alertPatch.setTrip(new AgencyAndId(feedId, networkId));
-                alertPatch.setId(situationNumber);
-                patches.add(alertPatch);
             }
-        }
 
-        AffectsScopeStructure.StopPlaces stopPlaces = affectsStructure.getStopPlaces();
+            AffectsScopeStructure.Networks networks = affectsStructure.getNetworks();
 
-        if (stopPlaces != null && !isListNullOrEmpty(stopPlaces.getAffectedStopPlaces())) {
+            if (networks != null && !isListNullOrEmpty(networks.getAffectedNetworks())) {
 
-            for (AffectedStopPlaceStructure stopPoint : stopPlaces.getAffectedStopPlaces()) {
-                StopPlaceRef stopPlace = stopPoint.getStopPlaceRef();
-                if (stopPlace == null || stopPlace.getValue() == null) {
-                    continue;
-                }
+                for (AffectsScopeStructure.Networks.AffectedNetwork affectedNetwork : networks.getAffectedNetworks()) {
+                    List<AffectedLineStructure> affectedLines = affectedNetwork.getAffectedLines();
+                    if (affectedLines != null && !isListNullOrEmpty(affectedLines)) {
+                        for (AffectedLineStructure line : affectedLines) {
 
-                AgencyAndId stopId = siriFuzzyTripMatcher.getStop(stopPlace.getValue());
-                Set<Route> affectedRoutes = siriFuzzyTripMatcher.getRoutesForStop(stopId);
+                            LineRef lineRef = line.getLineRef();
 
-                for (Route route : affectedRoutes) {
+                            if (lineRef == null || lineRef.getValue() == null) {
+                                continue;
+                            }
+
+                            Set<Route> affectedRoutes = siriFuzzyTripMatcher.getRoutes(lineRef.getValue());
+                            for (Route route : affectedRoutes) {
+
+                                AlertPatch alertPatch = new AlertPatch();
+                                alertPatch.setRoute(route.getId());
+                                alertPatch.setTimePeriods(periods);
+                                alertPatch.setId(situationNumber + route.getId());
+                                patches.add(alertPatch);
+                            }
+                        }
+                    }
+                    NetworkRefStructure networkRef = affectedNetwork.getNetworkRef();
+                    if (networkRef == null || networkRef.getValue() == null) {
+                        continue;
+                    }
+                    String networkId = networkRef.getValue();
+
                     AlertPatch alertPatch = new AlertPatch();
-                    alertPatch.setRoute(route.getId());
-                    alertPatch.setStop(stopId);
-                    alertPatch.setId(situationNumber + route.getId());
+                    alertPatch.setTrip(new AgencyAndId(feedId, networkId));
+                    alertPatch.setId(situationNumber);
                     patches.add(alertPatch);
                 }
             }
-        }
 
-        AffectsScopeStructure.VehicleJourneys vjs = affectsStructure.getVehicleJourneys();
-        if (vjs != null && !isListNullOrEmpty(vjs.getAffectedVehicleJourneies())) {
+            AffectsScopeStructure.StopPlaces stopPlaces = affectsStructure.getStopPlaces();
 
-            for (AffectedVehicleJourneyStructure vj : vjs.getAffectedVehicleJourneies()) {
+            if (stopPlaces != null && !isListNullOrEmpty(stopPlaces.getAffectedStopPlaces())) {
 
-                String lineRef = null;
-                if (vj.getLineRef() != null) {
-                    lineRef = vj.getLineRef().getValue();
-                }
-
-                List<VehicleJourneyRef> tripRefs = vj.getVehicleJourneyReves();
-                AffectedVehicleJourneyStructure.Calls stopRefs = vj.getCalls();
-
-                boolean hasTripRefs = !isListNullOrEmpty(tripRefs);
-                boolean hasStopRefs = stopRefs != null && !isListNullOrEmpty(stopRefs.getCalls());
-
-                if (!(hasTripRefs || hasStopRefs)) {
-                    if (lineRef != null) {
-
-                        Set<Route> affectedRoutes = siriFuzzyTripMatcher.getRoutes(lineRef);
-                        for (Route route : affectedRoutes) {
-                            AgencyAndId routeId = route.getId();
-                            AlertPatch alertPatch = new AlertPatch();
-                            alertPatch.setRoute(routeId);
-                            patches.add(alertPatch);
-                        }
+                for (AffectedStopPlaceStructure stopPoint : stopPlaces.getAffectedStopPlaces()) {
+                    StopPlaceRef stopPlace = stopPoint.getStopPlaceRef();
+                    if (stopPlace == null || stopPlace.getValue() == null) {
+                        continue;
                     }
-                } else if (hasTripRefs && hasStopRefs) {
-                    for (VehicleJourneyRef vjRef : vj.getVehicleJourneyReves()) {
 
-                        AgencyAndId tripId = siriFuzzyTripMatcher.getTripId(vjRef.getValue());
+                    AgencyAndId stopId = siriFuzzyTripMatcher.getStop(stopPlace.getValue());
+                    Set<Route> affectedRoutes = siriFuzzyTripMatcher.getRoutesForStop(stopId);
 
+                    for (Route route : affectedRoutes) {
+                        AlertPatch alertPatch = new AlertPatch();
+                        alertPatch.setRoute(route.getId());
+                        alertPatch.setStop(stopId);
+                        alertPatch.setId(situationNumber + route.getId());
+                        patches.add(alertPatch);
+                    }
+                }
+            }
+
+            AffectsScopeStructure.VehicleJourneys vjs = affectsStructure.getVehicleJourneys();
+            if (vjs != null && !isListNullOrEmpty(vjs.getAffectedVehicleJourneies())) {
+
+                for (AffectedVehicleJourneyStructure vj : vjs.getAffectedVehicleJourneies()) {
+
+                    String lineRef = null;
+                    if (vj.getLineRef() != null) {
+                        lineRef = vj.getLineRef().getValue();
+                    }
+
+                    List<VehicleJourneyRef> tripRefs = vj.getVehicleJourneyReves();
+                    AffectedVehicleJourneyStructure.Calls stopRefs = vj.getCalls();
+
+                    boolean hasTripRefs = !isListNullOrEmpty(tripRefs);
+                    boolean hasStopRefs = stopRefs != null && !isListNullOrEmpty(stopRefs.getCalls());
+
+                    if (!(hasTripRefs || hasStopRefs)) {
+                        if (lineRef != null) {
+
+                            Set<Route> affectedRoutes = siriFuzzyTripMatcher.getRoutes(lineRef);
+                            for (Route route : affectedRoutes) {
+                                AgencyAndId routeId = route.getId();
+                                AlertPatch alertPatch = new AlertPatch();
+                                alertPatch.setRoute(routeId);
+                                patches.add(alertPatch);
+                            }
+                        }
+                    } else if (hasTripRefs && hasStopRefs) {
+                        for (VehicleJourneyRef vjRef : vj.getVehicleJourneyReves()) {
+
+                            AgencyAndId tripId = siriFuzzyTripMatcher.getTripId(vjRef.getValue());
+
+                            for (AffectedCallStructure call : stopRefs.getCalls()) {
+
+                                AgencyAndId stopId = siriFuzzyTripMatcher.getStop(call.getStopPointRef().getValue());
+                                Set<Route> routeId = siriFuzzyTripMatcher.getRoutesForStop(stopId);
+
+                                for (Route route : routeId) {
+                                    AlertPatch alertPatch = new AlertPatch();
+                                    alertPatch.setRoute(route.getId());
+                                    alertPatch.setTrip(tripId);
+                                    alertPatch.setStop(stopId);
+                                    patches.add(alertPatch);
+                                }
+                            }
+                        }
+                    } else if (hasTripRefs) {
+                        for (VehicleJourneyRef vjRef : vj.getVehicleJourneyReves()) {
+
+                            AgencyAndId tripId = siriFuzzyTripMatcher.getTripId(vjRef.getValue());
+                            if (tripId != null) {
+                                AlertPatch alertPatch = new AlertPatch();
+                                alertPatch.setRoute(new AgencyAndId(feedId, lineRef));
+                                alertPatch.setTrip(tripId);
+                                patches.add(alertPatch);
+                            }
+                        }
+                    } else {
                         for (AffectedCallStructure call : stopRefs.getCalls()) {
-
                             AgencyAndId stopId = siriFuzzyTripMatcher.getStop(call.getStopPointRef().getValue());
                             Set<Route> routeId = siriFuzzyTripMatcher.getRoutesForStop(stopId);
 
                             for (Route route : routeId) {
                                 AlertPatch alertPatch = new AlertPatch();
                                 alertPatch.setRoute(route.getId());
-                                alertPatch.setTrip(tripId);
                                 alertPatch.setStop(stopId);
                                 patches.add(alertPatch);
                             }
-                        }
-                    }
-                } else if (hasTripRefs) {
-                    for (VehicleJourneyRef vjRef : vj.getVehicleJourneyReves()) {
-
-                        AgencyAndId tripId = siriFuzzyTripMatcher.getTripId(vjRef.getValue());
-                        if (tripId != null) {
-                            AlertPatch alertPatch = new AlertPatch();
-                            alertPatch.setRoute(new AgencyAndId(feedId, lineRef));
-                            alertPatch.setTrip(tripId);
-                            patches.add(alertPatch);
-                        }
-                    }
-                } else {
-                    for (AffectedCallStructure call : stopRefs.getCalls()) {
-                        AgencyAndId stopId = siriFuzzyTripMatcher.getStop(call.getStopPointRef().getValue());
-                        Set<Route> routeId = siriFuzzyTripMatcher.getRoutesForStop(stopId);
-
-                        for (Route route : routeId) {
-                            AlertPatch alertPatch = new AlertPatch();
-                            alertPatch.setRoute(route.getId());
-                            alertPatch.setStop(stopId);
-                            patches.add(alertPatch);
                         }
                     }
                 }
