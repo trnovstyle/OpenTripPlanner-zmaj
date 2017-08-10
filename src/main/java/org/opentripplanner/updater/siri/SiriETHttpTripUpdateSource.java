@@ -27,7 +27,6 @@ import javax.xml.bind.JAXBException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.time.ZonedDateTime;
-import java.util.List;
 import java.util.UUID;
 
 public class SiriETHttpTripUpdateSource implements EstimatedTimetableSource, JsonConfigurable {
@@ -82,7 +81,7 @@ public class SiriETHttpTripUpdateSource implements EstimatedTimetableSource, Jso
     JAXBContext jaxbContext;
 
     @Override
-    public List getUpdates() {
+    public Siri getUpdates() {
         long t1 = System.currentTimeMillis();
         try {
 
@@ -103,7 +102,7 @@ public class SiriETHttpTripUpdateSource implements EstimatedTimetableSource, Jso
 
                 //All subsequent requests will return changes since last request
                 fullDataset = false;
-                return siri.getServiceDelivery().getEstimatedTimetableDeliveries();
+                return siri;
 
             }
         } catch (IOException e) {

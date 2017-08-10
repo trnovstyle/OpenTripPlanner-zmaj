@@ -25,7 +25,6 @@ import uk.org.siri.siri20.Siri;
 
 import java.io.InputStream;
 import java.time.ZonedDateTime;
-import java.util.List;
 
 public class SiriLiteVMHttpTripUpdateSource implements VehicleMonitoringSource, JsonConfigurable {
     private static final Logger LOG =
@@ -70,7 +69,7 @@ public class SiriLiteVMHttpTripUpdateSource implements VehicleMonitoringSource, 
     }
 
     @Override
-    public List getUpdates() {
+    public Siri getUpdates() {
         long t1 = System.currentTimeMillis();
         try {
 
@@ -94,7 +93,7 @@ public class SiriLiteVMHttpTripUpdateSource implements VehicleMonitoringSource, 
                 }
                 lastTimestamp = siri.getServiceDelivery().getResponseTimestamp();
 
-                return siri.getServiceDelivery().getVehicleMonitoringDeliveries();
+                return siri;
 
             }
         } catch (Exception e) {
