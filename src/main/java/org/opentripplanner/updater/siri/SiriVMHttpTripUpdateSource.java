@@ -97,7 +97,7 @@ public class SiriVMHttpTripUpdateSource implements VehicleMonitoringSource, Json
                 }
                 lastTimestamp = siri.getServiceDelivery().getResponseTimestamp();
 
-                return siri.getServiceDelivery().getVehicleMonitoringDeliveries();
+                return siri;
 
             }
         } catch (Exception e) {
