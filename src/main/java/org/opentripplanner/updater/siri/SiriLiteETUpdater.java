@@ -15,14 +15,10 @@ package org.opentripplanner.updater.siri;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import org.opentripplanner.routing.graph.Graph;
-import org.opentripplanner.updater.*;
-import org.opentripplanner.updater.stoptime.TimetableSnapshotSource;
+import org.opentripplanner.updater.JsonConfigurable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.org.siri.siri20.EstimatedTimetableDeliveryStructure;
-
-import java.util.List;
-import java.util.concurrent.ExecutionException;
+import uk.org.siri.siri20.Siri;
 
 /**
  * Update OTP stop time tables from some (realtime) source
@@ -71,14 +67,18 @@ public class SiriLiteETUpdater extends SiriETUpdater {
     @Override
     public void runPolling() {
         // Get update lists from update source
-        List<EstimatedTimetableDeliveryStructure> updates = updateSource.getUpdates();
+        Siri updates = updateSource.getUpdates();
         boolean fullDataset = updateSource.getFullDatasetValueOfLastUpdates();
 
-        if (updates != null) {
+        if (updates != null && updates.getServiceDelivery().getEstimatedTimetableDeliveries() != null) {
             // Handle trip updates via graph writer runnable
             EstimatedTimetableGraphWriterRunnable runnable =
-                    new EstimatedTimetableGraphWriterRunnable(fullDataset, updates);
+                    new EstimatedTimetableGraphWriterRunnable(fullDataset, updates.getServiceDelivery().getEstimatedTimetableDeliveries());
             super.updaterManager.execute(runnable);
+        }
+        if (updates.getServiceDelivery().isMoreData()) {
+            LOG.info("More data is available - fetching immediately");
+            runPolling();
         }
     }
 

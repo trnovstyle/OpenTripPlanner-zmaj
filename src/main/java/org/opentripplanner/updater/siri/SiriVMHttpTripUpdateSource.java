@@ -20,13 +20,12 @@ import org.opentripplanner.updater.SiriHelper;
 import org.opentripplanner.util.HttpUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.org.siri.siri20.*;
+import uk.org.siri.siri20.Siri;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import java.io.InputStream;
 import java.time.ZonedDateTime;
-import java.util.List;
 import java.util.UUID;
 
 public class SiriVMHttpTripUpdateSource implements VehicleMonitoringSource, JsonConfigurable {
@@ -80,7 +79,7 @@ public class SiriVMHttpTripUpdateSource implements VehicleMonitoringSource, Json
     JAXBContext jaxbContext;
 
     @Override
-    public List getUpdates() {
+    public Siri getUpdates() {
         long t1 = System.currentTimeMillis();
         fullDataset = false;
         try {

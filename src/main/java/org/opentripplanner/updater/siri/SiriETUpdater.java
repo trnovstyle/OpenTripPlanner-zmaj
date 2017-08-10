@@ -19,10 +19,8 @@ import org.opentripplanner.updater.*;
 import org.opentripplanner.updater.stoptime.TimetableSnapshotSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.org.siri.siri20.EstimatedTimetableDeliveryStructure;
-import uk.org.siri.siri20.VehicleMonitoringDeliveryStructure;
+import uk.org.siri.siri20.Siri;
 
-import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 /**
@@ -151,14 +149,18 @@ public class SiriETUpdater extends PollingGraphUpdater {
     @Override
     public void runPolling() {
         // Get update lists from update source
-        List<EstimatedTimetableDeliveryStructure> updates = updateSource.getUpdates();
+        Siri updates = updateSource.getUpdates();
         boolean fullDataset = updateSource.getFullDatasetValueOfLastUpdates();
 
-        if (updates != null) {
+        if (updates != null && updates.getServiceDelivery().getEstimatedTimetableDeliveries() != null) {
             // Handle trip updates via graph writer runnable
             EstimatedTimetableGraphWriterRunnable runnable =
-                    new EstimatedTimetableGraphWriterRunnable(fullDataset, updates);
+                    new EstimatedTimetableGraphWriterRunnable(fullDataset, updates.getServiceDelivery().getEstimatedTimetableDeliveries());
             updaterManager.execute(runnable);
+        }
+        if (updates.getServiceDelivery().isMoreData() != null && updates.getServiceDelivery().isMoreData()) {
+            LOG.info("More data is available - fetching immediately");
+            runPolling();
         }
     }
 

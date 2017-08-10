@@ -25,7 +25,6 @@ import uk.org.siri.siri20.Siri;
 
 import java.io.InputStream;
 import java.time.ZonedDateTime;
-import java.util.List;
 
 public class SiriLiteETHttpTripUpdateSource implements EstimatedTimetableSource, JsonConfigurable {
     private static final Logger LOG =
@@ -70,7 +69,7 @@ public class SiriLiteETHttpTripUpdateSource implements EstimatedTimetableSource,
     }
 
     @Override
-    public List getUpdates() {
+    public Siri getUpdates() {
         long t1 = System.currentTimeMillis();
         try {
 
@@ -96,7 +95,7 @@ public class SiriLiteETHttpTripUpdateSource implements EstimatedTimetableSource,
 
                 //All subsequent requests will return changes since last request
                 fullDataset = false;
-                return siri.getServiceDelivery().getEstimatedTimetableDeliveries();
+                return siri;
 
             }
         } catch (Exception e) {
