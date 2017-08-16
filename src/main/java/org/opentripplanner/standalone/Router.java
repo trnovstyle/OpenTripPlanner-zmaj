@@ -62,6 +62,8 @@ public class Router {
     /** Storage for non-destructive alternatives analysis scenarios. */
     public ScenarioStore scenarioStore = new ScenarioStore();
 
+    public String kartverketToken;
+
     public Router(String id, Graph graph) {
         this.id = id;
         this.graph = graph;
@@ -168,6 +170,11 @@ public class Router {
             graph.stopClusterMode = stopClusterMode.asText();    
         } else {
             graph.stopClusterMode = "proximity";
+        }
+
+        JsonNode tokenUrl = config.get("kartverketTokenUrl");
+        if (tokenUrl != null && tokenUrl.has("url")) {
+            this.kartverketToken = tokenUrl.get("url").asText();
         }
         
         /* Create Graph updater modules from JSON config. */
