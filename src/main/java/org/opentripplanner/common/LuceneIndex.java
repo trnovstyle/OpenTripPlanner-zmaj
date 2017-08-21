@@ -84,9 +84,6 @@ public class LuceneIndex {
             for (StopCluster stopCluster : graphIndex.stopClusterForId.values()) {
                 addCluster(writer, stopCluster);
             }
-            for (StreetVertex sv : Iterables.filter(graphIndex.vertexForId.values(), StreetVertex.class)) {
-                addCorner(writer, sv);
-            }
             writer.close();
             long elapsedTime = System.currentTimeMillis() - startTime;
             LOG.info("Built Lucene index in {} msec", elapsedTime);
@@ -210,7 +207,7 @@ public class LuceneIndex {
         }
         List<LuceneResult> result = Lists.newArrayList();
         try {
-            TopScoreDocCollector collector = TopScoreDocCollector.create(10, true);
+            TopScoreDocCollector collector = TopScoreDocCollector.create(30, true);
             searcher.search(query, collector);
             ScoreDoc[] docs = collector.topDocs().scoreDocs;
             for (int i = 0; i < docs.length; i++) {
@@ -230,7 +227,11 @@ public class LuceneIndex {
                     lr.id = doc.getField("id").stringValue();
                 }
                 String name = doc.getField("name").stringValue();
-                lr.description = category + " " + name + " " + code;
+                if (lr.id != null) {
+                    lr.description = name + " " + code + " " + lr.id;
+                } else {
+                    lr.description = name + " " + code + " " + category;
+                }
                 result.add(lr);
             }
         } catch (Exception ex) {
