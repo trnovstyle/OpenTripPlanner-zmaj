@@ -7,29 +7,8 @@ import com.vividsolutions.jts.geom.LineString;
 import graphql.Scalars;
 import graphql.relay.Relay;
 import graphql.relay.SimpleListConnection;
-import graphql.schema.DataFetcher;
-import graphql.schema.DataFetchingEnvironment;
-import graphql.schema.DataFetchingEnvironmentImpl;
-import graphql.schema.GraphQLArgument;
-import graphql.schema.GraphQLEnumType;
-import graphql.schema.GraphQLFieldDefinition;
-import graphql.schema.GraphQLInputObjectField;
-import graphql.schema.GraphQLInputObjectType;
-import graphql.schema.GraphQLInterfaceType;
-import graphql.schema.GraphQLList;
-import graphql.schema.GraphQLNonNull;
-import graphql.schema.GraphQLObjectType;
-import graphql.schema.GraphQLOutputType;
-import graphql.schema.GraphQLSchema;
-import graphql.schema.GraphQLType;
-import graphql.schema.GraphQLTypeReference;
-import graphql.schema.PropertyDataFetcher;
-import graphql.schema.TypeResolver;
-import org.onebusaway.gtfs.model.Agency;
-import org.onebusaway.gtfs.model.AgencyAndId;
-import org.onebusaway.gtfs.model.Route;
-import org.onebusaway.gtfs.model.Stop;
-import org.onebusaway.gtfs.model.Trip;
+import graphql.schema.*;
+import org.onebusaway.gtfs.model.*;
 import org.onebusaway.gtfs.model.calendar.ServiceDate;
 import org.opentripplanner.api.common.Message;
 import org.opentripplanner.api.model.*;
@@ -1196,6 +1175,13 @@ public class IndexGraphQLSchema {
                     .collect(Collectors.toList());
                 })
                 .build())
+            .field(GraphQLFieldDefinition.newFieldDefinition()
+                    .name("alerts")
+                    .description("Get all alerts active for the stop")
+                    .type(new GraphQLList(alertType))
+                    .dataFetcher(dataFetchingEnvironment -> index.getAlertsForStop(
+                            dataFetchingEnvironment.getSource()))
+                    .build())
             .build();
 
         stoptimeType = GraphQLObjectType.newObject()
