@@ -177,21 +177,13 @@ public class AlertsUpdateHandler {
                     }
 
                     AgencyAndId stopId = siriFuzzyTripMatcher.getStop(stopPointRef.getValue());
-                    Set<Route> affectedRoutes = siriFuzzyTripMatcher.getRoutesForStop(stopId);
 
-                    for (Route route : affectedRoutes) {
-
-                        String id = paddedSituationNumber + route.getId();
-                        if (expireSituation) {
-                            idsToExpire.add(id);
-                        } else {
-                            AlertPatch alertPatch = new AlertPatch();
-                            alertPatch.setRoute(route.getId());
-                            alertPatch.setStop(stopId);
-                            alertPatch.setTimePeriods(periods);
-                            alertPatch.setId(id);
-                            patches.add(alertPatch);
-                        }
+                    if (stopId != null) {
+                        AlertPatch alertPatch = new AlertPatch();
+                        alertPatch.setStop(stopId);
+                        alertPatch.setTimePeriods(periods);
+                        alertPatch.setId(situationNumber);
+                        patches.add(alertPatch);
                     }
                 }
             }
@@ -255,20 +247,14 @@ public class AlertsUpdateHandler {
                     }
 
                     AgencyAndId stopId = siriFuzzyTripMatcher.getStop(stopPlace.getValue());
-                    Set<Route> affectedRoutes = siriFuzzyTripMatcher.getRoutesForStop(stopId);
 
-                    for (Route route : affectedRoutes) {
+                    if (stopId != null) {
 
-                        String id = paddedSituationNumber + route.getId();
-                        if (expireSituation) {
-                            idsToExpire.add(id);
-                        } else {
-                            AlertPatch alertPatch = new AlertPatch();
-                            alertPatch.setRoute(route.getId());
-                            alertPatch.setStop(stopId);
-                            alertPatch.setId(id);
-                            patches.add(alertPatch);
-                        }
+                        AlertPatch alertPatch = new AlertPatch();
+                        alertPatch.setStop(stopId);
+                        alertPatch.setTimePeriods(periods);
+                        alertPatch.setId(situationNumber);
+                        patches.add(alertPatch);
                     }
                 }
             }
