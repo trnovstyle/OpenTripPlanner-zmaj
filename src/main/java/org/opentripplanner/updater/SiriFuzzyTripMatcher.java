@@ -196,6 +196,12 @@ public class SiriFuzzyTripMatcher {
                 return stop.getId();
             }
         }
+        //No match found in quays - check parent-stops (stopplace)
+        for (Stop stop : stops) {
+            if (siriStopId.equals(stop.getParentStation())) {
+                return new AgencyAndId(stop.getId().getAgencyId(), stop.getParentStation());
+            }
+        }
         return null;
     }
 
