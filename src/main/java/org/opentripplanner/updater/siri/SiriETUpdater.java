@@ -158,7 +158,10 @@ public class SiriETUpdater extends PollingGraphUpdater {
                     new EstimatedTimetableGraphWriterRunnable(fullDataset, updates.getServiceDelivery().getEstimatedTimetableDeliveries());
             updaterManager.execute(runnable);
         }
-        if (updates.getServiceDelivery().isMoreData() != null && updates.getServiceDelivery().isMoreData()) {
+        if (updates != null &&
+                updates.getServiceDelivery() != null &&
+                updates.getServiceDelivery().isMoreData() != null &&
+                updates.getServiceDelivery().isMoreData()) {
             LOG.info("More data is available - fetching immediately");
             runPolling();
         }

@@ -566,21 +566,13 @@ public class TimetableSnapshotSource {
             return false;
         }
 
-        EstimatedCall firstCall = estimatedCalls.getEstimatedCalls().get(0);
-        ZonedDateTime date = firstCall.getAimedDepartureTime();
-
-        if (date == null) {
-            return false;
-        }
-
-        ServiceDate serviceDate = new ServiceDate(date.getYear(), date.getMonthValue(), date.getDayOfMonth());
 
         Set<Trip> trips = siriFuzzyTripMatcher.match(estimatedVehicleJourney);
 
         //Values used in logging
         Boolean isMonitored = estimatedVehicleJourney.isMonitored();
         String lineRef = estimatedVehicleJourney.getLineRef().getValue();
-        String vehicleJourneyRef = (estimatedVehicleJourney.getVehicleJourneyRef() != null ? estimatedVehicleJourney.getVehicleJourneyRef().getValue():null);
+        String vehicleJourneyRef = (estimatedVehicleJourney.getVehicleRef() != null ? estimatedVehicleJourney.getVehicleRef().getValue():null);
         String operatorRef = (estimatedVehicleJourney.getOperatorRef() != null ? estimatedVehicleJourney.getOperatorRef().getValue():null);
 
         if (trips == null || trips.isEmpty()) {
@@ -628,6 +620,21 @@ public class TimetableSnapshotSource {
             }
         }
 
+        ZonedDateTime date;
+        if (estimatedVehicleJourney.getRecordedCalls() != null && !estimatedVehicleJourney.getRecordedCalls().getRecordedCalls().isEmpty()){
+            date = estimatedVehicleJourney.getRecordedCalls().getRecordedCalls().get(0).getAimedDepartureTime();
+        } else {
+            EstimatedCall firstCall = estimatedCalls.getEstimatedCalls().get(0);
+            date = firstCall.getAimedDepartureTime();
+        }
+
+        if (date == null) {
+            return false;
+        }
+
+        ServiceDate serviceDate = new ServiceDate(date.getYear(), date.getMonthValue(), date.getDayOfMonth());
+
+
         if (!updatedTripTimes.isCanceled() && updatedTripTimes.getRealTimeState() == RealTimeState.MODIFIED)  {
 
             cancelScheduledTrip(SIRI_FEED_ID, trip.getId().getId(), serviceDate);
@@ -637,8 +644,8 @@ public class TimetableSnapshotSource {
             cancelPreviouslyAddedTrip(SIRI_FEED_ID, trip.getId().getId(), serviceDate);
 
             // Calculate modified stop-pattern
-            List<Stop> modifiedStops = pattern.scheduledTimetable.createModifiedStops(estimatedVehicleJourney);
-            List<StopTime> modifiedStopTimes = pattern.scheduledTimetable.createModifiedStopTimes(updatedTripTimes, estimatedVehicleJourney, trip);
+            List<Stop> modifiedStops = pattern.scheduledTimetable.createModifiedStops(estimatedVehicleJourney, graphIndex);
+            List<StopTime> modifiedStopTimes = pattern.scheduledTimetable.createModifiedStopTimes(updatedTripTimes, estimatedVehicleJourney, trip, graphIndex);
 
             if (modifiedStops != null && modifiedStops.isEmpty()) {
                 updatedTripTimes.cancel();
@@ -1424,35 +1431,49 @@ public class TimetableSnapshotSource {
 
         Set<ServiceDate> serviceDates = graphIndex.graph.getCalendarService().getServiceDatesForServiceId(trip.getServiceId());
 
+        List<RecordedCall> recordedCalls = (journey.getRecordedCalls() != null ? journey.getRecordedCalls().getRecordedCalls():new ArrayList<>());
         List<EstimatedCall> estimatedCalls = journey.getEstimatedCalls().getEstimatedCalls();
 
-        //Determine which stop is the first with reported update
-        EstimatedCall firstCall =estimatedCalls.get(0);
-        int stopNumber = 1;
-        if (firstCall.getOrder() != null) {
-            stopNumber = firstCall.getOrder().intValue();
-        } else if (firstCall.getVisitNumber() != null) {
-            stopNumber = firstCall.getVisitNumber().intValue();
-        }
-
-        if (stopNumber > tripPattern.getStops().size()) {
-            return null;
-        }
-
-        String journeyFirstStopId = firstCall.getStopPointRef().getValue();
-        String journeyLastStopId = estimatedCalls.get(estimatedCalls.size()-1).getStopPointRef().getValue();
-
-        ServiceDate journeyDate = new ServiceDate(Date.from(firstCall.getAimedDepartureTime().toInstant()));
-
-        Stop firstStop = tripPattern.getStop(stopNumber-1);
-        Stop lastStop = tripPattern.getStop(tripPattern.getStops().size() - 1);
-
-        if (serviceDates.contains(journeyDate)) {
-            if (firstStop.getId().getId().equals(journeyFirstStopId) & lastStop.getId().getId().equals(journeyLastStopId)) {
-                // Reported stops match original stops
-                return tripPattern;
+            String journeyFirstStopId;
+            ServiceDate journeyDate;
+            if (recordedCalls != null && !recordedCalls.isEmpty()) {
+                RecordedCall recordedCall = recordedCalls.get(0);
+                journeyFirstStopId = recordedCall.getStopPointRef().getValue();
+                journeyDate = new ServiceDate(Date.from(recordedCall.getAimedDepartureTime().toInstant()));
+            } else if (estimatedCalls != null && !estimatedCalls.isEmpty()) {
+                EstimatedCall estimatedCall = estimatedCalls.get(0);
+                journeyFirstStopId = estimatedCall.getStopPointRef().getValue();
+                journeyDate = new ServiceDate(Date.from(estimatedCall.getAimedDepartureTime().toInstant()));
+            } else {
+                return null;
             }
-        }
+
+            String journeyLastStopId = estimatedCalls.get(estimatedCalls.size() - 1).getStopPointRef().getValue();
+
+            Stop firstStop = tripPattern.getStop(0);
+            Stop lastStop = tripPattern.getStop(tripPattern.getStops().size() - 1);
+
+            if (serviceDates.contains(journeyDate)) {
+                boolean firstStopIsMatch = firstStop.getId().getId().equals(journeyFirstStopId);
+                boolean lastStopIsMatch = lastStop.getId().getId().equals(journeyLastStopId);
+
+                if (!firstStopIsMatch && firstStop.getParentStation() != null) {
+                    Stop otherFirstStop = graphIndex.stopForId.get(new AgencyAndId(firstStop.getId().getAgencyId(), journeyFirstStopId));
+                    firstStopIsMatch = (otherFirstStop != null && otherFirstStop.getParentStation() != null && otherFirstStop.getParentStation().equals(firstStop.getParentStation()));
+                }
+
+                if (!lastStopIsMatch && lastStop.getParentStation() != null) {
+                    Stop otherLastStop = graphIndex.stopForId.get(new AgencyAndId(lastStop.getId().getAgencyId(), journeyLastStopId));
+                    lastStopIsMatch = (otherLastStop != null && otherLastStop.getParentStation() != null && otherLastStop.getParentStation().equals(lastStop.getParentStation()));
+                }
+
+                if (firstStopIsMatch & lastStopIsMatch) {
+                    // Found matches
+                    return tripPattern;
+                }
+
+                return null;
+            }
 
         return null;
     }
@@ -1495,15 +1516,28 @@ public class TimetableSnapshotSource {
      */
     private Trip getTripForJourney(Set<Trip> trips, EstimatedVehicleJourney journey) {
 
-        EstimatedCall firstCall = journey.getEstimatedCalls().getEstimatedCalls().get(0);
-        int stopNumber = 1;
-        if (firstCall.getOrder() != null) {
-            stopNumber = firstCall.getOrder().intValue();
-        } else if (firstCall.getVisitNumber() != null) {
-            stopNumber = firstCall.getVisitNumber().intValue();
-        }
 
-        ZonedDateTime date = firstCall.getAimedDepartureTime();
+        List<RecordedCall> recordedCalls = (journey.getRecordedCalls() != null ? journey.getRecordedCalls().getRecordedCalls():new ArrayList<>());
+        List<EstimatedCall> estimatedCalls = journey.getEstimatedCalls().getEstimatedCalls();
+
+        ZonedDateTime date;
+        int stopNumber = 1;
+
+        if (recordedCalls != null && !recordedCalls.isEmpty()) {
+            RecordedCall recordedCall = recordedCalls.get(0);
+            date = recordedCall.getAimedDepartureTime();
+
+        } else if (estimatedCalls != null && !estimatedCalls.isEmpty()) {
+            EstimatedCall estimatedCall = estimatedCalls.get(0);
+            if (estimatedCall.getOrder() != null) {
+                stopNumber = estimatedCall.getOrder().intValue();
+            } else if (estimatedCall.getVisitNumber() != null) {
+                stopNumber = estimatedCall.getVisitNumber().intValue();
+            }
+            date = estimatedCall.getAimedDepartureTime();
+        } else {
+            return null;
+        }
 
         if (date == null) {
             //If no date is set - assume Realtime-data is reported for 'today'.
@@ -1511,6 +1545,8 @@ public class TimetableSnapshotSource {
         }
         ServiceDate serviceDate = new ServiceDate(date.getYear(), date.getMonthValue(), date.getDayOfMonth());
 
+        int departureInSecondsSinceMidnight = calculateSecondsSinceMidnight(date);
+        Set<Trip> result = new HashSet<>();
         for (Iterator<Trip> iterator = trips.iterator(); iterator.hasNext(); ) {
 
             Trip trip = iterator.next();
@@ -1520,15 +1556,19 @@ public class TimetableSnapshotSource {
                 for (TripPattern pattern : graphIndex.patternsForRoute.get(trip.getRoute())) {
                     for (TripTimes times : pattern.scheduledTimetable.tripTimes) {
                         if (stopNumber < times.getNumStops() &&
-                                times.getScheduledDepartureTime(stopNumber-1) == calculateSecondsSinceMidnight(date)) {
-                            return trip;
+                                times.getScheduledDepartureTime(stopNumber-1) == departureInSecondsSinceMidnight) {
+                            result.add(trip);
                         }
                     }
                 }
             }
         }
 
-        return null;
+        if (result.size() == 1) {
+            return result.iterator().next();
+        } else {
+            return null;
+        }
     }
 
 
