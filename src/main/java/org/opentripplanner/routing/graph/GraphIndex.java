@@ -178,7 +178,8 @@ public class GraphIndex {
                 tripForId.put(trip.getId(), trip);
             }
             for (Stop stop: pattern.getStops()) {
-                patternsForStop.put(stop, pattern);
+                if (!patternsForStop.containsEntry(stop, pattern))
+                    patternsForStop.put(stop, pattern);
             }
         }
         for (Route route : patternsForRoute.asMap().keySet()) {
