@@ -66,6 +66,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriInfo;
+import javax.ws.rs.core.HttpHeaders;
 import java.io.IOException;
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -78,6 +79,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.stream.DoubleStream;
 
 // TODO move to org.opentripplanner.api.resource, this is a Jersey resource class
 
@@ -109,6 +111,8 @@ public class IndexAPI {
 
    /* Needed to check whether query parameter map is empty, rather than chaining " && x == null"s */
    @Context UriInfo uriInfo;
+
+   @Context HttpHeaders headers;
 
    private Router router;
 
@@ -593,6 +597,7 @@ public class IndexAPI {
     @Path("/graphql")
     @Consumes(MediaType.APPLICATION_JSON)
     public Response getGraphQL (HashMap<String, Object> queryParameters, @HeaderParam("OTPTimeout") @DefaultValue("10000") int timeout, @HeaderParam("OTPMaxResolves") @DefaultValue("1000000") long maxResolves) {
+        int finalTimeout = checkTimeout(timeout);
         String query = (String) queryParameters.get("query");
         Object queryVariables = queryParameters.getOrDefault("variables", null);
         String operationName = (String) queryParameters.getOrDefault("operationName", null);
@@ -609,14 +614,15 @@ public class IndexAPI {
         } else {
             variables = new HashMap<>();
         }
-        return index.getGraphQLResponse(query, router, variables, operationName, timeout, maxResolves);
+        return index.getGraphQLResponse(query, router, variables, operationName, finalTimeout, maxResolves);
     }
 
     @POST
     @Path("/graphql")
     @Consumes("application/graphql")
     public Response getGraphQL (String query, @HeaderParam("OTPTimeout") @DefaultValue("10000") int timeout, @HeaderParam("OTPMaxResolves") @DefaultValue("1000000") long maxResolves) {
-        return index.getGraphQLResponse(query, router, null, null, timeout, maxResolves);
+        int finalTimeout = checkTimeout(timeout);
+        return index.getGraphQLResponse(query, router, null, null, finalTimeout, maxResolves);
     }
 
 //    @GET
@@ -630,6 +636,7 @@ public class IndexAPI {
     @Path("/graphql/batch")
     @Consumes(MediaType.APPLICATION_JSON)
     public Response getGraphQLBatch (List<HashMap<String, Object>> queries, @HeaderParam("OTPTimeout") @DefaultValue("10000") int timeout, @HeaderParam("OTPMaxResolves") @DefaultValue("1000000") long maxResolves) {
+        int finalTimeout = checkTimeout(timeout);
         List<Map<String, Object>> responses = new ArrayList<>();
         List<Callable<Map>> futures = new ArrayList();
 
@@ -650,7 +657,7 @@ public class IndexAPI {
             String operationName = (String) query.getOrDefault("operationName", null);
 
             futures.add(() -> index.getGraphQLExecutionResult((String) query.get("query"), router,
-                variables, operationName, timeout, maxResolves));
+                variables, operationName, finalTimeout, maxResolves));
         }
 
         try {
@@ -681,5 +688,19 @@ public class IndexAPI {
             toStopId = GtfsLibrary.convertIdToString(((TransitStop) e.getToVertex()).getStopId());
             distance = e.getDistance();
         }
+    }
+
+    private int checkTimeout(int timeout) {
+        Boolean timeoutSpecified = headers.getRequestHeaders().containsKey("OTPTimeout");
+        if (router.timeouts.length > 0 && (DoubleStream.of(router.timeouts).sum() + 1) * 1000 > timeout) {
+            if (timeoutSpecified) {
+                timeout = (int)Math.floor(DoubleStream.of(router.timeouts).sum() + 1) * 1000;
+                LOG.warn("HTTP request default timeout set to equal or less than sum of router-config timeouts. Timeout changed for this request.");
+            }
+            else {
+                LOG.warn("HTTP request timeout set to equal or less than sum router-config timeouts.");
+            }
+        }
+        return timeout;
     }
 }
