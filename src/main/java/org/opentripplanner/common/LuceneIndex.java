@@ -100,6 +100,9 @@ public class LuceneIndex {
         if (stop.getCode() != null) {
             doc.add(new StringField("code", stop.getCode(), Field.Store.YES));
         }
+        if (stop.getPlatformCode() != null) {
+            doc.add(new StringField("platformCode", stop.getPlatformCode(), Field.Store.YES));
+        }
         doc.add(new DoubleField("lat", stop.getLat(), Field.Store.YES));
         doc.add(new DoubleField("lon", stop.getLon(), Field.Store.YES));
         doc.add(new StringField("id", GtfsLibrary.convertIdToString(stop.getId()), Field.Store.YES));
@@ -216,11 +219,11 @@ public class LuceneIndex {
                 lr.lat = doc.getField("lat").numericValue().doubleValue();
                 lr.lng = doc.getField("lon").numericValue().doubleValue();
                 String category = doc.getField("category").stringValue().toLowerCase();
-                String code;
-                if (doc.getField("code") != null){
-                    code = "(" + doc.getField("code").stringValue() + ")";
+                String platformCode;
+                if (doc.getField("platformCode") != null){
+                    platformCode = "(" + doc.getField("platformCode").stringValue() + ")";
                 } else {
-                    code = "";
+                    platformCode = "";
                 }
                 if (doc.getField("category").stringValue().equals(Category.STOP.name()) ||
                         doc.getField("category").stringValue().equals(Category.CLUSTER.name())) {
@@ -228,9 +231,9 @@ public class LuceneIndex {
                 }
                 String name = doc.getField("name").stringValue();
                 if (lr.id != null) {
-                    lr.description = name + " " + code + " " + lr.id;
+                    lr.description = name + " " + platformCode + " " + lr.id;
                 } else {
-                    lr.description = name + " " + code + " " + category;
+                    lr.description = name + " " + platformCode + " " + category;
                 }
                 result.add(lr);
             }
