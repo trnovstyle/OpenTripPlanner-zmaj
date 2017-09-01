@@ -42,6 +42,9 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 
+import static org.opentripplanner.model.StopPattern.PICKDROP_NONE;
+import static org.opentripplanner.model.StopPattern.PICKDROP_SCHEDULED;
+
 
 /**
  * Timetables provide most of the TripPattern functionality. Each TripPattern may possess more than
@@ -573,8 +576,8 @@ public class Timetable implements Serializable {
         List<Stop> stops = new ArrayList<>();
         Stop[] allStops = pattern.stopPattern.stops;
         for (int i = 0; i < allStops.length; i++) {
-            if (pattern.stopPattern.dropoffs[i] == 0 |
-                    pattern.stopPattern.pickups[i] == 0) {
+            if (pattern.stopPattern.dropoffs[i] != PICKDROP_NONE &
+                    pattern.stopPattern.pickups[i] != PICKDROP_NONE) {
                 stops.add(allStops[i]);
             } else {
                 stopPatternChanged = true;
@@ -755,8 +758,8 @@ public class Timetable implements Serializable {
         List<Stop> stops = new ArrayList<>();
 
         for (int i = 0; i < pattern.stopPattern.stops.length; i++) {
-            if (pattern.stopPattern.dropoffs[i] == 0 |
-                    pattern.stopPattern.pickups[i] == 0) {
+            if (pattern.stopPattern.dropoffs[i] != PICKDROP_NONE |
+                    pattern.stopPattern.pickups[i] != PICKDROP_NONE) {
                 stops.add(pattern.stopPattern.stops[i]);
             }
         }
@@ -853,11 +856,24 @@ public class Timetable implements Serializable {
                         stopTime.setDepartureTime(calculateSecondsSinceMidnight(departureDate, estimatedCall.getExpectedDepartureTime()));
                     }
                     if (estimatedCall.isCancellation() != null && estimatedCall.isCancellation()) {
-                        stopTime.setDropOffType(1);
-                        stopTime.setPickupType(1);
+                        stopTime.setDropOffType(PICKDROP_NONE);
+                        stopTime.setPickupType(PICKDROP_NONE);
                     } else {
-                        stopTime.setDropOffType(0);
-                        stopTime.setPickupType(0);
+
+                        if (estimatedCall.getArrivalBoardingActivity() != null) {
+                            if (estimatedCall.getArrivalBoardingActivity() == ArrivalBoardingActivityEnumeration.ALIGHTING) {
+                                stopTime.setPickupType(PICKDROP_SCHEDULED);
+                            } else if (estimatedCall.getArrivalBoardingActivity() == ArrivalBoardingActivityEnumeration.NO_ALIGHTING) {
+                                stopTime.setPickupType(PICKDROP_NONE);
+                            }
+                        }
+                        if (estimatedCall.getDepartureBoardingActivity() != null) {
+                            if (estimatedCall.getDepartureBoardingActivity() == DepartureBoardingActivityEnumeration.BOARDING) {
+                                stopTime.setDropOffType(PICKDROP_SCHEDULED);
+                            } else if (estimatedCall.getDepartureBoardingActivity() == DepartureBoardingActivityEnumeration.NO_BOARDING) {
+                                stopTime.setDropOffType(PICKDROP_NONE);
+                            }
+                        }
                     }
 
                     stopTime.setTimepoint(1); //Exact time

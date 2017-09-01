@@ -76,7 +76,10 @@ public class SiriLiteETUpdater extends SiriETUpdater {
                     new EstimatedTimetableGraphWriterRunnable(fullDataset, updates.getServiceDelivery().getEstimatedTimetableDeliveries());
             super.updaterManager.execute(runnable);
         }
-        if (updates.getServiceDelivery().isMoreData()) {
+        if (updates != null &&
+                updates.getServiceDelivery() != null &&
+                updates.getServiceDelivery().isMoreData() != null &&
+                updates.getServiceDelivery().isMoreData()) {
             LOG.info("More data is available - fetching immediately");
             runPolling();
         }
