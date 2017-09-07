@@ -576,7 +576,7 @@ public class Timetable implements Serializable {
         List<Stop> stops = new ArrayList<>();
         Stop[] allStops = pattern.stopPattern.stops;
         for (int i = 0; i < allStops.length; i++) {
-            if (pattern.stopPattern.dropoffs[i] != PICKDROP_NONE &
+            if (pattern.stopPattern.dropoffs[i] != PICKDROP_NONE |
                     pattern.stopPattern.pickups[i] != PICKDROP_NONE) {
                 stops.add(allStops[i]);
             } else {
@@ -615,8 +615,7 @@ public class Timetable implements Serializable {
                 }
             }
             if (!foundMatch) {
-
-                stopPatternChanged = true;
+                modifiedStops.add(stop);
             }
         }
 
@@ -630,11 +629,14 @@ public class Timetable implements Serializable {
 
         int callCounter = 0;
         ZonedDateTime departureDate = null;
+        Set<EstimatedCall> alreadyVisited = new HashSet<>();
         for (Stop stop : modifiedStops) {
 
 
             for (EstimatedCall estimatedCall : estimatedCalls) {
-
+                if (alreadyVisited.contains(estimatedCall)) {
+                    continue;
+                }
                 //Current stop is being updated
                 boolean stopsMatchById = stop.getId().getId().equals(estimatedCall.getStopPointRef().getValue());
 
@@ -669,6 +671,7 @@ public class Timetable implements Serializable {
                     }
                     newTimes.updateDepartureTime(callCounter, Math.max(departureTime, arrivalTime));
 
+                    alreadyVisited.add(estimatedCall);
                     break;
                 }
             }
@@ -688,6 +691,10 @@ public class Timetable implements Serializable {
 
         if (!newTimes.timesIncreasing()) {
             LOG.error("TripTimes are non-increasing after applying SIRI delay propagation - LineRef {}.", journey.getLineRef().getValue());
+            return null;
+        }
+
+        if (newTimes.getNumStops() > oldTimes.getNumStops()) {
             return null;
         }
 
