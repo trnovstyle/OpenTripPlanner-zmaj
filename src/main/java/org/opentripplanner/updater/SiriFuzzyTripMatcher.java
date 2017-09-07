@@ -81,6 +81,18 @@ public class SiriFuzzyTripMatcher {
         if (journey.getVehicleRef() != null) {
             trips = getCachedTripsBySiriId(journey.getVehicleRef().getValue());
         }
+
+        if (trips == null) {
+            String datedVehicleRef = null;
+            if (journey.getDatedVehicleJourneyRef() != null) {
+                datedVehicleRef = journey.getDatedVehicleJourneyRef().getValue();
+            } else if (journey.getFramedVehicleJourneyRef() != null) {
+                datedVehicleRef = journey.getFramedVehicleJourneyRef().getDatedVehicleJourneyRef();
+            }
+            if (datedVehicleRef != null) {
+                trips = mappedTripsCache.get(datedVehicleRef);
+            }
+        }
         if (trips == null) {
             List<EstimatedCall> estimatedCalls = journey.getEstimatedCalls().getEstimatedCalls();
             EstimatedCall lastStop = estimatedCalls.get(estimatedCalls.size() - 1);
@@ -98,9 +110,10 @@ public class SiriFuzzyTripMatcher {
 
             if (trips == null) {
                 //SIRI-data may report other platform, but still on the same Parent-stop
-                Stop stop = index.stopForId.get(new AgencyAndId("RB", lastStopPoint));
+                String agencyId = index.agenciesForFeedId.keySet().iterator().next();
+                Stop stop = index.stopForId.get(new AgencyAndId(agencyId, lastStopPoint));
                 if (stop != null && stop.getParentStation() != null) {
-                    Collection<Stop> allQuays = index.stopsForParentStation.get(new AgencyAndId("RB", stop.getParentStation()));
+                    Collection<Stop> allQuays = index.stopsForParentStation.get(new AgencyAndId(agencyId, stop.getParentStation()));
                     for (Stop quay : allQuays) {
                         Set<Trip> tripSet = start_stop_tripCache.get(createStartStopKey(quay.getId().getId(), arrivalTime.toLocalTime().toSecondOfDay()));
                         if (tripSet != null) {
