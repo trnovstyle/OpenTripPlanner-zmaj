@@ -13,10 +13,11 @@
 
 package org.opentripplanner.common.model;
 
-import static org.junit.Assert.*;
+import com.vividsolutions.jts.geom.Coordinate;
+import org.junit.Assert;
 import org.junit.Test;
 
-import com.vividsolutions.jts.geom.Coordinate;
+import static org.junit.Assert.*;
 
 public class GenericLocationTest {
 
@@ -35,6 +36,7 @@ public class GenericLocationTest {
         assertNull(loc.getCoordinate());
         assertFalse(loc.hasName());
         assertFalse(loc.hasPlace());
+        assertFalse(loc.hasVertexId());
     }
 
     @Test
@@ -51,6 +53,7 @@ public class GenericLocationTest {
         assertFalse(loc.hasHeading());
         assertTrue(loc.hasName());
         assertTrue(loc.hasPlace());
+        assertTrue(loc.hasVertexId());
         assertNull(loc.lat);
         assertNull(loc.lng);
         assertNull(loc.getCoordinate());
@@ -71,6 +74,7 @@ public class GenericLocationTest {
         
         assertTrue(loc.hasCoordinate());
         assertFalse(loc.hasHeading());
+        assertFalse(loc.hasVertexId());
         assertEquals(new Double(-1.0), loc.lat);
         assertEquals(new Double(2.5), loc.lng);
         assertEquals(new Coordinate(2.5, -1.0), loc.getCoordinate());
@@ -92,7 +96,8 @@ public class GenericLocationTest {
         assertEquals("12345", np.place);
         assertTrue(loc.hasName());
         assertTrue(loc.hasPlace());
-        
+        assertTrue(loc.hasVertexId());
+
         assertFalse(loc.hasCoordinate());
         assertFalse(loc.hasHeading());
         assertNull(loc.lat);
@@ -132,8 +137,14 @@ public class GenericLocationTest {
  
     @Test
     public void testToString() {
-        String input = "name::1.0,2.5";
+        String input = "name::1234 1.0,2.5";
         GenericLocation loc = GenericLocation.fromOldStyleString(input);
+        assertEquals(input, loc.toString());
+        assertTrue(loc.hasCoordinate());
+        assertFalse(loc.hasHeading());
+
+        input = "name::1.0,2.5";
+        loc = GenericLocation.fromOldStyleString(input);
         assertEquals(input, loc.toString());
         assertTrue(loc.hasCoordinate());
         assertFalse(loc.hasHeading());
@@ -161,7 +172,8 @@ public class GenericLocationTest {
         assertFalse(loc.hasHeading());
         
         assertFalse(loc.hasName());
-        assertFalse(loc.hasPlace());   
+        assertFalse(loc.hasPlace());
+        assertFalse(loc.hasVertexId());
     }
     
     @Test
@@ -193,12 +205,14 @@ public class GenericLocationTest {
         Coordinate expectedCoord = new Coordinate(2.0, 1.0);
         GenericLocation loc = new GenericLocation(expectedCoord);
         loc.heading = 137.2;
+        loc.vertexId = "Alf";
         GenericLocation cloned = loc.clone();
         
         assertEquals(expectedCoord, cloned.getCoordinate());
         assertEquals(loc.heading, cloned.heading);
         assertEquals(loc.getNamedPlace().name, cloned.getNamedPlace().name);
         assertEquals(loc.getNamedPlace().place, cloned.getNamedPlace().place);
+        assertEquals(loc.vertexId, cloned.vertexId);
     }
 
     @Test
@@ -207,15 +221,99 @@ public class GenericLocationTest {
         GenericLocation loc = GenericLocation.fromOldStyleString(input);
         assertEquals("0", loc.name);
         assertEquals("", loc.place);
+        assertFalse(loc.hasVertexId());
 
         input = "::1";
         loc = GenericLocation.fromOldStyleString(input);
         assertEquals("", loc.name);
         assertEquals("1", loc.place);
+        assertTrue(loc.hasVertexId());
 
         input = "::";
         loc = GenericLocation.fromOldStyleString(input);
         assertEquals("", loc.name);
         assertEquals("", loc.place);
+        assertFalse(loc.hasVertexId());
+    }
+
+    @Test public void testParsing() {
+        ParsingTestCase[] testCases = {
+                new ParsingTestCase(
+                        "",
+                        "::null (null, null) h=null e=null"
+                ),
+                new ParsingTestCase(
+                        "F::",
+                        "F::null (null, null) h=null e=null"
+                ),
+                new ParsingTestCase(
+                        "FF::123",
+                        "FF::123 (null, null) h=null e=null"
+                ),
+                new ParsingTestCase(
+                        "Alf",
+                        "::Alf (null, null) h=null e=null"
+                ),
+                new ParsingTestCase(
+                        "ID 123.1,1.2",
+                        "::ID (123.1, 1.2) h=null e=null"
+                ),
+                new ParsingTestCase(
+                        "ID:: -123.1,-1.2",
+                        "ID::null (-123.1, -1.2) h=null e=null"
+                ),
+                new ParsingTestCase(
+                        "AD::123 edgeId=2",
+                        "AD::123 (null, null) h=null e=2"
+                ),
+                new ParsingTestCase(
+                        "Alf edgeId=2",
+                        "::Alf (null, null) h=null e=2"
+                ),
+                new ParsingTestCase(
+                        "Hei::pa:deg 123.1 1.2 edgeId=2",
+                        "Hei::pa:deg (123.1, 1.2) h=null e=2"
+                ),
+                new ParsingTestCase(
+                        "RB::Hei:pa:deg:2.2 12.1, -1.2  edgeId=2",
+                        "RB::Hei:pa:deg:2.2 (12.1, -1.2) h=null e=2"
+                ),
+                new ParsingTestCase(
+                        "Hei:pa:deg ,-123.1 ,1.2  edgeId=2 heading=7.2",
+                        "::Hei:pa:deg (-123.1, 1.2) h=7.2 e=2"
+                ),
+                new ParsingTestCase(
+                        "AA::X:2,2.2,1.1edgeId=2heading=15.1",
+                        "AA::X:2 (2.2, 1.1) h=15.1 e=2"
+                )
+        };
+
+        for (ParsingTestCase tc : testCases) {
+            tc.test();
+        }
+    }
+
+    private static class ParsingTestCase {
+        final String input;
+        /** Format: <em>name::vertexId (lat, lng) h=heading e=edgeId</em> */
+        final String expected;
+
+        ParsingTestCase(String input, String expected) {
+            this.input = input;
+            this.expected = expected;
+        }
+
+        void test() {
+            GenericLocation result = GenericLocation.fromOldStyleString(input);
+            Assert.assertEquals(expected, formatToExpectedString(result));
+        }
+
+        /** @see #expected */
+        private String formatToExpectedString(GenericLocation loc) {
+            return String.format(
+                    "%s::%s (%s, %s) h=%s e=%s",
+                    loc.name, loc.vertexId, loc.lat, loc.lng, loc.heading, loc.edgeId
+            );
+        }
     }
 }
