@@ -77,7 +77,7 @@ public class LuceneIndex {
             //directory = new RAMDirectory(); // only a little faster
             IndexWriterConfig config = new IndexWriterConfig(Version.LUCENE_47, analyzer).setOpenMode(OpenMode.CREATE);
             final IndexWriter writer = new IndexWriter(directory, config);
-            for (Stop stop : graphIndex.stopForId.values()) {
+            for (Stop stop : graphIndex.stationForId.values()) {
                 addStop(writer, stop);
             }
             graphIndex.clusterStopsAsNeeded();
@@ -231,7 +231,7 @@ public class LuceneIndex {
                 }
                 String name = doc.getField("name").stringValue();
                 if (lr.id != null) {
-                    lr.description = name + " " + platformCode + " " + lr.id;
+                    lr.description = name + " " + platformCode + " (" + lr.id + ")";
                 } else {
                     lr.description = name + " " + platformCode + " " + category;
                 }
