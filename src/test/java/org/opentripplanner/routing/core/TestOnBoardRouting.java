@@ -13,7 +13,6 @@
 
 package org.opentripplanner.routing.core;
 
-import java.io.File;
 import java.util.Date;
 import java.util.Random;
 
@@ -23,7 +22,6 @@ import org.opentripplanner.model.Stop;
 import org.opentripplanner.model.calendar.CalendarServiceData;
 import org.opentripplanner.ConstantsForTests;
 import org.opentripplanner.gtfs.GtfsContext;
-import org.opentripplanner.gtfs.GtfsLibrary;
 import org.opentripplanner.routing.algorithm.AStar;
 import org.opentripplanner.routing.edgetype.OnBoardDepartPatternHop;
 import org.opentripplanner.routing.edgetype.PatternHop;
@@ -40,6 +38,7 @@ import org.opentripplanner.routing.vertextype.PatternStopVertex;
 import org.opentripplanner.util.TestUtils;
 
 import static org.opentripplanner.calendar.impl.CalendarServiceDataFactoryImpl.createCalendarServiceData;
+import static org.opentripplanner.gtfs.GtfsContextBuilder.contextBuilder;
 
 /**
  * Test on-board routing, ie routing with a starting point "on-board" a vehicle.
@@ -55,13 +54,13 @@ public class TestOnBoardRouting extends TestCase {
     private AStar aStar = new AStar();
 
     public void setUp() throws Exception {
-        GtfsContext context = GtfsLibrary.readGtfs(new File(ConstantsForTests.FAKE_GTFS));
+        GtfsContext context = contextBuilder(ConstantsForTests.FAKE_GTFS).build();
         graph = new Graph();
         GTFSPatternHopFactory factory = new GTFSPatternHopFactory(context);
         factory.run(graph);
         graph.putService(
                 CalendarServiceData.class,
-                createCalendarServiceData(context.getOtpTransitService())
+                createCalendarServiceData(context.getTransitBuilder())
         );
     }
 

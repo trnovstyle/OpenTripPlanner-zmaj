@@ -13,7 +13,6 @@
 
 package org.opentripplanner.routing.algorithm;
 
-import java.io.File;
 import java.util.List;
 
 import com.google.common.collect.Lists;
@@ -22,7 +21,6 @@ import junit.framework.TestCase;
 import org.opentripplanner.model.calendar.CalendarServiceData;
 import org.opentripplanner.ConstantsForTests;
 import org.opentripplanner.gtfs.GtfsContext;
-import org.opentripplanner.gtfs.GtfsLibrary;
 import org.opentripplanner.routing.core.RoutingRequest;
 import org.opentripplanner.routing.core.State;
 import org.opentripplanner.routing.edgetype.factory.GTFSPatternHopFactory;
@@ -34,6 +32,7 @@ import org.opentripplanner.routing.vertextype.TransitStop;
 import org.opentripplanner.util.TestUtils;
 
 import static org.opentripplanner.calendar.impl.CalendarServiceDataFactoryImpl.createCalendarServiceData;
+import static org.opentripplanner.gtfs.GtfsContextBuilder.contextBuilder;
 
 public class TestGraphPath extends TestCase {
     
@@ -42,13 +41,13 @@ public class TestGraphPath extends TestCase {
     private AStar aStar = new AStar();
 
     public void setUp() throws Exception {
-        GtfsContext context = GtfsLibrary.readGtfs(new File(ConstantsForTests.FAKE_GTFS));
+        GtfsContext context = contextBuilder(ConstantsForTests.FAKE_GTFS).build();
         graph = new Graph();
         GTFSPatternHopFactory hl = new GTFSPatternHopFactory(context);
         hl.run(graph);
         graph.putService(
                 CalendarServiceData.class,
-                createCalendarServiceData(context.getOtpTransitService())
+                createCalendarServiceData(context.getTransitBuilder())
         );
     }
 

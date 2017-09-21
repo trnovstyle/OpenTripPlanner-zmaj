@@ -27,7 +27,6 @@ import org.opentripplanner.graph_builder.module.ned.DegreeGridNEDTileSource;
 import org.opentripplanner.graph_builder.module.ned.ElevationModule;
 import org.opentripplanner.graph_builder.module.ned.GeotiffGridCoverageFactoryImpl;
 import org.opentripplanner.graph_builder.module.ned.NEDGridCoverageFactoryImpl;
-import org.opentripplanner.graph_builder.module.osm.DefaultWayPropertySetSource;
 import org.opentripplanner.graph_builder.module.osm.OpenStreetMapModule;
 import org.opentripplanner.graph_builder.services.DefaultStreetEdgeFactory;
 import org.opentripplanner.graph_builder.services.GraphBuilderModule;
@@ -325,7 +324,7 @@ public class GraphBuilder implements Runnable {
      * We want to detect even those that are not graph builder inputs so we can effectively warn when unrecognized file
      * types are present. This helps point out when config files have been misnamed (builder-config vs. build-config).
      */
-    private static enum InputFileType {
+    private enum InputFileType {
         GTFS, OSM, DEM, CONFIG, GRAPH, OTHER;
         public static InputFileType forFile(File file) {
             String name = file.getName();

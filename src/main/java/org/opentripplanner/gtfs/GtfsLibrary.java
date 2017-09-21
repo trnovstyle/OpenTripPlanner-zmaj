@@ -13,42 +13,15 @@
 
 package org.opentripplanner.gtfs;
 
-import org.opentripplanner.graph_builder.module.GtfsFeedId;
-import org.opentripplanner.gtfs.mapping.OtpTransitDaoMapper;
+
 import org.opentripplanner.model.AgencyAndId;
-import org.opentripplanner.model.CalendarService;
-import org.opentripplanner.model.OtpTransitService;
 import org.opentripplanner.model.Route;
 import org.opentripplanner.routing.core.TraverseMode;
 
-import java.io.File;
-import java.io.IOException;
-
-import static org.opentripplanner.calendar.impl.CalendarServiceDataFactoryImpl.createCalendarService;
 
 public class GtfsLibrary {
 
-    public static final char ID_SEPARATOR = ':'; // note this is different than what OBA GTFS uses to match our 1.0 API
-
-    public static GtfsContext createContext(GtfsFeedId feedId, OtpTransitService transitService) {
-        CalendarService calendarService = createCalendarService(transitService);
-        return createContext(feedId, transitService, calendarService);
-    }
-
-    public static GtfsContext createContext(GtfsFeedId feedId, OtpTransitService transitService,
-            CalendarService calendarService) {
-        return new GtfsContextImpl(feedId, transitService, calendarService);
-    }
-
-    public static GtfsContext readGtfs(File path) throws IOException {
-        GtfsImport gtfsImport = new GtfsImport(path);
-
-        GtfsFeedId feedId = gtfsImport.getFeedId();
-        OtpTransitService transitService = OtpTransitDaoMapper.mapDao(gtfsImport.getDao());
-        CalendarService calendarService = createCalendarService(transitService);
-
-        return new GtfsContextImpl(feedId, transitService, calendarService);
-    }
+    private static final char ID_SEPARATOR = ':'; // note this is different than what OBA GTFS uses to match our 1.0 API
 
     /* Using in index since we can't modify OBA libs and the colon in the expected separator in the 1.0 API. */
     public static AgencyAndId convertIdFromString(String value) {
@@ -125,37 +98,6 @@ public class GtfsLibrary {
             return TraverseMode.FUNICULAR;
         default:
             throw new IllegalArgumentException("unknown gtfs route type " + routeType);
-        }
-    }
-
-    private static class GtfsContextImpl implements GtfsContext {
-
-        private GtfsFeedId _feedId;
-
-        private OtpTransitService transitService;
-
-        private CalendarService _calendar;
-
-        public GtfsContextImpl(GtfsFeedId feedId, OtpTransitService transitService,
-                CalendarService calendar) {
-            _feedId = feedId;
-            this.transitService = transitService;
-            _calendar = calendar;
-        }
-
-        @Override
-        public GtfsFeedId getFeedId() {
-            return _feedId;
-        }
-
-        @Override
-        public OtpTransitService getOtpTransitService() {
-            return transitService;
-        }
-
-        @Override
-        public CalendarService getCalendarService() {
-            return _calendar;
         }
     }
 }

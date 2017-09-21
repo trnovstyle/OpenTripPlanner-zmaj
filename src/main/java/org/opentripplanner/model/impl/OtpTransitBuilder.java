@@ -14,7 +14,11 @@
 */
 package org.opentripplanner.model.impl;
 
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.ListMultimap;
+import com.google.common.collect.Multimap;
 import org.opentripplanner.model.Agency;
+import org.opentripplanner.model.AgencyAndId;
 import org.opentripplanner.model.FareAttribute;
 import org.opentripplanner.model.FareRule;
 import org.opentripplanner.model.FeedInfo;
@@ -26,13 +30,18 @@ import org.opentripplanner.model.ServiceCalendar;
 import org.opentripplanner.model.ServiceCalendarDate;
 import org.opentripplanner.model.ShapePoint;
 import org.opentripplanner.model.Stop;
+import org.opentripplanner.model.StopPattern;
 import org.opentripplanner.model.StopTime;
 import org.opentripplanner.model.Transfer;
 import org.opentripplanner.model.Trip;
 import org.opentripplanner.model.OtpTransitService;
+import org.opentripplanner.routing.edgetype.TripPattern;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class OtpTransitBuilder {
     private final List<Agency> agencies = new ArrayList<>();
@@ -51,42 +60,22 @@ public class OtpTransitBuilder {
 
     private final List<Pathway> pathways = new ArrayList<>();
 
-    private final List<Route> routes = new ArrayList<>();
+    private final EntityMap<AgencyAndId, Route> routesById = new EntityMap<>();
 
     private final List<ShapePoint> shapePoints = new ArrayList<>();
 
-    private final List<Stop> stops = new ArrayList<>();
+    private final EntityMap<AgencyAndId, Stop> stopsById = new EntityMap<>();
 
-    private final List<StopTime> stopTimes = new ArrayList<>();
+    private final SortedMultimap<Trip, StopTime> stopTimesByTrip = new SortedMultimap<>();
 
     private final List<Transfer> transfers = new ArrayList<>();
 
-    private final List<Trip> trips = new ArrayList<>();
+    private final EntityMap<AgencyAndId, Trip> trips = new EntityMap<>();
 
-    public OtpTransitBuilder() {
-    }
+    private final ListMultimap<StopPattern, TripPattern> tripPatterns = ArrayListMultimap.create();
 
-    public OtpTransitBuilder(OtpTransitService transitService) {
-        add(transitService);
-    }
 
-    public OtpTransitBuilder add(OtpTransitService other) {
-        agencies.addAll(other.getAllAgencies());
-        calendarDates.addAll(other.getAllCalendarDates());
-        calendars.addAll(other.getAllCalendars());
-        fareAttributes.addAll(other.getAllFareAttributes());
-        fareRules.addAll(other.getAllFareRules());
-        feedInfos.addAll(other.getAllFeedInfos());
-        frequencies.addAll(other.getAllFrequencies());
-        pathways.addAll(other.getAllPathways());
-        routes.addAll(other.getAllRoutes());
-        shapePoints.addAll(other.getAllShapePoints());
-        stops.addAll(other.getAllStops());
-        stopTimes.addAll(other.getAllStopTimes());
-        transfers.addAll(other.getAllTransfers());
-        trips.addAll(other.getAllTrips());
-        return this;
-    }
+    /* Accessors */
 
     public List<Agency> getAgencies() {
         return agencies;
@@ -120,44 +109,60 @@ public class OtpTransitBuilder {
         return pathways;
     }
 
-    public List<Route> getRoutes() {
-        return routes;
+    public EntityMap<AgencyAndId, Route> getRoutes() {
+        return routesById;
     }
 
     public List<ShapePoint> getShapePoints() {
         return shapePoints;
     }
 
-    public List<Stop> getStops() {
-        return stops;
+    public EntityMap<AgencyAndId, Stop> getStops() {
+        return stopsById;
     }
 
-    public List<StopTime> getStopTimes() {
-        return stopTimes;
+    public SortedMultimap<Trip, StopTime> getStopTimesSortedByTrip() {
+        return stopTimesByTrip;
     }
 
     public List<Transfer> getTransfers() {
         return transfers;
     }
 
-    public List<Trip> getTrips() {
+    public EntityMap<AgencyAndId, Trip> getTrips() {
         return trips;
     }
 
-    public OtpTransitService build() {
+    public Multimap<StopPattern, TripPattern> getTripPatterns() {
+        return tripPatterns;
+    }
 
+
+    /**
+     * Find all serviceIds in both CalendarServices and CalendarServiceDates.
+     */
+    Set<AgencyAndId> findAllServiceIds() {
+        Set<AgencyAndId> serviceIds = new HashSet<>();
+        for (ServiceCalendar calendar : getCalendars()) {
+            serviceIds.add(calendar.getServiceId());
+        }
+        for (ServiceCalendarDate date : getCalendarDates()) {
+            serviceIds.add(date.getServiceId());
+        }
+        return serviceIds;
+    }
+
+    public OtpTransitService build() {
         createNoneExistingIds();
 
-        return new OtpTransitServiceImpl(agencies, calendarDates, calendars, fareAttributes, fareRules,
-                feedInfos, frequencies, pathways, routes, shapePoints, stops, stopTimes, transfers,
-                trips);
+        return new OtpTransitServiceImpl(this);
     }
 
     private void createNoneExistingIds() {
         generateNoneExistingIds(feedInfos);
     }
 
-    static <T extends IdentityBean<Integer>> void generateNoneExistingIds(List<T> entities) {
+    static <T extends IdentityBean<Integer>> void generateNoneExistingIds(Collection<T> entities) {
         int maxId = 0;
         for (T it : entities) {
             maxId = zeroOrNull(it.getId()) ? maxId : Math.max(maxId, it.getId());
@@ -171,5 +176,12 @@ public class OtpTransitBuilder {
 
     private static boolean zeroOrNull(Integer id) {
         return id == null || id == 0;
+    }
+
+    public void regenerateIndexes() {
+        trips.reindex();
+        this.stopsById.reindex();
+        this.routesById.reindex();
+        this.stopTimesByTrip.reindex();
     }
 }

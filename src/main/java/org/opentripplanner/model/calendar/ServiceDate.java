@@ -16,10 +16,6 @@
  */
 package org.opentripplanner.model.calendar;
 
-import org.opentripplanner.model.ServiceCalendar;
-import org.opentripplanner.model.ServiceCalendarDate;
-import org.opentripplanner.model.StopTime;
-
 import java.io.Serializable;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
@@ -32,9 +28,9 @@ import java.util.regex.Pattern;
 
 /**
  * A general representation of a year-month-day tuple not tied to any locale and
- * used by the GTFS entities {@link ServiceCalendar} and
- * {@link ServiceCalendarDate} to represent service date ranges. A service date
- * is a particular date when a particular GTFS service id is active.
+ * used by the GTFS entities {@link org.opentripplanner.model.ServiceCalendar} and
+ * {@link org.opentripplanner.model.ServiceCalendarDate} to represent service date ranges.
+ * A service date is a particular date when a particular GTFS service id is active.
  *
  * @author bdferris
  *
@@ -141,8 +137,9 @@ public class ServiceDate implements Serializable, Comparable<ServiceDate> {
      * service date and timezone specified and then subtracting twelve hours.
      * Normally that would be equivalent to midnight, except on Daylight Saving
      * Time days, in which case it can be an hour ahead or behind. This behavior
-     * ensures correct calculation of {@link StopTime} arrival and departure time
-     * when the second offset is added to the localized service date.
+     * ensures correct calculation of {@link org.opentripplanner.model.StopTime}
+     * arrival and departure time when the second offset is added to the localized
+     * service date.
      *
      * @param timeZone the target timezone to localize the service date to
      * @return a localized date at "midnight" at the start of this service date in
@@ -272,8 +269,9 @@ public class ServiceDate implements Serializable, Comparable<ServiceDate> {
      * service date and timezone specified and then subtracting twelve hours.
      * Normally that would be equivalent to midnight, except on Daylight Saving
      * Time days, in which case it can be an hour ahead or behind. This behavior
-     * ensures correct calculation of {@link StopTime} arrival and departure time
-     * when the second offset is added to the localized service date.
+     * ensures correct calculation of {@link org.opentripplanner.model.StopTime}
+     * arrival and departure time when the second offset is added to the localized
+     * service date.
      *
      * @param c the target calendar, already to some time on the target date
      */

@@ -13,7 +13,6 @@
 
 package org.opentripplanner.routing.edgetype.loader;
 
-import java.io.File;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
@@ -36,7 +35,6 @@ import org.opentripplanner.graph_builder.annotation.GraphBuilderAnnotation;
 import org.opentripplanner.graph_builder.annotation.NegativeHopTime;
 import org.opentripplanner.graph_builder.module.StreetLinkerModule;
 import org.opentripplanner.gtfs.GtfsContext;
-import org.opentripplanner.gtfs.GtfsLibrary;
 import org.opentripplanner.routing.algorithm.AStar;
 import org.opentripplanner.routing.core.OptimizeType;
 import org.opentripplanner.routing.core.RoutingRequest;
@@ -61,6 +59,7 @@ import org.opentripplanner.util.TestUtils;
 import com.vividsolutions.jts.geom.Geometry;
 
 import static org.opentripplanner.calendar.impl.CalendarServiceDataFactoryImpl.createCalendarServiceData;
+import static org.opentripplanner.gtfs.GtfsContextBuilder.contextBuilder;
 
 public class TestPatternHopFactory extends TestCase {
 
@@ -71,15 +70,17 @@ public class TestPatternHopFactory extends TestCase {
 
     public void setUp() throws Exception {
 
-        context = GtfsLibrary.readGtfs(new File(ConstantsForTests.FAKE_GTFS));
         graph = new Graph();
+        context = contextBuilder(ConstantsForTests.FAKE_GTFS)
+                .withGraphBuilderAnnotationsAndDeduplicator(graph)
+                .build();
 
         feedId = context.getFeedId().getId();
         GTFSPatternHopFactory factory = new GTFSPatternHopFactory(context);
         factory.run(graph);
         graph.putService(
                 CalendarServiceData.class,
-                createCalendarServiceData(context.getOtpTransitService())
+                createCalendarServiceData(context.getTransitBuilder())
         );
         
         String[] stops = {

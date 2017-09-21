@@ -20,8 +20,8 @@ import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.opentripplanner.calendar.impl.CalendarServiceDataFactoryImpl.createCalendarServiceData;
+import static org.opentripplanner.gtfs.GtfsContextBuilder.contextBuilder;
 
-import java.io.File;
 import java.text.ParseException;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -31,20 +31,13 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.opentripplanner.model.AgencyAndId;
-import org.opentripplanner.model.FareAttribute;
-import org.opentripplanner.model.Pathway;
-import org.opentripplanner.model.Route;
-import org.opentripplanner.model.ServiceCalendar;
-import org.opentripplanner.model.ServiceCalendarDate;
-import org.opentripplanner.model.ShapePoint;
 import org.opentripplanner.model.Stop;
 import org.opentripplanner.model.Trip;
 import org.opentripplanner.model.calendar.CalendarServiceData;
 import org.opentripplanner.model.calendar.ServiceDate;
-import org.opentripplanner.model.OtpTransitService;
 import org.opentripplanner.ConstantsForTests;
 import org.opentripplanner.gtfs.GtfsContext;
-import org.opentripplanner.gtfs.GtfsLibrary;
+import org.opentripplanner.gtfs.GtfsContextBuilder;
 import org.opentripplanner.routing.edgetype.Timetable;
 import org.opentripplanner.routing.edgetype.TimetableSnapshot;
 import org.opentripplanner.routing.edgetype.TransitBoardAlight;
@@ -76,36 +69,17 @@ public class TimetableSnapshotSourceTest {
 
     @BeforeClass
     public static void setUpClass() throws Exception {
-        context = GtfsLibrary.readGtfs(new File(ConstantsForTests.FAKE_GTFS));
+        GtfsContextBuilder contextBuilder = contextBuilder(ConstantsForTests.FAKE_GTFS)
+                .withGraphBuilderAnnotationsAndDeduplicator(graph);
 
-        OtpTransitService transitService = context.getOtpTransitService();
+        context = contextBuilder
+                .turnOnSetAgencyToFeedIdForAllElements()
+                .turnOffRepairStopTimesAndTripPatternsGeneration()
+                .build();
 
         feedId = context.getFeedId().getId();
 
-        for (ShapePoint shapePoint : transitService.getAllShapePoints()) {
-            shapePoint.getShapeId().setAgencyId(feedId);
-        }
-        for (Route route : transitService.getAllRoutes()) {
-            route.getId().setAgencyId(feedId);
-        }
-        for (Stop stop : transitService.getAllStops()) {
-            stop.getId().setAgencyId(feedId);
-        }
-        for (Trip trip : transitService.getAllTrips()) {
-            trip.getId().setAgencyId(feedId);
-        }
-        for (ServiceCalendar serviceCalendar : transitService.getAllCalendars()) {
-            serviceCalendar.getServiceId().setAgencyId(feedId);
-        }
-        for (ServiceCalendarDate serviceCalendarDate : transitService.getAllCalendarDates()) {
-            serviceCalendarDate.getServiceId().setAgencyId(feedId);
-        }
-        for (FareAttribute fareAttribute : transitService.getAllFareAttributes()) {
-            fareAttribute.getId().setAgencyId(feedId);
-        }
-        for (Pathway pathway : transitService.getAllPathways()) {
-            pathway.getId().setAgencyId(feedId);
-        }
+        contextBuilder.repairStopTimesAndGenerateTripPatterns();
 
         GTFSPatternHopFactory factory = new GTFSPatternHopFactory(context);
         factory.run(graph);
@@ -127,7 +101,7 @@ public class TimetableSnapshotSourceTest {
     public void setUp() {
         graph.putService(
                 CalendarServiceData.class,
-                createCalendarServiceData(context.getOtpTransitService())
+                createCalendarServiceData(context.getTransitBuilder())
         );
         updater = new TimetableSnapshotSource(graph);
     }
