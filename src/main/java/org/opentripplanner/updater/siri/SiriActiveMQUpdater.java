@@ -16,6 +16,7 @@ import uk.org.siri.siri20.VehicleMonitoringDeliveryStructure;
 
 import javax.jms.*;
 import javax.xml.bind.JAXBException;
+import javax.xml.stream.XMLStreamException;
 import java.util.List;
 
 
@@ -85,8 +86,8 @@ public class SiriActiveMQUpdater implements GraphUpdater {
                     Siri siri = null;
                     try {
                         siri = SiriXml.parseXml(textMessage.getText());
-                    } catch (JAXBException e) {
-                        e.printStackTrace();
+                    } catch (JAXBException | XMLStreamException e) {
+                        LOG.error("Could not parse XML", e);
                     }
                     if (siri != null && siri.getServiceDelivery() != null) {
                         if (siri.getServiceDelivery().getEstimatedTimetableDeliveries() != null &&
@@ -117,7 +118,7 @@ public class SiriActiveMQUpdater implements GraphUpdater {
         try {
             connection.close();
         } catch (JMSException e) {
-            e.printStackTrace();
+            LOG.warn("Trouble tearing down connection", e);
         }
 
     }
