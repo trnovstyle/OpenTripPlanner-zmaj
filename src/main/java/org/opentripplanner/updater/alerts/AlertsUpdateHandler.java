@@ -178,11 +178,12 @@ public class AlertsUpdateHandler {
 
                     AgencyAndId stopId = siriFuzzyTripMatcher.getStop(stopPointRef.getValue());
 
+                    String id = paddedSituationNumber + stopPointRef.getValue();
                     if (stopId != null) {
                         AlertPatch alertPatch = new AlertPatch();
                         alertPatch.setStop(stopId);
                         alertPatch.setTimePeriods(periods);
-                        alertPatch.setId(situationNumber);
+                        alertPatch.setId(id);
                         patches.add(alertPatch);
                     }
                 }
@@ -248,12 +249,13 @@ public class AlertsUpdateHandler {
 
                     AgencyAndId stopId = siriFuzzyTripMatcher.getStop(stopPlace.getValue());
 
+                    String id = paddedSituationNumber + stopPlace.getValue();
                     if (stopId != null) {
 
                         AlertPatch alertPatch = new AlertPatch();
                         alertPatch.setStop(stopId);
                         alertPatch.setTimePeriods(periods);
-                        alertPatch.setId(situationNumber);
+                        alertPatch.setId(id);
                         patches.add(alertPatch);
                     }
                 }
