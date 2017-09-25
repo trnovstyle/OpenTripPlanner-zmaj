@@ -214,6 +214,7 @@ public class AlertsUpdateHandler {
                                     AlertPatch alertPatch = new AlertPatch();
                                     alertPatch.setRoute(route.getId());
                                     alertPatch.setTimePeriods(periods);
+                                    alertPatch.setAgencyId(route.getAgency().getId());
                                     alertPatch.setId(id);
                                     patches.add(alertPatch);
                                 }
@@ -288,6 +289,7 @@ public class AlertsUpdateHandler {
                                 } else {
                                     AlertPatch alertPatch = new AlertPatch();
                                     alertPatch.setRoute(route.getId());
+                                    alertPatch.setAgencyId(route.getAgency().getId());
                                     alertPatch.setId(id);
                                     patches.add(alertPatch);
                                 }
@@ -311,6 +313,7 @@ public class AlertsUpdateHandler {
                                         AlertPatch alertPatch = new AlertPatch();
                                         alertPatch.setRoute(route.getId());
                                         alertPatch.setTrip(tripId);
+                                        alertPatch.setAgencyId(tripId.getAgencyId());
                                         alertPatch.setStop(stopId);
                                         alertPatch.setId(id);
                                         patches.add(alertPatch);
@@ -330,6 +333,7 @@ public class AlertsUpdateHandler {
                                 } else {
                                     AlertPatch alertPatch = new AlertPatch();
                                     alertPatch.setTrip(tripId);
+                                    alertPatch.setAgencyId(tripId.getAgencyId());
                                     alertPatch.setId(id);
                                     patches.add(alertPatch);
                                 }
@@ -348,6 +352,7 @@ public class AlertsUpdateHandler {
                                 } else {
                                     AlertPatch alertPatch = new AlertPatch();
                                     alertPatch.setRoute(route.getId());
+                                    alertPatch.setAgencyId(route.getAgency().getId());
                                     alertPatch.setStop(stopId);
                                     alertPatch.setId(id);
                                     patches.add(alertPatch);
