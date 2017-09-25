@@ -121,6 +121,10 @@ public class TimetableSnapshotSource {
         SIRI_FEED_ID = graphIndex.agenciesForFeedId.keySet().iterator().next();
     }
 
+    public String getFeedId() {
+        return SIRI_FEED_ID;
+    }
+
     /**
      * @return an up-to-date snapshot mapping TripPatterns to Timetables. This snapshot and the
      *         timetable objects it references are guaranteed to never change, so the requesting
@@ -573,11 +577,11 @@ public class TimetableSnapshotSource {
         //Values used in logging
         Boolean isMonitored = estimatedVehicleJourney.isMonitored();
         String lineRef = estimatedVehicleJourney.getLineRef().getValue();
-        String vehicleJourneyRef = (estimatedVehicleJourney.getVehicleRef() != null ? estimatedVehicleJourney.getVehicleRef().getValue():null);
+        String vehicleRef = (estimatedVehicleJourney.getVehicleRef() != null ? estimatedVehicleJourney.getVehicleRef().getValue():null);
         String operatorRef = (estimatedVehicleJourney.getOperatorRef() != null ? estimatedVehicleJourney.getOperatorRef().getValue():null);
 
         if (trips == null || trips.isEmpty()) {
-            LOG.info("No trips found for EstimatedVehicleJourney (lastStopId, departureTime). [operator={}, isMonitored={}, lineRef={}, vehicleJourneyRef={}]", operatorRef, isMonitored, lineRef, vehicleJourneyRef);
+            LOG.info("No trips found for EstimatedVehicleJourney (lastStopId, departureTime). [operator={}, isMonitored={}, lineRef={}, vehicleRef={}]", operatorRef, isMonitored, lineRef, vehicleRef);
             return false;
         }
 
@@ -585,7 +589,7 @@ public class TimetableSnapshotSource {
         Set<Trip> matchingTrips = getTripForJourney(trips, estimatedVehicleJourney);
 
         if (matchingTrips == null || matchingTrips.isEmpty()) {
-            LOG.info("Found no matching trip for SIRI ET (serviceDate, departureTime). [operator={}, isMonitored={}, lineRef={}, vehicleJourneyRef={}]", operatorRef, isMonitored, lineRef, vehicleJourneyRef);
+            LOG.info("Found no matching trip for SIRI ET (serviceDate, departureTime). [operator={}, isMonitored={}, lineRef={}, vehicleJourneyRef={}]", operatorRef, isMonitored, lineRef, vehicleRef);
             return false;
         }
 
@@ -604,7 +608,7 @@ public class TimetableSnapshotSource {
         }
 
         if (patterns.isEmpty()) {
-            LOG.info("Found no matching pattern for SIRI ET (firstStopId, lastStopId, numberOfStops). [operator={}, isMonitored={}, lineRef={}, vehicleJourneyRef={}]", operatorRef, isMonitored, lineRef, vehicleJourneyRef);
+            LOG.info("Found no matching pattern for SIRI ET (firstStopId, lastStopId, numberOfStops). [operator={}, isMonitored={}, lineRef={}, vehicleRef={}]", operatorRef, isMonitored, lineRef, vehicleRef);
             return false;
         }
 
@@ -669,6 +673,7 @@ public class TimetableSnapshotSource {
                 }
                 result = result | buffer.update(SIRI_FEED_ID, pattern, tripTimes, serviceDate);
             }
+            LOG.info("Applied realtime data for trip {}", trip.getId().getId());
         }
 
         return result;

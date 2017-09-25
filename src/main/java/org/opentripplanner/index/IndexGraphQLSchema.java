@@ -1397,7 +1397,12 @@ public class IndexGraphQLSchema {
                         if (timetableSnapshotSource != null) {
                             TimetableSnapshot timetableSnapshot = timetableSnapshotSource.getTimetableSnapshot();
                             if (timetableSnapshot != null) {
-                                timetable = timetableSnapshot.resolve(index.patternForTrip.get(trip), serviceDate);
+                                // Check if realtime-data is available for trip
+                                TripPattern pattern = timetableSnapshot.getLastAddedTripPattern(timetableSnapshotSource.getFeedId(), trip.getId().getId(), serviceDate);
+                                if (pattern == null) {
+                                    pattern = index.patternForTrip.get(trip);
+                                }
+                                timetable = timetableSnapshot.resolve(pattern, serviceDate);
                             }
                         }
                         if (timetable == null) {
