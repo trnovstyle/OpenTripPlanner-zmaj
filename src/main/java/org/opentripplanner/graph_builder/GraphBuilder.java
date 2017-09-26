@@ -279,7 +279,7 @@ public class GraphBuilder implements Runnable {
         // This module is outside the hasGTFS conditional block because it also links things like bike rental
         // which need to be handled even when there's no transit.
         StreetLinkerModule streetLinkerModule = new StreetLinkerModule();
-        streetLinkerModule.skipVisibility = !builderParams.areaVisibility;
+        streetLinkerModule.setAddExtraEdgesToAreas(builderParams.extraEdgesStopPlatformLink);
         graphBuilder.addModule(streetLinkerModule);
 
         
