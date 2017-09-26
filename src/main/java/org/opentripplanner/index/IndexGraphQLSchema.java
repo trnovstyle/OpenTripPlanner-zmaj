@@ -1372,6 +1372,7 @@ public class IndexGraphQLSchema {
             .field(GraphQLFieldDefinition.newFieldDefinition()
                 .name("stoptimes")
                 .type(new GraphQLList(stoptimeType))
+                .description("Returns scheduled stoptimes only - without realtime-updates, for realtime-data use 'stoptimesForDate'")
                 .dataFetcher(environment -> TripTimeShort.fromTripTimes(
                     index.patternForTrip.get((Trip) environment.getSource()).scheduledTimetable,
                     environment.getSource()))
@@ -1379,6 +1380,7 @@ public class IndexGraphQLSchema {
             .field(GraphQLFieldDefinition.newFieldDefinition()
                 .name("stoptimesForDate")
                 .type(new GraphQLList(stoptimeType))
+                .description("Returns scheduled stoptimes updated with realtime-updates")
                 .argument(GraphQLArgument.newArgument()
                     .name("serviceDay")
                     .type(Scalars.GraphQLString)
