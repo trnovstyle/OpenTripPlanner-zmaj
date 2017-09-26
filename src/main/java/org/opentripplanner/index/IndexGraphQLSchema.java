@@ -1389,7 +1389,8 @@ public class IndexGraphQLSchema {
                 .dataFetcher(environment -> {
                     try {
                         final Trip trip = environment.getSource();
-                        final String argServiceDay = environment.getArgument("serviceDay");
+
+                        final String argServiceDay = cleanupServiceDayArgument(environment.getArgument("serviceDay"));
                         final ServiceDate serviceDate = argServiceDay != null
                             ? ServiceDate.parseString(argServiceDay) : new ServiceDate();
                         final ServiceDay serviceDay = new ServiceDay(index.graph, serviceDate,
@@ -1503,7 +1504,7 @@ public class IndexGraphQLSchema {
                 .dataFetcher(environment -> {
                     try {
                         BitSet services = index.servicesRunning(
-                            ServiceDate.parseString(environment.getArgument("serviceDay"))
+                            ServiceDate.parseString(cleanupServiceDayArgument(environment.getArgument("serviceDay")))
                         );
                         return ((TripPattern) environment.getSource()).scheduledTimetable.tripTimes
                             .stream()
@@ -2460,6 +2461,14 @@ public class IndexGraphQLSchema {
         indexSchema = GraphQLSchema.newSchema()
             .query(queryType)
             .build(dictionary);
+    }
+
+    //Supporting serviceDay format to be the same as date-format - for consistency
+    private String cleanupServiceDayArgument(String serviceDayArgument) {
+        if (serviceDayArgument != null) {
+           serviceDayArgument = serviceDayArgument.replace("-", "");
+        }
+        return serviceDayArgument;
     }
 
     private List<AgencyAndId> toIdList(List<String> ids) {
