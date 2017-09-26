@@ -852,15 +852,16 @@ public class Timetable implements Serializable {
 
                 if (stopsMatchById) {
                     foundMatch = true;
-                    if (estimatedCall.getAimedArrivalTime() != null) {
-                        stopTime.setArrivalTime(calculateSecondsSinceMidnight(departureDate, estimatedCall.getAimedArrivalTime()));
-                    } else if (estimatedCall.getExpectedArrivalTime() != null) {
+                    if (estimatedCall.getExpectedArrivalTime() != null) {
                         stopTime.setArrivalTime(calculateSecondsSinceMidnight(departureDate, estimatedCall.getExpectedArrivalTime()));
+                    } else if (estimatedCall.getAimedArrivalTime() != null) {
+                        stopTime.setArrivalTime(calculateSecondsSinceMidnight(departureDate, estimatedCall.getAimedArrivalTime()));
                     }
-                    if (estimatedCall.getAimedDepartureTime() != null) {
-                        stopTime.setDepartureTime(calculateSecondsSinceMidnight(departureDate, estimatedCall.getAimedDepartureTime()));
-                    } else if (estimatedCall.getExpectedDepartureTime() != null) {
+
+                    if (estimatedCall.getExpectedDepartureTime() != null) {
                         stopTime.setDepartureTime(calculateSecondsSinceMidnight(departureDate, estimatedCall.getExpectedDepartureTime()));
+                    } else if (estimatedCall.getAimedDepartureTime() != null) {
+                        stopTime.setDepartureTime(calculateSecondsSinceMidnight(departureDate, estimatedCall.getAimedDepartureTime()));
                     }
                     if (estimatedCall.isCancellation() != null && estimatedCall.isCancellation()) {
                         stopTime.setDropOffType(PICKDROP_NONE);
