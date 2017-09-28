@@ -5,6 +5,8 @@ import org.onebusaway.gtfs.model.Route;
 import org.onebusaway.gtfs.model.Stop;
 import org.onebusaway.gtfs.model.Trip;
 import org.onebusaway.gtfs.model.calendar.ServiceDate;
+import org.opentripplanner.gtfs.GtfsLibrary;
+import org.opentripplanner.routing.core.TraverseMode;
 import org.opentripplanner.routing.edgetype.TripPattern;
 import org.opentripplanner.routing.graph.GraphIndex;
 import org.opentripplanner.routing.trippattern.TripTimes;
@@ -132,7 +134,7 @@ public class SiriFuzzyTripMatcher {
 
     private Set<Trip> getCachedTripsBySiriId(String tripId) {
         if (tripId == null) {return null;}
-        return mappedTripsCache.get(tripId);
+        return mappedTripsCache.getOrDefault(tripId, new HashSet<>());
     }
 
     private static void initCache(GraphIndex index) {
@@ -256,6 +258,24 @@ public class SiriFuzzyTripMatcher {
         for (Trip trip : trips) {
             if (trip.getId().getId().equals(vehicleJourney)) {
                 return trip.getId();
+            }
+        }
+        return null;
+    }
+
+    public AgencyAndId getTripIdForTripShortNameServiceDateAndMode(String tripShortName, ServiceDate serviceDate, TraverseMode traverseMode) {
+
+        Set<Trip> cachedTripsBySiriId = getCachedTripsBySiriId(tripShortName);
+
+        for (Trip trip : cachedTripsBySiriId) {
+            if (GtfsLibrary.getTraverseMode(trip.getRoute()).equals(traverseMode)) {
+                Set<ServiceDate> serviceDates = index.graph.getCalendarService().getServiceDatesForServiceId(trip.getServiceId());
+
+                if (serviceDates.contains(serviceDate) &&
+                        trip.getTripShortName() != null &&
+                        trip.getTripShortName().equals(tripShortName)) {
+                    return trip.getId();
+                }
             }
         }
         return null;

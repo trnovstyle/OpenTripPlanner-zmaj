@@ -17,9 +17,11 @@ import com.google.transit.realtime.GtfsRealtime;
 import com.google.transit.realtime.GtfsRealtime.*;
 import org.onebusaway.gtfs.model.AgencyAndId;
 import org.onebusaway.gtfs.model.Route;
+import org.onebusaway.gtfs.model.calendar.ServiceDate;
 import org.opentripplanner.routing.alertpatch.Alert;
 import org.opentripplanner.routing.alertpatch.AlertPatch;
 import org.opentripplanner.routing.alertpatch.TimePeriod;
+import org.opentripplanner.routing.core.TraverseMode;
 import org.opentripplanner.routing.services.AlertPatchService;
 import org.opentripplanner.updater.GtfsRealtimeFuzzyTripMatcher;
 import org.opentripplanner.updater.SiriFuzzyTripMatcher;
@@ -30,8 +32,10 @@ import org.slf4j.LoggerFactory;
 import uk.org.ifopt.siri20.StopPlaceRef;
 import uk.org.siri.siri20.*;
 
+import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 /**
  * This updater only includes GTFS-Realtime Service Alert feeds.
@@ -125,11 +129,12 @@ public class AlertsUpdateHandler {
         }
 
         String situationNumber = null;
-        String paddedSituationNumber = null;
+
         if (situation.getSituationNumber() != null) {
             situationNumber = situation.getSituationNumber().getValue();
-            paddedSituationNumber = situationNumber + "-";
         }
+
+        String paddedSituationNumber = situationNumber + ":";
 
         Set<String> idsToExpire = new HashSet<>();
         boolean expireSituation = (situation.getProgress() != null &&
@@ -265,103 +270,61 @@ public class AlertsUpdateHandler {
             AffectsScopeStructure.VehicleJourneys vjs = affectsStructure.getVehicleJourneys();
             if (vjs != null && !isListNullOrEmpty(vjs.getAffectedVehicleJourneies())) {
 
-                for (AffectedVehicleJourneyStructure vj : vjs.getAffectedVehicleJourneies()) {
+                for (AffectedVehicleJourneyStructure affectedVehicleJourney : vjs.getAffectedVehicleJourneies()) {
 
                     String lineRef = null;
-                    if (vj.getLineRef() != null) {
-                        lineRef = vj.getLineRef().getValue();
+                    if (affectedVehicleJourney.getLineRef() != null) {
+                        lineRef = affectedVehicleJourney.getLineRef().getValue();
                     }
 
-                    List<VehicleJourneyRef> tripRefs = vj.getVehicleJourneyReves();
-                    AffectedVehicleJourneyStructure.Calls stopRefs = vj.getCalls();
+                    List<VehicleJourneyRef> vehicleJourneyReves = affectedVehicleJourney.getVehicleJourneyReves();
 
-                    boolean hasTripRefs = !isListNullOrEmpty(tripRefs);
-                    boolean hasStopRefs = stopRefs != null && !isListNullOrEmpty(stopRefs.getCalls());
+                    ZonedDateTime originAimedDepartureTime = (affectedVehicleJourney.getOriginAimedDepartureTime() != null ? affectedVehicleJourney.getOriginAimedDepartureTime():ZonedDateTime.now());
 
-                    if (!(hasTripRefs || hasStopRefs)) {
-                        if (lineRef != null) {
+                    if (!isListNullOrEmpty(vehicleJourneyReves)) {
+                        for (VehicleJourneyRef vehicleJourneyRef : vehicleJourneyReves) {
 
-                            Set<Route> affectedRoutes = siriFuzzyTripMatcher.getRoutes(lineRef);
-                            for (Route route : affectedRoutes) {
-                                String id = paddedSituationNumber + route.getId();
-                                if (expireSituation) {
-                                    idsToExpire.add(id);
-                                } else {
-                                    AlertPatch alertPatch = new AlertPatch();
-                                    alertPatch.setRoute(route.getId());
-                                    alertPatch.setAgencyId(route.getAgency().getId());
-                                    alertPatch.setId(id);
-                                    patches.add(alertPatch);
-                                }
+                            AgencyAndId tripId = siriFuzzyTripMatcher.getTripId(vehicleJourneyRef.getValue());
+                            if (tripId == null) {
+                                tripId = siriFuzzyTripMatcher.getTripIdForTripShortNameServiceDateAndMode(vehicleJourneyRef.getValue(),
+                                        new ServiceDate(new Date(originAimedDepartureTime.toInstant().toEpochMilli())),
+                                        TraverseMode.RAIL);
                             }
-                        }
-                    } else if (hasTripRefs && hasStopRefs) {
-                        for (VehicleJourneyRef vjRef : vj.getVehicleJourneyReves()) {
-
-                            AgencyAndId tripId = siriFuzzyTripMatcher.getTripId(vjRef.getValue());
-
-                            for (AffectedCallStructure call : stopRefs.getCalls()) {
-
-                                AgencyAndId stopId = siriFuzzyTripMatcher.getStop(call.getStopPointRef().getValue());
-                                Set<Route> routeId = siriFuzzyTripMatcher.getRoutesForStop(stopId);
-
-                                for (Route route : routeId) {
-                                    String id = paddedSituationNumber + route.getId();
-                                    if (expireSituation) {
-                                        idsToExpire.add(id);
-                                    } else {
-                                        AlertPatch alertPatch = new AlertPatch();
-                                        alertPatch.setRoute(route.getId());
-                                        alertPatch.setTrip(tripId);
-                                        alertPatch.setAgencyId(tripId.getAgencyId());
-                                        alertPatch.setStop(stopId);
-                                        alertPatch.setId(id);
-                                        patches.add(alertPatch);
-                                    }
-                                }
-                            }
-                        }
-                    } else if (hasTripRefs) {
-                        for (VehicleJourneyRef vjRef : vj.getVehicleJourneyReves()) {
-
-                            AgencyAndId tripId = siriFuzzyTripMatcher.getTripId(vjRef.getValue());
                             if (tripId != null) {
+                                String id = paddedSituationNumber + tripId.getId();
 
-                                String id = paddedSituationNumber + vjRef.getValue();
-                                if (expireSituation) {
-                                    idsToExpire.add(id);
-                                } else {
-                                    AlertPatch alertPatch = new AlertPatch();
-                                    alertPatch.setTrip(tripId);
-                                    alertPatch.setAgencyId(tripId.getAgencyId());
-                                    alertPatch.setId(id);
-                                    patches.add(alertPatch);
-                                }
+                                AlertPatch alertPatch = new AlertPatch();
+                                alertPatch.setTrip(tripId);
+                                alertPatch.setAgencyId(tripId.getAgencyId());
+                                alertPatch.setId(id);
+                                patches.add(alertPatch);
                             }
                         }
-                    } else {
-                        for (AffectedCallStructure call : stopRefs.getCalls()) {
-                            AgencyAndId stopId = siriFuzzyTripMatcher.getStop(call.getStopPointRef().getValue());
-                            Set<Route> routeId = siriFuzzyTripMatcher.getRoutesForStop(stopId);
+                    }
+                    if (lineRef != null) {
 
-                            for (Route route : routeId) {
-
-                                String id = paddedSituationNumber + route.getId().getId();
-                                if (expireSituation) {
-                                    idsToExpire.add(id);
-                                } else {
-                                    AlertPatch alertPatch = new AlertPatch();
-                                    alertPatch.setRoute(route.getId());
-                                    alertPatch.setAgencyId(route.getAgency().getId());
-                                    alertPatch.setStop(stopId);
-                                    alertPatch.setId(id);
-                                    patches.add(alertPatch);
-                                }
+                        Set<Route> affectedRoutes = siriFuzzyTripMatcher.getRoutes(lineRef);
+                        for (Route route : affectedRoutes) {
+                            String id = paddedSituationNumber + route.getId();
+                            if (expireSituation) {
+                                idsToExpire.add(id);
+                            } else {
+                                AlertPatch alertPatch = new AlertPatch();
+                                alertPatch.setRoute(route.getId());
+                                alertPatch.setAgencyId(route.getAgency().getId());
+                                alertPatch.setId(id);
+                                patches.add(alertPatch);
                             }
                         }
                     }
                 }
             }
+        } else if (affectsStructure == null && expireSituation) {
+               idsToExpire.addAll(alertPatchService.getAllAlertPatches()
+                    .stream()
+                    .filter(alertPatch -> alertPatch.getId().startsWith(paddedSituationNumber))
+                    .map(alertPatch -> alertPatch.getId())
+                    .collect(Collectors.toList()));
         }
 
         if (patches.size() > 0 | !idsToExpire.isEmpty()) {
@@ -516,12 +479,19 @@ public class AlertsUpdateHandler {
     private I18NString getTranslatedString(List<DefaultedTextStructure> input) {
         Map<String, String> translations = new HashMap<>();
         if (input != null && input.size() > 0) {
-            translations.put("nb", input.get(0).getValue());
-            translations.put("en", "EN: "+input.get(0).getValue()); //Hack to allow non-translated string being returned as "translated"
+            for (DefaultedTextStructure textStructure : input) {
+                String language = "";
+                String value = "";
+                if (textStructure.getLang() != null) {
+                    language = textStructure.getLang();
+                }
+                if (textStructure.getValue() != null) {
+                    value = textStructure.getValue();
+                }
+                translations.put(language, value);
+            }
         } else {
-
-            translations.put("nb", "");
-            translations.put("en", "EN: ");  //Hack to allow non-translated string being returned as "translated"
+            translations.put("", "");
         }
 
         return translations.isEmpty() ? null : TranslatedString.getI18NString(translations);
