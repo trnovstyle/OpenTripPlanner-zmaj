@@ -656,20 +656,22 @@ public class Timetable implements Serializable {
                     }
 
                     int arrivalTime = newTimes.getArrivalTime(callCounter);
+                    int realtimeArrivalTime = arrivalTime;
                     if (estimatedCall.getExpectedArrivalTime() != null) {
-                        arrivalTime = calculateSecondsSinceMidnight(departureDate, estimatedCall.getExpectedArrivalTime());
+                        realtimeArrivalTime = calculateSecondsSinceMidnight(departureDate, estimatedCall.getExpectedArrivalTime());
                     } else if (estimatedCall.getAimedArrivalTime() != null) {
-                        arrivalTime = calculateSecondsSinceMidnight(departureDate, estimatedCall.getAimedArrivalTime());
+                        realtimeArrivalTime = calculateSecondsSinceMidnight(departureDate, estimatedCall.getAimedArrivalTime());
                     }
-                    newTimes.updateArrivalTime(callCounter, arrivalTime);
+                    newTimes.updateArrivalDelay(callCounter, realtimeArrivalTime-arrivalTime);
 
                     int departureTime = newTimes.getDepartureTime(callCounter);
+                    int realtimeDepartureTime = departureTime;
                     if (estimatedCall.getExpectedDepartureTime() != null) {
-                        departureTime = calculateSecondsSinceMidnight(departureDate, estimatedCall.getExpectedDepartureTime());
+                        realtimeDepartureTime = calculateSecondsSinceMidnight(departureDate, estimatedCall.getExpectedDepartureTime());
                     } else if (estimatedCall.getAimedDepartureTime() != null) {
-                        departureTime = calculateSecondsSinceMidnight(departureDate, estimatedCall.getAimedDepartureTime());
+                        realtimeDepartureTime = calculateSecondsSinceMidnight(departureDate, estimatedCall.getAimedDepartureTime());
                     }
-                    newTimes.updateDepartureTime(callCounter, Math.max(departureTime, arrivalTime));
+                    newTimes.updateDepartureDelay(callCounter, realtimeDepartureTime-departureTime);
 
                     alreadyVisited.add(estimatedCall);
                     break;
