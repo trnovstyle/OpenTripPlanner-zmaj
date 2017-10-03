@@ -893,16 +893,6 @@ public class Timetable implements Serializable {
                 }
             }
 
-            if (counter == 0) {
-                //Override first stop
-                stopTime.setDropOffType(1);
-                stopTime.setArrivalTime(stopTime.getDepartureTime());
-            } else if (counter == stops.size()-1) {
-                //Override last stop
-                stopTime.setPickupType(1);
-                stopTime.setDepartureTime(stopTime.getArrivalTime());
-            }
-
             if (!foundMatch) {
                 stopTime.setArrivalTime(oldTimes.getArrivalTime(counter));
                 stopTime.setDepartureTime(oldTimes.getDepartureTime(counter));
