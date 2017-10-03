@@ -764,7 +764,9 @@ public class GraphIndex {
 
             // loop through all stops of pattern
             for (final Stop currStop : pattern.stopPattern.stops) {
-                if (currStop.equals(stop)) {
+                if (currStop.equals(stop) ||
+                        (currStop.getParentStation() != null && currStop.getParentStation().equals(stop.getParentStation()))) {
+
                     for (final TripTimes triptimes : tt.tripTimes) {
                         if (!sd.serviceRunning(triptimes.serviceCode))
                             continue;
