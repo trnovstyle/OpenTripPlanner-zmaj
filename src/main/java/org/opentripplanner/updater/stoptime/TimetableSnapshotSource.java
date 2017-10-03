@@ -490,9 +490,6 @@ public class TimetableSnapshotSource {
 
         final List<Stop> stops = pattern.getStops();
 
-        // Create StopTimes
-        final List<StopTime> stopTimes = new ArrayList<>(updatedTripTimes.getNumStops());
-
         int accumulatedDelayTime = 0;
 
         VehicleActivityStructure.MonitoredVehicleJourney monitoredVehicleJourney = activity.getMonitoredVehicleJourney();
@@ -507,12 +504,18 @@ public class TimetableSnapshotSource {
 
                     final Stop stop = stops.get(index);
 
-                    // Create stop time
-                    final StopTime stopTime = new StopTime();
-                    stopTime.setTrip(trip);
-                    stopTime.setStop(stop);
+                    boolean stopIdMatches = stop.getId().getId().equals(monitoredCall.getStopPointRef().getValue());
 
-                    if (stop.getId().getId().equals(monitoredCall.getStopPointRef().getValue())) {
+                    if (!stopIdMatches && stop.getParentStation() != null) {
+                        AgencyAndId alternativeId = new AgencyAndId(stop.getId().getAgencyId(), monitoredCall.getStopPointRef().getValue());
+                        Stop alternativeStop = graphIndex.stopForId.get(alternativeId);
+                        if (alternativeStop != null && alternativeStop.getParentStation() != null) {
+                            stopIdMatches = stop.getParentStation().equals(alternativeStop.getParentStation());
+                        }
+                    }
+
+
+                    if (stopIdMatches) {
                         if (delay != null) {
                             accumulatedDelayTime += delay.getSign()*(delay.getHours() *3600 + delay.getMinutes() *60 + delay.getSeconds());
                         }
@@ -522,29 +525,6 @@ public class TimetableSnapshotSource {
                             LOG.debug("Added delay of [{}s] before stop [{}] on trip [{}]", accumulatedDelayTime, monitoredCall.getStopPointRef().getValue(), trip.getId());
                         }
                     }
-
-                    stopTime.setArrivalTime(updatedTripTimes.getArrivalTime(index));
-                    stopTime.setDepartureTime(updatedTripTimes.getDepartureTime(index));
-
-                    stopTime.setTimepoint(1); // Exact time
-
-                    // Set pickup type
-                    // Set different pickup type for last stop
-                    if (index == updatedTripTimes.getNumStops() - 1) {
-                        stopTime.setPickupType(1); // No pickup available
-                    } else {
-                        stopTime.setPickupType(0); // Regularly scheduled pickup
-                    }
-                    // Set drop off type
-                    // Set different drop off type for first stop
-                    if (index == 0) {
-                        stopTime.setDropOffType(1); // No drop off available
-                    } else {
-                        stopTime.setDropOffType(0); // Regularly scheduled drop off
-                    }
-
-                    // Add stop time to list
-                    stopTimes.add(stopTime);
                 }
             }
 
@@ -593,6 +573,11 @@ public class TimetableSnapshotSource {
             return false;
         }
 
+        int numberOfStops = estimatedCalls.getEstimatedCalls().size();
+        if (estimatedVehicleJourney.getRecordedCalls() != null && estimatedVehicleJourney.getRecordedCalls().getRecordedCalls() != null) {
+            numberOfStops += estimatedVehicleJourney.getRecordedCalls().getRecordedCalls().size();
+        }
+
         Set<TripTimes> times = new HashSet<>();
 
         Set<TripPattern> patterns = new HashSet<>();
@@ -600,7 +585,7 @@ public class TimetableSnapshotSource {
             TripPattern pattern = getPatternForTrip(matchingTrip, estimatedVehicleJourney);
             if (pattern != null) {
                 TripTimes updatedTripTimes = pattern.scheduledTimetable.createUpdatedTripTimes(graph, estimatedVehicleJourney, timeZone, matchingTrip.getId());
-                if (updatedTripTimes != null && updatedTripTimes.getNumStops() == estimatedCalls.getEstimatedCalls().size()) {
+                if (updatedTripTimes != null && updatedTripTimes.getNumStops() == numberOfStops) {
                     patterns.add(pattern);
                     times.add(updatedTripTimes);
                 }
