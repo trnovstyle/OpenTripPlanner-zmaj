@@ -1157,7 +1157,19 @@ public class TimetableSnapshotSource {
         pattern.scheduledTimetable.addTripTimes(updatedTripTimes);
         pattern.scheduledTimetable.finish();
 
-        //TODO: Add pattern to index?
+
+        //Add pattern to index
+        graphIndex.patternsForFeedId.put(pattern.getFeedId(), pattern);
+        graphIndex.patternsForRoute.put(pattern.route, pattern);
+
+        graphIndex.patternForTrip.put(trip, pattern);
+        graphIndex.tripForId.put(trip.getId(), trip);
+        for (Stop stop: pattern.getStops()) {
+            if (!graphIndex.patternsForStop.containsEntry(stop, pattern)) {
+                graphIndex.patternsForStop.put(stop, pattern);
+            }
+        }
+
 
         // Add new trip times to the buffer
         final boolean success = buffer.update(feedId, pattern, updatedTripTimes, serviceDate);
