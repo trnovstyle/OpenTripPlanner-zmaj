@@ -159,7 +159,7 @@ otp.config = {
     showLogo            : false,
     showTitle           : true,
     showModuleSelector  : true,
-    metric              : false,
+    metric              : true,
 
 
     /**
