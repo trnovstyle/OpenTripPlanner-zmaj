@@ -885,6 +885,12 @@ public class Timetable implements Serializable {
                             }
                         }
                     }
+                    if (stopTime.getArrivalTime() < 0 && stopTime.getDepartureTime() > 0) {
+                        stopTime.setArrivalTime(stopTime.getDepartureTime());
+                    }
+                    if (stopTime.getDepartureTime() < 0 && stopTime.getArrivalTime() > 0) {
+                        stopTime.setDepartureTime(stopTime.getArrivalTime());
+                    }
 
                     stopTime.setTimepoint(1); //Exact time
 
