@@ -1163,6 +1163,7 @@ public class TimetableSnapshotSource {
         graphIndex.patternsForRoute.put(pattern.route, pattern);
 
         graphIndex.patternForTrip.put(trip, pattern);
+        graphIndex.patternForId.put(pattern.code, pattern);
         graphIndex.tripForId.put(trip.getId(), trip);
         for (Stop stop: pattern.getStops()) {
             if (!graphIndex.patternsForStop.containsEntry(stop, pattern)) {
