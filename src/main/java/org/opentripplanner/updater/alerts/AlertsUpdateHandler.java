@@ -194,7 +194,36 @@ public class AlertsUpdateHandler {
                 }
             }
 
-            AffectsScopeStructure.Networks networks = affectsStructure.getNetworks();
+            AffectsScopeStructure.StopPlaces stopPlaces = affectsStructure.getStopPlaces();
+
+            if (stopPlaces != null && !isListNullOrEmpty(stopPlaces.getAffectedStopPlaces())) {
+
+                for (AffectedStopPlaceStructure stopPoint : stopPlaces.getAffectedStopPlaces()) {
+                    StopPlaceRef stopPlace = stopPoint.getStopPlaceRef();
+                    if (stopPlace == null || stopPlace.getValue() == null) {
+                        continue;
+                    }
+
+                    AgencyAndId stopId = siriFuzzyTripMatcher.getStop(stopPlace.getValue());
+
+                    String id = paddedSituationNumber + stopPlace.getValue();
+                    if (stopId != null) {
+
+                        AlertPatch alertPatch = new AlertPatch();
+                        alertPatch.setStop(stopId);
+                        alertPatch.setTimePeriods(periods);
+                        alertPatch.setId(id);
+                        patches.add(alertPatch);
+                    }
+                }
+            }
+
+            AffectsScopeStructure.Networks networks = null;
+
+            if (stopPoints == null && stopPlaces == null) {
+                //NRP-2242: When Alert affects both Line and Stop, only Stop should be used
+                networks = affectsStructure.getNetworks();
+            }
 
             if (networks != null && !isListNullOrEmpty(networks.getAffectedNetworks())) {
 
@@ -237,30 +266,6 @@ public class AlertsUpdateHandler {
                         idsToExpire.add(id);
                     } else {
                         AlertPatch alertPatch = new AlertPatch();
-                        alertPatch.setId(id);
-                        patches.add(alertPatch);
-                    }
-                }
-            }
-
-            AffectsScopeStructure.StopPlaces stopPlaces = affectsStructure.getStopPlaces();
-
-            if (stopPlaces != null && !isListNullOrEmpty(stopPlaces.getAffectedStopPlaces())) {
-
-                for (AffectedStopPlaceStructure stopPoint : stopPlaces.getAffectedStopPlaces()) {
-                    StopPlaceRef stopPlace = stopPoint.getStopPlaceRef();
-                    if (stopPlace == null || stopPlace.getValue() == null) {
-                        continue;
-                    }
-
-                    AgencyAndId stopId = siriFuzzyTripMatcher.getStop(stopPlace.getValue());
-
-                    String id = paddedSituationNumber + stopPlace.getValue();
-                    if (stopId != null) {
-
-                        AlertPatch alertPatch = new AlertPatch();
-                        alertPatch.setStop(stopId);
-                        alertPatch.setTimePeriods(periods);
                         alertPatch.setId(id);
                         patches.add(alertPatch);
                     }
