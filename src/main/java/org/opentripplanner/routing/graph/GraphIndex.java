@@ -751,7 +751,7 @@ public class GraphIndex {
             Timetable tt;
 
             if (snapshot != null) {
-                tt = snapshot.resolve(pattern, serviceDate);
+                tt = snapshot.resolveLastAdded(pattern, serviceDate);
             } else {
                 tt = pattern.scheduledTimetable;
             }
@@ -763,7 +763,7 @@ public class GraphIndex {
             int stopIndex = 0;
 
             // loop through all stops of pattern
-            for (final Stop currStop : pattern.stopPattern.stops) {
+            for (final Stop currStop : tt.pattern.stopPattern.stops) {
                 if (currStop.equals(stop) ||
                         (currStop.getParentStation() != null && currStop.getParentStation().equals(stop.getParentStation()))) {
 
@@ -826,7 +826,7 @@ public class GraphIndex {
             StopTimesInPattern stopTimes = new StopTimesInPattern(pattern);
             Timetable tt;
             if (snapshot != null){
-                tt = snapshot.resolve(pattern, serviceDate);
+                tt = snapshot.resolveLastAdded(pattern, serviceDate);
             } else {
                 tt = pattern.scheduledTimetable;
             }

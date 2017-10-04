@@ -13,15 +13,15 @@
 
 package org.opentripplanner.routing.edgetype;
 
-import java.util.*;
-import java.util.Map.Entry;
-
+import com.google.common.base.Preconditions;
+import org.onebusaway.gtfs.model.Trip;
 import org.onebusaway.gtfs.model.calendar.ServiceDate;
 import org.opentripplanner.routing.trippattern.TripTimes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.base.Preconditions;
+import java.util.*;
+import java.util.Map.Entry;
 
 // this is only currently in edgetype because that's where Trippattern is.
 // move these classes elsewhere.
@@ -151,7 +151,56 @@ public class TimetableSnapshot {
 
         return pattern.scheduledTimetable;
     }
-    
+
+    /**
+     * Returns an updated timetable for the specified pattern if one is available in this snapshot,
+     * or the originally scheduled timetable if there are no updates in this snapshot.
+     */
+    public Timetable resolveLastAdded(TripPattern pattern, ServiceDate serviceDate) {
+
+        Set<TripPattern> updatedPatterns = new HashSet<>();
+        List<Trip> trips = pattern.getTrips();
+        for (Trip trip : trips) {
+            TripPattern lastAddedTripPattern = getLastAddedTripPattern(trip.getId().getAgencyId(), trip.getId().getId(), serviceDate);
+            if (lastAddedTripPattern != null) {
+                updatedPatterns.add(lastAddedTripPattern);
+            }
+        }
+        Timetable lastAddedTimetable = null;
+        if (!updatedPatterns.isEmpty()) {
+            for (TripPattern updatedPattern : updatedPatterns) {
+                if (updatedPattern.scheduledTimetable != null && updatedPattern.scheduledTimetable.isValidFor(serviceDate)) {
+                    if (updatedPattern.scheduledTimetable.tripTimes != null) {
+                        for (TripTimes tripTime : updatedPattern.scheduledTimetable.tripTimes) {
+                            if (!tripTime.isCanceled() & !tripTime.isScheduled()) {
+                                LOG.trace("returning modified timetable");
+                                if (lastAddedTimetable == null) {
+                                    lastAddedTimetable = new Timetable(updatedPattern.scheduledTimetable, serviceDate);
+
+                                } else {
+                                    lastAddedTimetable.addTripTimes(tripTime);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        Timetable timetable = resolve(pattern, serviceDate);
+        if (lastAddedTimetable != null) {
+            if (timetable != null && timetable.tripTimes != null) {
+                for (TripTimes tripTime : timetable.tripTimes) {
+                    if (!lastAddedTimetable.tripTimes.contains(tripTime)) {
+                        lastAddedTimetable.tripTimes.add(tripTime);
+                    }
+                }
+                lastAddedTimetable.finish();
+                return lastAddedTimetable;
+            }
+        }
+        return timetable;
+    }
+
     /**
      * Get the last <b>added</b> trip pattern given a trip id (without agency) and a service date as
      * a result of a call to {@link #update(String feedId, TripPattern, TripTimes, ServiceDate)} with trip times of

@@ -622,6 +622,9 @@ public class Timetable implements Serializable {
         Trip trip = getTrip(tripId);
 
         List<StopTime> modifiedStopTimes = createModifiedStopTimes(oldTimes, journey, trip, graph.index);
+        if (modifiedStopTimes == null) {
+            return null;
+        }
         TripTimes newTimes = new TripTimes(trip, modifiedStopTimes, graph.deduplicator);
 
         //Populate missing data from existing TripTimes
@@ -810,6 +813,10 @@ public class Timetable implements Serializable {
 
         ZonedDateTime departureDate = null;
         int counter = (journey.getRecordedCalls() != null && journey.getRecordedCalls().getRecordedCalls() != null) ? journey.getRecordedCalls().getRecordedCalls().size():0;
+
+        if (estimatedCalls.size() + counter > stops.size()) {
+            return null;
+        }
 
         // Keep existing stop-times as-is
         for (int i = 0; i < counter; i++) {
