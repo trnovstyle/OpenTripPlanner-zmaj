@@ -585,7 +585,7 @@ public class TimetableSnapshotSource {
             TripPattern pattern = getPatternForTrip(matchingTrip, estimatedVehicleJourney);
             if (pattern != null) {
                 TripTimes updatedTripTimes = pattern.scheduledTimetable.createUpdatedTripTimes(graph, estimatedVehicleJourney, timeZone, matchingTrip.getId());
-                if (updatedTripTimes != null && updatedTripTimes.getNumStops() == numberOfStops) {
+                if (updatedTripTimes != null) {
                     patterns.add(pattern);
                     times.add(updatedTripTimes);
                 }

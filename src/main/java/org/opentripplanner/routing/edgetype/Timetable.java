@@ -561,57 +561,53 @@ public class Timetable implements Serializable {
         }
 
         EstimatedVehicleJourney.EstimatedCalls journeyCalls = journey.getEstimatedCalls();
+        EstimatedVehicleJourney.RecordedCalls recordedCalls = journey.getRecordedCalls();
 
         if (journeyCalls == null) {
             LOG.error("Part of a TripUpdate object could not be applied successfully.");
             return null;
         }
 
-
         List<EstimatedCall> estimatedCalls = journeyCalls.getEstimatedCalls();
+
+        int numberOfRecordedCalls = (recordedCalls != null ? (recordedCalls.getRecordedCalls() != null ? recordedCalls.getRecordedCalls().size():0):0);
 
         boolean stopPatternChanged = false;
 
         //Get all scheduled stops with dropoff or pickup
-        List<Stop> stops = new ArrayList<>();
-        Stop[] allStops = pattern.stopPattern.stops;
-        for (int i = 0; i < allStops.length; i++) {
-            if (pattern.stopPattern.dropoffs[i] != PICKDROP_NONE |
-                    pattern.stopPattern.pickups[i] != PICKDROP_NONE) {
-                stops.add(allStops[i]);
-            } else {
-                stopPatternChanged = true;
-            }
-        }
+        Stop[] stops = pattern.stopPattern.stops;
 
         List<Stop> modifiedStops = new ArrayList<>();
-        for (Stop stop : stops) {
+        for (int i = 0; i < stops.length; i++) {
+            Stop stop = stops[i];
+
             boolean foundMatch = false;
+            if (i > numberOfRecordedCalls) {
+                for (EstimatedCall estimatedCall : estimatedCalls) {
 
-            for (EstimatedCall estimatedCall : estimatedCalls) {
+                    //Current stop is being updated
+                    boolean stopsMatchById = stop.getId().getId().equals(estimatedCall.getStopPointRef().getValue());
 
-                //Current stop is being updated
-                boolean stopsMatchById = stop.getId().getId().equals(estimatedCall.getStopPointRef().getValue());
-
-                if (!stopsMatchById && stop.getParentStation() != null) {
-                    Stop alternativeStop = graph.index.stopForId.get(new AgencyAndId(stop.getId().getAgencyId(), estimatedCall.getStopPointRef().getValue()));
-                    if (alternativeStop != null && stop.getParentStation().equals(alternativeStop.getParentStation())) {
-                        stopsMatchById = true;
-                        stopPatternChanged = true;
-                        stop = alternativeStop;
+                    if (!stopsMatchById && stop.getParentStation() != null) {
+                        Stop alternativeStop = graph.index.stopForId.get(new AgencyAndId(stop.getId().getAgencyId(), estimatedCall.getStopPointRef().getValue()));
+                        if (alternativeStop != null && stop.getParentStation().equals(alternativeStop.getParentStation())) {
+                            stopsMatchById = true;
+                            stopPatternChanged = true;
+                            stop = alternativeStop;
+                        }
                     }
-                }
 
-                if (stopsMatchById) {
-                    foundMatch = true;
-                    boolean isCancelled = estimatedCall.isCancellation() != null && estimatedCall.isCancellation();
+                    if (stopsMatchById) {
+                        foundMatch = true;
+                        boolean isCancelled = estimatedCall.isCancellation() != null && estimatedCall.isCancellation();
 
-                    if (!isCancelled) {
-                        modifiedStops.add(stop);
-                    } else {
-                        stopPatternChanged = true;
+                        if (!isCancelled) {
+                            modifiedStops.add(stop);
+                        } else {
+                            stopPatternChanged = true;
+                        }
+                        break;
                     }
-                    break;
                 }
             }
             if (!foundMatch) {
@@ -735,7 +731,7 @@ public class Timetable implements Serializable {
         List<EstimatedCall> estimatedCalls = journeyCalls.getEstimatedCalls();
 
         //Get all scheduled stops
-        List<Stop> stops = getScheduledStops();
+        Stop[] stops = pattern.stopPattern.stops;
 
         List<Stop> modifiedStops = new ArrayList<>();
 
@@ -764,18 +760,6 @@ public class Timetable implements Serializable {
             }
         }
         return modifiedStops;
-    }
-
-    private List<Stop> getScheduledStops() {
-        List<Stop> stops = new ArrayList<>();
-
-        for (int i = 0; i < pattern.stopPattern.stops.length; i++) {
-            if (pattern.stopPattern.dropoffs[i] != PICKDROP_NONE |
-                    pattern.stopPattern.pickups[i] != PICKDROP_NONE) {
-                stops.add(pattern.stopPattern.stops[i]);
-            }
-        }
-        return stops;
     }
 
     /**
@@ -807,108 +791,99 @@ public class Timetable implements Serializable {
         List<EstimatedCall> estimatedCalls = journeyCalls.getEstimatedCalls();
 
         //Get all scheduled stops
-        List<Stop> stops = getScheduledStops();
+        Stop[] stops = pattern.stopPattern.stops;
 
         List<StopTime> modifiedStops = new ArrayList<>();
 
         ZonedDateTime departureDate = null;
-        int counter = (journey.getRecordedCalls() != null && journey.getRecordedCalls().getRecordedCalls() != null) ? journey.getRecordedCalls().getRecordedCalls().size():0;
+        int numberOfRecordedCalls = (journey.getRecordedCalls() != null && journey.getRecordedCalls().getRecordedCalls() != null) ? journey.getRecordedCalls().getRecordedCalls().size():0;
 
-        if (estimatedCalls.size() + counter > stops.size()) {
+        if (estimatedCalls.size() + numberOfRecordedCalls > stops.length) {
             return null;
         }
 
-        // Keep existing stop-times as-is
-        for (int i = 0; i < counter; i++) {
-            Stop stop = stops.get(i);
-
-            StopTime stopTime = new StopTime();
-            stopTime.setStop(stop);
-            stopTime.setTrip(trip);
-            stopTime.setStopSequence(i);
-
-            stopTime.setArrivalTime(oldTimes.getArrivalTime(i));
-            stopTime.setDepartureTime(oldTimes.getDepartureTime(i));
-            modifiedStops.add(stopTime);
-        }
         // modify updated stop-times
-        for (; counter < stops.size(); counter++) {
-            Stop stop = stops.get(counter);
+        for (int i = 0; i < stops.length; i++) {
+            Stop stop = stops[i];
 
             final StopTime stopTime = new StopTime();
             stopTime.setStop(stop);
             stopTime.setTrip(trip);
-            stopTime.setStopSequence(counter);
+            stopTime.setStopSequence(i);
+            stopTime.setDropOffType(pattern.stopPattern.dropoffs[i]);
+            stopTime.setPickupType(pattern.stopPattern.pickups[i]);
 
             boolean foundMatch = false;
-            for (EstimatedCall estimatedCall : estimatedCalls) {
+            if (i > numberOfRecordedCalls) {
+                for (EstimatedCall estimatedCall : estimatedCalls) {
 
-                if (departureDate == null) {
-                    departureDate = (estimatedCall.getAimedDepartureTime() != null ? estimatedCall.getAimedDepartureTime():estimatedCall.getAimedArrivalTime());
-                }
-
-                //Current stop is being updated
-                boolean stopsMatchById = stop.getId().getId().equals(estimatedCall.getStopPointRef().getValue());
-
-                if (!stopsMatchById && stop.getParentStation() != null) {
-                    Stop alternativeStop = graphIndex.stopForId.get(new AgencyAndId(stop.getId().getAgencyId(), estimatedCall.getStopPointRef().getValue()));
-                    if (alternativeStop != null && stop.getParentStation().equals(alternativeStop.getParentStation())) {
-                        stopsMatchById = true;
-                        stopTime.setStop(alternativeStop);
+                    if (departureDate == null) {
+                        departureDate = (estimatedCall.getAimedDepartureTime() != null ? estimatedCall.getAimedDepartureTime() : estimatedCall.getAimedArrivalTime());
                     }
 
-                }
+                    //Current stop is being updated
+                    boolean stopsMatchById = stop.getId().getId().equals(estimatedCall.getStopPointRef().getValue());
 
-                if (stopsMatchById) {
-                    foundMatch = true;
-                    if (estimatedCall.getExpectedArrivalTime() != null) {
-                        stopTime.setArrivalTime(calculateSecondsSinceMidnight(departureDate, estimatedCall.getExpectedArrivalTime()));
-                    } else if (estimatedCall.getAimedArrivalTime() != null) {
-                        stopTime.setArrivalTime(calculateSecondsSinceMidnight(departureDate, estimatedCall.getAimedArrivalTime()));
+                    if (!stopsMatchById && stop.getParentStation() != null) {
+                        Stop alternativeStop = graphIndex.stopForId.get(new AgencyAndId(stop.getId().getAgencyId(), estimatedCall.getStopPointRef().getValue()));
+                        if (alternativeStop != null && stop.getParentStation().equals(alternativeStop.getParentStation())) {
+                            stopsMatchById = true;
+                            stopTime.setStop(alternativeStop);
+                        }
+
                     }
 
-                    if (estimatedCall.getExpectedDepartureTime() != null) {
-                        stopTime.setDepartureTime(calculateSecondsSinceMidnight(departureDate, estimatedCall.getExpectedDepartureTime()));
-                    } else if (estimatedCall.getAimedDepartureTime() != null) {
-                        stopTime.setDepartureTime(calculateSecondsSinceMidnight(departureDate, estimatedCall.getAimedDepartureTime()));
-                    }
-                    if (estimatedCall.isCancellation() != null && estimatedCall.isCancellation()) {
-                        stopTime.setDropOffType(PICKDROP_NONE);
-                        stopTime.setPickupType(PICKDROP_NONE);
-                    } else {
+                    if (stopsMatchById) {
+                        foundMatch = true;
+                        if (estimatedCall.getExpectedArrivalTime() != null) {
+                            stopTime.setArrivalTime(calculateSecondsSinceMidnight(departureDate, estimatedCall.getExpectedArrivalTime()));
+                        } else if (estimatedCall.getAimedArrivalTime() != null) {
+                            stopTime.setArrivalTime(calculateSecondsSinceMidnight(departureDate, estimatedCall.getAimedArrivalTime()));
+                        }
 
-                        if (estimatedCall.getArrivalBoardingActivity() != null) {
-                            if (estimatedCall.getArrivalBoardingActivity() == ArrivalBoardingActivityEnumeration.ALIGHTING) {
-                                stopTime.setPickupType(PICKDROP_SCHEDULED);
-                            } else if (estimatedCall.getArrivalBoardingActivity() == ArrivalBoardingActivityEnumeration.NO_ALIGHTING) {
-                                stopTime.setPickupType(PICKDROP_NONE);
+                        if (estimatedCall.getExpectedDepartureTime() != null) {
+                            stopTime.setDepartureTime(calculateSecondsSinceMidnight(departureDate, estimatedCall.getExpectedDepartureTime()));
+                        } else if (estimatedCall.getAimedDepartureTime() != null) {
+                            stopTime.setDepartureTime(calculateSecondsSinceMidnight(departureDate, estimatedCall.getAimedDepartureTime()));
+                        }
+                        if (estimatedCall.isCancellation() != null && estimatedCall.isCancellation()) {
+                            stopTime.setDropOffType(PICKDROP_NONE);
+                            stopTime.setPickupType(PICKDROP_NONE);
+                        } else {
+
+                            if (estimatedCall.getArrivalBoardingActivity() != null) {
+                                if (estimatedCall.getArrivalBoardingActivity() == ArrivalBoardingActivityEnumeration.ALIGHTING) {
+                                    stopTime.setPickupType(PICKDROP_SCHEDULED);
+                                } else if (estimatedCall.getArrivalBoardingActivity() == ArrivalBoardingActivityEnumeration.NO_ALIGHTING) {
+                                    stopTime.setPickupType(PICKDROP_NONE);
+                                }
+                            }
+                            if (estimatedCall.getDepartureBoardingActivity() != null) {
+                                if (estimatedCall.getDepartureBoardingActivity() == DepartureBoardingActivityEnumeration.BOARDING) {
+                                    stopTime.setDropOffType(PICKDROP_SCHEDULED);
+                                } else if (estimatedCall.getDepartureBoardingActivity() == DepartureBoardingActivityEnumeration.NO_BOARDING) {
+                                    stopTime.setDropOffType(PICKDROP_NONE);
+                                }
                             }
                         }
-                        if (estimatedCall.getDepartureBoardingActivity() != null) {
-                            if (estimatedCall.getDepartureBoardingActivity() == DepartureBoardingActivityEnumeration.BOARDING) {
-                                stopTime.setDropOffType(PICKDROP_SCHEDULED);
-                            } else if (estimatedCall.getDepartureBoardingActivity() == DepartureBoardingActivityEnumeration.NO_BOARDING) {
-                                stopTime.setDropOffType(PICKDROP_NONE);
-                            }
+                        if (stopTime.getArrivalTime() < 0 && stopTime.getDepartureTime() > 0) {
+                            stopTime.setArrivalTime(stopTime.getDepartureTime());
                         }
-                    }
-                    if (stopTime.getArrivalTime() < 0 && stopTime.getDepartureTime() > 0) {
-                        stopTime.setArrivalTime(stopTime.getDepartureTime());
-                    }
-                    if (stopTime.getDepartureTime() < 0 && stopTime.getArrivalTime() > 0) {
-                        stopTime.setDepartureTime(stopTime.getArrivalTime());
-                    }
+                        if (stopTime.getDepartureTime() < 0 && stopTime.getArrivalTime() > 0) {
+                            stopTime.setDepartureTime(stopTime.getArrivalTime());
+                        }
 
-                    stopTime.setTimepoint(1); //Exact time
+                        stopTime.setTimepoint(1); //Exact time
 
-                    modifiedStops.add(stopTime);
-                    break;
+                        modifiedStops.add(stopTime);
+                        break;
+                    }
                 }
             }
 
             if (!foundMatch) {
-                stopTime.setArrivalTime(oldTimes.getArrivalTime(counter));
-                stopTime.setDepartureTime(oldTimes.getDepartureTime(counter));
+                stopTime.setArrivalTime(oldTimes.getArrivalTime(i));
+                stopTime.setDepartureTime(oldTimes.getDepartureTime(i));
                 modifiedStops.add(stopTime);
             }
         }
