@@ -84,7 +84,7 @@ public class SiriFuzzyTripMatcher {
             trips = getCachedTripsBySiriId(journey.getVehicleRef().getValue());
         }
 
-        if (trips == null) {
+        if (trips == null || trips.isEmpty()) {
             String datedVehicleRef = null;
             if (journey.getDatedVehicleJourneyRef() != null) {
                 datedVehicleRef = journey.getDatedVehicleJourneyRef().getValue();
@@ -95,7 +95,7 @@ public class SiriFuzzyTripMatcher {
                 trips = mappedTripsCache.get(datedVehicleRef);
             }
         }
-        if (trips == null) {
+        if (trips == null || trips.isEmpty()) {
             List<EstimatedCall> estimatedCalls = journey.getEstimatedCalls().getEstimatedCalls();
             EstimatedCall lastStop = estimatedCalls.get(estimatedCalls.size() - 1);
 
@@ -110,7 +110,7 @@ public class SiriFuzzyTripMatcher {
                 trips = start_stop_tripCache.get(createStartStopKey(lastStopPoint, lastStopArrivalTime));
             }
 
-            if (trips == null) {
+            if (trips == null || trips.isEmpty()) {
                 //SIRI-data may report other platform, but still on the same Parent-stop
                 String agencyId = index.agenciesForFeedId.keySet().iterator().next();
                 Stop stop = index.stopForId.get(new AgencyAndId(agencyId, lastStopPoint));
