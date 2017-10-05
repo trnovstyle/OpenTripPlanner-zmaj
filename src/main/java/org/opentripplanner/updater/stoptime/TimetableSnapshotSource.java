@@ -1595,7 +1595,9 @@ public class TimetableSnapshotSource {
                     for (TripTimes times : pattern.scheduledTimetable.tripTimes) {
                         if (stopNumber < times.getNumStops() &&
                                 times.getScheduledDepartureTime(matchingStopId) == departureInSecondsSinceMidnight) {
-                            result.add(trip);
+                            if (graphIndex.graph.getCalendarService().getServiceDatesForServiceId(times.trip.getServiceId()).contains(serviceDate)) {
+                                result.add(times.trip);
+                            }
                         }
                     }
                 }
