@@ -582,7 +582,7 @@ public class Timetable implements Serializable {
             Stop stop = stops[i];
 
             boolean foundMatch = false;
-            if (i > numberOfRecordedCalls) {
+            if (i >= numberOfRecordedCalls) {
                 for (EstimatedCall estimatedCall : estimatedCalls) {
 
                     //Current stop is being updated
@@ -601,9 +601,9 @@ public class Timetable implements Serializable {
                         foundMatch = true;
                         boolean isCancelled = estimatedCall.isCancellation() != null && estimatedCall.isCancellation();
 
-                        if (!isCancelled) {
-                            modifiedStops.add(stop);
-                        } else {
+                        modifiedStops.add(stop);
+
+                        if (isCancelled) {
                             stopPatternChanged = true;
                         }
                         break;
@@ -814,7 +814,7 @@ public class Timetable implements Serializable {
             stopTime.setPickupType(pattern.stopPattern.pickups[i]);
 
             boolean foundMatch = false;
-            if (i > numberOfRecordedCalls) {
+            if (i >= numberOfRecordedCalls) {
                 for (EstimatedCall estimatedCall : estimatedCalls) {
 
                     if (departureDate == null) {
