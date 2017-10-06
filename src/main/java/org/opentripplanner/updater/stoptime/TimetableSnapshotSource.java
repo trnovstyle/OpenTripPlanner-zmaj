@@ -573,11 +573,6 @@ public class TimetableSnapshotSource {
             return false;
         }
 
-        int numberOfStops = estimatedCalls.getEstimatedCalls().size();
-        if (estimatedVehicleJourney.getRecordedCalls() != null && estimatedVehicleJourney.getRecordedCalls().getRecordedCalls() != null) {
-            numberOfStops += estimatedVehicleJourney.getRecordedCalls().getRecordedCalls().size();
-        }
-
         Set<TripTimes> times = new HashSet<>();
 
         Set<TripPattern> patterns = new HashSet<>();
@@ -600,23 +595,6 @@ public class TimetableSnapshotSource {
         if (times.isEmpty()) {
             return false;
         }
-
-        //Update platformCode
-//        for (EstimatedCall updated : estimatedCalls.getEstimatedCalls()) {
-//            Stop stop = graphIndex.stopForId.get(new AgencyAndId(graphIndex.agenciesForFeedId.keySet().iterator().next(), updated.getStopPointRef().getValue()));
-//            if (stop != null) {
-//                String platformCode = stop.getPlatformCode();
-//                if (updated.getDeparturePlatformName() != null) {
-//                    platformCode = updated.getDeparturePlatformName().getValue();
-//                } else if (updated.getArrivalPlatformName() != null) {
-//                    platformCode = updated.getArrivalPlatformName().getValue();
-//                }
-//                if (platformCode != null && !platformCode.equals(stop.getPlatformCode())) {
-//                    stop.setPlatformCode(platformCode);
-//                    graphIndex.stopForId.put(stop.getId(), stop);
-//                }
-//            }
-//        }
 
         ZonedDateTime date;
         if (estimatedVehicleJourney.getRecordedCalls() != null && !estimatedVehicleJourney.getRecordedCalls().getRecordedCalls().isEmpty()){
