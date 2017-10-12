@@ -143,29 +143,30 @@ public class SiriFuzzyTripMatcher {
             Set<Trip> trips = index.patternForTrip.keySet();
             for (Trip trip : trips) {
 
-                String currentTripId = getUnpaddedTripId(trip.getId().getId());
+                TripPattern tripPattern = index.patternForTrip.get(trip);
 
-                if (mappedTripsCache.containsKey(currentTripId)) {
-                    mappedTripsCache.get(currentTripId).add(trip);
-                } else {
-                    Set<Trip> initialSet = new HashSet<>();
-                    initialSet.add(trip);
-                    mappedTripsCache.put(currentTripId, initialSet);
-                }
+                    String currentTripId = getUnpaddedTripId(trip.getId().getId());
 
-                if (trip.getTripShortName() != null) {
-                    String tripShortName = trip.getTripShortName();
-
-                    if (mappedTripsCache.containsKey(tripShortName)) {
-                        mappedTripsCache.get(tripShortName).add(trip);
+                    if (mappedTripsCache.containsKey(currentTripId)) {
+                        mappedTripsCache.get(currentTripId).add(trip);
                     } else {
                         Set<Trip> initialSet = new HashSet<>();
                         initialSet.add(trip);
-                        mappedTripsCache.put(tripShortName, initialSet);
+                        mappedTripsCache.put(currentTripId, initialSet);
+                    }
+
+                if (tripPattern != null && tripPattern.mode.equals(TraverseMode.RAIL)) {
+                    if (trip.getTripShortName() != null) {
+                        String tripShortName = trip.getTripShortName();
+                        if (mappedTripsCache.containsKey(tripShortName)) {
+                            mappedTripsCache.get(tripShortName).add(trip);
+                        } else {
+                            Set<Trip> initialSet = new HashSet<>();
+                            initialSet.add(trip);
+                            mappedTripsCache.put(tripShortName, initialSet);
+                        }
                     }
                 }
-
-                TripPattern tripPattern = index.patternForTrip.get(trip);
                 String lastStopId = tripPattern.getStops().get(tripPattern.getStops().size()-1).getId().getId();
 
                 TripTimes tripTimes = tripPattern.scheduledTimetable.getTripTimes(trip);
