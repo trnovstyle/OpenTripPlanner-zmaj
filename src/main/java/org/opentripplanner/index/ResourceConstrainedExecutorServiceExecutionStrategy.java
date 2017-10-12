@@ -9,17 +9,14 @@ import graphql.execution.ExecutionStrategy;
 import graphql.execution.SimpleExecutionStrategy;
 import graphql.language.Field;
 import graphql.schema.GraphQLObjectType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Callable;
-import java.util.concurrent.CancellationException;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -27,6 +24,8 @@ import java.util.concurrent.atomic.AtomicLong;
  *
  */
 public class ResourceConstrainedExecutorServiceExecutionStrategy extends ExecutionStrategy {
+
+    private static final Logger LOG = LoggerFactory.getLogger(ResourceConstrainedExecutorServiceExecutionStrategy.class);
 
     ExecutorService executorService;
 
@@ -79,6 +78,9 @@ public class ResourceConstrainedExecutorServiceExecutionStrategy extends Executi
                 // TODO: Is there some kind of zip stream which could take this?
                 Future<ExecutionResult> executionResultFuture = executionResults.get(i);
                 ExecutionResult executionResult = executionResultFuture.get();
+                if (executionResult.getErrors() != null && !executionResult.getErrors().isEmpty()) {
+                    LOG.warn("Caught exception resolving field {}: {}", fieldNames.get(i), executionResult.getErrors());
+                }
                 results.put(fieldNames.get(i), executionResult != null ? executionResult.getData() : null);
             }
         } catch (CancellationException e) {
