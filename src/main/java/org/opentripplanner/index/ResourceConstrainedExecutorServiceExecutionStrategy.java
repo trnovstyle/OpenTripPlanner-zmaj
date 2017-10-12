@@ -77,11 +77,13 @@ public class ResourceConstrainedExecutorServiceExecutionStrategy extends Executi
             for (int i = 0; i < executionResults.size(); i++) {
                 // TODO: Is there some kind of zip stream which could take this?
                 Future<ExecutionResult> executionResultFuture = executionResults.get(i);
-                ExecutionResult executionResult = executionResultFuture.get();
-                if (executionResult.getErrors() != null && !executionResult.getErrors().isEmpty()) {
-                    LOG.warn("Caught exception resolving field {}: {}", fieldNames.get(i), executionResult.getErrors());
+                if (executionResultFuture != null) {
+                    ExecutionResult executionResult = executionResultFuture.get();
+                    if (executionResult != null && executionResult.getErrors() != null && !executionResult.getErrors().isEmpty()) {
+                        LOG.warn("Caught exception resolving field {}: {}", fieldNames.get(i), executionResult.getErrors());
+                    }
+                    results.put(fieldNames.get(i), executionResult != null ? executionResult.getData() : null);
                 }
-                results.put(fieldNames.get(i), executionResult != null ? executionResult.getData() : null);
             }
         } catch (CancellationException e) {
             executionContext.addError(new ExceptionWhileDataFetching(e));
