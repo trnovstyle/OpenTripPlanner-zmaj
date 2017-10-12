@@ -580,7 +580,7 @@ public class TimetableSnapshotSource {
             TripPattern pattern = getPatternForTrip(matchingTrip, estimatedVehicleJourney);
             if (pattern != null) {
                 TripTimes updatedTripTimes = pattern.scheduledTimetable.createUpdatedTripTimes(graph, estimatedVehicleJourney, timeZone, matchingTrip.getId());
-                if (updatedTripTimes != null) {
+                if (updatedTripTimes != null && pattern.stopPattern.size == updatedTripTimes.getNumStops()) {
                     patterns.add(pattern);
                     times.add(updatedTripTimes);
                 }
@@ -1549,32 +1549,29 @@ public class TimetableSnapshotSource {
             Set<ServiceDate> serviceDatesForServiceId = graphIndex.graph.getCalendarService().getServiceDatesForServiceId(trip.getServiceId());
             if (serviceDatesForServiceId.contains(serviceDate)) {
 
-                for (TripPattern pattern : graphIndex.patternsForRoute.get(trip.getRoute())) {
-                    int matchingStopId = stopNumber-1;
-                    for (int i = 0; i < pattern.stopPattern.stops.length; i++) {
-                        Stop stop = pattern.stopPattern.stops[i];
-                        if (firstStopId.equals(stop.getId().getId())) {
-                            matchingStopId = i;
-                            break;
-                        } else {
-                            String agencyId = stop.getId().getAgencyId();
-                            if (stop.getParentStation() != null) {
-                                Stop alternativeStop = graphIndex.stopForId.get(new AgencyAndId(agencyId, firstStopId));
-                                if (alternativeStop != null &&
-                                        stop.getParentStation().equals(alternativeStop.getParentStation())) {
-                                    matchingStopId = i;
-                                    break;
-                                }
+                TripPattern pattern = graphIndex.patternForTrip.get(trip);
+
+                if (stopNumber < pattern.stopPattern.stops.length) {
+                    boolean firstReportedStopIsFound = false;
+                    Stop stop = pattern.stopPattern.stops[stopNumber-1];
+                    if (firstStopId.equals(stop.getId().getId())) {
+                       firstReportedStopIsFound = true;
+                    } else {
+                        String agencyId = stop.getId().getAgencyId();
+                        if (stop.getParentStation() != null) {
+                            Stop alternativeStop = graphIndex.stopForId.get(new AgencyAndId(agencyId, firstStopId));
+                            if (alternativeStop != null &&
+                                    stop.getParentStation().equals(alternativeStop.getParentStation())) {
+                                firstReportedStopIsFound = true;
                             }
-
                         }
-
                     }
-                    for (TripTimes times : pattern.scheduledTimetable.tripTimes) {
-                        if (stopNumber < times.getNumStops() &&
-                                times.getScheduledDepartureTime(matchingStopId) == departureInSecondsSinceMidnight) {
-                            if (graphIndex.graph.getCalendarService().getServiceDatesForServiceId(times.trip.getServiceId()).contains(serviceDate)) {
-                                result.add(times.trip);
+                    if (firstReportedStopIsFound) {
+                        for (TripTimes times : pattern.scheduledTimetable.tripTimes) {
+                            if (times.getScheduledDepartureTime(stopNumber - 1) == departureInSecondsSinceMidnight) {
+                                if (graphIndex.graph.getCalendarService().getServiceDatesForServiceId(times.trip.getServiceId()).contains(serviceDate)) {
+                                    result.add(times.trip);
+                                }
                             }
                         }
                     }
