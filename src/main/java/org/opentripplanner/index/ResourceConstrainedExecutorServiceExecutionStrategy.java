@@ -79,9 +79,6 @@ public class ResourceConstrainedExecutorServiceExecutionStrategy extends Executi
                 Future<ExecutionResult> executionResultFuture = executionResults.get(i);
                 if (executionResultFuture != null) {
                     ExecutionResult executionResult = executionResultFuture.get();
-                    if (executionResult != null && executionResult.getErrors() != null && !executionResult.getErrors().isEmpty()) {
-                        LOG.warn("Caught exception resolving field {}: {}", fieldNames.get(i), executionResult.getErrors());
-                    }
                     results.put(fieldNames.get(i), executionResult != null ? executionResult.getData() : null);
                 }
             }
