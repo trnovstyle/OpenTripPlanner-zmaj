@@ -113,6 +113,7 @@ public class GrizzlyServer {
             httpServer.getServerConfiguration().addHttpHandler(localHandler, "/local");
         }
 
+
         /* 3. Test alternate method (no Jersey). */
         // As in servlets, * is needed in base path to identify the "rest" of the path.
         // GraphService gs = (GraphService) iocFactory.getComponentProvider(GraphService.class).getInstance();
@@ -128,6 +129,9 @@ public class GrizzlyServer {
         try {
             httpServer.start();
             LOG.info("Grizzly server running.");
+            // Enabling jmx enabled
+            httpServer.getServerConfiguration().setJmxEnabled(true);
+            LOG.info("Enabled JMX");
             Thread.currentThread().join();
         } catch (BindException be) {
             LOG.error("Cannot bind to port {}. Is it already in use?", params.port);
