@@ -129,9 +129,11 @@ public class GrizzlyServer {
         try {
             httpServer.start();
             LOG.info("Grizzly server running.");
+
             // Enabling jmx enabled
-            httpServer.getServerConfiguration().setJmxEnabled(true);
-            LOG.info("Enabled JMX");
+            // httpServer.getServerConfiguration().setJmxEnabled(true);
+            // LOG.info("Enabled JMX");
+
             Thread.currentThread().join();
         } catch (BindException be) {
             LOG.error("Cannot bind to port {}. Is it already in use?", params.port);
