@@ -162,6 +162,7 @@ public class Timetable implements Serializable {
         // We could invert this and skip some service days based on schedule overlap as in RRRR.
         for (TripTimes tt : tripTimes) {
             if (tt.isCanceled()) continue;
+            if ((tt.getNumStops() <= stopIndex)) continue;
             if ( ! serviceDay.serviceRunning(tt.serviceCode)) continue; // TODO merge into call on next line
             if ( ! tt.tripAcceptable(s0, stopIndex)) continue;
             int adjustedTime = adjustTimeForTransfer(s0, currentStop, tt.trip, boarding, serviceDay, time);
