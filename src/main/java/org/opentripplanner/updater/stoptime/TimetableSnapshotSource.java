@@ -614,29 +614,34 @@ public class TimetableSnapshotSource {
         for (TripTimes tripTimes : times) {
             Trip trip = tripTimes.trip;
             for (TripPattern pattern : patterns) {
-                if (!tripTimes.isCanceled() && tripTimes.getRealTimeState() == RealTimeState.MODIFIED) {
+                if (tripTimes.getNumStops() == pattern.stopPattern.stops.length) {
+                    if (!tripTimes.isCanceled() && tripTimes.getRealTimeState() == RealTimeState.MODIFIED) {
 
-                    cancelScheduledTrip(SIRI_FEED_ID, trip.getId().getId(), serviceDate);
+                        cancelScheduledTrip(SIRI_FEED_ID, trip.getId().getId(), serviceDate);
 
-                    // Check whether trip id has been used for previously ADDED/MODIFIED trip message and cancel
-                    // previously created trip
-                    cancelPreviouslyAddedTrip(SIRI_FEED_ID, trip.getId().getId(), serviceDate);
+                        // Check whether trip id has been used for previously ADDED/MODIFIED trip message and cancel
+                        // previously created trip
+                        cancelPreviouslyAddedTrip(SIRI_FEED_ID, trip.getId().getId(), serviceDate);
 
-                    // Calculate modified stop-pattern
-                    List<Stop> modifiedStops = pattern.scheduledTimetable.createModifiedStops(estimatedVehicleJourney, graphIndex);
-                    List<StopTime> modifiedStopTimes = pattern.scheduledTimetable.createModifiedStopTimes(tripTimes, estimatedVehicleJourney, trip, graphIndex);
+                        // Calculate modified stop-pattern
+                        List<Stop> modifiedStops = pattern.scheduledTimetable.createModifiedStops(estimatedVehicleJourney, graphIndex);
+                        List<StopTime> modifiedStopTimes = pattern.scheduledTimetable.createModifiedStopTimes(tripTimes, estimatedVehicleJourney, trip, graphIndex);
 
-                    if (modifiedStops != null && modifiedStops.isEmpty()) {
-                        tripTimes.cancel();
-                    } else {
-                        // Add new trip
-                        result = result | addTripToGraphAndBuffer(SIRI_FEED_ID, graph, trip, modifiedStopTimes, modifiedStops, tripTimes, serviceDate);
-                        continue;
+                        if (modifiedStops != null && modifiedStops.isEmpty()) {
+                            tripTimes.cancel();
+                        } else {
+                            // Add new trip
+                            result = result | addTripToGraphAndBuffer(SIRI_FEED_ID, graph, trip, modifiedStopTimes, modifiedStops, tripTimes, serviceDate);
+                            continue;
+                        }
                     }
+                    result = result | buffer.update(SIRI_FEED_ID, pattern, tripTimes, serviceDate);
+
+                    LOG.debug("Applied realtime data for trip {}", trip.getId().getId());
+                } else {
+                    LOG.info("Ignoring update since number of stops do not match");
                 }
-                result = result | buffer.update(SIRI_FEED_ID, pattern, tripTimes, serviceDate);
             }
-            LOG.debug("Applied realtime data for trip {}", trip.getId().getId());
         }
 
         return result;
