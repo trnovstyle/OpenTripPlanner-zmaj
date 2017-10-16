@@ -14,9 +14,6 @@
 package org.opentripplanner.gtfs;
 
 
-import java.io.File;
-import java.io.IOException;
-
 import org.onebusaway.gtfs.impl.GtfsRelationalDaoImpl;
 import org.onebusaway.gtfs.impl.calendar.CalendarServiceDataFactoryImpl;
 import org.onebusaway.gtfs.impl.calendar.CalendarServiceImpl;
@@ -28,6 +25,9 @@ import org.onebusaway.gtfs.services.GtfsRelationalDao;
 import org.onebusaway.gtfs.services.calendar.CalendarService;
 import org.opentripplanner.graph_builder.module.GtfsFeedId;
 import org.opentripplanner.routing.core.TraverseMode;
+
+import java.io.File;
+import java.io.IOException;
 
 public class GtfsLibrary {
 
@@ -85,7 +85,11 @@ public class GtfsLibrary {
     }
 
     public static String convertIdToString(AgencyAndId aid) {
-        return aid.getAgencyId() + ID_SEPARATOR + aid.getId();
+        if (aid != null) {
+            return aid.getAgencyId() + ID_SEPARATOR + aid.getId();
+        } else {
+            return null;
+        }
     }
 
     /** @return the route's short name, or the long name if the short name is null. */
