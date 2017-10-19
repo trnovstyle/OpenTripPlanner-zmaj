@@ -138,13 +138,31 @@ public class TimetableSnapshot {
      * or the originally scheduled timetable if there are no updates in this snapshot.
      */
     public Timetable resolve(TripPattern pattern, ServiceDate serviceDate) {
+
         SortedSet<Timetable> sortedTimetables = timetables.get(pattern);
 
-        if(sortedTimetables != null && serviceDate != null) {
-            for(Timetable timetable : sortedTimetables) {
-                if (timetable != null && timetable.isValidFor(serviceDate)) {
-                    LOG.trace("returning modified timetable");
-                    return timetable;
+        if (sortedTimetables != null && serviceDate != null) {
+            Timetable lastAdded = resolveLastAdded(pattern, serviceDate);
+            if (lastAdded != null) {
+                for (Timetable timetable : sortedTimetables) {
+
+                    if (timetable != null && timetable.tripTimes != null && timetable.isValidFor(serviceDate)) {
+
+                        for (TripTimes tripTime : timetable.tripTimes) {
+                            if (!lastAdded.tripTimes.contains(tripTime)) {
+                                lastAdded.tripTimes.add(tripTime);
+                            }
+                        }
+                    }
+                }
+                lastAdded.finish();
+                return lastAdded;
+            } else {
+                for (Timetable timetable : sortedTimetables) {
+                    if (timetable != null && timetable.isValidFor(serviceDate)) {
+                        LOG.trace("returning modified timetable");
+                        return timetable;
+                    }
                 }
             }
         }
@@ -156,7 +174,7 @@ public class TimetableSnapshot {
      * Returns an updated timetable for the specified pattern if one is available in this snapshot,
      * or the originally scheduled timetable if there are no updates in this snapshot.
      */
-    public Timetable resolveLastAdded(TripPattern pattern, ServiceDate serviceDate) {
+    private Timetable resolveLastAdded(TripPattern pattern, ServiceDate serviceDate) {
 
         Set<TripPattern> updatedPatterns = new HashSet<>();
         List<Trip> trips = pattern.getTrips();
@@ -186,19 +204,7 @@ public class TimetableSnapshot {
                 }
             }
         }
-        Timetable timetable = resolve(pattern, serviceDate);
-        if (lastAddedTimetable != null) {
-            if (timetable != null && timetable.tripTimes != null) {
-                for (TripTimes tripTime : timetable.tripTimes) {
-                    if (!lastAddedTimetable.tripTimes.contains(tripTime)) {
-                        lastAddedTimetable.tripTimes.add(tripTime);
-                    }
-                }
-                lastAddedTimetable.finish();
-                return lastAddedTimetable;
-            }
-        }
-        return timetable;
+        return lastAddedTimetable;
     }
 
     /**

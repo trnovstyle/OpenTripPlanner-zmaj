@@ -335,7 +335,7 @@ public class TripPattern implements Cloneable, Serializable {
      */
     public Timetable getUpdatedTimetable (RoutingRequest req, ServiceDay sd) {
         if (req != null && req.rctx != null && req.rctx.timetableSnapshot != null && sd != null) {
-            return req.rctx.timetableSnapshot.resolveLastAdded(this, sd.getServiceDate());
+            return req.rctx.timetableSnapshot.resolve(this, sd.getServiceDate());
         }
         return scheduledTimetable;
     }

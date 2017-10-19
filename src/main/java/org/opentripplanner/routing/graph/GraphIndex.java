@@ -751,7 +751,7 @@ public class GraphIndex {
             Timetable tt;
 
             if (snapshot != null) {
-                tt = snapshot.resolveLastAdded(pattern, serviceDate);
+                tt = snapshot.resolve(pattern, serviceDate);
             } else {
                 tt = pattern.scheduledTimetable;
             }
@@ -826,7 +826,7 @@ public class GraphIndex {
             StopTimesInPattern stopTimes = new StopTimesInPattern(pattern);
             Timetable tt;
             if (snapshot != null){
-                tt = snapshot.resolveLastAdded(pattern, serviceDate);
+                tt = snapshot.resolve(pattern, serviceDate);
             } else {
                 tt = pattern.scheduledTimetable;
             }
