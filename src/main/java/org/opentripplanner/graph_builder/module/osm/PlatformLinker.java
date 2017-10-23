@@ -62,7 +62,7 @@ public class PlatformLinker {
 
 
         List<Area> platforms = osmdb.getWalkableAreas().stream().
-                filter(area -> "platform".equals(area.parent.getTag("public_transport")) &&
+                filter(area -> "platform".equals(area.parent.getTag("public_transport")) ||
                         "platform".equals(area.parent.getTag("railway"))).
                 collect(Collectors.toList());
 
