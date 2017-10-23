@@ -13,19 +13,11 @@
 
 package org.opentripplanner.routing.edgetype;
 
-import java.util.BitSet;
-
-import java.util.Locale;
+import com.vividsolutions.jts.geom.LineString;
 import org.onebusaway.gtfs.model.Stop;
 import org.onebusaway.gtfs.model.Trip;
-import org.opentripplanner.routing.core.RoutingContext;
-import org.opentripplanner.routing.core.RoutingRequest;
-import org.opentripplanner.routing.core.ServiceDay;
-import org.opentripplanner.routing.core.State;
-import org.opentripplanner.routing.core.StateEditor;
-import org.opentripplanner.routing.core.TransferTable;
-import org.opentripplanner.routing.core.TraverseMode;
-import org.opentripplanner.routing.core.TraverseModeSet;
+import org.onebusaway.gtfs.model.calendar.ServiceDate;
+import org.opentripplanner.routing.core.*;
 import org.opentripplanner.routing.trippattern.TripTimes;
 import org.opentripplanner.routing.vertextype.PatternStopVertex;
 import org.opentripplanner.routing.vertextype.TransitStopArrive;
@@ -33,7 +25,8 @@ import org.opentripplanner.routing.vertextype.TransitStopDepart;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.vividsolutions.jts.geom.LineString;
+import java.util.BitSet;
+import java.util.Locale;
 
 
 /**
@@ -146,6 +139,16 @@ public class TransitBoardAlight extends TablePatternEdge implements OnboardEdge 
         if (options.wheelchairAccessible && ! getPattern().wheelchairAccessible(stopIndex)) {
             return null;
         };
+
+        Timetable scheduledTimetable = getPattern().scheduledTimetable;
+        ServiceDate serviceDate = new ServiceDate(options.getDateTime());
+
+        if (scheduledTimetable != null && scheduledTimetable.serviceDate != null) {
+           if (!serviceDate.equals(scheduledTimetable.serviceDate)) {
+               // if a specific ServiceDate is defined, and it does not match the requested travel-date. This is not a viable option
+               return null;
+           }
+        }
 
         /*
          * Determine whether we are going onto or off of transit. Entering and leaving transit is
@@ -266,6 +269,11 @@ public class TransitBoardAlight extends TablePatternEdge implements OnboardEdge 
             for (ServiceDay sd : rctx.serviceDays) {
                 /* Find the proper timetable (updated or original) if there is a realtime snapshot. */
                 Timetable timetable = tripPattern.getUpdatedTimetable(options, sd);
+                if (timetable.serviceDate != null && !sd.getServiceDate().equals(timetable.serviceDate)) {
+                    if ( ! timetable.temporallyViable(sd, s0.getTimeSeconds(), bestWait, boarding)) {
+                        continue;
+                    }
+                }
                 /* Skip this day/timetable if no trip in it could possibly be useful. */
                 // TODO disabled until frequency representation is stable, and min/max timetable times are set from frequencies
                 // However, experiments seem to show very little measurable improvement here (due to cache locality?)

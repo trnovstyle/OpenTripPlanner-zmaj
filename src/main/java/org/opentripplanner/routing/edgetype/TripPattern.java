@@ -26,6 +26,7 @@ import org.onebusaway.gtfs.model.AgencyAndId;
 import org.onebusaway.gtfs.model.Route;
 import org.onebusaway.gtfs.model.Stop;
 import org.onebusaway.gtfs.model.Trip;
+import org.onebusaway.gtfs.model.calendar.ServiceDate;
 import org.opentripplanner.api.resource.CoordinateArrayListSequence;
 import org.opentripplanner.common.MavenVersion;
 import org.opentripplanner.common.geometry.GeometryUtils;
@@ -102,7 +103,7 @@ public class TripPattern implements Cloneable, Serializable {
      * realtime updates applied. If realtime stoptime updates are applied, next/previous departure
      * searches will be conducted using a different, updated timetable in a snapshot.
      */
-    public final Timetable scheduledTimetable = new Timetable(this);
+    public Timetable scheduledTimetable = new Timetable(this);
 
     /** The human-readable, unique name for this trip pattern. */
     public String name;
@@ -161,6 +162,11 @@ public class TripPattern implements Cloneable, Serializable {
      */
     // TODO MOVE codes INTO Timetable or TripTimes
     BitSet services;
+
+    public TripPattern(Route route, StopPattern stopPattern, ServiceDate serviceDate) {
+        this(route, stopPattern);
+        this.scheduledTimetable = new Timetable(this, serviceDate);
+    }
 
     public TripPattern(Route route, StopPattern stopPattern) {
         this.route = route;

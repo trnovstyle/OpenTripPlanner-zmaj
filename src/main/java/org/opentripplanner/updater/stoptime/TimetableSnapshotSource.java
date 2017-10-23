@@ -1069,7 +1069,7 @@ public class TimetableSnapshotSource {
         final StopPattern stopPattern = new StopPattern(stopTimes);
 
         // Get cached trip pattern or create one if it doesn't exist yet
-        final TripPattern pattern = tripPatternCache.getOrCreateTripPattern(stopPattern, trip.getRoute(), graph);
+        final TripPattern pattern = tripPatternCache.getOrCreateTripPattern(stopPattern, trip.getRoute(), graph, serviceDate);
 
         // Add service code to bitset of pattern if needed (using copy on write)
         final int serviceCode = graph.serviceCodes.get(trip.getServiceId());
@@ -1119,7 +1119,7 @@ public class TimetableSnapshotSource {
         final StopPattern stopPattern = new StopPattern(stopTimes);
 
         // Get cached trip pattern or create one if it doesn't exist yet
-        final TripPattern pattern = tripPatternCache.getOrCreateTripPattern(stopPattern, trip.getRoute(), graph);
+        final TripPattern pattern = tripPatternCache.getOrCreateTripPattern(stopPattern, trip.getRoute(), graph, serviceDate);
 
         // Add service code to bitset of pattern if needed (using copy on write)
         final int serviceCode = graph.serviceCodes.get(trip.getServiceId());
@@ -1200,6 +1200,7 @@ public class TimetableSnapshotSource {
                 final TripTimes newTripTimes = new TripTimes(timetable.getTripTimes(tripIndex));
                 newTripTimes.cancel();
                 buffer.update(feedId, pattern, newTripTimes, serviceDate);
+//                buffer.removeLastAddedTripPattern(feedId, tripId, serviceDate);
                 success = true;
             }
         }

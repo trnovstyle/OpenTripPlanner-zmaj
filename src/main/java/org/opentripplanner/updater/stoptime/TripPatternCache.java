@@ -13,14 +13,15 @@
 
 package org.opentripplanner.updater.stoptime;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import org.onebusaway.gtfs.model.AgencyAndId;
 import org.onebusaway.gtfs.model.Route;
+import org.onebusaway.gtfs.model.calendar.ServiceDate;
 import org.opentripplanner.model.StopPattern;
 import org.opentripplanner.routing.edgetype.TripPattern;
 import org.opentripplanner.routing.graph.Graph;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * A synchronized cache of trip patterns that are added to the graph due to GTFS-realtime messages.
@@ -29,7 +30,7 @@ public class TripPatternCache {
     
     private int counter = 0;
 
-    private final Map<StopPattern, TripPattern> cache = new HashMap<>();
+    private final Map<StopPatternServiceDateKey, TripPattern> cache = new HashMap<>();
     
     /**
      * Get cached trip pattern or create one if it doesn't exist yet. If a trip pattern is created, vertices
@@ -38,16 +39,18 @@ public class TripPatternCache {
      * @param stopPattern stop pattern to retrieve/create trip pattern
      * @param route route of new trip pattern in case a new trip pattern will be created
      * @param graph graph to add vertices and edges in case a new trip pattern will be created
+     * @param serviceDate
      * @return cached or newly created trip pattern
      */
     public synchronized TripPattern getOrCreateTripPattern(final StopPattern stopPattern,
-            final Route route, final Graph graph) {
+                                                           final Route route, final Graph graph, ServiceDate serviceDate) {
         // Check cache for trip pattern
-        TripPattern tripPattern = cache.get(stopPattern);
+        StopPatternServiceDateKey key = new StopPatternServiceDateKey(stopPattern, serviceDate);
+        TripPattern tripPattern = cache.get(key);
         
         // Create TripPattern if it doesn't exist yet
         if (tripPattern == null) {
-            tripPattern = new TripPattern(route, stopPattern);
+            tripPattern = new TripPattern(route, stopPattern, serviceDate);
             
             // Generate unique code for trip pattern
             tripPattern.code = generateUniqueTripPatternCode(tripPattern);
@@ -65,7 +68,7 @@ public class TripPatternCache {
             // TODO: Add pattern to graph index? 
             
             // Add pattern to cache
-            cache.put(stopPattern, tripPattern);
+            cache.put(key, tripPattern);
         }
         
         return tripPattern;
@@ -91,4 +94,25 @@ public class TripPatternCache {
         return code;
     }
 
+}
+class StopPatternServiceDateKey {
+    StopPattern stopPattern;
+    ServiceDate serviceDate;
+
+    public StopPatternServiceDateKey(StopPattern stopPattern, ServiceDate serviceDate) {
+        this.stopPattern = stopPattern;
+        this.serviceDate = serviceDate;
+    }
+
+    @Override
+    public boolean equals(Object thatObject) {
+        if (!(thatObject instanceof StopPatternServiceDateKey)) return false;
+        StopPatternServiceDateKey that = (StopPatternServiceDateKey) thatObject;
+        return (this.stopPattern.equals(that.stopPattern) & this.serviceDate.equals(that.serviceDate));
+    }
+
+    @Override
+    public int hashCode() {
+        return stopPattern.hashCode()+serviceDate.hashCode();
+    }
 }

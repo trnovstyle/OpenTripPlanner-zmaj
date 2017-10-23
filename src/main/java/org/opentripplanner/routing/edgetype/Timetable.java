@@ -98,6 +98,12 @@ public class Timetable implements Serializable {
         this.serviceDate = null;
     }
 
+    /** Construct an empty Timetable with a specified serviceDate. */
+    public Timetable(TripPattern pattern, ServiceDate serviceDate) {
+        this.pattern = pattern;
+        this.serviceDate = serviceDate;
+    }
+
     /**
      * Copy constructor: create an un-indexed Timetable with the same TripTimes as the specified timetable.
      */
