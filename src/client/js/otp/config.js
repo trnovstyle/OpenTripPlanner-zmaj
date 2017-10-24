@@ -178,7 +178,7 @@ otp.config = {
         {
             id : 'planner',
             className : 'otp.modules.multimodal.MultimodalPlannerModule',
-            defaultBaseLayer : 'Rutebanken OSM',
+            defaultBaseLayer : 'OSM Standard Tiles',
             isDefault: true
         },
         {
