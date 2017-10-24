@@ -568,7 +568,8 @@ public class Timetable implements Serializable {
             LOG.trace("tripId {} found at index {} in timetable.", tripId, tripIndex);
         }
 
-        TripTimes oldTimes = new TripTimes(getTripTimes(tripIndex));
+        final TripTimes existingTripTimes = getTripTimes(tripIndex);
+        TripTimes oldTimes = new TripTimes(existingTripTimes);
 
         if (journey.isCancellation() != null && journey.isCancellation()) {
             oldTimes.cancel();
@@ -713,8 +714,18 @@ public class Timetable implements Serializable {
                     newTimes.updateArrivalTime(callCounter, departureFromPreviousStop);
                     newTimes.updateDepartureTime(callCounter, departureFromPreviousStop);
                 } else {
-                    newTimes.updateArrivalDelay(callCounter, lastArrivalDelay);
-                    newTimes.updateDepartureDelay(callCounter, lastDepartureDelay);
+
+                    int arrivalDelay = lastArrivalDelay;
+                    int departureDelay = lastDepartureDelay;
+
+                    if (lastArrivalDelay == 0 && lastDepartureDelay == 0) {
+                        //No match has been found yet (i.e. still in RecordedCalls) - keep existing delays
+                        arrivalDelay = existingTripTimes.getArrivalDelay(callCounter);
+                        departureDelay = existingTripTimes.getDepartureDelay(callCounter);
+                    }
+
+                    newTimes.updateArrivalDelay(callCounter, arrivalDelay);
+                    newTimes.updateDepartureDelay(callCounter, departureDelay);
                 }
 
                 departureFromPreviousStop = newTimes.getDepartureTime(callCounter);
@@ -722,9 +733,16 @@ public class Timetable implements Serializable {
             callCounter++;
         }
 
+        RealTimeState existingRealTimeState = existingTripTimes.getRealTimeState();
+
         if (stopPatternChanged) {
+            // This update modified stopPattern
             newTimes.setRealTimeState(RealTimeState.MODIFIED);
+        } else if (existingRealTimeState != RealTimeState.SCHEDULED) {
+            // StopPattern has already been modified/updated - keep previous state
+            newTimes.setRealTimeState(existingRealTimeState);
         } else {
+            // This is the first update, and StopPattern has not been changed
             newTimes.setRealTimeState(RealTimeState.UPDATED);
         }
 

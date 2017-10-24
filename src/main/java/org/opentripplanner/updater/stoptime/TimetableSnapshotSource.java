@@ -1428,8 +1428,6 @@ public class TimetableSnapshotSource {
     }
     private TripPattern getPatternForTrip(Trip trip, EstimatedVehicleJourney journey) {
 
-        TripPattern tripPattern = graphIndex.patternForTrip.get(trip);
-
         Set<ServiceDate> serviceDates = graphIndex.graph.getCalendarService().getServiceDatesForServiceId(trip.getServiceId());
 
         List<RecordedCall> recordedCalls = (journey.getRecordedCalls() != null ? journey.getRecordedCalls().getRecordedCalls():new ArrayList<>());
@@ -1450,6 +1448,20 @@ public class TimetableSnapshotSource {
             }
 
             String journeyLastStopId = estimatedCalls.get(estimatedCalls.size() - 1).getStopPointRef().getValue();
+
+
+            TripPattern lastAddedTripPattern = null;
+            if (getTimetableSnapshot() != null) {
+                lastAddedTripPattern  = getTimetableSnapshot().getLastAddedTripPattern(trip.getId().getAgencyId(), trip.getId().getId(), journeyDate);
+            }
+
+            TripPattern tripPattern;
+            if (lastAddedTripPattern != null) {
+                tripPattern = lastAddedTripPattern;
+            } else {
+                tripPattern = graphIndex.patternForTrip.get(trip);
+            }
+
 
             Stop firstStop = tripPattern.getStop(0);
             Stop lastStop = tripPattern.getStop(tripPattern.getStops().size() - 1);
