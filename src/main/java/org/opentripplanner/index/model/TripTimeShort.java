@@ -1,17 +1,17 @@
 package org.opentripplanner.index.model;
 
-import java.util.List;
-
+import com.beust.jcommander.internal.Lists;
 import org.onebusaway.gtfs.model.AgencyAndId;
 import org.onebusaway.gtfs.model.Stop;
 import org.onebusaway.gtfs.model.Trip;
-import org.onebusaway.gtfs.model.calendar.ServiceDate;
 import org.opentripplanner.routing.core.ServiceDay;
 import org.opentripplanner.routing.edgetype.Timetable;
 import org.opentripplanner.routing.trippattern.RealTimeState;
 import org.opentripplanner.routing.trippattern.TripTimes;
 
-import com.beust.jcommander.internal.Lists;
+import java.util.List;
+
+import static org.opentripplanner.model.StopPattern.PICKDROP_NONE;
 
 public class TripTimeShort {
 
@@ -79,7 +79,12 @@ public class TripTimeShort {
         List<TripTimeShort> out = Lists.newArrayList();
         // one per stop, not one per hop, thus the <= operator
         for (int i = 0; i < times.getNumStops(); ++i) {
-            out.add(new TripTimeShort(times, i, table.pattern.getStop(i), serviceDay));
+            Stop stop = table.pattern.getStop(i);
+            if (table.pattern.stopPattern.pickups[i] != PICKDROP_NONE |
+                    table.pattern.stopPattern.dropoffs[i] != PICKDROP_NONE) {
+                // If stop is neither pickup nor dropoff - do not include it in result
+                out.add(new TripTimeShort(times, i, stop, serviceDay));
+            }
         }
         return out;
     }
