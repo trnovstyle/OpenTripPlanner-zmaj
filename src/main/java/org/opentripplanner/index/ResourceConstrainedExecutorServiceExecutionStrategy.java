@@ -69,7 +69,8 @@ public class ResourceConstrainedExecutorServiceExecutionStrategy extends Executi
                 try {
                     return resolveField(executionContext, parentType, source, fieldList);
                 } catch (Exception e) {
-                    throw new ExecutionException("Caught exception while resolving fieldName " + fieldName + ", fields: " + fields + ", source: " + source, e);
+                    LOG.warn("Caught exception while resolving fieldName " + fieldName + ", fields: " + fields + ", parentType: " + parentType + ", source: " + source, e);
+                    throw new ExecutionException("Caught exception while resolving fieldName " + fieldName + ", fields: " + fields + ", parentType: " + parentType + ", source: " + source, e);
                 }
             });
             fieldNames.add(fieldName);
