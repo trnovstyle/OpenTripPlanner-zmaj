@@ -691,15 +691,9 @@ public class IndexAPI {
     }
 
     private int checkTimeout(int timeout) {
-        Boolean timeoutSpecified = headers.getRequestHeaders().containsKey("OTPTimeout");
         if (router.timeouts.length > 0 && (DoubleStream.of(router.timeouts).sum() + 1) * 1000 > timeout) {
-            if (timeoutSpecified) {
-                timeout = (int)Math.floor(DoubleStream.of(router.timeouts).sum() + 1) * 1000;
-                LOG.warn("HTTP request default timeout set to equal or less than sum of router-config timeouts. Timeout changed for this request.");
-            }
-            else {
-                LOG.warn("HTTP request timeout set to equal or less than sum router-config timeouts.");
-            }
+            timeout = (int)Math.floor(DoubleStream.of(router.timeouts).sum() + 1) * 1000;
+            LOG.warn("HTTP request default timeout set to equal or less than sum of router-config timeouts. Timeout changed for this request.");
         }
         return timeout;
     }
