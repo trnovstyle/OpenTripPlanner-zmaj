@@ -691,9 +691,12 @@ public class IndexAPI {
     }
 
     private int checkTimeout(int timeout) {
-        if (router.timeouts.length > 0 && (DoubleStream.of(router.timeouts).sum() + 1) * 1000 > timeout) {
-            timeout = (int)Math.floor(DoubleStream.of(router.timeouts).sum() + 1) * 1000;
-            LOG.warn("HTTP request default timeout set to equal or less than sum of router-config timeouts. Timeout changed for this request.");
+        if (router.timeouts.length > 0) {
+            int newTimeout = (int) Math.floor(DoubleStream.of(router.timeouts).sum() + 5) * 1000;
+            if (newTimeout > timeout){
+                LOG.debug("Timeout set to sum of router config timeouts. Sum: {}. Old timeout: {}", newTimeout, timeout);
+                timeout = newTimeout;
+            }
         }
         return timeout;
     }
