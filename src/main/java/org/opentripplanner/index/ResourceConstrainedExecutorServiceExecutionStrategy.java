@@ -21,7 +21,6 @@ import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * TODO: write JavaDoc
- *
  */
 public class ResourceConstrainedExecutorServiceExecutionStrategy extends ExecutionStrategy {
 
@@ -52,10 +51,10 @@ public class ResourceConstrainedExecutorServiceExecutionStrategy extends Executi
 
     @Override
     public ExecutionResult execute(
-        final ExecutionContext executionContext,
-        final GraphQLObjectType parentType,
-        final Object source,
-        final Map<String, List<Field>> fields
+            final ExecutionContext executionContext,
+            final GraphQLObjectType parentType,
+            final Object source,
+            final Map<String, List<Field>> fields
     ) {
         if (executorService == null)
             return new SimpleExecutionStrategy().execute(executionContext, parentType, source, fields);
@@ -69,7 +68,6 @@ public class ResourceConstrainedExecutorServiceExecutionStrategy extends Executi
                 try {
                     return resolveField(executionContext, parentType, source, fieldList);
                 } catch (Exception e) {
-                    LOG.warn("Caught exception while resolving fieldName " + fieldName + ", fields: " + fields + ", parentType: " + parentType + ", source: " + source, e);
                     throw new ExecutionException("Caught exception while resolving fieldName " + fieldName + ", fields: " + fields + ", parentType: " + parentType + ", source: " + source, e);
                 }
             });
@@ -82,16 +80,22 @@ public class ResourceConstrainedExecutorServiceExecutionStrategy extends Executi
             List<Future<ExecutionResult>> executionResults = executorService.invokeAll(futures, timeout, timeUnit);
 
             for (int i = 0; i < executionResults.size(); i++) {
-                // TODO: Is there some kind of zip stream which could take this?
                 Future<ExecutionResult> executionResultFuture = executionResults.get(i);
+                // TODO: Is there some kind of zip stream which could take this?
                 if (executionResultFuture != null) {
-                    ExecutionResult executionResult = executionResultFuture.get();
-                    results.put(fieldNames.get(i), executionResult != null ? executionResult.getData() : null);
+
+                    try {
+                        ExecutionResult executionResult = executionResultFuture.get();
+                        results.put(fieldNames.get(i), executionResult != null ? executionResult.getData() : null);
+                    } catch (CancellationException e) {
+
+                        IllegalStateException ise = new IllegalStateException("Caught CancellationException while resolving field "
+                                + fieldNames.get(i) + "timeout: " + timeout + " " + timeUnit, e);
+                        executionContext.addError(new ExceptionWhileDataFetching(ise));
+                    }
                 }
             }
-        } catch (CancellationException e) {
-            executionContext.addError(new ExceptionWhileDataFetching(e));
-        } catch (ExecutionException|InterruptedException e) {
+        } catch (ExecutionException | InterruptedException e) {
             throw new GraphQLException(e);
         }
 
