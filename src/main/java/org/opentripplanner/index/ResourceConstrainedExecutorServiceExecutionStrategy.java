@@ -65,7 +65,13 @@ public class ResourceConstrainedExecutorServiceExecutionStrategy extends Executi
 
         for (String fieldName : fields.keySet()) {
             final List<Field> fieldList = fields.get(fieldName);
-            futures.add(() -> resolveField(executionContext, parentType, source, fieldList));
+            futures.add(() -> {
+                try {
+                    return resolveField(executionContext, parentType, source, fieldList);
+                } catch (Exception e) {
+                    throw new ExecutionException("Caught exception while resolving fieldName " + fieldName + ", fields: " + fields + ", source: " + source, e);
+                }
+            });
             fieldNames.add(fieldName);
         }
 
