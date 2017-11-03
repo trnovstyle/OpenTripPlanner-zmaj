@@ -706,6 +706,16 @@ public abstract class GraphPathToTripPlanConverter {
         if (vertex instanceof StreetVertex && !(vertex instanceof TemporaryStreetLocation)) {
             name = ((StreetVertex) vertex).getIntersectionName(requestedLocale).toString(requestedLocale);
         }
+        // Sets the name as the connecting stop in case the leg starts/ends at a splitter vertex
+        if (vertex instanceof SplitterVertex) {
+            for (Edge outgoing : vertex.getOutgoing()) {
+                if (outgoing.getToVertex() instanceof TransitStop) {
+                    name = outgoing.getToVertex().getName();
+                    break;
+                }
+            }
+        }
+
         Place place = new Place(vertex.getX(), vertex.getY(), name,
                 makeCalendar(state), makeCalendar(state));
 
