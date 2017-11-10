@@ -1171,6 +1171,7 @@ public class IndexGraphQLSchema {
                     }
                     return stream.flatMap(stoptimesWithPattern -> stoptimesWithPattern.times.stream())
                     .sorted(Comparator.comparing(t -> t.serviceDay + t.realtimeDeparture))
+                    .distinct()
                     .limit((long) (int) environment.getArgument("numberOfDepartures"))
                     .collect(Collectors.toList());
                 })

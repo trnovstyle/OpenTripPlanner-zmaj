@@ -799,7 +799,10 @@ public class GraphIndex {
 
         final List<TripTimeShort> result = new ArrayList<>();
         while(ret.size()>0) {
-            result.add(0, ret.pop());
+            TripTimeShort tripTimeShort = ret.pop();
+            if (!result.contains(tripTimeShort)) {
+                result.add(0, tripTimeShort);
+            }
         }
         
         return result; 
