@@ -136,7 +136,7 @@ public class MappingTest {
         DateTime startDate = new DateTime(serviceCalendar.getStartDate().getAsDate());
         DateTime endDate = new DateTime(serviceCalendar.getEndDate().getAsDate());
 
-        for (MutableDateTime date = new MutableDateTime(startDate); date.isBefore(endDate); date.addDays(1)) {
+        for (MutableDateTime date = new MutableDateTime(startDate); date.isBefore(endDate.plusDays(1)); date.addDays(1)) {
             if (calendarDatesRemove.stream().map(it -> it.toString()).collect(Collectors.toList()).contains(date.toDate().toString())) {
                 continue;
             }

@@ -19,18 +19,19 @@ import org.opentripplanner.model.ServiceCalendarDate;
 import org.opentripplanner.model.calendar.ServiceDate;
 import org.opentripplanner.graph_builder.model.NetexDao;
 import org.rutebanken.netex.model.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 
 // TODO TGR - Add Unit tests
 public class CalendarMapper {
+    private static final Logger LOG = LoggerFactory.getLogger(CalendarMapper.class);
 
     public static Collection<ServiceCalendarDate> mapToCalendarDates(AgencyAndId serviceId, NetexDao netexDao) {
         Collection<ServiceCalendarDate> serviceCalendarDates = new ArrayList<>();
@@ -71,7 +72,7 @@ public class CalendarMapper {
                         }
                     }
 
-                    for (LocalDateTime date = fromDate; date.isBefore(toDate); date = date.plusDays(1)) {
+                    for (LocalDateTime date = fromDate; date.isBefore(toDate.plusDays(1)); date = date.plusDays(1)) {
                         ServiceCalendarDate serviceCalendarDate = mapServiceCalendarDate(date, serviceId, 1);
 
                         if (daysOfWeek.contains(DayOfWeekEnumeration.EVERYDAY)) {
@@ -150,6 +151,10 @@ public class CalendarMapper {
         }
 
         serviceCalendarDates.removeAll(serviceCalendarDatesRemove);
+
+        if (serviceCalendarDates.isEmpty()) {
+            LOG.warn("ServiceCode " + serviceId + " does not contain any serviceDates");
+        }
 
         return serviceCalendarDates;
     }
