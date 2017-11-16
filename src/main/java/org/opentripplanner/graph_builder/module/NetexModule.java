@@ -1,6 +1,7 @@
 package org.opentripplanner.graph_builder.module;
 
 import com.google.common.collect.Lists;
+import com.vividsolutions.jts.io.InStream;
 import org.apache.commons.io.IOUtils;
 import org.opentripplanner.calendar.impl.MultiCalendarServiceImpl;
 import org.opentripplanner.graph_builder.model.NetexBundle;
@@ -22,14 +23,17 @@ import org.slf4j.LoggerFactory;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBElement;
+import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
 
 public class NetexModule implements GraphBuilderModule {
@@ -55,7 +59,7 @@ public class NetexModule implements GraphBuilderModule {
             for(NetexBundle netexBundle : netexBundles){
                 NetexDao netexDao = loadBundle(netexBundle);
 
-                AgencyAndIdFactory.setAgencyId(netexBundle.getNetexParameters().netexFeedId);
+                AgencyAndIdFactory.setAgencyId(netexBundle.netexParameters.netexFeedId);
 
                 NetexMapper otpMapper = new NetexMapper(new OtpTransitBuilder());
                 OtpTransitBuilder daoBuilder = otpMapper.mapNetexToOtp(netexDao);
@@ -63,7 +67,7 @@ public class NetexModule implements GraphBuilderModule {
                 calendarService.addData(daoBuilder);
 
                 GTFSPatternHopFactory hf = new GTFSPatternHopFactory(
-                        new GtfsFeedId.Builder().id(netexBundle.getNetexParameters().netexFeedId).build(),
+                        new GtfsFeedId.Builder().id(netexBundle.netexParameters.netexFeedId).build(),
                         daoBuilder.build(),
                         _fareServiceFactory,
                         netexBundle.getMaxStopToShapeSnapDistance(),
@@ -97,14 +101,17 @@ public class NetexModule implements GraphBuilderModule {
     }
 
     private NetexDao loadBundle(NetexBundle netexBundle) throws Exception {
+        LOG.info("Loading bundle " + netexBundle.getFilename());
         NetexDao netexDao = new NetexDao();
         List<ZipEntry> entries = netexBundle.getFileEntriesInOrder();
         Unmarshaller unmarshaller = getUnmarshaller();
-        for(ZipEntry entry : entries){
-            LOG.info("Loading file " + entry.getName());
-            InputStream fileInputStream = netexBundle.getFileInputStream(entry);
-            loadFile(fileInputStream, unmarshaller, netexDao);
-        }
+
+        netexBundle.withZipFile(zipFile -> {
+            for(ZipEntry entry : entries){
+                LOG.info("Loading file " + entry.getName());
+                loadFile(entryAsBytes(zipFile, entry), unmarshaller, netexDao);
+            }
+        });
         return netexDao;
     }
 
@@ -127,38 +134,49 @@ public class NetexModule implements GraphBuilderModule {
         return unmarshaller;
     }
 
-    private void loadFile(InputStream is, Unmarshaller unmarshaller, NetexDao netexDao) throws Exception {
-        byte[] bytesArray = IOUtils.toByteArray(is);
 
-        @SuppressWarnings("unchecked")
-        JAXBElement<PublicationDeliveryStructure> jaxbElement = (JAXBElement<PublicationDeliveryStructure>) unmarshaller
-                .unmarshal(new ByteArrayInputStream(bytesArray));
+    private byte[] entryAsBytes(ZipFile zipFile, ZipEntry entry) {
+        try {
+            return IOUtils.toByteArray(zipFile.getInputStream(entry));
+        } catch (IOException e) {
+            throw new RuntimeException(e.getMessage(), e);
+        }
+    }
 
-        PublicationDeliveryStructure value = jaxbElement.getValue();
-        List<JAXBElement<? extends Common_VersionFrameStructure>> compositeFrameOrCommonFrames = value.getDataObjects().getCompositeFrameOrCommonFrame();
-        for(JAXBElement frame : compositeFrameOrCommonFrames){
+    private void loadFile(byte[] bytesArray, Unmarshaller unmarshaller, NetexDao netexDao) {
+        try {
+            @SuppressWarnings("unchecked")
+            JAXBElement<PublicationDeliveryStructure> jaxbElement = (JAXBElement<PublicationDeliveryStructure>) unmarshaller
+                    .unmarshal(new ByteArrayInputStream(bytesArray));
 
-            if(frame.getValue() instanceof CompositeFrame) {
-                CompositeFrame cf = (CompositeFrame) frame.getValue();
-                VersionFrameDefaultsStructure frameDefaults = cf.getFrameDefaults();
-                String timeZone = "GMT";
-                if(frameDefaults != null && frameDefaults.getDefaultLocale() != null
-                        && frameDefaults.getDefaultLocale().getTimeZone() != null){
-                    timeZone = frameDefaults.getDefaultLocale().getTimeZone();
+            PublicationDeliveryStructure value = jaxbElement.getValue();
+            List<JAXBElement<? extends Common_VersionFrameStructure>> compositeFrameOrCommonFrames = value.getDataObjects().getCompositeFrameOrCommonFrame();
+            for(JAXBElement frame : compositeFrameOrCommonFrames){
+
+                if(frame.getValue() instanceof CompositeFrame) {
+                    CompositeFrame cf = (CompositeFrame) frame.getValue();
+                    VersionFrameDefaultsStructure frameDefaults = cf.getFrameDefaults();
+                    String timeZone = "GMT";
+                    if(frameDefaults != null && frameDefaults.getDefaultLocale() != null
+                            && frameDefaults.getDefaultLocale().getTimeZone() != null){
+                        timeZone = frameDefaults.getDefaultLocale().getTimeZone();
+                    }
+
+                    netexDao.setTimeZone(timeZone);
+                    List<JAXBElement<? extends Common_VersionFrameStructure>> commonFrames = cf.getFrames().getCommonFrame();
+                    for (JAXBElement commonFrame : commonFrames) {
+                        loadResourceFrames(commonFrame, netexDao);
+                        loadServiceCalendarFrames(commonFrame, netexDao);
+                        loadTimeTableFrames(commonFrame, netexDao);
+                        loadServiceFrames(commonFrame, netexDao);
+                    }
                 }
-
-                netexDao.setTimeZone(timeZone);
-                List<JAXBElement<? extends Common_VersionFrameStructure>> commonFrames = cf.getFrames().getCommonFrame();
-                for (JAXBElement commonFrame : commonFrames) {
-                    loadResourceFrames(commonFrame, netexDao);
-                    loadServiceCalendarFrames(commonFrame, netexDao);
-                    loadTimeTableFrames(commonFrame, netexDao);
-                    loadServiceFrames(commonFrame, netexDao);
+                else if (frame.getValue() instanceof SiteFrame) {
+                    loadSiteFrames(frame, netexDao);
                 }
             }
-            else if (frame.getValue() instanceof SiteFrame) {
-                loadSiteFrames(frame, netexDao);
-            }
+        } catch (JAXBException e) {
+            throw new RuntimeException(e.getMessage(), e);
         }
     }
 

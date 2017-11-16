@@ -1,5 +1,6 @@
 package org.opentripplanner.netex;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import org.joda.time.DateTime;
 import org.joda.time.MutableDateTime;
 import org.junit.Assert;
@@ -14,8 +15,11 @@ import org.opentripplanner.model.calendar.ServiceDate;
 import org.opentripplanner.model.impl.OtpTransitBuilder;
 import org.opentripplanner.graph_builder.model.NetexBundle;
 import org.opentripplanner.graph_builder.module.NetexModule;
+import org.opentripplanner.standalone.GraphBuilderParameters;
+import org.opentripplanner.standalone.OTPMain;
 
 import java.io.File;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -29,18 +33,27 @@ import java.util.stream.Collectors;
 
 
 public class MappingTest {
+
+
     static final String gtfsFile = "src/test/resources/netex_mapping_test/gtfs_minimal_fileset/gtfs_minimal.zip";
-    static final String netexFile = "src/test/resources/netex_mapping_test/netex_minimal_fileset/netex_minimal.zip";
+    static final File netexFile = new File("src/test/resources/netex_mapping_test/netex_minimal_fileset/netex_minimal.zip");
+    static final File netexConfigFile = new File("src/test/resources/netex_mapping_test/build-config.json");
 
     private static OtpTransitBuilder otpBuilderFromGtfs;
     private static OtpTransitBuilder otpBuilderFromNetex;
 
     @BeforeClass
     public static void setUpNetexMapping() throws Exception {
-
-        NetexBundle netexBundle = new NetexBundle(new File(netexFile));
-        NetexModule netexModule = new NetexModule(Collections.singletonList(netexBundle));
-
+        if (gtfsFile == null || netexFile == null) {
+            Assert.fail();
+        }
+        JsonNode buildConfig = OTPMain.loadJson(netexConfigFile);
+        NetexBundle netexBundle = new NetexBundle(netexFile, new GraphBuilderParameters(buildConfig));
+        NetexModule netexModule = new NetexModule(new ArrayList<NetexBundle>() {
+            {
+                add(netexBundle);
+            }
+        });
         otpBuilderFromNetex = netexModule.getOtpDao().stream().findFirst().get();
         otpBuilderFromGtfs = GtfsContextBuilder
                 .contextBuilder(gtfsFile)
@@ -48,12 +61,6 @@ public class MappingTest {
                 .build()
                 .getTransitBuilder();
     }
-
-    @Test
-    public void test() {
-        Assert.assertEquals(1,1);
-    }
-
 
     @Test
     public void testNetexRoutes() {
