@@ -348,13 +348,14 @@ public class AlertsUpdateHandler {
                     }
                 }
             }
-        } else if (affectsStructure == null && expireSituation) {
-               idsToExpire.addAll(alertPatchService.getAllAlertPatches()
-                    .stream()
-                    .filter(alertPatch -> alertPatch.getId().startsWith(paddedSituationNumber))
-                    .map(alertPatch -> alertPatch.getId())
-                    .collect(Collectors.toList()));
         }
+
+        // Alerts are not partially updated - cancel ALL current related alerts before adding updated.
+        idsToExpire.addAll(alertPatchService.getAllAlertPatches()
+            .stream()
+            .filter(alertPatch -> alertPatch.getId().startsWith(paddedSituationNumber))
+            .map(alertPatch -> alertPatch.getId())
+            .collect(Collectors.toList()));
 
         if (!patches.isEmpty() | !idsToExpire.isEmpty()) {
             alertPatchService.expire(idsToExpire);
