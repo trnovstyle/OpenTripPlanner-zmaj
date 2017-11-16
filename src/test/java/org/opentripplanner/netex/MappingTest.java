@@ -19,37 +19,41 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+
+
 public class MappingTest {
-
-
-    static String gtfsFile = "src/test/resources/netex_mapping_test/gtfs_minimal_fileset/gtfs_minimal.zip";
-    static File netexFile = new File("src/test/resources/netex_mapping_test/netex_minimal_fileset/netex_minimal.zip");
+    static final String gtfsFile = "src/test/resources/netex_mapping_test/gtfs_minimal_fileset/gtfs_minimal.zip";
+    static final String netexFile = "src/test/resources/netex_mapping_test/netex_minimal_fileset/netex_minimal.zip";
 
     private static OtpTransitBuilder otpBuilderFromGtfs;
     private static OtpTransitBuilder otpBuilderFromNetex;
 
     @BeforeClass
     public static void setUpNetexMapping() throws Exception {
-        if (gtfsFile == null || netexFile == null) {
-            Assert.fail();
-        }
 
-        NetexBundle netexBundle = new NetexBundle(netexFile);
-        NetexModule netexModule = new NetexModule(new ArrayList<NetexBundle>() {
-            {
-                add(netexBundle);
-            }
-        });
+        NetexBundle netexBundle = new NetexBundle(new File(netexFile));
+        NetexModule netexModule = new NetexModule(Collections.singletonList(netexBundle));
+
         otpBuilderFromNetex = netexModule.getOtpDao().stream().findFirst().get();
-        otpBuilderFromGtfs = GtfsContextBuilder.contextBuilder(gtfsFile).turnOnSetAgencyToFeedIdForAllElements().build()
+        otpBuilderFromGtfs = GtfsContextBuilder
+                .contextBuilder(gtfsFile)
+                .turnOnSetAgencyToFeedIdForAllElements()
+                .build()
                 .getTransitBuilder();
     }
+
+    @Test
+    public void test() {
+        Assert.assertEquals(1,1);
+    }
+
 
     @Test
     public void testNetexRoutes() {
