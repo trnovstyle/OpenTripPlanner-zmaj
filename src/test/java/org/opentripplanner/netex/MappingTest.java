@@ -47,7 +47,7 @@ public class MappingTest {
             }
         });
         otpBuilderFromNetex = netexModule.getOtpDao().stream().findFirst().get();
-        otpBuilderFromGtfs = GtfsContextBuilder.contextBuilder(gtfsFile).build()
+        otpBuilderFromGtfs = GtfsContextBuilder.contextBuilder(gtfsFile).turnOnSetAgencyToFeedIdForAllElements().build()
                 .getTransitBuilder();
     }
 
