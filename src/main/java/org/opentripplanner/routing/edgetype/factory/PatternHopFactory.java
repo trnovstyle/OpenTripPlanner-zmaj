@@ -265,9 +265,9 @@ class IndexedLineSegmentComparator implements Comparator<IndexedLineSegment> {
 /**
  * Generates a set of edges from GTFS.
  */
-public class GTFSPatternHopFactory {
+public class PatternHopFactory {
 
-    private static final Logger LOG = LoggerFactory.getLogger(GTFSPatternHopFactory.class);
+    private static final Logger LOG = LoggerFactory.getLogger(PatternHopFactory.class);
 
     private static GeometryFactory _geometryFactory = GeometryUtils.getGeometryFactory();
 
@@ -295,17 +295,17 @@ public class GTFSPatternHopFactory {
 
     public int maxInterlineDistance = 200;
 
-    public GTFSPatternHopFactory(GtfsContext context) {
+    public PatternHopFactory(GtfsContext context) {
         this._feedId = context.getFeedId();
         this._transitService = context.getTransitBuilder().build();
     }
     
-    public GTFSPatternHopFactory() {
+    public PatternHopFactory() {
         this._feedId = null;
         this._transitService = null;
     }
 
-    public GTFSPatternHopFactory(
+    public PatternHopFactory(
             GtfsFeedId feedId, OtpTransitService transitService, FareServiceFactory fareServiceFactory,
             double maxStopToShapeSnapDistance, int subwayAccessTime, int maxInterlineDistance
     ) {

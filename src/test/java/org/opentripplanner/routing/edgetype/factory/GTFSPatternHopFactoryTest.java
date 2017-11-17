@@ -47,7 +47,7 @@ public class GTFSPatternHopFactoryTest {
                 .withGraphBuilderAnnotationsAndDeduplicator(graph)
                 .build();
 
-        GTFSPatternHopFactory factory = new GTFSPatternHopFactory(context);
+        PatternHopFactory factory = new PatternHopFactory(context);
 
         factory.run(graph);
 

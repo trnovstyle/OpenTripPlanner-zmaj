@@ -9,7 +9,7 @@ import org.opentripplanner.graph_builder.services.GraphBuilderModule;
 import org.opentripplanner.model.calendar.CalendarServiceData;
 import org.opentripplanner.model.impl.OtpTransitBuilder;
 import org.opentripplanner.netex.mapping.NetexMapper;
-import org.opentripplanner.routing.edgetype.factory.GTFSPatternHopFactory;
+import org.opentripplanner.routing.edgetype.factory.PatternHopFactory;
 import org.opentripplanner.routing.edgetype.factory.GtfsStopContext;
 import org.opentripplanner.routing.graph.Graph;
 import org.opentripplanner.routing.impl.DefaultFareServiceFactory;
@@ -62,7 +62,7 @@ public class NetexModule implements GraphBuilderModule {
 
                 calendarService.addData(daoBuilder);
 
-                GTFSPatternHopFactory hf = new GTFSPatternHopFactory(
+                PatternHopFactory hf = new PatternHopFactory(
                         new GtfsFeedId.Builder().id(netexBundle.netexParameters.netexFeedId).build(),
                         daoBuilder.build(),
                         _fareServiceFactory,

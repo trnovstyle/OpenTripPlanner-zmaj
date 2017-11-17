@@ -26,6 +26,7 @@ import org.opentripplanner.graph_builder.annotation.NegativeDwellTime;
 import org.opentripplanner.graph_builder.annotation.NegativeHopTime;
 import org.opentripplanner.graph_builder.annotation.RepeatedStops;
 import org.opentripplanner.model.impl.SortedMultimap;
+import org.opentripplanner.routing.edgetype.factory.PatternHopFactory;
 import org.opentripplanner.routing.graph.AddBuilderAnnotation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,7 +39,7 @@ import java.util.List;
 /**
  * This class is responsible for cleaning stop times, removing duplicates, correcting bad data
  * and so on. This was previously done in the
- * {@link org.opentripplanner.routing.edgetype.factory.GTFSPatternHopFactory}, and the code is
+ * {@link PatternHopFactory}, and the code is
  * extracted out of it to make the PatternHopFactory reusable for NETEX and GTFS file import.
  */
 public class RepairStopTimesForEachTripOperation {

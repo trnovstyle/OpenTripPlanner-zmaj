@@ -51,7 +51,7 @@ import org.opentripplanner.gtfs.GenerateTripPatternsOperation;
 import org.opentripplanner.gtfs.RepairStopTimesForEachTripOperation;
 import org.opentripplanner.model.StopTime;
 import org.opentripplanner.model.impl.OtpTransitBuilder;
-import org.opentripplanner.routing.edgetype.factory.GTFSPatternHopFactory;
+import org.opentripplanner.routing.edgetype.factory.PatternHopFactory;
 import org.opentripplanner.routing.graph.Graph;
 import org.opentripplanner.routing.services.FareServiceFactory;
 import org.slf4j.Logger;
@@ -128,7 +128,7 @@ public class GtfsModule implements GraphBuilderModule {
 
                 createTripPatterns(graph, builder, calendarService);
 
-                GTFSPatternHopFactory hf = createPatternHopFactory(gtfsBundle, builder.build());
+                PatternHopFactory hf = createPatternHopFactory(gtfsBundle, builder.build());
 
                 hf.run(graph);
 
@@ -176,8 +176,8 @@ public class GtfsModule implements GraphBuilderModule {
         graph.hasScheduledService = graph.hasScheduledService || buildTPOp.hasScheduledTrips();
     }
 
-    private GTFSPatternHopFactory createPatternHopFactory(GtfsBundle bundle, OtpTransitService transitService) {
-        return new GTFSPatternHopFactory(
+    private PatternHopFactory createPatternHopFactory(GtfsBundle bundle, OtpTransitService transitService) {
+        return new PatternHopFactory(
                 bundle.getFeedId(),
                 transitService,
                 _fareServiceFactory,

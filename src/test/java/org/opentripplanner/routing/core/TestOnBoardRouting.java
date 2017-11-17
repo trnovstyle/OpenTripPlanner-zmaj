@@ -25,7 +25,7 @@ import org.opentripplanner.gtfs.GtfsContext;
 import org.opentripplanner.routing.algorithm.AStar;
 import org.opentripplanner.routing.edgetype.OnBoardDepartPatternHop;
 import org.opentripplanner.routing.edgetype.PatternHop;
-import org.opentripplanner.routing.edgetype.factory.GTFSPatternHopFactory;
+import org.opentripplanner.routing.edgetype.factory.PatternHopFactory;
 import org.opentripplanner.routing.graph.Edge;
 import org.opentripplanner.routing.graph.Graph;
 import org.opentripplanner.routing.graph.Vertex;
@@ -56,7 +56,7 @@ public class TestOnBoardRouting extends TestCase {
     public void setUp() throws Exception {
         GtfsContext context = contextBuilder(ConstantsForTests.FAKE_GTFS).build();
         graph = new Graph();
-        GTFSPatternHopFactory factory = new GTFSPatternHopFactory(context);
+        PatternHopFactory factory = new PatternHopFactory(context);
         factory.run(graph);
         graph.putService(
                 CalendarServiceData.class,

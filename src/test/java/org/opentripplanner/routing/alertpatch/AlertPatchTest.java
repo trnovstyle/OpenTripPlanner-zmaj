@@ -26,7 +26,7 @@ import org.opentripplanner.gtfs.GtfsContext;
 import org.opentripplanner.routing.algorithm.AStar;
 import org.opentripplanner.routing.core.RoutingRequest;
 import org.opentripplanner.routing.core.State;
-import org.opentripplanner.routing.edgetype.factory.GTFSPatternHopFactory;
+import org.opentripplanner.routing.edgetype.factory.PatternHopFactory;
 import org.opentripplanner.routing.graph.Edge;
 import org.opentripplanner.routing.graph.Graph;
 import org.opentripplanner.routing.graph.Vertex;
@@ -54,7 +54,7 @@ public class AlertPatchTest extends TestCase {
         GtfsContext context = contextBuilder(ConstantsForTests.FAKE_GTFS)
                 .withGraphBuilderAnnotationsAndDeduplicator(graph)
                 .build();
-        GTFSPatternHopFactory factory = new GTFSPatternHopFactory(context);
+        PatternHopFactory factory = new PatternHopFactory(context);
         factory.run(graph);
         graph.putService(
                 CalendarServiceData.class,

@@ -24,7 +24,7 @@ import org.opentripplanner.routing.core.FareComponent;
 import org.opentripplanner.routing.core.Money;
 import org.opentripplanner.routing.core.RoutingRequest;
 import org.opentripplanner.routing.core.WrappedCurrency;
-import org.opentripplanner.routing.edgetype.factory.GTFSPatternHopFactory;
+import org.opentripplanner.routing.edgetype.factory.PatternHopFactory;
 import org.opentripplanner.routing.graph.Graph;
 import org.opentripplanner.routing.impl.SeattleFareServiceFactory;
 import org.opentripplanner.routing.services.FareService;
@@ -45,7 +45,7 @@ public class TestFares extends TestCase {
 
         Graph gg = new Graph();
         GtfsContext context = contextBuilder(ConstantsForTests.CALTRAIN_GTFS).build();
-        GTFSPatternHopFactory factory = new GTFSPatternHopFactory(context);
+        PatternHopFactory factory = new PatternHopFactory(context);
         factory.run(gg);
         gg.putService(
                 CalendarServiceData.class,
@@ -123,7 +123,7 @@ public class TestFares extends TestCase {
     	Graph gg = new Graph();
         GtfsContext context = contextBuilder(ConstantsForTests.KCM_GTFS).build();
         
-        GTFSPatternHopFactory factory = new GTFSPatternHopFactory(context);
+        PatternHopFactory factory = new PatternHopFactory(context);
         factory.setFareServiceFactory(new SeattleFareServiceFactory());
         
         factory.run(gg);
@@ -164,7 +164,7 @@ public class TestFares extends TestCase {
     public void testFareComponent() throws Exception {
         Graph gg = new Graph();
         GtfsContext context = contextBuilder(ConstantsForTests.FARE_COMPONENT_GTFS).build();
-        GTFSPatternHopFactory factory = new GTFSPatternHopFactory(context);
+        PatternHopFactory factory = new PatternHopFactory(context);
         factory.run(gg);
         gg.putService(
                 CalendarServiceData.class,

@@ -19,7 +19,7 @@ import java.util.HashMap;
 import org.opentripplanner.model.calendar.CalendarServiceData;
 import org.opentripplanner.graph_builder.module.StreetLinkerModule;
 import org.opentripplanner.gtfs.GtfsContext;
-import org.opentripplanner.routing.edgetype.factory.GTFSPatternHopFactory;
+import org.opentripplanner.routing.edgetype.factory.PatternHopFactory;
 import org.opentripplanner.routing.edgetype.factory.TransferGraphLinker;
 import org.opentripplanner.routing.graph.Graph;
 
@@ -75,7 +75,7 @@ public class ConstantsForTests {
             portlandContext = contextBuilder(ConstantsForTests.PORTLAND_GTFS)
                     .withGraphBuilderAnnotationsAndDeduplicator(portlandGraph)
                     .build();
-            GTFSPatternHopFactory factory = new GTFSPatternHopFactory(portlandContext);
+            PatternHopFactory factory = new PatternHopFactory(portlandContext);
             factory.run(portlandGraph);
             TransferGraphLinker linker = new TransferGraphLinker(portlandGraph);
             linker.run();
@@ -103,7 +103,7 @@ public class ConstantsForTests {
             e.printStackTrace();
             return null;
         }
-        GTFSPatternHopFactory factory = new GTFSPatternHopFactory(context);
+        PatternHopFactory factory = new PatternHopFactory(context);
         factory.run(graph);
         graph.putService(
                 CalendarServiceData.class,
