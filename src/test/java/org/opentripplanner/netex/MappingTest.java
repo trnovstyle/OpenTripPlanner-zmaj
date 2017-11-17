@@ -19,17 +19,14 @@ import org.opentripplanner.standalone.GraphBuilderParameters;
 import org.opentripplanner.standalone.OTPMain;
 
 import java.io.File;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
-
 
 
 public class MappingTest {
@@ -55,10 +52,7 @@ public class MappingTest {
             }
         });
         otpBuilderFromNetex = netexModule.getOtpDao().stream().findFirst().get();
-        otpBuilderFromGtfs = GtfsContextBuilder
-                .contextBuilder(gtfsFile)
-                .turnOnSetAgencyToFeedIdForAllElements()
-                .build()
+        otpBuilderFromGtfs = GtfsContextBuilder.contextBuilder(gtfsFile).turnOnSetAgencyToFeedIdForAllElements().build()
                 .getTransitBuilder();
     }
 
