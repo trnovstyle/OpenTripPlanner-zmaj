@@ -4,10 +4,10 @@ import org.opentripplanner.netex.loader.NetexDao;
 import org.opentripplanner.model.Route;
 import org.opentripplanner.model.Stop;
 import org.opentripplanner.model.impl.OtpTransitBuilder;
+import org.opentripplanner.model.Transfer;
 import org.rutebanken.netex.model.Authority;
 import org.rutebanken.netex.model.JourneyPattern;
 import org.rutebanken.netex.model.Line;
-import org.rutebanken.netex.model.Operator;
 import org.rutebanken.netex.model.StopPlace;
 
 import java.util.Collection;
@@ -25,6 +25,8 @@ public class NetexMapper {
     private final TripPatternMapper tripPatternMapper = new TripPatternMapper();
 
     private final OtpTransitBuilder transitBuilder;
+
+    private final TransferMapper transferMapper = new TransferMapper();
 
     private final String agencyId;
 
@@ -62,6 +64,15 @@ public class NetexMapper {
 
         for (String serviceId : netexDao.getCalendarServiceIds()) {
             transitBuilder.getCalendarDates().addAll(mapToCalendarDates(AgencyAndIdFactory.createAgencyAndId(serviceId), netexDao));
+        }
+
+        for (org.rutebanken.netex.model.ServiceJourneyInterchange interchange : netexDao.getInterchanges()) {
+            if (interchange != null) {
+                Transfer transfer = transferMapper.mapTransfer(interchange, transitBuilder, netexDao);
+                if (transfer != null) {
+                    transitBuilder.getTransfers().add(transfer);
+                }
+            }
         }
     }
 }
