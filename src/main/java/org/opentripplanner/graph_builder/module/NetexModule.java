@@ -1,7 +1,6 @@
 package org.opentripplanner.graph_builder.module;
 
 import com.google.common.collect.Lists;
-import com.vividsolutions.jts.io.InStream;
 import org.apache.commons.io.IOUtils;
 import org.opentripplanner.calendar.impl.MultiCalendarServiceImpl;
 import org.opentripplanner.graph_builder.model.NetexBundle;
@@ -9,7 +8,6 @@ import org.opentripplanner.graph_builder.model.NetexDao;
 import org.opentripplanner.graph_builder.services.GraphBuilderModule;
 import org.opentripplanner.model.calendar.CalendarServiceData;
 import org.opentripplanner.model.impl.OtpTransitBuilder;
-import org.opentripplanner.netex.mapping.AgencyAndIdFactory;
 import org.opentripplanner.netex.mapping.NetexMapper;
 import org.opentripplanner.routing.edgetype.factory.GTFSPatternHopFactory;
 import org.opentripplanner.routing.edgetype.factory.GtfsStopContext;
@@ -27,7 +25,6 @@ import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -59,9 +56,8 @@ public class NetexModule implements GraphBuilderModule {
             for(NetexBundle netexBundle : netexBundles){
                 NetexDao netexDao = loadBundle(netexBundle);
 
-                AgencyAndIdFactory.setAgencyId(netexBundle.netexParameters.netexFeedId);
-
-                NetexMapper otpMapper = new NetexMapper(new OtpTransitBuilder());
+                NetexMapper otpMapper = new NetexMapper(new OtpTransitBuilder(),
+                        netexBundle.netexParameters.netexFeedId);
                 OtpTransitBuilder daoBuilder = otpMapper.mapNetexToOtp(netexDao);
 
                 calendarService.addData(daoBuilder);
@@ -121,7 +117,7 @@ public class NetexModule implements GraphBuilderModule {
         for(NetexBundle bundle : netexBundles) {
             NetexDao netexDao = loadBundle(bundle);
 
-            NetexMapper otpMapper = new NetexMapper(new OtpTransitBuilder());
+            NetexMapper otpMapper = new NetexMapper(new OtpTransitBuilder(), bundle.netexParameters.netexFeedId);
             otpDaoList.add(otpMapper.mapNetexToOtp(netexDao));
         }
 

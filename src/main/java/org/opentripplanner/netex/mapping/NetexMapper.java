@@ -25,12 +25,17 @@ public class NetexMapper {
 
     TripPatternMapper tripPatternMapper = new TripPatternMapper();
 
+    String agencyId;
 
-    public NetexMapper(OtpTransitBuilder transitBuilder) {
+
+    public NetexMapper(OtpTransitBuilder transitBuilder, String agencyId) {
         this.transitBuilder = transitBuilder;
+        this.agencyId = agencyId;
     }
 
     public OtpTransitBuilder mapNetexToOtp(NetexDao netexDao) {
+        AgencyAndIdFactory.setAgencyId(agencyId);
+
         for (Operator operator : netexDao.getOperators().values()) {
             if (operator != null) {
                 transitBuilder.getAgencies().add(agencyMapper.mapAgency(operator, "Europe/Oslo"));
