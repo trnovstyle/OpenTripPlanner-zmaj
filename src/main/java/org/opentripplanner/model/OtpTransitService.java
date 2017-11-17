@@ -4,6 +4,7 @@ import org.opentripplanner.routing.edgetype.TripPattern;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Methods for accessing imported entities.
@@ -17,6 +18,10 @@ public interface OtpTransitService {
     Collection<FareRule> getAllFareRules();
 
     Collection<FeedInfo> getAllFeedInfos();
+
+    Map<AgencyAndId, NoticeAssignment> getNoticeAssignmentById();
+
+    Map<AgencyAndId, Notice> getNoticeById();
 
     Collection<Pathway> getAllPathways();
 

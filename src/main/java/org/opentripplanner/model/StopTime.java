@@ -18,14 +18,14 @@ package org.opentripplanner.model;
 
 import org.opentripplanner.util.TimeToStringConverter;
 
-import java.io.Serializable;
-import java.util.Objects;
 
-public final class StopTime implements Serializable, Comparable<StopTime> {
+public final class StopTime extends IdentityBean<AgencyAndId> implements Comparable<StopTime> {
 
     private static final long serialVersionUID = 1L;
 
     public static final int MISSING_VALUE = -999;
+
+    private AgencyAndId id;
 
     private Trip trip;
 
@@ -68,6 +68,14 @@ public final class StopTime implements Serializable, Comparable<StopTime> {
         this.stopSequence = st.stopSequence;
         this.timepoint = st.timepoint;
         this.trip = st.trip;
+    }
+
+    public AgencyAndId getId() {
+        return id;
+    }
+
+    public void setId(AgencyAndId id) {
+        this.id = id;
     }
 
     public Trip getTrip() {
@@ -209,23 +217,6 @@ public final class StopTime implements Serializable, Comparable<StopTime> {
 
     public int compareTo(StopTime o) {
         return this.getStopSequence() - o.getStopSequence();
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o)
-            return true;
-        if (o == null || getClass() != o.getClass())
-            return false;
-        StopTime stopTime = (StopTime) o;
-        return stopSequence == stopTime.stopSequence
-                && Objects.equals(trip, stopTime.trip)
-                && Objects.equals(stop, stopTime.stop);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(trip, stop, stopSequence);
     }
 
     @Override

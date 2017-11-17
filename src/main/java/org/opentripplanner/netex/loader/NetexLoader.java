@@ -38,9 +38,12 @@ import org.rutebanken.netex.model.Line;
 import org.rutebanken.netex.model.LinesInFrame_RelStructure;
 import org.rutebanken.netex.model.LinkSequence_VersionStructure;
 import org.rutebanken.netex.model.Network;
+import org.rutebanken.netex.model.Notice;
+import org.rutebanken.netex.model.NoticeAssignment;
 import org.rutebanken.netex.model.OperatingPeriod;
 import org.rutebanken.netex.model.OperatingPeriod_VersionStructure;
 import org.rutebanken.netex.model.PassengerStopAssignment;
+import org.rutebanken.netex.model.PointInLinkSequence_VersionedChildStructure;
 import org.rutebanken.netex.model.PublicationDeliveryStructure;
 import org.rutebanken.netex.model.Quay;
 import org.rutebanken.netex.model.ResourceFrame;
@@ -54,6 +57,7 @@ import org.rutebanken.netex.model.StopAssignment_VersionStructure;
 import org.rutebanken.netex.model.StopAssignmentsInFrame_RelStructure;
 import org.rutebanken.netex.model.StopPlace;
 import org.rutebanken.netex.model.StopPlacesInFrame_RelStructure;
+import org.rutebanken.netex.model.StopPointInJourneyPattern;
 import org.rutebanken.netex.model.TimetableFrame;
 import org.rutebanken.netex.model.VersionFrameDefaultsStructure;
 import org.slf4j.Logger;
@@ -325,7 +329,32 @@ public class NetexLoader {
                         .getJourneyPattern_OrJourneyPatternView();
                 for (JAXBElement pattern : journeyPattern_orJourneyPatternView) {
                     if (pattern.getValue() instanceof JourneyPattern) {
+                        JourneyPattern journeyPattern = (JourneyPattern) pattern.getValue();
                         currentNetexDao().addJourneyPattern((JourneyPattern) pattern.getValue());
+                        for (PointInLinkSequence_VersionedChildStructure pointInLinkSequence_versionedChildStructure
+                                : journeyPattern.getPointsInSequence().getPointInJourneyPatternOrStopPointInJourneyPatternOrTimingPointInJourneyPattern()) {
+                            if (pointInLinkSequence_versionedChildStructure instanceof StopPointInJourneyPattern) {
+                                StopPointInJourneyPattern stopPointInJourneyPattern = (StopPointInJourneyPattern) pointInLinkSequence_versionedChildStructure;
+                                currentNetexDao().addJourneyPatternByStopPointId(stopPointInJourneyPattern.getId(), journeyPattern);
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (sf.getNotices() != null) {
+                for (Notice notice : sf.getNotices().getNotice()) {
+                    currentNetexDao().addNotice(notice);
+                }
+            }
+
+            if (sf.getNoticeAssignments() != null) {
+                for (JAXBElement<? extends DataManagedObjectStructure> noticeAssignmentElement : sf.getNoticeAssignments()
+                        .getNoticeAssignment_()) {
+                    NoticeAssignment noticeAssignment = (NoticeAssignment) noticeAssignmentElement.getValue();
+
+                    if (noticeAssignment.getNoticeRef() != null && noticeAssignment.getNoticedObjectRef() != null) {
+                        currentNetexDao().addNoticeAssignment(noticeAssignment);
                     }
                 }
             }
@@ -369,6 +398,16 @@ public class NetexLoader {
                         }
                     } else {
                         LOG.warn("JourneyPattern not found. " + journeyPatternId);
+                    }
+                }
+            }
+            if (timetableFrame.getNoticeAssignments() != null) {
+                for (JAXBElement<? extends DataManagedObjectStructure> noticeAssignmentElement : timetableFrame.getNoticeAssignments()
+                        .getNoticeAssignment_()) {
+                    NoticeAssignment noticeAssignment = (NoticeAssignment) noticeAssignmentElement.getValue();
+
+                    if (noticeAssignment.getNoticeRef() != null && noticeAssignment.getNoticedObjectRef() != null) {
+                        currentNetexDao().addNoticeAssignment(noticeAssignment);
                     }
                 }
             }

@@ -18,6 +18,7 @@ import java.util.Arrays;
 import java.util.BitSet;
 import java.util.Collection;
 
+import org.opentripplanner.model.AgencyAndId;
 import org.opentripplanner.model.StopTime;
 import org.opentripplanner.model.Trip;
 import org.opentripplanner.common.MavenVersion;
@@ -98,6 +99,12 @@ public class TripTimes implements Serializable, Comparable<TripTimes>, Cloneable
     int[] departureTimes;
 
     /**
+     * Keep track of stop time ids to enable notices to point to a specific stop time.
+     */
+
+    AgencyAndId[] stopTimeIds;
+
+    /**
      * These are the GTFS stop sequence numbers, which show the order in which the vehicle visits
      * the stops. Despite the face that the StopPattern or TripPattern enclosing this TripTimes
      * provides an ordered list of Stops, the original stop sequence numbers may still be needed for
@@ -125,6 +132,7 @@ public class TripTimes implements Serializable, Comparable<TripTimes>, Cloneable
         final int nStops = stopTimes.size();
         final int[] departures = new int[nStops];
         final int[] arrivals   = new int[nStops];
+        this.stopTimeIds = new AgencyAndId[nStops];
         final int[] sequences  = new int[nStops];
         final BitSet timepoints = new BitSet(nStops);
         // Times are always shifted to zero. This is essential for frequencies and deduplication.
@@ -133,6 +141,7 @@ public class TripTimes implements Serializable, Comparable<TripTimes>, Cloneable
         for (final StopTime st : stopTimes) {
             departures[s] = st.getDepartureTime() - timeShift;
             arrivals[s] = st.getArrivalTime() - timeShift;
+            stopTimeIds[s] = st.getId();
             sequences[s] = st.getStopSequence();
             timepoints.set(s, st.getTimepoint() == 1);
             s++;
@@ -159,6 +168,7 @@ public class TripTimes implements Serializable, Comparable<TripTimes>, Cloneable
         this.headsigns = object.headsigns;
         this.scheduledDepartureTimes = object.scheduledDepartureTimes;
         this.scheduledArrivalTimes = object.scheduledArrivalTimes;
+        this.stopTimeIds = object.stopTimeIds;
         this.stopSequences = object.stopSequences;
         this.timepoints = object.timepoints;
     }
@@ -232,6 +242,10 @@ public class TripTimes implements Serializable, Comparable<TripTimes>, Cloneable
     public int getDepartureTime(final int stop) {
         if (departureTimes == null) return getScheduledDepartureTime(stop);
         else return departureTimes[stop]; // updated times are not time shifted.
+    }
+
+    public AgencyAndId getStopTimeIdByIndex(int i) {
+        return stopTimeIds[i];
     }
 
     /** @return the amount of time in seconds that the vehicle waits at the stop. */

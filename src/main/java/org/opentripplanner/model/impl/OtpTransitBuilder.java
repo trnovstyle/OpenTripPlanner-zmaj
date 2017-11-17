@@ -24,6 +24,8 @@ import org.opentripplanner.model.FareRule;
 import org.opentripplanner.model.FeedInfo;
 import org.opentripplanner.model.Frequency;
 import org.opentripplanner.model.IdentityBean;
+import org.opentripplanner.model.Notice;
+import org.opentripplanner.model.NoticeAssignment;
 import org.opentripplanner.model.Pathway;
 import org.opentripplanner.model.Route;
 import org.opentripplanner.model.ServiceCalendar;
@@ -57,6 +59,10 @@ public class OtpTransitBuilder {
     private final List<FeedInfo> feedInfos = new ArrayList<>();
 
     private final List<Frequency> frequencies = new ArrayList<>();
+
+    private final EntityMap<AgencyAndId, Notice> noticesById = new EntityMap<>();
+
+    private final EntityMap<AgencyAndId, NoticeAssignment> noticeAssignmentsById = new EntityMap<>();
 
     private final List<Pathway> pathways = new ArrayList<>();
 
@@ -137,6 +143,14 @@ public class OtpTransitBuilder {
         return tripPatterns;
     }
 
+
+    public EntityMap<AgencyAndId, Notice> getNoticesById() {
+        return noticesById;
+    }
+
+    public EntityMap<AgencyAndId, NoticeAssignment> getNoticeAssignmentsById() {
+        return noticeAssignmentsById;
+    }
 
     /**
      * Find all serviceIds in both CalendarServices and CalendarServiceDates.

@@ -96,8 +96,8 @@ public class TripPatternMapper {
 
         TripPattern tripPattern = new TripPattern(otpRoute, stopPattern);
         tripPattern.code = journeyPattern.getId();
-        tripPattern.name =
-                journeyPattern.getName() == null ? "" : journeyPattern.getName().getValue();
+        tripPattern.name = journeyPattern.getName() == null ? "" : journeyPattern.getName().getValue();
+        tripPattern.id = AgencyAndIdFactory.createAgencyAndId(journeyPattern.getId());
 
         Deduplicator deduplicator = new Deduplicator();
 

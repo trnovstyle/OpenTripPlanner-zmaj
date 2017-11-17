@@ -10,6 +10,8 @@ import org.rutebanken.netex.model.GroupOfLines;
 import org.rutebanken.netex.model.JourneyPattern;
 import org.rutebanken.netex.model.Line;
 import org.rutebanken.netex.model.Network;
+import org.rutebanken.netex.model.Notice;
+import org.rutebanken.netex.model.NoticeAssignment;
 import org.rutebanken.netex.model.OperatingPeriod;
 import org.rutebanken.netex.model.Quay;
 import org.rutebanken.netex.model.Route;
@@ -41,6 +43,8 @@ public class NetexDao {
 
     private final Map<String, JourneyPattern> journeyPatternsById = new HashMap<>();
 
+    private final Map<String, JourneyPattern> journeyPatternByStopPointId = new HashMap<>();
+
     private final Map<String, Route> routeById = new HashMap<>();
 
     private final Map<String, Line> lineById = new HashMap<>();
@@ -70,6 +74,10 @@ public class NetexDao {
     private final Map<String, Network> networkById = new HashMap<>();
 
     private final Set<String> calendarServiceIds = new HashSet<>();
+
+    private final Map<String, Notice> noticeById = new HashMap<>();
+
+    private final Map<String, NoticeAssignment> noticeAssignmentMap = new HashMap<>();
 
     private final Multimap<String, StopPlace> stopPlaceById = ArrayListMultimap.create();
 
@@ -187,6 +195,14 @@ public class NetexDao {
     }
 
     /**
+     * @return true if at least one ServiceJourney exist for id in this class or in one of the parents.
+     */
+    public boolean serviceJourneysExist(String journeyPatternId) {
+        return serviceJourneyById.containsKey(journeyPatternId) ||
+                (parent != null && parent.serviceJourneysExist(journeyPatternId));
+    }
+
+    /**
      * Lookup elements in this class and if not found delegate up to the parent NetexDao.
      * NB! elements of this class and its parents are NOT merged, the closest win.
      * @return an empty collection if no element are found.
@@ -210,6 +226,15 @@ public class NetexDao {
 
     public Collection<JourneyPattern> getJourneyPatterns() {
         return journeyPatternsById.values();
+    }
+
+    public void addJourneyPatternByStopPointId(String stopPointId, JourneyPattern journeyPattern) {
+        journeyPatternByStopPointId.put(stopPointId, journeyPattern);
+    }
+
+    public JourneyPattern lookupJourneyPatternByStopPointId(String id) {
+        JourneyPattern v = journeyPatternByStopPointId.get(id);
+        return returnLocalValue(v) ? v : parent.lookupJourneyPatternByStopPointId(id);
     }
 
     void addLine(Line line) {
@@ -341,6 +366,28 @@ public class NetexDao {
     public Network lookupNetworkById(String networkId) {
         Network v = networkById.get(networkId);
         return returnLocalValue(v) ? v : parent.lookupNetworkById(networkId);
+    }
+
+    public void addNotice(Notice notice) {
+        noticeById.put(notice.getId(), notice);
+    }
+
+    public Collection<Notice> getNotices() {
+        return noticeById.values();
+    }
+
+    public void addNoticeAssignment(NoticeAssignment noticeAssignment) {
+        noticeAssignmentMap.put(noticeAssignment.getId(), noticeAssignment);
+    }
+
+
+    public Collection<NoticeAssignment> getNoticeAssignments() {
+        return noticeAssignmentMap.values();
+    }
+
+
+    public Map<String, NoticeAssignment> getNoticeAssignmentMap() {
+        return noticeAssignmentMap;
     }
 
 
