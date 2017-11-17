@@ -37,7 +37,6 @@ import java.util.Set;
  * present in the parent NetexDao.
  */
 public class NetexDao {
-    private final Map<String, String> quayIdByStopPointRef = new HashMap<>();
 
     private final Map<String, JourneyPattern> journeyPatternsById = new HashMap<>();
 
@@ -76,6 +75,10 @@ public class NetexDao {
     private final Multimap<String, Quay> quayById = ArrayListMultimap.create();
 
     private final Map<String, DestinationDisplay> destinationDisplayMap = new HashMap<>();
+
+    private final Map<String, String> quayIdByStopPointRef = new HashMap<>();
+
+    private final Map<String, StopPlace> multimodalStopPlaceById = new HashMap<>();
 
     private String timeZone;
 
@@ -341,6 +344,14 @@ public class NetexDao {
     public Network lookupNetworkById(String networkId) {
         Network v = networkById.get(networkId);
         return returnLocalValue(v) ? v : parent.lookupNetworkById(networkId);
+    }
+
+    public void addMultimodalStopPlace(StopPlace stopPlace) {
+        multimodalStopPlaceById.put(stopPlace.getId(), stopPlace);
+    }
+
+    public Collection<StopPlace> getMultimodalStops() {
+        return multimodalStopPlaceById.values();
     }
 
 

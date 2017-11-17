@@ -4,6 +4,7 @@ import org.opentripplanner.routing.edgetype.TripPattern;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Methods for accessing imported entities.
@@ -26,6 +27,8 @@ public interface OtpTransitService {
     Collection<ShapePoint> getShapePointsForShapeId(AgencyAndId shapeId);
 
     Stop getStopForId(AgencyAndId id);
+
+    Iterable<Map.Entry<Stop, Collection<Stop>>> getStationsByMultiModalStop();
 
     List<Stop> getStopsForStation(Stop station);
 

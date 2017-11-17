@@ -1114,6 +1114,30 @@ public class PatternHopFactory {
     }
 
     /**
+     * Links multimodal stops to stops the same way as parent stops are linked in linkStopsToParentStations
+     * @param graph
+     */
+
+    public void linkMultiModalStops(Graph graph) {
+        for (Map.Entry<Stop, Collection<Stop>> entry : _transitService.getStationsByMultiModalStop()) {
+            Stop multiModalStop = entry.getKey();
+            TransitStation multiModalStopVertex = (TransitStation) context.stationStopNodes.get(multiModalStop);
+            if(!entry.getValue().isEmpty()) {
+                for (Stop station : entry.getValue()) {
+                    for (Stop stop : _transitService.getStopsForStation(station)) {
+                        TransitStop stopVertex = (TransitStop) context.stationStopNodes.get(stop);
+                        new StationStopEdge(multiModalStopVertex, stopVertex);
+                        new StationStopEdge(stopVertex, multiModalStopVertex);
+                    }
+                }
+            }
+            else {
+                LOG.warn("Multimodal stop " + multiModalStop.getId() + " does not contain any stations.");
+            }
+        }
+    }
+
+    /**
      * Create transfer edges between stops which are listed in transfers.txt.
      * 
      * NOTE: this method is only called when transfersTxtDefinesStationPaths is set to

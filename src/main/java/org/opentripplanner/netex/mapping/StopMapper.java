@@ -1,8 +1,10 @@
 package org.opentripplanner.netex.mapping;
 
 import com.google.common.collect.Iterables;
+import org.opentripplanner.model.AgencyAndId;
 import org.opentripplanner.model.Stop;
 import org.opentripplanner.netex.loader.NetexDao;
+import org.opentripplanner.model.impl.OtpTransitBuilder;
 import org.rutebanken.netex.model.Quay;
 import org.rutebanken.netex.model.StopPlace;
 import org.slf4j.Logger;
@@ -19,9 +21,10 @@ import java.util.stream.Collectors;
 public class StopMapper {
     private static final Logger LOG = LoggerFactory.getLogger(StopMapper.class);
 
-    public Collection<Stop> mapParentAndChildStops(Collection<StopPlace> stopPlaceAllVersions, NetexDao netexDao){
+    public Collection<Stop> mapParentAndChildStops(Collection<StopPlace> stopPlaceAllVersions, OtpTransitBuilder transitBuilder, NetexDao netexDao){
         ArrayList<Stop> stops = new ArrayList<>();
 
+        Stop multiModalStop = null;
         Stop stop = new Stop();
         stop.setLocationType(1);
 
@@ -32,8 +35,24 @@ public class StopMapper {
 
         StopPlace stopPlaceLatest = Iterables.getLast(stopPlaceAllVersions);
 
+        if (stopPlaceLatest.getParentSiteRef() != null) {
+            AgencyAndId id = AgencyAndIdFactory.createAgencyAndId(stopPlaceLatest.getParentSiteRef().getRef());
+            if (transitBuilder.getMultiModalStops().containsKey(id)) {
+                multiModalStop = transitBuilder.getMultiModalStops().get(id);
+                transitBuilder.getStationsByMultiModalStop().put(multiModalStop, stop);
+            }
+        }
+
         if (stopPlaceLatest.getName() != null) {
             stop.setName(stopPlaceLatest.getName().getValue());
+        } else if (multiModalStop != null) {
+            String parentName = multiModalStop.getName();
+            if (parentName != null) {
+                stop.setName(parentName);
+            } else {
+                LOG.warn("No name found for stop " + stopPlaceLatest.getId() + " or in parent stop");
+                stop.setName("N/A");
+            }
         } else {
             stop.setName("N/A");
         }
@@ -70,6 +89,9 @@ public class StopMapper {
                         stopQuay.setLon(quay.getCentroid().getLocation().getLongitude().doubleValue());
                         stopQuay.setId(AgencyAndIdFactory.createAgencyAndId(quay.getId()));
                         stopQuay.setParentStation(stop.getId().getId());
+                        if (multiModalStop != null) {
+                            stopQuay.setMultiModalStation(multiModalStop.getId().getId());
+                        }
 
 
                         // Continue if this is not newest version of quay
@@ -87,5 +109,27 @@ public class StopMapper {
             }
         }
         return stops;
+    }
+
+    // Mapped same way as parent stops for now
+    Stop mapMultiModalStop(StopPlace stopPlace) {
+        Stop stop = new Stop();
+        stop.setId(AgencyAndIdFactory.createAgencyAndId(stopPlace.getId()));
+        stop.setLocationType(1); // Set same as parent stop for now
+        if (stopPlace.getName() != null) {
+            stop.setName(stopPlace.getName().getValue());
+        } else {
+
+            LOG.warn("No name found for stop " + stopPlace.getId());
+            stop.setName("Not found");
+        }
+        if(stopPlace.getCentroid() != null){
+            stop.setLat(stopPlace.getCentroid().getLocation().getLatitude().doubleValue());
+            stop.setLon(stopPlace.getCentroid().getLocation().getLongitude().doubleValue());
+        }else{
+            LOG.warn(stopPlace.getId() + " does not contain any coordinates.");
+        }
+
+        return stop;
     }
 }
