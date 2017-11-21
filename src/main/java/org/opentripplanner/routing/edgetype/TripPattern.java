@@ -583,7 +583,13 @@ public class TripPattern implements Cloneable, Serializable {
     public void setServiceCodes (Map<AgencyAndId, Integer> serviceCodes) {
         services = new BitSet();
         for (Trip trip : trips) {
-            services.set(serviceCodes.get(trip.getServiceId()));
+            AgencyAndId serviceId = trip.getServiceId();
+            if (serviceCodes.containsKey(serviceId)) {
+                services.set(serviceCodes.get(trip.getServiceId()));
+            }
+            else {
+                LOG.warn("ServiceCode " + serviceCodes.toString() + " not found.");
+            }
         }
         scheduledTimetable.setServiceCodes (serviceCodes);
     }
