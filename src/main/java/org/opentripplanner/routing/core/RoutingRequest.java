@@ -14,11 +14,14 @@
 package org.opentripplanner.routing.core;
 
 import com.google.common.base.Objects;
-import org.onebusaway.gtfs.model.AgencyAndId;
-import org.onebusaway.gtfs.model.Route;
-import org.onebusaway.gtfs.model.Trip;
+import org.opentripplanner.model.AgencyAndId;
+import org.opentripplanner.model.Route;
+import org.opentripplanner.model.Trip;
 import org.opentripplanner.api.common.Message;
 import org.opentripplanner.api.common.ParameterException;
+import org.opentripplanner.model.AgencyAndId;
+import org.opentripplanner.model.Route;
+import org.opentripplanner.model.Trip;
 import org.opentripplanner.api.parameter.QualifiedModeSet;
 import org.opentripplanner.common.MavenVersion;
 import org.opentripplanner.common.model.GenericLocation;
@@ -116,6 +119,9 @@ public class RoutingRequest implements Cloneable, Serializable {
 
     /** The maximum duration of a returned itinerary, in hours. */
     public double maxHours = Double.MAX_VALUE;
+
+    /** Whether maxHours limit should consider wait/idle time between the itinerary and the requested arrive/depart time. */
+    public boolean useRequestedDateTimeInMaxHours = false;
 
     /** The set of TraverseModes that a user is willing to use. Defaults to WALK | TRANSIT. */
     public TraverseModeSet modes = new TraverseModeSet("TRANSIT,WALK"); // defaults in constructor overwrite this
@@ -1085,7 +1091,7 @@ public class RoutingRequest implements Cloneable, Serializable {
     }
 
     /**
-     * @return The weight (multiplier) for mode, the default weight is one. 
+     * @return The weight (multiplier) for mode, the default weight is one.
      * Allows de-prioritizing modes.
      */
     public double getModeWeight(TraverseMode traverseMode) {

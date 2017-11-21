@@ -30,6 +30,15 @@ import java.util.stream.Collectors;
 import static java.lang.Math.max;
 import static java.lang.Math.min;
 
+/**
+ * Links unconnected entries to platforms. The entries may be stairs or walk paths in OSM
+ * arriving inside the platform area. The end vertex of the entry is linked to all vertices in
+ * the ring defining the platform.
+ *
+ * An implementation of the Ray-casting algorithm is used to decide if the endpoint of the entry
+ * is inside the platform area.
+ *
+ */
 public class PlatformLinker {
 
     private static Logger LOG = LoggerFactory.getLogger(PlatformLinker.class);
@@ -58,7 +67,7 @@ public class PlatformLinker {
                 filter(this::isEndpoint).
                 collect(Collectors.toList());
 
-        LOG.info("Endpoints: " + endpoints.size());
+        LOG.info("Endpoints found: " + endpoints.size());
 
 
         List<Area> platforms = osmdb.getWalkableAreas().stream().
@@ -66,7 +75,7 @@ public class PlatformLinker {
                         "platform".equals(area.parent.getTag("railway"))).
                 collect(Collectors.toList());
 
-        LOG.info("Platforms: " + platforms.size());
+        LOG.info("Platforms found: " + platforms.size());
 
         for (Area area : platforms) {
             List<OsmVertex> endpointsWithin = new ArrayList<>();
@@ -82,9 +91,6 @@ public class PlatformLinker {
                     }
                 }
 
-            }
-            if(endpointsWithin.size() > 0){
-                LOG.info("Linked  " + endpointsWithin.size() + " entries for platform: " + area.parent.getId());
             }
         }
         LOG.info("Done linking platforms");
@@ -152,7 +158,9 @@ public class PlatformLinker {
         return name;
     }
 
-    //Ray casting methods
+    /**
+     * Returns true if the vertex is inside the area defined by this Ring object.
+     */
     static boolean contains(Ring ring, Vertex vertex) {
         double[][] shape = new double[ring.nodes.size()][2];
         for (int i = 0; i < ring.nodes.size(); i++) {

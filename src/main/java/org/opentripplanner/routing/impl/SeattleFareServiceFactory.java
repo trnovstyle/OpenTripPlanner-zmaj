@@ -16,9 +16,9 @@ package org.opentripplanner.routing.impl;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.onebusaway.gtfs.model.AgencyAndId;
-import org.onebusaway.gtfs.model.Trip;
-import org.onebusaway.gtfs.services.GtfsRelationalDao;
+import org.opentripplanner.model.AgencyAndId;
+import org.opentripplanner.model.Trip;
+import org.opentripplanner.model.OtpTransitDao;
 import org.opentripplanner.routing.core.Fare.FareType;
 import org.opentripplanner.routing.core.FareRuleSet;
 import org.opentripplanner.routing.services.FareService;
@@ -35,24 +35,24 @@ public class SeattleFareServiceFactory extends DefaultFareServiceFactory {
     @Override
     public FareService makeFareService() {
     	
-    	DefaultFareServiceImpl fareService = new DefaultFareServiceImpl();
+    	SeattleFareServiceImpl fareService = new SeattleFareServiceImpl();
     	fareService.addFareRules(FareType.regular, regularFareRules.values());
     	fareService.addFareRules(FareType.youth, regularFareRules.values());
     	fareService.addFareRules(FareType.senior, regularFareRules.values());
-    	
+
     	return fareService;
     }
-    
+
     @Override
     public void configure(JsonNode config) {
         // No config for the moment
     }
     
     @Override
-    public void processGtfs(GtfsRelationalDao dao) {
+    public void processGtfs(OtpTransitDao dao) {
     	// Add custom extension: trips may have a fare ID specified in KCM GTFS.
     	// Need to ensure that we are scoped to feed when adding trips to FareRuleSet,
-    	// since fare IDs may not be unique across feeds and trip agency IDs
+    	// since fare IDs may not be unique across feeds and trip agency IDsqq
     	// may not match fare attribute agency IDs (which are feed IDs).
     	
     	Map<AgencyAndId, FareRuleSet> feedFareRules = new HashMap<>();

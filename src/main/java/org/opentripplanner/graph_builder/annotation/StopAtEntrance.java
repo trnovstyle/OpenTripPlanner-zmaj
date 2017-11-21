@@ -13,7 +13,7 @@
 
 package org.opentripplanner.graph_builder.annotation;
 
-import org.onebusaway.gtfs.model.StopTime;
+import org.opentripplanner.model.StopTime;
 
 public class StopAtEntrance extends GraphBuilderAnnotation {
 

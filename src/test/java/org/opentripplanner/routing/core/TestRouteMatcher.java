@@ -15,8 +15,8 @@ package org.opentripplanner.routing.core;
 
 import junit.framework.TestCase;
 
-import org.onebusaway.gtfs.model.AgencyAndId;
-import org.onebusaway.gtfs.model.Route;
+import org.opentripplanner.model.AgencyAndId;
+import org.opentripplanner.model.Route;
 
 public class TestRouteMatcher extends TestCase {
 

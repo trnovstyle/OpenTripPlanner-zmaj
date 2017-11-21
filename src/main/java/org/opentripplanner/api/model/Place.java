@@ -14,7 +14,7 @@
 package org.opentripplanner.api.model; 
 
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import org.onebusaway.gtfs.model.AgencyAndId;
+import org.opentripplanner.model.AgencyAndId;
 import org.opentripplanner.util.Constants;
 
 import javax.xml.bind.annotation.XmlAttribute;

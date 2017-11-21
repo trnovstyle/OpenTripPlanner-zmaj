@@ -1,0 +1,57 @@
+stop_id,stop_name,stop_lat,stop_lon,zone_id,stop_timezone
+1471,S Jackson St & 5th Ave S,47.599125,-122.328041,21,America/Los_Angeles
+1500,S Jackson St & 8th Ave S,47.599255,-122.322327,21,America/Los_Angeles
+1510,S Jackson St & Maynard Ave S,47.599262,-122.325455,21,America/Los_Angeles
+1530,S Jackson St & 5th Ave S,47.599266,-122.328384,21,America/Los_Angeles
+1610,Prefontaine Pl S & Yesler Way,47.60173,-122.330116,21,America/Los_Angeles
+1690,3rd Ave & Vine St,47.616871,-122.348297,21,America/Los_Angeles
+2010,10th Ave W & W Fulton St,47.645351,-122.370277,21,America/Los_Angeles
+2020,10th Ave W & W Bothwell St,47.643486,-122.370308,21,America/Los_Angeles
+2030,10th Ave W & W Halladay St,47.641792,-122.370171,21,America/Los_Angeles
+2050,10th Ave W & W Mcgraw St,47.639458,-122.370415,21,America/Los_Angeles
+2060,10th Ave W & W Crockett St,47.637588,-122.370438,21,America/Los_Angeles
+2070,10th Ave W & W Howe St,47.635769,-122.370453,21,America/Los_Angeles
+2080,10th Ave W & W Blaine St,47.634563,-122.370468,21,America/Los_Angeles
+2090,10th Ave W & W Galer St,47.632374,-122.370506,21,America/Los_Angeles
+2100,Olympic Way W & W Lee St,47.631081,-122.370155,1,America/Los_Angeles
+2110,Olympic Way W & 9th Ave W,47.629497,-122.368652,21,America/Los_Angeles
+2120,Olympic Way W & 7th Ave W,47.627605,-122.366096,21,America/Los_Angeles
+2130,Olympic Way W & 5th Ave W,47.62669,-122.36335,21,America/Los_Angeles
+2140,W Olympic Pl & 3rd Ave W,47.626659,-122.360306,21,America/Los_Angeles
+2150,W Roy St & 2nd Ave W,47.625648,-122.358765,21,America/Los_Angeles
+2180,Queen Anne Ave N & W Harrison St,47.621834,-122.356834,21,America/Los_Angeles
+2200,Queen Anne Ave N & W John St,47.619213,-122.35685,21,America/Los_Angeles
+2220,3rd Ave & Cedar St,47.616871,-122.348625,21,America/Los_Angeles
+2244,Denny Way & 2nd Ave N,47.618515,-122.3517,1,America/Los_Angeles
+2320,1st Ave & Broad St,47.617218,-122.352859,21,America/Los_Angeles
+2330,1st Ave N & Denny Way,47.618904,-122.355347,21,America/Los_Angeles
+2360,1st Ave N & Republican St,47.623188,-122.355316,21,America/Los_Angeles
+2370,Mercer St & Queen Anne Ave N,47.624649,-122.356552,21,America/Los_Angeles
+2390,2nd Ave W & W Roy St,47.625897,-122.359215,21,America/Los_Angeles
+2400,W Olympic Pl & 3rd Ave W,47.626793,-122.360535,21,America/Los_Angeles
+2410,W Olympic Pl & 5th Ave W,47.626808,-122.363159,21,America/Los_Angeles
+2420,Olympic Way W & 7th Ave W,47.627861,-122.366356,21,America/Los_Angeles
+2430,Olympic Way W & W Prospect St,47.629059,-122.367981,21,America/Los_Angeles
+2440,Olympic Way W & W Lee St,47.631279,-122.37011,21,America/Los_Angeles
+2450,10th Ave W & W Galer St,47.632503,-122.370308,21,America/Los_Angeles
+2460,10th Ave W & W Blaine St,47.634956,-122.370262,21,America/Los_Angeles
+2470,10th Ave W & W Howe St,47.63615,-122.370247,21,America/Los_Angeles
+2480,10th Ave W & W Crockett St,47.637974,-122.370224,21,America/Los_Angeles
+2490,10th Ave W & W Mcgraw St,47.639767,-122.370125,21,America/Los_Angeles
+2500,10th Ave W & W Halladay St,47.642193,-122.369965,21,America/Los_Angeles
+2510,10th Ave W & W Newell St,47.644455,-122.370087,21,America/Los_Angeles
+2520,9th Ave W & W Armour St,47.645317,-122.369278,21,America/Los_Angeles
+2672,Queen Anne Ave N & W Mercer St,47.624306,-122.356819,21,America/Los_Angeles
+3600,S Jackson St & 12th Ave S,47.599255,-122.317757,21,America/Los_Angeles
+400,3rd Ave & Bell St,47.614445,-122.344513,21,America/Los_Angeles
+420,3rd Ave & Virginia St,47.612373,-122.341019,21,America/Los_Angeles
+430,3rd Ave & Pine St,47.610973,-122.339035,21,America/Los_Angeles
+450,3rd Ave & Union St,47.60825,-122.336548,21,America/Los_Angeles
+480,3rd Ave & Marion St,47.604996,-122.333572,21,America/Los_Angeles
+500,3rd Ave & James St,47.602234,-122.331047,21,America/Los_Angeles
+515,3rd Ave S & S Main St,47.600239,-122.330376,21,America/Los_Angeles
+538,3rd Ave & Columbia St,47.604191,-122.332588,21,America/Los_Angeles
+558,3rd Ave & Seneca St,47.607052,-122.335213,21,America/Los_Angeles
+575,3rd Ave & Pike St,47.609642,-122.337585,21,America/Los_Angeles
+600,3rd Ave & Virginia St,47.612808,-122.341438,21,America/Los_Angeles
+605,3rd Ave & Bell St,47.615036,-122.3452,21,America/Los_Angeles

@@ -22,10 +22,10 @@ import java.util.List;
 
 import com.beust.jcommander.internal.Lists;
 import org.junit.Test;
-import org.onebusaway.gtfs.model.AgencyAndId;
-import org.onebusaway.gtfs.model.IdentityBean;
-import org.onebusaway.gtfs.model.Trip;
-import org.onebusaway.gtfs.services.MockGtfs;
+import org.opentripplanner.model.AgencyAndId;
+import org.opentripplanner.model.IdentityBean;
+import org.opentripplanner.model.Trip;
+import org.opentripplanner.gtfs.MockGtfs;
 import org.opentripplanner.graph_builder.model.GtfsBundle;
 import org.opentripplanner.gtfs.BikeAccess;
 import org.opentripplanner.routing.edgetype.TripPattern;
@@ -34,7 +34,7 @@ import org.opentripplanner.routing.impl.DefaultStreetVertexIndexFactory;
 
 public class GtfsGraphBuilderModuleTest {
 
-    private static final HashMap<Class<?>, Object> _extra = new HashMap<Class<?>, Object>();
+    private static final HashMap<Class<?>, Object> _extra = new HashMap<>();
 
     private GtfsModule _builder;
 

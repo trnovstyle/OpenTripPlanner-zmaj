@@ -17,7 +17,8 @@ public class UIPBikeRentalDataSource extends GenericJsonBikeRentalDataSource {
     }
 
     /**
-     * http://urbaninfrastructure.no/
+     *
+     * Bike-rental station data source for: http://urbaninfrastructure.no/
      *
      * API description: https://developer.oslobysykkel.no/api
      *

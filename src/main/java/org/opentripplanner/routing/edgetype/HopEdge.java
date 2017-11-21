@@ -13,7 +13,7 @@
 
 package org.opentripplanner.routing.edgetype;
 
-import org.onebusaway.gtfs.model.Stop;
+import org.opentripplanner.model.Stop;
 
 import com.vividsolutions.jts.geom.LineString;
 

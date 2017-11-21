@@ -14,65 +14,14 @@
 package org.opentripplanner.gtfs;
 
 
-import org.onebusaway.gtfs.impl.GtfsRelationalDaoImpl;
-import org.onebusaway.gtfs.impl.calendar.CalendarServiceDataFactoryImpl;
-import org.onebusaway.gtfs.impl.calendar.CalendarServiceImpl;
-import org.onebusaway.gtfs.model.AgencyAndId;
-import org.onebusaway.gtfs.model.Route;
-import org.onebusaway.gtfs.model.calendar.CalendarServiceData;
-import org.onebusaway.gtfs.serialization.GtfsReader;
-import org.onebusaway.gtfs.services.GtfsRelationalDao;
-import org.onebusaway.gtfs.services.calendar.CalendarService;
-import org.opentripplanner.graph_builder.module.GtfsFeedId;
+import org.opentripplanner.model.AgencyAndId;
+import org.opentripplanner.model.Route;
 import org.opentripplanner.routing.core.TraverseMode;
 
-import java.io.File;
-import java.io.IOException;
 
 public class GtfsLibrary {
 
-    public static final char ID_SEPARATOR = ':'; // note this is different than what OBA GTFS uses to match our 1.0 API
-
-    public static GtfsContext createContext(GtfsFeedId feedId, GtfsRelationalDao dao) {
-        CalendarService calendarService = createCalendarService(dao);
-        return createContext(feedId, dao, calendarService);
-    }
-
-    public static GtfsContext createContext(GtfsFeedId feedId, GtfsRelationalDao dao, CalendarService calendarService) {
-        return new GtfsContextImpl(feedId, dao, calendarService);
-    }
-
-    public static GtfsContext readGtfs(File path) throws IOException {
-        GtfsRelationalDaoImpl dao = new GtfsRelationalDaoImpl();
-
-        GtfsReader reader = new GtfsReader();
-        reader.setInputLocation(path);
-        reader.setEntityStore(dao);
-
-        GtfsFeedId feedId = new GtfsFeedId.Builder().fromGtfsFeed(reader.getInputSource()).build();
-
-        reader.setDefaultAgencyId(feedId.getId());
-
-        reader.run();
-
-        CalendarService calendarService = createCalendarService(dao);
-
-        return new GtfsContextImpl(feedId, dao, calendarService);
-    }
-
-    public static CalendarService createCalendarService(GtfsRelationalDao dao) {
-        CalendarServiceData data = createCalendarServiceData(dao);
-        CalendarServiceImpl service = new CalendarServiceImpl();
-        service.setData(data);
-        return service;
-    }
-
-    public static CalendarServiceData createCalendarServiceData(GtfsRelationalDao dao) {
-        CalendarServiceDataFactoryImpl factory = new CalendarServiceDataFactoryImpl();
-        factory.setGtfsDao(dao);
-        CalendarServiceData data = factory.createData();
-        return data;
-    }
+    private static final char ID_SEPARATOR = ':'; // note this is different than what OBA GTFS uses to match our 1.0 API
 
     /* Using in index since we can't modify OBA libs and the colon in the expected separator in the 1.0 API. */
     public static AgencyAndId convertIdFromString(String value) {
@@ -152,36 +101,6 @@ public class GtfsLibrary {
             return TraverseMode.FUNICULAR;
         default:
             throw new IllegalArgumentException("unknown gtfs route type " + routeType);
-        }
-    }
-
-    private static class GtfsContextImpl implements GtfsContext {
-
-        private GtfsFeedId _feedId;
-
-        private GtfsRelationalDao _dao;
-
-        private CalendarService _calendar;
-        
-        public GtfsContextImpl(GtfsFeedId feedId, GtfsRelationalDao dao, CalendarService calendar) {
-            _feedId = feedId;
-            _dao = dao;
-            _calendar = calendar;
-        }
-
-        @Override
-        public GtfsFeedId getFeedId() {
-            return _feedId;
-        }
-
-        @Override
-        public GtfsRelationalDao getDao() {
-            return _dao;
-        }
-
-        @Override
-        public CalendarService getCalendarService() {
-            return _calendar;
         }
     }
 }

@@ -13,15 +13,17 @@
 
 package org.opentripplanner.routing.edgetype;
 
+import java.util.*;
+import java.util.Map.Entry;
+
+import org.opentripplanner.model.calendar.ServiceDate;
 import com.google.common.base.Preconditions;
-import org.onebusaway.gtfs.model.Trip;
-import org.onebusaway.gtfs.model.calendar.ServiceDate;
+import org.opentripplanner.model.Trip;
 import org.opentripplanner.routing.trippattern.TripTimes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
-import java.util.Map.Entry;
+import com.google.common.base.Preconditions;
 
 // this is only currently in edgetype because that's where Trippattern is.
 // move these classes elsewhere.

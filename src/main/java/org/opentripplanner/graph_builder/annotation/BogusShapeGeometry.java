@@ -13,7 +13,7 @@
 
 package org.opentripplanner.graph_builder.annotation;
 
-import org.onebusaway.gtfs.model.AgencyAndId;
+import org.opentripplanner.model.AgencyAndId;
 
 public class BogusShapeGeometry extends GraphBuilderAnnotation {
 

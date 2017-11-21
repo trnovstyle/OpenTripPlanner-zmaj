@@ -23,12 +23,15 @@ import gnu.trove.list.TDoubleList;
 import gnu.trove.list.linked.TDoubleLinkedList;
 import org.apache.commons.math3.stat.descriptive.rank.Median;
 import org.joda.time.DateTime;
-import org.onebusaway.gtfs.impl.calendar.CalendarServiceImpl;
-import org.onebusaway.gtfs.model.Agency;
-import org.onebusaway.gtfs.model.AgencyAndId;
-import org.onebusaway.gtfs.model.calendar.CalendarServiceData;
-import org.onebusaway.gtfs.model.calendar.ServiceDate;
-import org.onebusaway.gtfs.services.calendar.CalendarService;
+import org.opentripplanner.calendar.impl.CalendarServiceImpl;
+import org.opentripplanner.model.Agency;
+import org.opentripplanner.model.AgencyAndId;
+import org.opentripplanner.model.Notice;
+import org.opentripplanner.model.Stop;
+import org.opentripplanner.model.FeedInfo;
+import org.opentripplanner.model.calendar.CalendarServiceData;
+import org.opentripplanner.model.calendar.ServiceDate;
+import org.opentripplanner.model.CalendarService;
 import org.opentripplanner.analyst.core.GeometryIndex;
 import org.opentripplanner.analyst.request.SampleFactory;
 import org.opentripplanner.common.MavenVersion;
@@ -67,7 +70,7 @@ import java.util.prefs.Preferences;
 /**
  * A graph is really just one or more indexes into a set of vertexes. It used to keep edgelists for each vertex, but those are in the vertex now.
  */
-public class Graph implements Serializable {
+public class Graph implements Serializable, AddBuilderAnnotation {
 
     private static final Logger LOG = LoggerFactory.getLogger(Graph.class);
 
@@ -83,6 +86,25 @@ public class Graph implements Serializable {
     private final Map<Edge, List<TurnRestriction>> turnRestrictions = Maps.newHashMap();
 
     public final StreetNotesService streetNotesService = new StreetNotesService();
+
+    public void setNoticeMap(Map<AgencyAndId, Notice> noticeMap) {
+        this.noticeMap = noticeMap;
+    }
+
+    public void setNoticeAssignmentMap(Map<AgencyAndId, List<Notice>> noticeAssignmentMap) {
+        this.noticeAssignmentMap = noticeAssignmentMap;
+    }
+
+    public Map<AgencyAndId, Notice> getNoticeMap() {
+        return noticeMap;
+    }
+
+    public Map<AgencyAndId, List<Notice>> getNoticeAssignmentMap() {
+        return noticeAssignmentMap;
+    }
+
+    private Map<AgencyAndId, Notice> noticeMap = new HashMap<>();
+    private Map<AgencyAndId, List<Notice>> noticeAssignmentMap = new HashMap<>();
 
     // transit feed validity information in seconds since epoch
     private long transitServiceStarts = Long.MAX_VALUE;
@@ -130,6 +152,8 @@ public class Graph implements Serializable {
     private Map<String, Collection<Agency>> agenciesForFeedId = new HashMap<>();
 
     private Collection<String> feedIds = new HashSet<>();
+
+    private Map<String, FeedInfo> feedInfoForId = new HashMap<>();
 
     private VertexComparatorFactory vertexComparatorFactory = new MortonVertexComparatorFactory();
 
@@ -207,6 +231,12 @@ public class Graph implements Serializable {
 
     /** The difference in meters between the WGS84 ellipsoid height and geoid height at the graph's center */
     public Double ellipsoidToGeoidDifference = 0.0;
+
+    /** Parent stops **/
+    public Map<AgencyAndId, Stop> parentStopById = new HashMap<>();
+
+    /** Multimodal stops **/
+    public Map<AgencyAndId, Stop> multiModalStopById = new HashMap<>();
 
     public Graph(Graph basedOn) {
         this();
@@ -875,9 +905,7 @@ public class Graph implements Serializable {
         if (calendarService == null) {
             CalendarServiceData data = this.getService(CalendarServiceData.class);
             if (data != null) {
-                CalendarServiceImpl calendarService = new CalendarServiceImpl();
-                calendarService.setData(data);
-                this.calendarService = calendarService;
+                this.calendarService = new CalendarServiceImpl(data);
             }
         }
         return this.calendarService;
@@ -906,11 +934,19 @@ public class Graph implements Serializable {
         return agenciesForFeedId.get(feedId);
     }
 
+    public FeedInfo getFeedInfo(String feedId) {
+        return feedInfoForId.get(feedId);
+    }
+
     public void addAgency(String feedId, Agency agency) {
         Collection<Agency> agencies = agenciesForFeedId.getOrDefault(feedId, new HashSet<>());
         agencies.add(agency);
         this.agenciesForFeedId.put(feedId, agencies);
         this.feedIds.add(feedId);
+    }
+
+    public void addFeedInfo(FeedInfo info) {
+        this.feedInfoForId.put(info.getId().toString(), info);
     }
 
     /**

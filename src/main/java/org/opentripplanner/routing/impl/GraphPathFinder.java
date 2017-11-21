@@ -14,7 +14,7 @@
 package org.opentripplanner.routing.impl;
 
 import com.google.common.collect.Lists;
-import org.onebusaway.gtfs.model.AgencyAndId;
+import org.opentripplanner.model.AgencyAndId;
 import org.opentripplanner.api.resource.DebugOutput;
 import org.opentripplanner.common.model.GenericLocation;
 import org.opentripplanner.routing.algorithm.AStar;
@@ -188,7 +188,14 @@ public class GraphPathFinder {
             }
 
             paths.addAll(newPaths.stream()
-                    .filter(path -> path.getDuration() < options.maxHours * 60 * 60)
+                    .filter(path -> {
+                        double duration = options.useRequestedDateTimeInMaxHours
+                            ? options.arriveBy
+                                ? options.dateTime - path.getStartTime()
+                                : path.getEndTime() - options.dateTime
+                            : path.getDuration();
+                        return duration < options.maxHours * 60 * 60;
+                    })
                     .collect(Collectors.toList()));
 
             LOG.debug("we have {} paths", paths.size());

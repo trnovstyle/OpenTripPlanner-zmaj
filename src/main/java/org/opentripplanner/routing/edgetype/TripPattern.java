@@ -22,11 +22,11 @@ import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
 import com.google.common.io.BaseEncoding;
 import com.vividsolutions.jts.geom.LineString;
-import org.onebusaway.gtfs.model.AgencyAndId;
-import org.onebusaway.gtfs.model.Route;
-import org.onebusaway.gtfs.model.Stop;
-import org.onebusaway.gtfs.model.Trip;
-import org.onebusaway.gtfs.model.calendar.ServiceDate;
+import org.opentripplanner.model.AgencyAndId;
+import org.opentripplanner.model.Route;
+import org.opentripplanner.model.Stop;
+import org.opentripplanner.model.Trip;
+import org.opentripplanner.model.calendar.ServiceDate;
 import org.opentripplanner.api.resource.CoordinateArrayListSequence;
 import org.opentripplanner.common.MavenVersion;
 import org.opentripplanner.common.geometry.GeometryUtils;
@@ -113,6 +113,12 @@ public class TripPattern implements Cloneable, Serializable {
      * generally in the format Agency:RouteId:DirectionId:PatternNumber.
      */
     public String code;
+
+    /**
+     * Currently used for NeTEx id
+     */
+
+    public AgencyAndId id;
 
     /* The vertices in the Graph that correspond to each Stop in this pattern. */
     public final TransitStop[] stopVertices; // these are not unique to this pattern, can be shared. FIXME they appear to be all null. are they even used?

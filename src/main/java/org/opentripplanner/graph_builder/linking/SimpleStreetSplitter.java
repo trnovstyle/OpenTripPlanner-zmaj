@@ -489,7 +489,7 @@ public class SimpleStreetSplitter {
         new ParkAndRideLinkEdge(to, from);
     }
 
-    /** 
+    /**
      * Make street transit link edges, unless they already exist.
      */
     private void makeTransitLinkEdges (TransitStop tstop, StreetVertex v) {

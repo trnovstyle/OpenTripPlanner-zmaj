@@ -13,10 +13,8 @@
 
 package org.opentripplanner.routing.core;
 
-import org.onebusaway.gtfs.model.AgencyAndId;
-import org.opentripplanner.routing.core.Money;
+import org.opentripplanner.model.AgencyAndId;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 

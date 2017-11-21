@@ -1,7 +1,6 @@
 package org.opentripplanner.standalone;
 
 import org.opentripplanner.graph_builder.module.osm.WayPropertySetSource;
-import org.opentripplanner.graph_builder.module.osm.WayPropertySetSourceFactory;
 import org.opentripplanner.graph_builder.services.osm.CustomNamer;
 import org.opentripplanner.routing.impl.DefaultFareServiceFactory;
 import org.opentripplanner.routing.services.FareServiceFactory;
@@ -135,7 +134,7 @@ public class GraphBuilderParameters {
      */
     public boolean allowDuplicateStops = false;
 
-    /** 
+    /**
      * This field indicates the pruning threshold for islands without stops.
      * Any such island under this size will be pruned.
      */
@@ -166,9 +165,20 @@ public class GraphBuilderParameters {
     public final double maxTransferDistance;
 
     /**
+     * Netex spesific build parameters.
+     */
+    public final NetexParameters netex;
+
+    /**
      * This will add extra edges when linking a stop to a platform, to prevent detours along the platform edge.
      */
     public final Boolean extraEdgesStopPlatformLink;
+
+    /**
+     *  Link multimodal stops to their containing stops
+     */
+
+    public final boolean linkMultiModalStopsToParentStations;
 
     /**
      * Set all parameters from the given Jackson JSON tree, applying defaults.
@@ -192,7 +202,7 @@ public class GraphBuilderParameters {
         elevationBucket = S3BucketConfig.fromConfig(config.path("elevationBucket"));
         fareServiceFactory = DefaultFareServiceFactory.fromConfig(config.path("fares"));
         customNamer = CustomNamer.CustomNamerFactory.fromConfig(config.path("osmNaming"));
-        wayPropertySet = WayPropertySetSourceFactory.fromConfig(config.path("osmWayPropertySet").asText("default"));
+        wayPropertySet = WayPropertySetSource.fromConfig(config.path("osmWayPropertySet").asText("default"));
         staticBikeRental = config.path("staticBikeRental").asBoolean(false);
         staticParkAndRide = config.path("staticParkAndRide").asBoolean(true);
         staticBikeParkAndRide = config.path("staticBikeParkAndRide").asBoolean(false);
@@ -205,6 +215,8 @@ public class GraphBuilderParameters {
         banDiscouragedBiking = config.path("banDiscouragedBiking").asBoolean(false);
         maxTransferDistance = config.path("maxTransferDistance").asDouble(2000);
         extraEdgesStopPlatformLink = config.path("extraEdgesStopPlatformLink").asBoolean(false);
+        netex = new NetexParameters(config.path("netex"));
+        linkMultiModalStopsToParentStations = config.path("linkMultiModalStopsToParentStations").asBoolean(false);
     }
 
 }

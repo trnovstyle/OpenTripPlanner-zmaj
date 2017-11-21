@@ -21,7 +21,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import org.onebusaway.gtfs.services.GtfsRelationalDao;
+import org.opentripplanner.model.OtpTransitDao;
 import org.opentripplanner.common.model.P2;
 import org.opentripplanner.routing.services.FareService;
 import org.opentripplanner.routing.services.FareServiceFactory;
@@ -47,7 +47,7 @@ public class TimeBasedBikeRentalFareServiceFactory implements FareServiceFactory
     }
 
     @Override
-    public void processGtfs(GtfsRelationalDao dao) {
+    public void processGtfs(OtpTransitDao dao) {
         // Nothing to do
     }
 

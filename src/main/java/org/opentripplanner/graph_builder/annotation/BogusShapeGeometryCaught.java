@@ -13,8 +13,8 @@
 
 package org.opentripplanner.graph_builder.annotation;
 
-import org.onebusaway.gtfs.model.AgencyAndId;
-import org.onebusaway.gtfs.model.StopTime;
+import org.opentripplanner.model.AgencyAndId;
+import org.opentripplanner.model.StopTime;
 
 public class BogusShapeGeometryCaught extends GraphBuilderAnnotation {
 
