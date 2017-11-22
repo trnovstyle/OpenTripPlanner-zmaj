@@ -2,7 +2,7 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <!-- Unable to use rutebanken superpom due to unknown reasons. Possible java-8 problem? -->
+    <!-- Unable to use rutebanken superpom due to unknown reasons. Possible java-8 problem?  -->
 
     <name>OpenTripPlanner</name>
     <description>The OpenTripPlanner multimodal journey planning system</description>
