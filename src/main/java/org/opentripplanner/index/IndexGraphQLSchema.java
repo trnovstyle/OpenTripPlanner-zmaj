@@ -2071,13 +2071,10 @@ public class IndexGraphQLSchema {
                 .dataFetcher(environment -> new ArrayList<>(index.getAllAgencies()))
                 .build())
             .field(GraphQLFieldDefinition.newFieldDefinition()
-                    .name("notices")
-                    .type(new GraphQLList(noticeType))
-                    .dataFetcher(environment -> {
-                        Trip trip = (Trip) environment.getSource();
-                        return index.getNoticeMap().values();
-                    })
-                    .build())
+                .name("notices")
+                .type(new GraphQLList(noticeType))
+                .dataFetcher(environment -> index.getNoticeMap().values())
+                .build())
             .field(GraphQLFieldDefinition.newFieldDefinition()
                 .name("agency")
                 .description("Get a single agency based on agency ID")
