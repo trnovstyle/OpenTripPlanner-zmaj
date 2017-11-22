@@ -242,9 +242,6 @@ public class IndexGraphQLSchema {
             if (o instanceof PlaceAndDistance) {
                 return (GraphQLObjectType) placeAtDistanceType;
             }
-            if (o instanceof Notice) {
-                return (GraphQLObjectType) noticeType;
-            }
             return null;
         }
     });
@@ -636,19 +633,19 @@ public class IndexGraphQLSchema {
         noticeType = GraphQLObjectType.newObject()
                 .name("Notice")
                 .field(GraphQLFieldDefinition.newFieldDefinition()
-                        .name("Id")
+                        .name("id")
                         .type(Scalars.GraphQLString)
                         .dataFetcher(
                                 environment -> ((Notice) environment.getSource()).getId())
                         .build())
                 .field(GraphQLFieldDefinition.newFieldDefinition()
-                        .name("Text")
+                        .name("text")
                         .type(Scalars.GraphQLString)
                         .dataFetcher(
                                 environment -> ((Notice) environment.getSource()).getText())
                         .build())
                 .field(GraphQLFieldDefinition.newFieldDefinition()
-                        .name("PublicCode")
+                        .name("publicCode")
                         .type(Scalars.GraphQLString)
                         .dataFetcher(
                                 environment -> ((Notice) environment.getSource()).getPublicCode())
