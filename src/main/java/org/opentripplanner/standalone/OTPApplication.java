@@ -14,6 +14,7 @@ import org.opentripplanner.api.model.JSONObjectMapperProvider;
 import org.opentripplanner.api.resource.*;
 import org.opentripplanner.index.GeocoderResource;
 import org.opentripplanner.index.IndexAPI;
+import org.opentripplanner.index.transmodel.TransmodelIndexAPI;
 import org.slf4j.bridge.SLF4JBridgeHandler;
 
 import javax.ws.rs.core.Application;
@@ -71,6 +72,7 @@ public class OTPApplication extends Application {
             /* Jersey resource classes: define web services, i.e. an HTTP API. */
             PlannerResource.class,
             IndexAPI.class,
+            TransmodelIndexAPI.class,
             ExternalGeocoderResource.class,
             GeocoderResource.class,
             SimpleIsochrone.class,
