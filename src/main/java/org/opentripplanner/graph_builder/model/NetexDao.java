@@ -43,7 +43,7 @@ public class NetexDao {
     private final Map<String, Notice> noticeMap = new HashMap<>();
     private final Map<String, NoticeAssignment> noticeAssignmentMap = new HashMap<>();
     private final Multimap<String, StopPlace> stopsById = ArrayListMultimap.create();
-    private final Map<String, Quay> quayById = new HashMap<>();
+    private final Multimap<String, Quay> quayById = ArrayListMultimap.create();;
     private final Map<Quay, StopPlace> stopPlaceByQuay = new HashMap<>();
     private Map<String, JourneyPattern> journeyPatternByStopPointId = new HashMap<>();
     private final Map<String, ServiceJourneyInterchange> interchanges = new HashMap<>();
@@ -69,7 +69,7 @@ public class NetexDao {
         return stopsById;
     }
 
-    public Map<String, Quay> getQuayById() {
+    public Multimap<String, Quay> getQuayById() {
         return quayById;
     }
 
