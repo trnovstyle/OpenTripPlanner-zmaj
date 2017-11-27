@@ -1749,6 +1749,18 @@ public class IndexGraphQLSchema {
                     .collect(Collectors.toList()))
                 .build())
             .field(GraphQLFieldDefinition.newFieldDefinition()
+                    .name("notices")
+                    .type(new GraphQLList(noticeType))
+                    .argument(GraphQLArgument.newArgument()
+                            .name("gtfsId")
+                            .type(Scalars.GraphQLString)
+                            .build())
+                    .dataFetcher(environment -> {
+                        Route route = (Route) environment.getSource();
+                        return index.getNoticesForElement(route.getId());
+                    })
+                    .build())
+            .field(GraphQLFieldDefinition.newFieldDefinition()
                 .name("alerts")
                 .description("Get all alerts active for the route")
                 .type(new GraphQLList(alertType))
