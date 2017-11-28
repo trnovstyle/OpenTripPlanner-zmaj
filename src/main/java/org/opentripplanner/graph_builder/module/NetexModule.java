@@ -303,6 +303,15 @@ public class NetexModule implements GraphBuilderModule {
                 }
             }
 
+            //destinationDisplays
+
+            if (sf.getDestinationDisplays() != null) {
+                for (DestinationDisplay destinationDisplay : sf.getDestinationDisplays().getDestinationDisplay()) {
+                    netexDao.getDestinationDisplayMap().put(destinationDisplay.getId(), destinationDisplay);
+                }
+            }
+
+
             if (sf.getNotices() != null) {
                 for (Notice notice : sf.getNotices().getNotice()) {
                     netexDao.getNoticeMap().put(notice.getId(), notice);

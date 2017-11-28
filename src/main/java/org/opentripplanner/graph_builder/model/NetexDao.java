@@ -5,6 +5,7 @@ import com.google.common.collect.Multimap;
 import org.rutebanken.netex.model.Authority;
 import org.rutebanken.netex.model.DayType;
 import org.rutebanken.netex.model.DayTypeAssignment;
+import org.rutebanken.netex.model.DestinationDisplay;
 import org.rutebanken.netex.model.JourneyPattern;
 import org.rutebanken.netex.model.Line;
 import org.rutebanken.netex.model.Notice;
@@ -47,6 +48,7 @@ public class NetexDao {
     private final Map<Quay, StopPlace> stopPlaceByQuay = new HashMap<>();
     private Map<String, JourneyPattern> journeyPatternByStopPointId = new HashMap<>();
     private final Map<String, ServiceJourneyInterchange> interchanges = new HashMap<>();
+    private final Map<String, DestinationDisplay> destinationDisplayMap = new HashMap<>();
     private String timeZone;
 
     public Map<String, StopPlace> getParentStopPlaceById() {
@@ -159,5 +161,9 @@ public class NetexDao {
 
     public Map<String, NoticeAssignment> getNoticeAssignmentMap() {
         return noticeAssignmentMap;
+    }
+
+    public Map<String, DestinationDisplay> getDestinationDisplayMap() {
+        return destinationDisplayMap;
     }
 }

@@ -112,6 +112,13 @@ public class TripPatternMapper {
                     LOG.warn("Time missing for trip " + trip.getId());
                 }
 
+                if (stopPoint.getDestinationDisplayRef() != null) {
+                    String destinationRef = stopPoint.getDestinationDisplayRef().getRef();
+                    if (netexDao.getDestinationDisplayMap().containsKey(destinationRef)) {
+                        stopTime.setStopHeadsign(netexDao.getDestinationDisplayMap().get(destinationRef).getFrontText().getValue());
+                    }
+                }
+
                 stopTime.setStop(quay);
                 stopTimes.add(stopTime);
             }
