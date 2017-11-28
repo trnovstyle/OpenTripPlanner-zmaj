@@ -143,6 +143,7 @@ public class TripPatternMapper {
     private StopTime mapToStopTime(Trip trip, StopPointInJourneyPattern stopPoint, Stop quay,
                                    TimetabledPassingTime passingTime, int stopSequence, NetexDao netexDao) {
         StopTime stopTime = new StopTime();
+        stopTime.setId(AgencyAndIdFactory.createAgencyAndId(passingTime.getId()));
         stopTime.setTrip(trip);
         stopTime.setStopSequence(stopSequence);
         stopTime.setStop(quay);
