@@ -6,6 +6,8 @@ import org.joda.time.MutableDateTime;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.opentripplanner.model.Agency;
+import org.opentripplanner.netex.loader.NetexLoader;
 import org.opentripplanner.gtfs.GtfsContextBuilder;
 import org.opentripplanner.model.Route;
 import org.opentripplanner.model.ServiceCalendar;
@@ -13,7 +15,7 @@ import org.opentripplanner.model.ServiceCalendarDate;
 import org.opentripplanner.model.StopTime;
 import org.opentripplanner.model.calendar.ServiceDate;
 import org.opentripplanner.model.impl.OtpTransitBuilder;
-import org.opentripplanner.graph_builder.model.NetexBundle;
+import org.opentripplanner.netex.loader.NetexBundle;
 import org.opentripplanner.graph_builder.module.NetexModule;
 import org.opentripplanner.standalone.GraphBuilderParameters;
 import org.opentripplanner.standalone.OTPMain;
@@ -30,8 +32,6 @@ import java.util.stream.Collectors;
 
 
 public class MappingTest {
-
-
     static final String gtfsFile = "src/test/resources/netex_mapping_test/gtfs_minimal_fileset/gtfs_minimal.zip";
     static final File netexFile = new File("src/test/resources/netex_mapping_test/netex_minimal_fileset/netex_minimal.zip");
     static final File netexConfigFile = new File("src/test/resources/netex_mapping_test/build-config.json");
@@ -51,9 +51,20 @@ public class MappingTest {
                 add(netexBundle);
             }
         });
-        otpBuilderFromNetex = netexModule.getOtpDao().stream().findFirst().get();
-        otpBuilderFromGtfs = GtfsContextBuilder.contextBuilder(gtfsFile).turnOnSetAgencyToFeedIdForAllElements().build()
+        otpBuilderFromNetex = new NetexLoader(netexBundle).loadBundle();
+        otpBuilderFromGtfs = GtfsContextBuilder
+                .contextBuilder(gtfsFile)
+                .turnOnSetAgencyToFeedIdForAllElements().build()
                 .getTransitBuilder();
+    }
+
+    @Test
+    public void testAgencies() {
+        List<Agency> ga = otpBuilderFromGtfs.getAgencies();
+        List<Agency> na = otpBuilderFromNetex.getAgencies();
+
+        // TODO TGR - fix this test
+        Assert.assertEquals(ga.size(), na.size());
     }
 
     @Test
