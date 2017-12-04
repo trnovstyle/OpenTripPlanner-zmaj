@@ -1,5 +1,6 @@
 package org.opentripplanner.graph_builder.module;
 
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import org.apache.commons.io.IOUtils;
 import org.opentripplanner.calendar.impl.MultiCalendarServiceImpl;
@@ -29,6 +30,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -224,7 +226,13 @@ public class NetexModule implements GraphBuilderModule {
                         PassengerStopAssignment passengerStopAssignment = (PassengerStopAssignment) assignment.getValue();
                         if (passengerStopAssignment.getQuayRef() != null) {
                             if (netexDao.getQuayById().containsKey(passengerStopAssignment.getQuayRef().getRef())) {
-                                Quay quay = netexDao.getQuayById().get(passengerStopAssignment.getQuayRef().getRef());
+                                // Get last version of quay
+                                Collection<Quay> quays = netexDao.getQuayById().get(passengerStopAssignment.getQuayRef().getRef());
+                                quays = quays.stream()
+                                        .sorted((o2, o1) -> Integer.compare(Integer.parseInt(o2.getVersion()), Integer.parseInt(o1.getVersion())))
+                                        .collect(Collectors.toList());
+                                Quay quay = Iterables.getLast(quays);
+
                                 StopPlace stopPlace = netexDao.getStopPlaceByQuay().get(quay);
                                 netexDao.getStopPointStopPlaceMap().put(passengerStopAssignment.getScheduledStopPointRef().getValue().getRef(), stopPlace.getId());
                                 netexDao.getStopPointQuayMap().put(passengerStopAssignment.getScheduledStopPointRef().getValue().getRef(), quay.getId());
@@ -294,6 +302,15 @@ public class NetexModule implements GraphBuilderModule {
                     }
                 }
             }
+
+            //destinationDisplays
+
+            if (sf.getDestinationDisplays() != null) {
+                for (DestinationDisplay destinationDisplay : sf.getDestinationDisplays().getDestinationDisplay()) {
+                    netexDao.getDestinationDisplayMap().put(destinationDisplay.getId(), destinationDisplay);
+                }
+            }
+
 
             if (sf.getNotices() != null) {
                 for (Notice notice : sf.getNotices().getNotice()) {

@@ -56,6 +56,10 @@ public class TripMapper {
 
         trip.setServiceId(AgencyAndIdFactory.getAgencyAndId(serviceId.toString()));
 
+        if (serviceJourney.getPrivateCode() != null) {
+            trip.setTripShortName(serviceJourney.getPrivateCode().getValue());
+        }
+
         return trip;
     }
 }

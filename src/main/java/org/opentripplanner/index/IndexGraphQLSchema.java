@@ -1356,10 +1356,6 @@ public class IndexGraphQLSchema {
             .field(GraphQLFieldDefinition.newFieldDefinition()
                     .name("notices")
                     .type(new GraphQLList(noticeType))
-                    .argument(GraphQLArgument.newArgument()
-                            .name("gtfsId")
-                            .type(Scalars.GraphQLString)
-                            .build())
                     .dataFetcher(environment -> {
                         TripTimeShort tripTimeShort = (TripTimeShort) environment.getSource();
                         return index.getNoticesForElement(tripTimeShort.stopTimeId);
@@ -1507,10 +1503,6 @@ public class IndexGraphQLSchema {
             .field(GraphQLFieldDefinition.newFieldDefinition()
                     .name("notices")
                     .type(new GraphQLList(noticeType))
-                    .argument(GraphQLArgument.newArgument()
-                            .name("gtfsId")
-                            .type(Scalars.GraphQLString)
-                            .build())
                     .dataFetcher(environment -> {
                         Trip trip = (Trip) environment.getSource();
                         return index.getNoticesForElement(trip.getId());
@@ -1648,10 +1640,6 @@ public class IndexGraphQLSchema {
             .field(GraphQLFieldDefinition.newFieldDefinition()
                     .name("notices")
                     .type(new GraphQLList(noticeType))
-                    .argument(GraphQLArgument.newArgument()
-                            .name("gtfsId")
-                            .type(Scalars.GraphQLString)
-                            .build())
                     .dataFetcher(environment -> {
                         TripPattern tripPattern = (TripPattern) environment.getSource();
                         return index.getNoticesForElement(tripPattern.id);
@@ -1749,6 +1737,14 @@ public class IndexGraphQLSchema {
                     .collect(Collectors.toList()))
                 .build())
             .field(GraphQLFieldDefinition.newFieldDefinition()
+                    .name("notices")
+                    .type(new GraphQLList(noticeType))
+                    .dataFetcher(environment -> {
+                        Route route = (Route) environment.getSource();
+                        return index.getNoticesForElement(route.getId());
+                    })
+                    .build())
+            .field(GraphQLFieldDefinition.newFieldDefinition()
                 .name("alerts")
                 .description("Get all alerts active for the route")
                 .type(new GraphQLList(alertType))
@@ -1779,7 +1775,7 @@ public class IndexGraphQLSchema {
                 .build())
             .field(GraphQLFieldDefinition.newFieldDefinition()
                 .name("url")
-                .type(new GraphQLNonNull(Scalars.GraphQLString))
+                .type(Scalars.GraphQLString)
                 .build())
             .field(GraphQLFieldDefinition.newFieldDefinition()
                 .name("timezone")
@@ -2071,13 +2067,10 @@ public class IndexGraphQLSchema {
                 .dataFetcher(environment -> new ArrayList<>(index.getAllAgencies()))
                 .build())
             .field(GraphQLFieldDefinition.newFieldDefinition()
-                    .name("notices")
-                    .type(new GraphQLList(noticeType))
-                    .dataFetcher(environment -> {
-                        Trip trip = (Trip) environment.getSource();
-                        return index.getNoticeMap().values();
-                    })
-                    .build())
+                .name("notices")
+                .type(new GraphQLList(noticeType))
+                .dataFetcher(environment -> index.getNoticeMap().values())
+                .build())
             .field(GraphQLFieldDefinition.newFieldDefinition()
                 .name("agency")
                 .description("Get a single agency based on agency ID")

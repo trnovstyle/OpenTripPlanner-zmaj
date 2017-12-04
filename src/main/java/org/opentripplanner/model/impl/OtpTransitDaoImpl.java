@@ -42,8 +42,7 @@ import java.util.Map;
 import java.util.function.Function;
 
 import static java.util.Collections.unmodifiableMap;
-import static java.util.stream.Collectors.groupingBy;
-import static java.util.stream.Collectors.reducing;
+import static java.util.stream.Collectors.*;
 
 /**
  * A in-memory implementation of OtpTransitDao. It's super fast for most

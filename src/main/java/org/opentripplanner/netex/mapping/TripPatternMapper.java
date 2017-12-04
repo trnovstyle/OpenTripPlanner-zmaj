@@ -67,6 +67,7 @@ public class TripPatternMapper {
                 }
 
                 StopTime stopTime = new StopTime();
+                stopTime.setId(AgencyAndIdFactory.getAgencyAndId(passingTime.getId()));
                 stopTime.setTrip(trip);
                 stopTime.setStopSequence(stopSequence++);
 
@@ -110,6 +111,13 @@ public class TripPatternMapper {
 
                 if (passingTime.getArrivalTime() == null && passingTime.getDepartureTime() == null) {
                     LOG.warn("Time missing for trip " + trip.getId());
+                }
+
+                if (stopPoint.getDestinationDisplayRef() != null) {
+                    String destinationRef = stopPoint.getDestinationDisplayRef().getRef();
+                    if (netexDao.getDestinationDisplayMap().containsKey(destinationRef)) {
+                        stopTime.setStopHeadsign(netexDao.getDestinationDisplayMap().get(destinationRef).getFrontText().getValue());
+                    }
                 }
 
                 stopTime.setStop(quay);
