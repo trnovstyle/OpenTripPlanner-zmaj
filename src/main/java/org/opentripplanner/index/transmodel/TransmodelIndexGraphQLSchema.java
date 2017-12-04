@@ -1336,12 +1336,8 @@ public class TransmodelIndexGraphQLSchema {
                                   .field(GraphQLFieldDefinition.newFieldDefinition()
                                                  .name("notices")
                                                  .type(new GraphQLList(noticeType))
-                                                 .argument(GraphQLArgument.newArgument()
-                                                                   .name("id")
-                                                                   .type(Scalars.GraphQLString)
-                                                                   .build())
                                                  .dataFetcher(environment -> {
-                                                     TripTimeShort tripTimeShort = (TripTimeShort) environment.getSource();
+                                                     TripTimeShort tripTimeShort = environment.getSource();
                                                      return index.getNoticesForElement(tripTimeShort.stopTimeId);
                                                  })
                                                  .build()).build();
@@ -1460,12 +1456,8 @@ public class TransmodelIndexGraphQLSchema {
                                      .field(GraphQLFieldDefinition.newFieldDefinition()
                                                     .name("notices")
                                                     .type(new GraphQLList(noticeType))
-                                                    .argument(GraphQLArgument.newArgument()
-                                                                      .name("gtfsId")
-                                                                      .type(Scalars.GraphQLString)
-                                                                      .build())
                                                     .dataFetcher(environment -> {
-                                                        Trip trip = (Trip) environment.getSource();
+                                                        Trip trip = environment.getSource();
                                                         return index.getNoticesForElement(trip.getId());
                                                     })
                                                     .build())
@@ -1592,12 +1584,8 @@ public class TransmodelIndexGraphQLSchema {
                                      .field(GraphQLFieldDefinition.newFieldDefinition()
                                                     .name("notices")
                                                     .type(new GraphQLList(noticeType))
-                                                    .argument(GraphQLArgument.newArgument()
-                                                                      .name("id")
-                                                                      .type(Scalars.GraphQLString)
-                                                                      .build())
                                                     .dataFetcher(environment -> {
-                                                        TripPattern tripPattern = (TripPattern) environment.getSource();
+                                                        TripPattern tripPattern = environment.getSource();
                                                         return index.getNoticesForElement(tripPattern.id);
                                                     })
                                                     .build())
@@ -1688,6 +1676,14 @@ public class TransmodelIndexGraphQLSchema {
                                                                               .flatMap(Collection::stream)
                                                                               .distinct()
                                                                               .collect(Collectors.toList()))
+                                          .build())
+                           .field(GraphQLFieldDefinition.newFieldDefinition()
+                                          .name("notices")
+                                          .type(new GraphQLList(noticeType))
+                                          .dataFetcher(environment -> {
+                                              Route route = environment.getSource();
+                                              return index.getNoticesForElement(route.getId());
+                                          })
                                           .build())
                            .field(GraphQLFieldDefinition.newFieldDefinition()
                                           .name("alerts")
@@ -1988,10 +1984,7 @@ public class TransmodelIndexGraphQLSchema {
                             .field(GraphQLFieldDefinition.newFieldDefinition()
                                            .name("notices")
                                            .type(new GraphQLList(noticeType))
-                                           .dataFetcher(environment -> {
-                                               Trip trip = (Trip) environment.getSource();
-                                               return index.getNoticeMap().values();
-                                           })
+                                           .dataFetcher(environment -> index.getNoticeMap().values())
                                            .build())
                             .field(GraphQLFieldDefinition.newFieldDefinition()
                                            .name("organisation")
