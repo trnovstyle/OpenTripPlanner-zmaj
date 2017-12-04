@@ -13,6 +13,7 @@ public class TransportSubmodeMapper {
 
     private static final TransmodelTransportSubmode DEFAULT_TRANSMODEL_VALUE = TransmodelTransportSubmode.UNKNOWN;
 
+    // TODO do we need this?
     // 3= BUS
     private static final Integer DEFAULT_OTP_VALUE = 3;
 

@@ -36,6 +36,7 @@ import org.opentripplanner.index.GraphQlPlanner;
 import org.opentripplanner.index.model.StopTimesInPattern;
 import org.opentripplanner.index.model.TripTimeShort;
 import org.opentripplanner.index.transmodel.mapping.StopPlaceTypeMapper;
+import org.opentripplanner.index.transmodel.mapping.TransportSubmodeMapper;
 import org.opentripplanner.index.transmodel.model.TransmodelStopPlaceType;
 import org.opentripplanner.index.transmodel.model.TransmodelTransportSubmode;
 import org.opentripplanner.model.Agency;
@@ -129,7 +130,6 @@ public class TransmodelIndexGraphQLSchema {
                                                            .value("PARKANDRIDE", VertexType.PARKANDRIDE)
                                                            .build();
 
-    // TODO distinct from transportMode to make inclusion of wak, biclycle, car, transit and legSwitch possible
     public static GraphQLEnumType modeEnum = GraphQLEnumType.newEnum()
                                                      .name("Mode")
                                                      .value("air", TraverseMode.AIRPLANE)
@@ -140,7 +140,7 @@ public class TransmodelIndexGraphQLSchema {
                                                      .value("water", TraverseMode.FERRY)
                                                      .value("funicular", TraverseMode.FUNICULAR)
                                                      .value("lift", TraverseMode.GONDOLA)
-                                                     .value("legSwitch", TraverseMode.LEG_SWITCH) // TODO not in netex...?
+                                                     .value("linkSwitch", TraverseMode.LEG_SWITCH) // TODO not in netex...?
                                                      .value("rail", TraverseMode.RAIL)
                                                      .value("metro", TraverseMode.SUBWAY)
                                                      .value("tram", TraverseMode.TRAM)
@@ -180,21 +180,21 @@ public class TransmodelIndexGraphQLSchema {
 
     public static GraphQLEnumType filterPlaceTypeEnum = GraphQLEnumType.newEnum()
                                                                 .name("FilterPlaceType")
-                                                                .value("StopPlace", GraphIndex.PlaceType.STOP, "Stops")
-                                                                .value("DEPARTURE_ROW", GraphIndex.PlaceType.DEPARTURE_ROW, "Departure rows")
-                                                                .value("BICYCLE_RENT", GraphIndex.PlaceType.BICYCLE_RENT, "Bicycle rent stations")
-                                                                .value("BIKE_PARK", GraphIndex.PlaceType.BIKE_PARK, "Bike parks")
-                                                                .value("CAR_PARK", GraphIndex.PlaceType.CAR_PARK, "Car parks")
+                                                                .value("stopPlace", GraphIndex.PlaceType.STOP, "Stops")
+                                                                .value("departure", GraphIndex.PlaceType.DEPARTURE_ROW, "Departure")
+                                                                .value("bicyleRent", GraphIndex.PlaceType.BICYCLE_RENT, "Bicycle rent stations")
+                                                                .value("bikePark", GraphIndex.PlaceType.BIKE_PARK, "Bike parks")
+                                                                .value("carPark", GraphIndex.PlaceType.CAR_PARK, "Car parks")
                                                                 .build();
 
     public static GraphQLEnumType optimisationMethodEnum = GraphQLEnumType.newEnum()
                                                                    .name("OptimisationMethod")
-                                                                   .value("QUICK", OptimizeType.QUICK, "QUICK")
-                                                                   .value("SAFE", OptimizeType.SAFE, "SAFE")
-                                                                   .value("FLAT", OptimizeType.FLAT, "FLAT")
-                                                                   .value("GREENWAYS", OptimizeType.GREENWAYS, "GREENWAYS")
-                                                                   .value("TRIANGLE", OptimizeType.TRIANGLE, "TRIANGLE")
-                                                                   .value("INTERCHANGES", OptimizeType.TRANSFERS, "INTERCHANGES")
+                                                                   .value("quick", OptimizeType.QUICK)
+                                                                   .value("safe", OptimizeType.SAFE)
+                                                                   .value("flat", OptimizeType.FLAT)
+                                                                   .value("greenways", OptimizeType.GREENWAYS)
+                                                                   .value("triangle", OptimizeType.TRIANGLE)
+                                                                   .value("transfers", OptimizeType.TRANSFERS)
                                                                    .build();
 
     public static GraphQLEnumType directionTypeEnum = GraphQLEnumType.newEnum()
@@ -213,7 +213,7 @@ public class TransmodelIndexGraphQLSchema {
 
     public GraphQLOutputType alertType = new GraphQLTypeReference("Alert");
 
-    public GraphQLOutputType serviceTimeRangeType = new GraphQLTypeReference("ServiceTimeRange");
+    public GraphQLOutputType serviceValidBetweenType = new GraphQLTypeReference("ServiceValidBetween");
 
     public GraphQLOutputType bikeRentalStationType = new GraphQLTypeReference("BikeRentalStation");
 
@@ -239,7 +239,7 @@ public class TransmodelIndexGraphQLSchema {
 
     public GraphQLOutputType translatedStringType = new GraphQLTypeReference("TranslatedString");
 
-    public GraphQLOutputType departureRowType = new GraphQLTypeReference("DepartureRow");
+    public GraphQLOutputType departureType = new GraphQLTypeReference("Departure");
 
     public GraphQLOutputType placeAtDistanceType = new GraphQLTypeReference("PlaceAtDistance");
 
@@ -248,6 +248,8 @@ public class TransmodelIndexGraphQLSchema {
     public GraphQLOutputType tripType = new GraphQLTypeReference("Trip");
 
     public GraphQLSchema indexSchema;
+
+    private TransportSubmodeMapper transportSubmodeMapper = new TransportSubmodeMapper();
 
     private Relay relay = new Relay();
 
@@ -285,7 +287,7 @@ public class TransmodelIndexGraphQLSchema {
                 return (GraphQLObjectType) carParkType;
             }
             if (o instanceof GraphIndex.DepartureRow) {
-                return (GraphQLObjectType) departureRowType;
+                return (GraphQLObjectType) departureType;
             }
             if (o instanceof GraphIndex.PlaceAndDistance) {
                 return (GraphQLObjectType) placeAtDistanceType;
@@ -316,7 +318,7 @@ public class TransmodelIndexGraphQLSchema {
                                                                       return (GraphQLObjectType) stopPlaceType;
                                                                   }
                                                                   if (o instanceof GraphIndex.DepartureRow) {
-                                                                      return (GraphQLObjectType) departureRowType;
+                                                                      return (GraphQLObjectType) departureType;
                                                                   }
                                                                   if (o instanceof BikeRentalStation) {
                                                                       return (GraphQLObjectType) bikeRentalStationType;
@@ -340,16 +342,6 @@ public class TransmodelIndexGraphQLSchema {
             }
         }
         return null;
-    }
-
-    private List<Agency> getAllAgencies(GraphIndex index) {
-        //xxx what if there are duplciate agency ids?
-        //now we return the first
-        ArrayList<Agency> agencies = new ArrayList<Agency>();
-        for (Map<String, Agency> feedAgencies : index.agenciesForFeedId.values()) {
-            agencies.addAll(feedAgencies.values());
-        }
-        return agencies;
     }
 
     @SuppressWarnings("unchecked")
@@ -593,7 +585,7 @@ public class TransmodelIndexGraphQLSchema {
                                                                          .type(bannedInputType)
                                                                          .build())
                                                        .argument(GraphQLArgument.newArgument()
-                                                                         .name("interchangePenalty")
+                                                                         .name("transferPenalty")
                                                                          .description("An extra penalty added on transfers (i.e. all boardings except the first one). Not to be confused with bikeBoardCost and walkBoardCost, which are the cost of boarding a vehicle with and without a bicycle. The boardCosts are used to model the 'usual' perceived cost of using a transit vehicle, and the transferPenalty is used when a user requests even less transfers. In the latter case, we don't actually optimise for fewest transfers, as this can lead to absurd results. Consider a trip in New York from Grand Army Plaza (the one in Brooklyn) to Kalustyan's at noon. The true lowest transfers route is to wait until midnight, when the 4 train runs local the whole way. The actual fastest route is the 2/3 to the 4/5 at Nevins to the 6 at Union Square, which takes half an hour. Even someone optimise for fewest transfers doesn't want to wait until midnight. Maybe they would be willing to walk to 7th Ave and take the Q to Union Square, then transfer to the 6. If this takes less than optimise_transfer_penalty seconds, then that's what we'll return.")
                                                                          .type(Scalars.GraphQLInt)
                                                                          .build())
@@ -604,7 +596,7 @@ public class TransmodelIndexGraphQLSchema {
                                                                          .build())
                                                        .argument(GraphQLArgument.newArgument()
                                                                          .name("modes")
-                                                                         .description("The set of modes that a user is willing to use. Defaults to walk | TRANSIT.")  // TODO TRANSIT
+                                                                         .description("The set of modes that a user is willing to use. Defaults to foot | transit.")
                                                                          .type(Scalars.GraphQLString)
                                                                          .build())
                                                        .argument(GraphQLArgument.newArgument()
@@ -623,17 +615,17 @@ public class TransmodelIndexGraphQLSchema {
                                                                          .type(Scalars.GraphQLInt)
                                                                          .build())
                                                        .argument(GraphQLArgument.newArgument()
-                                                                         .name("minInterchangeTime")
+                                                                         .name("minTransferTime")
                                                                          .description("A global minimum transfer time (in seconds) that specifies the minimum amount of time that must pass between exiting one transit vehicle and boarding another. This time is in addition to time it might take to walk between transit stops. This time should also be overridden by specific transfer timing information in transfers.txt")
                                                                          .type(Scalars.GraphQLInt)
                                                                          .build())
                                                        .argument(GraphQLArgument.newArgument()
-                                                                         .name("nonpreferredInterchangePenalty")
-                                                                         .description("Penalty for using a non-preferred interchange")
+                                                                         .name("nonpreferredTransferPenalty")
+                                                                         .description("Penalty for using a non-preferred transfer")
                                                                          .type(Scalars.GraphQLInt)
                                                                          .build())
                                                        .argument(GraphQLArgument.newArgument()
-                                                                         .name("maxInterchanges")
+                                                                         .name("maxTransfers")
                                                                          .description("Maximum number of transfers")
                                                                          .type(Scalars.GraphQLInt)
                                                                          .build())
@@ -817,17 +809,17 @@ public class TransmodelIndexGraphQLSchema {
                             .build();
 
 
-        serviceTimeRangeType = GraphQLObjectType.newObject()
-                                       .name("serviceTimeRange")
+        serviceValidBetweenType = GraphQLObjectType.newObject()
+                                       .name("ServiceValidBetween")
                                        .description("Time range covered by the routing graph")
                                        .field(GraphQLFieldDefinition.newFieldDefinition()
-                                                      .name("start")
+                                                      .name("frommDate")
                                                       .type(Scalars.GraphQLLong)
                                                       .description("Beginning of service time range")
                                                       .dataFetcher(environment -> index.graph.getTransitServiceStarts())
                                                       .build())
                                        .field(GraphQLFieldDefinition.newFieldDefinition()
-                                                      .name("end")
+                                                      .name("toDate")
                                                       .type(Scalars.GraphQLLong)
                                                       .description("End of service time range")
                                                       .dataFetcher(environment -> index.graph.getTransitServiceEnds())
@@ -836,7 +828,7 @@ public class TransmodelIndexGraphQLSchema {
 
 
         stopAtDistanceType = GraphQLObjectType.newObject()
-                                     .name("stopPlaceAtDistance") // TODO?
+                                     .name("StopPlaceAtDistance")
                                      .withInterface(nodeInterface)
                                      .field(GraphQLFieldDefinition.newFieldDefinition()
                                                     .name("id")
@@ -857,14 +849,14 @@ public class TransmodelIndexGraphQLSchema {
                                                     .build())
                                      .build();
 
-        departureRowType = GraphQLObjectType.newObject()
-                                   .name("DepartureRow") // TODO netex avgangstavle?
+        departureType = GraphQLObjectType.newObject()
+                                   .name("Departure")
                                    .withInterface(nodeInterface)
                                    .withInterface(placeInterface)
                                    .field(GraphQLFieldDefinition.newFieldDefinition()
                                                   .name("id")
                                                   .type(new GraphQLNonNull(Scalars.GraphQLID))
-                                                  .dataFetcher(environment -> relay.toGlobalId(departureRowType.getName(), ((GraphIndex.DepartureRow) environment.getSource()).id))
+                                                  .dataFetcher(environment -> relay.toGlobalId(departureType.getName(), ((GraphIndex.DepartureRow) environment.getSource()).id))
                                                   .build())
                                    .field(GraphQLFieldDefinition.newFieldDefinition()
                                                   .name("stopPlace")
@@ -952,7 +944,7 @@ public class TransmodelIndexGraphQLSchema {
                                       .build();
 
         stopPointInJourneyPatternType = GraphQLObjectType.newObject()
-                                                .name("StopPointInJourneyPattern") // TODO stopTimeInjourneyPattern. men mangler boarding info og dest displays. dvs kan variere i underliggende stopTimes
+                                                .name("StopPointInJourneyPattern")
                                                 .field(GraphQLFieldDefinition.newFieldDefinition()
                                                                .name("journeyPattern")
                                                                .type(journeyPatternType)
@@ -1098,7 +1090,7 @@ public class TransmodelIndexGraphQLSchema {
                                                .dataFetcher(environment -> index.patternsForStop.get(environment.getSource()))
                                                .build())
                                 .field(GraphQLFieldDefinition.newFieldDefinition()
-                                               .name("interchanges")               //TODO: add max distance as parameter?
+                                               .name("transfers")               //TODO: add max distance as parameter?
                                                .type(new GraphQLList(stopAtDistanceType))
                                                .dataFetcher(environment -> index.stopVertexForStop
                                                                                    .get(environment.getSource())
@@ -1376,7 +1368,7 @@ public class TransmodelIndexGraphQLSchema {
                                                     .dataFetcher(environment -> (((Trip) environment.getSource()).getTripShortName()))
                                                     .build())
                                      .field(GraphQLFieldDefinition.newFieldDefinition()
-                                                    .name("destinationDisplay") // TODO no destDisplay for servicejourney in netexprofile. remove?
+                                                    .name("destinationDisplay")
                                                     .type(Scalars.GraphQLString)
                                                     .dataFetcher(environment -> (((Trip) environment.getSource()).getTripHeadsign()))
                                                     .build())
@@ -1388,16 +1380,6 @@ public class TransmodelIndexGraphQLSchema {
                                      .field(GraphQLFieldDefinition.newFieldDefinition()
                                                     .name("directionType")
                                                     .type(directionTypeEnum)
-                                                    .build())
-                                     .field(GraphQLFieldDefinition.newFieldDefinition()
-                                                    .name("blockId") // TODO rb not supported?
-                                                    .type(Scalars.GraphQLString)
-                                                    .build())
-                                     .field(GraphQLFieldDefinition.newFieldDefinition()
-                                                    .name("shapeId")// TODO netex not supported?
-                                                    .type(Scalars.GraphQLString)
-                                                    .dataFetcher(environment -> GtfsLibrary
-                                                                                        .convertIdToString(((Trip) environment.getSource()).getShapeId()))
                                                     .build())
                                      .field(GraphQLFieldDefinition.newFieldDefinition()
                                                     .name("wheelchairAccessible")
@@ -1545,11 +1527,6 @@ public class TransmodelIndexGraphQLSchema {
                                                     .dataFetcher(environment -> ((TripPattern) environment.getSource()).name)
                                                     .build())
                                      .field(GraphQLFieldDefinition.newFieldDefinition()
-                                                    .name("code") // TODO what is code? Ex: "RB:RUT:Line:506:0:01 where RUT:Line:506 is line id
-                                                    .type(new GraphQLNonNull(Scalars.GraphQLString))
-                                                    .dataFetcher(environment -> ((TripPattern) environment.getSource()).code)
-                                                    .build())
-                                     .field(GraphQLFieldDefinition.newFieldDefinition()
                                                     .name("destinationDisplay")
                                                     .type(Scalars.GraphQLString)
                                                     .dataFetcher(environment -> ((TripPattern) environment.getSource()).getDirection())
@@ -1652,7 +1629,7 @@ public class TransmodelIndexGraphQLSchema {
                            .field(GraphQLFieldDefinition.newFieldDefinition()
                                           .name("transportSubmode")
                                           .type(transportSubmode)
-                                          .dataFetcher(environment -> ((Route) environment.getSource()).getType())
+                                          .dataFetcher(environment -> transportSubmodeMapper.toTransmodel(((Route) environment.getSource()).getType()))
                                           .build())
                            .field(GraphQLFieldDefinition.newFieldDefinition()
                                           .name("description")
@@ -1660,15 +1637,16 @@ public class TransmodelIndexGraphQLSchema {
                                           .dataFetcher(environment -> ((Route) environment.getSource()).getDesc())
                                           .build())
                            .field(GraphQLFieldDefinition.newFieldDefinition()
-                                          .name("url") // TODO netex?
+                                          .name("url")
                                           .type(Scalars.GraphQLString)
                                           .build())
                            .field(GraphQLFieldDefinition.newFieldDefinition()
-                                          .name("color") // TODO Presentation?
+                                          .name("colourName")
                                           .type(Scalars.GraphQLString)
+                                          .dataFetcher(environment -> ((Route) environment.getSource()).getColor())
                                           .build())
                            .field(GraphQLFieldDefinition.newFieldDefinition()
-                                          .name("textColor") // TODO Presentation?
+                                          .name("textColourName")
                                           .type(Scalars.GraphQLString)
                                           .build())
                            .field(GraphQLFieldDefinition.newFieldDefinition()
@@ -1676,7 +1654,7 @@ public class TransmodelIndexGraphQLSchema {
                                           .type(bikesAllowedEnum)
                                           .build())
                            .field(GraphQLFieldDefinition.newFieldDefinition()
-                                          .name("journeyPatterns")  // TODO Ommiting route. ok?
+                                          .name("journeyPatterns")
                                           .type(new GraphQLList(journeyPatternType))
                                           .dataFetcher(environment -> index.patternsForRoute
                                                                               .get(environment.getSource()))
@@ -1952,7 +1930,7 @@ public class TransmodelIndexGraphQLSchema {
                 if (id.type.equals(alertType.getName())) {
                     return index.getAlertForId(id.id);
                 }
-                if (id.type.equals(departureRowType.getName())) {
+                if (id.type.equals(departureType.getName())) {
                     return GraphIndex.DepartureRow.fromId(index, id.id);
                 }
                 if (id.type.equals(bikeRentalStationType.getName())) {
@@ -2173,9 +2151,9 @@ public class TransmodelIndexGraphQLSchema {
                                                              .type(new GraphQLList(filterPlaceTypeEnum))
                                                              .build())
                                            .argument(GraphQLArgument.newArgument()
-                                                             .name("filterByTransportModes") // TODO stopPlaceTYpe / mode / transportMode ????
-                                                             .description("Only include places that include this transport mode. Only checked for places with mode i.e. stops, departure rows.")
-                                                             .type(new GraphQLList(transportModeEnum))
+                                                             .name("filterByModes")
+                                                             .description("Only include places that include this mode. Only checked for places with mode i.e. stops, departure rows.")
+                                                             .type(new GraphQLList(modeEnum))
                                                              .build())
                                            .argument(GraphQLArgument.newArgument()
                                                              .name("filterByIds")
@@ -2227,9 +2205,9 @@ public class TransmodelIndexGraphQLSchema {
                                            })
                                            .build())
                             .field(GraphQLFieldDefinition.newFieldDefinition()
-                                           .name("departureRow")
-                                           .description("Get a single departure row based on its id (format is Agency:StopId:PatternId)")
-                                           .type(departureRowType)
+                                           .name("departure")
+                                           .description("Get a single departure based on its id (format is Agency:StopId:PatternId)")
+                                           .type(departureType)
                                            .argument(GraphQLArgument.newArgument()
                                                              .name("id")
                                                              .type(new GraphQLNonNull(Scalars.GraphQLString))
@@ -2400,9 +2378,9 @@ public class TransmodelIndexGraphQLSchema {
                                            .dataFetcher(dataFetchingEnvironment -> index.getAlerts())
                                            .build())
                             .field(GraphQLFieldDefinition.newFieldDefinition()
-                                           .name("serviceTimeRange")
+                                           .name("validBetween")
                                            .description("Get start and end time for publict transit services present in the graph")
-                                           .type(serviceTimeRangeType)
+                                           .type(serviceValidBetweenType)
                                            .dataFetcher(environment -> index.graph)
                                            .build())
                             .field(GraphQLFieldDefinition.newFieldDefinition()
@@ -2620,7 +2598,7 @@ public class TransmodelIndexGraphQLSchema {
                                                                   .name("transportSubmode")
                                                                   .description("The transport sub mode (e.g., localBus or expressBus) used when traversing this leg.")
                                                                   .type(transportSubmode)
-                                                                  .dataFetcher(environment -> ((Leg) environment.getSource()).routeType)
+                                                                  .dataFetcher(environment -> transportSubmodeMapper.toTransmodel(((Leg) environment.getSource()).routeType))
                                                                   .build())
                                                    .field(GraphQLFieldDefinition.newFieldDefinition()
                                                                   .name("duration")
