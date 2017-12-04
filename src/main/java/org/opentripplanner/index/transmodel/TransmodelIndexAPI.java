@@ -39,32 +39,13 @@ public class TransmodelIndexAPI {
     private static final Logger LOG = LoggerFactory.getLogger(TransmodelIndexAPI.class);
     private static final String MSG_400 = "FOUR HUNDRED";
 
-    /**
-     * Choose short or long form of results.
-     */
-    @QueryParam("detail")
-    private boolean detail = false;
-
-    /**
-     * Include GTFS entities referenced by ID in the result.
-     */
-    @QueryParam("refs")
-    private boolean refs = false;
-
     private final TransmodelGraphIndex index;
     private final ObjectMapper deserializer = new ObjectMapper();
 
     public TransmodelIndexAPI(@Context OTPServer otpServer, @PathParam("routerId") String routerId) {
         router = otpServer.getRouter(routerId);
-        index = new TransmodelGraphIndex( router.graph.index);
+        index = TransmodelGraphIndexFactory.getTransmodelGraphIndexForRouter(router);
     }
-
-    /* Needed to check whether query parameter map is empty, rather than chaining " && x == null"s */
-    @Context
-    UriInfo uriInfo;
-
-    @Context
-    HttpHeaders headers;
 
     private Router router;
 
