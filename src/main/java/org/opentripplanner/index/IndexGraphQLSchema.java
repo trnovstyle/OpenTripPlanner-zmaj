@@ -11,29 +11,11 @@ import graphql.schema.*;
 import org.opentripplanner.api.common.Message;
 import org.opentripplanner.api.model.*;
 import org.opentripplanner.api.parameter.QualifiedModeSet;
-import graphql.schema.DataFetchingEnvironment;
-import graphql.schema.GraphQLArgument;
-import graphql.schema.GraphQLEnumType;
-import graphql.schema.GraphQLFieldDefinition;
-import graphql.schema.GraphQLInterfaceType;
-import graphql.schema.GraphQLList;
-import graphql.schema.GraphQLNonNull;
-import graphql.schema.GraphQLObjectType;
-import graphql.schema.GraphQLOutputType;
-import graphql.schema.GraphQLSchema;
-import graphql.schema.GraphQLTypeReference;
-import graphql.schema.TypeResolver;
-import org.opentripplanner.model.Agency;
-import org.opentripplanner.model.AgencyAndId;
-import org.opentripplanner.model.Notice;
-import org.opentripplanner.model.Route;
-import org.opentripplanner.model.Stop;
-import org.opentripplanner.model.Trip;
-import org.opentripplanner.model.calendar.ServiceDate;
 import org.opentripplanner.gtfs.GtfsLibrary;
 import org.opentripplanner.index.model.StopTimesInPattern;
 import org.opentripplanner.index.model.TripTimeShort;
-import org.opentripplanner.model.StopPattern;
+import org.opentripplanner.model.*;
+import org.opentripplanner.model.calendar.ServiceDate;
 import org.opentripplanner.profile.StopCluster;
 import org.opentripplanner.routing.alertpatch.Alert;
 import org.opentripplanner.routing.alertpatch.AlertPatch;
@@ -2327,7 +2309,19 @@ public class IndexGraphQLSchema {
                 .name("stations")
                 .description("Get all stations (stop with location_type = 1)")
                 .type(new GraphQLList(stopType))
-                .dataFetcher(environment -> new ArrayList<>(index.stationForId.values()))
+                .argument(GraphQLArgument.newArgument()
+                        .name("ids")
+                        .type(new GraphQLList(Scalars.GraphQLString))
+                        .build())
+                .dataFetcher(environment -> {
+                    if ((environment.getArgument("ids") instanceof List)) {
+                        return ((List<String>) environment.getArgument("ids"))
+                                .stream()
+                                .map(id -> index.stationForId.get(GtfsLibrary.convertIdFromString(id)))
+                                .collect(Collectors.toList());
+                    }
+                    return new ArrayList<>(index.stationForId.values());
+                })
                 .build())
             .field(GraphQLFieldDefinition.newFieldDefinition()
                 .name("routes")
