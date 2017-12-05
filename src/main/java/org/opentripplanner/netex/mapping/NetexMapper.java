@@ -49,13 +49,13 @@ public class NetexMapper {
 
         for (Operator operator : netexDao.getOperators().values()) {
             if (operator != null) {
-                transitBuilder.getAgencies().add(agencyMapper.mapAgency(operator, "Europe/Oslo"));
+                transitBuilder.getAgencies().add(agencyMapper.mapAgency(operator, netexDao.getTimeZone()));
             }
         }
 
         for (Line line : netexDao.getLineById().values()) {
             if (line != null) {
-                Route route = routeMapper.mapRoute(line, transitBuilder);
+                Route route = routeMapper.mapRoute(line, transitBuilder, netexDao, netexDao.getTimeZone());
                 transitBuilder.getRoutes().add(route);
             }
         }
