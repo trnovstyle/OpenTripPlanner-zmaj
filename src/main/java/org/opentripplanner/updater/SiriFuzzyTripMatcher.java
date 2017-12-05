@@ -1,11 +1,11 @@
 package org.opentripplanner.updater;
 
+import org.opentripplanner.gtfs.GtfsLibrary;
 import org.opentripplanner.model.AgencyAndId;
 import org.opentripplanner.model.Route;
 import org.opentripplanner.model.Stop;
 import org.opentripplanner.model.Trip;
 import org.opentripplanner.model.calendar.ServiceDate;
-import org.opentripplanner.gtfs.GtfsLibrary;
 import org.opentripplanner.routing.core.TraverseMode;
 import org.opentripplanner.routing.edgetype.TripPattern;
 import org.opentripplanner.routing.graph.GraphIndex;
@@ -54,25 +54,28 @@ public class SiriFuzzyTripMatcher {
      */
     public Set<Trip> match(VehicleActivityStructure activity) {
         VehicleActivityStructure.MonitoredVehicleJourney monitoredVehicleJourney = activity.getMonitoredVehicleJourney();
-
+        Set<Trip> trips = new HashSet<>();
         if (monitoredVehicleJourney != null) {
 
-            if (monitoredVehicleJourney.getCourseOfJourneyRef() != null) {
-                //TripId is provided in VM-delivery
-                return getCachedTripsBySiriId(monitoredVehicleJourney.getCourseOfJourneyRef().getValue());
-            } else {
+            String datedVehicleRef = null;
+            if (monitoredVehicleJourney.getFramedVehicleJourneyRef() != null) {
+                datedVehicleRef = monitoredVehicleJourney.getFramedVehicleJourneyRef().getDatedVehicleJourneyRef();
+                if (datedVehicleRef != null) {
+                    trips = mappedTripsCache.get(datedVehicleRef);
+                }
+            }
+            if (trips == null || trips.isEmpty()) {
                 // Find matches based on trip-data
                 if (monitoredVehicleJourney.getDestinationRef() != null &&
                         monitoredVehicleJourney.getDestinationAimedArrivalTime() != null) {
                     String destinationRef = monitoredVehicleJourney.getDestinationRef().getValue();
                     ZonedDateTime arrivalTime = monitoredVehicleJourney.getDestinationAimedArrivalTime();
-                    return start_stop_tripCache.get(createStartStopKey(destinationRef, arrivalTime.toLocalTime().toSecondOfDay()));
+                    trips = start_stop_tripCache.get(createStartStopKey(destinationRef, arrivalTime.toLocalTime().toSecondOfDay()));
                 }
             }
-
         }
 
-        return null;
+        return trips;
     }
 
     /**

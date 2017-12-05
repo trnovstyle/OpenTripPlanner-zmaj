@@ -19,7 +19,6 @@ import com.google.transit.realtime.GtfsRealtime.TripUpdate;
 import com.google.transit.realtime.GtfsRealtime.TripUpdate.StopTimeUpdate;
 import org.opentripplanner.model.*;
 import org.opentripplanner.model.calendar.ServiceDate;
-import org.opentripplanner.model.StopPattern;
 import org.opentripplanner.routing.edgetype.Timetable;
 import org.opentripplanner.routing.edgetype.TimetableSnapshot;
 import org.opentripplanner.routing.edgetype.TripPattern;
@@ -33,7 +32,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.org.siri.siri20.*;
 
-import javax.xml.datatype.Duration;
 import java.text.ParseException;
 import java.time.ZonedDateTime;
 import java.util.*;
@@ -482,56 +480,11 @@ public class TimetableSnapshotSource {
     private boolean handleTripPatternUpdate(Graph graph, TripPattern pattern, VehicleActivityStructure activity, Trip trip, ServiceDate serviceDate) {
 
         // Apply update on the *scheduled* time table and set the updated trip times in the buffer
-        final TripTimes updatedTripTimes = pattern.scheduledTimetable.createUpdatedTripTimes(activity, timeZone, trip.getId());
+        final TripTimes updatedTripTimes = pattern.scheduledTimetable.createUpdatedTripTimes(graph, activity, timeZone, trip.getId());
 
         if (updatedTripTimes == null) {
             return false;
         }
-
-        final List<Stop> stops = pattern.getStops();
-
-        int accumulatedDelayTime = 0;
-
-        VehicleActivityStructure.MonitoredVehicleJourney monitoredVehicleJourney = activity.getMonitoredVehicleJourney();
-
-        if (monitoredVehicleJourney != null) {
-            Duration delay = monitoredVehicleJourney.getDelay();
-
-            MonitoredCallStructure monitoredCall = monitoredVehicleJourney.getMonitoredCall();
-            if (monitoredCall != null && monitoredCall.getStopPointRef() != null) {
-
-                for (int index = 0; index < updatedTripTimes.getNumStops(); ++index) {
-
-                    final Stop stop = stops.get(index);
-
-                    boolean stopIdMatches = stop.getId().getId().equals(monitoredCall.getStopPointRef().getValue());
-
-                    if (!stopIdMatches && stop.getParentStation() != null) {
-                        AgencyAndId alternativeId = new AgencyAndId(stop.getId().getAgencyId(), monitoredCall.getStopPointRef().getValue());
-                        Stop alternativeStop = graphIndex.stopForId.get(alternativeId);
-                        if (alternativeStop != null && alternativeStop.getParentStation() != null) {
-                            stopIdMatches = stop.getParentStation().equals(alternativeStop.getParentStation());
-                        }
-                    }
-
-
-                    if (stopIdMatches) {
-                        if (delay != null) {
-                            accumulatedDelayTime += delay.getSign()*(delay.getHours() *3600 + delay.getMinutes() *60 + delay.getSeconds());
-                        }
-                        //If we get realtime data for a stop, flag as realtime also when delay == null
-                        updatedTripTimes.updateArrivalDelay(index, accumulatedDelayTime);
-                        if (keepLogging) {
-                            LOG.debug("Added delay of [{}s] before stop [{}] on trip [{}]", accumulatedDelayTime, monitoredCall.getStopPointRef().getValue(), trip.getId());
-                        }
-                    }
-                }
-            }
-
-        }
-
-        // Make sure that updated trip times have the correct real time state
-        updatedTripTimes.setRealTimeState(RealTimeState.UPDATED);
 
         final boolean success = buffer.update(SIRI_FEED_ID, pattern, updatedTripTimes, serviceDate);
 
@@ -1399,9 +1352,27 @@ public class TimetableSnapshotSource {
             if (monitoredVehicleJourney.getDestinationRef() != null) {
                 String siriDestinationRef = monitoredVehicleJourney.getDestinationRef().getValue();
 
-                if (firstStop.getId().getId().equals(siriOriginRef) & lastStop.getId().getId().equals(siriDestinationRef)) {
+                boolean firstStopIsMatch = firstStop.getId().getId().equals(siriOriginRef);
+                boolean lastStopIsMatch = lastStop.getId().getId().equals(siriDestinationRef);
+
+                if (!firstStopIsMatch && firstStop.getParentStation() != null) {
+                    Stop otherFirstStop = graphIndex.stopForId.get(new AgencyAndId(firstStop.getId().getAgencyId(), siriOriginRef));
+                    firstStopIsMatch = (otherFirstStop != null && otherFirstStop.getParentStation() != null && otherFirstStop.getParentStation().equals(firstStop.getParentStation()));
+                }
+
+                if (!lastStopIsMatch && lastStop.getParentStation() != null) {
+                    Stop otherLastStop = graphIndex.stopForId.get(new AgencyAndId(lastStop.getId().getAgencyId(), siriDestinationRef));
+                    lastStopIsMatch = (otherLastStop != null && otherLastStop.getParentStation() != null && otherLastStop.getParentStation().equals(lastStop.getParentStation()));
+                }
+
+                if (firstStopIsMatch & lastStopIsMatch) {
                     // Origin and destination matches
-                    patterns.add(tripPattern);
+                    TripPattern lastAddedTripPattern = buffer.getLastAddedTripPattern(tripPattern.getFeedId(), currentTrip.getId().getId(), realTimeReportedServiceDate);
+                    if (lastAddedTripPattern != null) {
+                        patterns.add(lastAddedTripPattern);
+                    } else {
+                        patterns.add(tripPattern);
+                    }
                 }
             } else {
                 //Match origin only - since destination is not defined

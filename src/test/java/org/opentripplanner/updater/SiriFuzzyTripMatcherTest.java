@@ -1,9 +1,9 @@
 package org.opentripplanner.updater;
 
-import org.opentripplanner.model.AgencyAndId;
-import org.opentripplanner.model.Trip;
 import org.opentripplanner.GtfsTest;
+import org.opentripplanner.model.Trip;
 import uk.org.siri.siri20.CourseOfJourneyRefStructure;
+import uk.org.siri.siri20.FramedVehicleJourneyRefStructure;
 import uk.org.siri.siri20.VehicleActivityStructure;
 
 import java.util.Set;
@@ -16,9 +16,9 @@ public class SiriFuzzyTripMatcherTest extends GtfsTest {
         SiriFuzzyTripMatcher matcher = new SiriFuzzyTripMatcher(graph.index, forceCacheRebuild);
 
         VehicleActivityStructure.MonitoredVehicleJourney monitoredVehicleJourney = new VehicleActivityStructure.MonitoredVehicleJourney();
-        CourseOfJourneyRefStructure courseOfJourney = new CourseOfJourneyRefStructure();
-        courseOfJourney.setValue("10W1020");
-        monitoredVehicleJourney.setCourseOfJourneyRef(courseOfJourney);
+        FramedVehicleJourneyRefStructure framedVehicleJourneyRef = new FramedVehicleJourneyRefStructure();
+        framedVehicleJourneyRef.setDatedVehicleJourneyRef("10W1020");
+        monitoredVehicleJourney.setFramedVehicleJourneyRef(framedVehicleJourneyRef);
 
 
         VehicleActivityStructure activity = new VehicleActivityStructure();
@@ -29,7 +29,7 @@ public class SiriFuzzyTripMatcherTest extends GtfsTest {
 
         Trip trip = match.iterator().next();
         assertNotNull(trip);
-        assertTrue(trip.getId().getId().equals(courseOfJourney.getValue()));
+        assertTrue(trip.getId().getId().equals(framedVehicleJourneyRef.getDatedVehicleJourneyRef()));
 
     }
 

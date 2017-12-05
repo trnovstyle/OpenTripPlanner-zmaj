@@ -18,13 +18,12 @@ import com.google.transit.realtime.GtfsRealtime.TripDescriptor;
 import com.google.transit.realtime.GtfsRealtime.TripUpdate;
 import com.google.transit.realtime.GtfsRealtime.TripUpdate.StopTimeEvent;
 import com.google.transit.realtime.GtfsRealtime.TripUpdate.StopTimeUpdate;
+import org.opentripplanner.common.MavenVersion;
 import org.opentripplanner.model.AgencyAndId;
 import org.opentripplanner.model.Stop;
 import org.opentripplanner.model.StopTime;
 import org.opentripplanner.model.Trip;
 import org.opentripplanner.model.calendar.ServiceDate;
-
-import org.opentripplanner.common.MavenVersion;
 import org.opentripplanner.routing.core.ServiceDay;
 import org.opentripplanner.routing.core.State;
 import org.opentripplanner.routing.core.StopTransfer;
@@ -38,6 +37,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.org.siri.siri20.*;
 
+import javax.xml.datatype.Duration;
 import java.io.Serializable;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
@@ -996,7 +996,7 @@ public class Timetable implements Serializable {
      *         with the id specified in the trip descriptor of the TripUpdate; null if something
      *         went wrong
      */
-    public TripTimes createUpdatedTripTimes(VehicleActivityStructure activity, TimeZone timeZone, AgencyAndId tripId) {
+    public TripTimes createUpdatedTripTimes(Graph graph, VehicleActivityStructure activity, TimeZone timeZone, AgencyAndId tripId) {
         if (activity == null) {
             LOG.error("A null VehicleActivityStructure pointer was passed to the Timetable class update method.");
             return null;
@@ -1013,39 +1013,69 @@ public class Timetable implements Serializable {
             LOG.trace("tripId {} found at index {} in timetable.", tripId, tripIndex);
         }
 
-        TripTimes newTimes = new TripTimes(getTripTimes(tripIndex));
+        final TripTimes existingTripTimes = getTripTimes(tripIndex);
+        TripTimes newTimes = new TripTimes(existingTripTimes);
 
 
         MonitoredCallStructure update = mvj.getMonitoredCall();
         if (update == null) {
             return null;
         }
+        final List<Stop> stops = pattern.getStops();
+
+        VehicleActivityStructure.MonitoredVehicleJourney monitoredVehicleJourney = activity.getMonitoredVehicleJourney();
+
+        if (monitoredVehicleJourney != null) {
+            Duration delay = monitoredVehicleJourney.getDelay();
+            int updatedDelay = 0;
+            if (delay != null) {
+                updatedDelay = delay.getSign() * (delay.getHours() * 3600 + delay.getMinutes() * 60 + delay.getSeconds());
+            }
+
+            MonitoredCallStructure monitoredCall = monitoredVehicleJourney.getMonitoredCall();
+            if (monitoredCall != null && monitoredCall.getStopPointRef() != null) {
+                boolean stopIdMatches;
+
+                int arrivalDelay;
+                int departureDelay;
+
+                for (int index = 0; index < newTimes.getNumStops(); ++index) {
+
+                    final Stop stop = stops.get(index);
+
+                    stopIdMatches = stop.getId().getId().equals(monitoredCall.getStopPointRef().getValue());
+
+                    if (!stopIdMatches && stop.getParentStation() != null) {
+                        AgencyAndId alternativeId = new AgencyAndId(stop.getId().getAgencyId(), monitoredCall.getStopPointRef().getValue());
+                        Stop alternativeStop = graph.index.stopForId.get(alternativeId);
+                        if (alternativeStop != null && alternativeStop.getParentStation() != null) {
+                            stopIdMatches = stop.getParentStation().equals(alternativeStop.getParentStation());
+                        }
+                    }
 
 
-        int numStops = newTimes.getNumStops();
-        int delay = 0;
+                    if (stopIdMatches) {
+                        arrivalDelay = departureDelay = updatedDelay;
+                    } else {
+                        arrivalDelay = existingTripTimes.getArrivalDelay(index);
+                        departureDelay = existingTripTimes.getDepartureDelay(index);
+                    }
 
-        boolean match = false;
-        for (int i = 0; i < numStops; i++) {
-            if (!match) {
-                if (update.getStopPointRef() != null) {
-                    match = pattern.getStop(i).getId().getId().equals(update.getStopPointRef().getValue());
+                    newTimes.updateArrivalDelay(index, arrivalDelay);
+                    newTimes.updateDepartureDelay(index, departureDelay);
                 }
-            }
-            //Delay on one stop aggregates to the following stops
-            if (mvj.getDelay() != null) {
-                delay = mvj.getDelay().getSeconds();
-            }
-
-            if (match && delay > 0) {
-                newTimes.updateArrivalDelay(i, delay);
-                newTimes.updateDepartureDelay(i, delay);
             }
         }
 
         if (!newTimes.timesIncreasing()) {
             LOG.error("TripTimes are non-increasing after applying SIRI delay propagation.");
             return null;
+        }
+
+        //If state is already MODIFIED - keep existing state
+        if (newTimes.getRealTimeState() != RealTimeState.MODIFIED) {
+            // Make sure that updated trip times have the correct real time state
+            newTimes.setRealTimeState(RealTimeState.UPDATED);
         }
 
         LOG.debug("A valid TripUpdate object was applied using the Timetable class update method.");
