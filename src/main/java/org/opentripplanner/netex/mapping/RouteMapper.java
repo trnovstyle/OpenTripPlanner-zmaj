@@ -33,6 +33,9 @@ public class RouteMapper {
 
             Agency compositeAgency = agencyMapper.combineAndMapAgency(operators, timeZone);
             otpRoute.setAgency(compositeAgency);
+            if (!transitBuilder.getAgencies().stream().anyMatch(a -> a.getId().equals(compositeAgency.getId()))) {
+                transitBuilder.getAgencies().add(compositeAgency);
+            }
         } else {
             String agencyId = line.getOperatorRef().getRef();
             Agency agency = transitBuilder.getAgencies().stream().filter(a -> a.getId().equals(agencyId)).findFirst().get();
