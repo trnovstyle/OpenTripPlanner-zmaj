@@ -45,7 +45,7 @@ public class TripPatternMapper {
             return;
         }
 
-        for(ServiceJourney serviceJourney : serviceJourneys){
+        serviceJourneyLoop : for(ServiceJourney serviceJourney : serviceJourneys){
             Trip trip = tripMapper.mapServiceJourney(serviceJourney, transitBuilder, netexDao);
             trips.add(trip);
 
@@ -63,7 +63,7 @@ public class TripPatternMapper {
 
                 if (quay == null) {
                     LOG.warn("Quay not found for timetabledPassingTime: " + passingTime.getId());
-                    break;
+                    continue serviceJourneyLoop;
                 }
 
                 StopTime stopTime = new StopTime();
@@ -134,7 +134,7 @@ public class TripPatternMapper {
             }
         }
 
-        if (stopPattern.size == 0) {
+        if (stopPattern == null || stopPattern.size == 0) {
             LOG.warn("ServiceJourneyPattern " + journeyPattern.getId() + " does not contain a valid stop pattern.");
             return;
         }

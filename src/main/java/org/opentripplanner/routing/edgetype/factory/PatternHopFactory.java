@@ -397,6 +397,9 @@ public class PatternHopFactory {
             /* Iterate over all stops in this pattern recording mode information. */
             TraverseMode mode = GtfsLibrary.getTraverseMode(tripPattern.route);
             for (TransitStop tstop : tripPattern.stopVertices) {
+                if (mode == null || tstop == null) {
+                    LOG.warn("null");
+                }
                 tstop.addMode(mode);
                 if (mode == TraverseMode.SUBWAY) {
                     tstop.setStreetToStopTime(subwayAccessTime);
