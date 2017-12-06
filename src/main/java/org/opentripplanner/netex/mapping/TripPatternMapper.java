@@ -61,39 +61,25 @@ public class TripPatternMapper {
             trips.add(trip);
 
             TimetabledPassingTimes_RelStructure passingTimes = serviceJourney.getPassingTimes();
-            List<TimetabledPassingTime> timetabledPassingTimes = passingTimes
-                    .getTimetabledPassingTime();
-            List<StopTime> stopTimes = new ArrayList<>();
+            List<TimetabledPassingTime> timetabledPassingTimes = passingTimes.getTimetabledPassingTime();
 
-            int stopSequence = 0;
+            List<StopTime> stopTimes = mapToStopTimes(
+                    journeyPattern, transitBuilder, netexDao, trip, timetabledPassingTimes
+            );
 
-            for (TimetabledPassingTime passingTime : timetabledPassingTimes) {
-                JAXBElement<? extends PointInJourneyPatternRefStructure> pointInJourneyPatternRef
-                        = passingTime.getPointInJourneyPatternRef();
-                String ref = pointInJourneyPatternRef.getValue().getRef();
+            if (stopTimes != null) {
+                transitBuilder.getStopTimesSortedByTrip().put(trip, stopTimes);
 
-                Stop quay = findQuay(ref, journeyPattern, netexDao, transitBuilder);
-
-                if (quay != null) {
-                    StopPointInJourneyPattern stopPoint = findStopPoint(ref, journeyPattern);
-                    StopTime stopTime = mapToStopTime(trip, stopPoint, quay, passingTime, stopSequence, netexDao);
-                    stopTimes.add(stopTime);
-                    ++stopSequence;
-                } else {
-                    LOG.warn("Quay not found for timetabledPassingTimes: " + passingTime.getId());
+                // We only generate a stopPattern for the first trip in the JourneyPattern.
+                // We can do this because we assume the stopPatterrns are the same for all trips in a
+                // JourneyPattern
+                if (stopPattern == null) {
+                    stopPattern = new StopPattern(transitBuilder.getStopTimesSortedByTrip().get(trip));
                 }
-            }
-
-            transitBuilder.getStopTimesSortedByTrip().put(trip, stopTimes);
-
-            // We only generate a stopPattern for the first trip in the JourneyPattern.
-            // We can do this because we assume the stopPatterrns are the same for all trips in a
-            // JourneyPattern
-            if (stopPattern == null) {
-                stopPattern = new StopPattern(transitBuilder.getStopTimesSortedByTrip().get(trip));
             }
         }
 
+        // TODO TGR/GMS - There is something fishy here: stopPattern can be null...
         if (stopPattern.size == 0) {
             LOG.warn("ServiceJourneyPattern " + journeyPattern.getId()
                     + " does not contain a valid stop pattern.");
@@ -119,6 +105,31 @@ public class TripPatternMapper {
         }
 
         transitBuilder.getTripPatterns().put(tripPattern.stopPattern, tripPattern);
+    }
+
+    private List<StopTime> mapToStopTimes(JourneyPattern journeyPattern, OtpTransitBuilder transitBuilder, NetexDao netexDao, Trip trip, List<TimetabledPassingTime> timetabledPassingTimes) {
+        List<StopTime> stopTimes = new ArrayList<>();
+
+        int stopSequence = 0;
+
+        for (TimetabledPassingTime passingTime : timetabledPassingTimes) {
+            JAXBElement<? extends PointInJourneyPatternRefStructure> pointInJourneyPatternRef
+                    = passingTime.getPointInJourneyPatternRef();
+            String ref = pointInJourneyPatternRef.getValue().getRef();
+
+            Stop quay = findQuay(ref, journeyPattern, netexDao, transitBuilder);
+
+            if (quay != null) {
+                StopPointInJourneyPattern stopPoint = findStopPoint(ref, journeyPattern);
+                StopTime stopTime = mapToStopTime(trip, stopPoint, quay, passingTime, stopSequence, netexDao);
+                stopTimes.add(stopTime);
+                ++stopSequence;
+            } else {
+                LOG.warn("Quay not found for timetabledPassingTimes: " + passingTime.getId());
+                return null;
+            }
+        }
+        return stopTimes;
     }
 
     private StopTime mapToStopTime(Trip trip, StopPointInJourneyPattern stopPoint, Stop quay,
