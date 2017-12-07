@@ -4,6 +4,7 @@ import org.opentripplanner.model.NoticeAssignment;
 import org.opentripplanner.graph_builder.model.NetexDao;
 import org.rutebanken.netex.model.JourneyPattern;
 import org.rutebanken.netex.model.ServiceJourney;
+import org.rutebanken.netex.model.TimetabledPassingTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,11 +25,15 @@ public class NoticeAssignmentMapper {
             if (journeyPattern != null && netexDao.getServiceJourneyById().containsKey(journeyPattern.getId())) {
                 // Map notice from StopPointInJourneyPattern to corresponding TimeTabledPassingTimes
                 for (ServiceJourney serviceJourney : netexDao.getServiceJourneyById().get(journeyPattern.getId())) {
+                    int order = netexDao.getStopPointInJourneyPatternById().get(journeyPatternRef).getOrder().intValue();
+
+                    TimetabledPassingTime passingTime = serviceJourney.getPassingTimes().getTimetabledPassingTime().get(order - 1);
+
                     org.opentripplanner.model.NoticeAssignment otpNoticeAssignment = new org.opentripplanner.model.NoticeAssignment();
 
                     otpNoticeAssignment.setId(AgencyAndIdFactory.getAgencyAndId(netexNoticeAssignment.getId()));
                     otpNoticeAssignment.setNoticeId(AgencyAndIdFactory.getAgencyAndId(netexNoticeAssignment.getNoticeRef().getRef()));
-                    otpNoticeAssignment.setElementId(AgencyAndIdFactory.getAgencyAndId(serviceJourney.getId()));
+                    otpNoticeAssignment.setElementId(AgencyAndIdFactory.getAgencyAndId(passingTime.getId()));
 
                     noticeAssignments.add(otpNoticeAssignment);
                 }

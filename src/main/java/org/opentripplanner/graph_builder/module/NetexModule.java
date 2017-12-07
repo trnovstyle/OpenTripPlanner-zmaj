@@ -303,6 +303,7 @@ public class NetexModule implements GraphBuilderModule {
                             if (pointInLinkSequence_versionedChildStructure instanceof StopPointInJourneyPattern) {
                                 StopPointInJourneyPattern stopPointInJourneyPattern = (StopPointInJourneyPattern) pointInLinkSequence_versionedChildStructure;
                                 netexDao.getJourneyPatternByStopPointId().put(stopPointInJourneyPattern.getId(), journeyPattern);
+                                netexDao.getStopPointInJourneyPatternById().put(stopPointInJourneyPattern.getId(), stopPointInJourneyPattern);
                             }
                         }
                     }

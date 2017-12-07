@@ -18,6 +18,7 @@ import org.rutebanken.netex.model.Route;
 import org.rutebanken.netex.model.ServiceJourney;
 import org.rutebanken.netex.model.ServiceJourneyInterchange;
 import org.rutebanken.netex.model.StopPlace;
+import org.rutebanken.netex.model.StopPointInJourneyPattern;
 
 import java.util.*;
 
@@ -50,6 +51,7 @@ public class NetexDao {
     private final Multimap<String, Quay> quayById = ArrayListMultimap.create();
     private final Map<Quay, StopPlace> stopPlaceByQuay = new HashMap<>();
     private Map<String, JourneyPattern> journeyPatternByStopPointId = new HashMap<>();
+    private Map<String, StopPointInJourneyPattern> stopPointInJourneyPatternById = new HashMap<>();
     private final Map<String, ServiceJourneyInterchange> interchanges = new HashMap<>();
     private final Map<String, DestinationDisplay> destinationDisplayMap = new HashMap<>();
     private String timeZone;
@@ -80,6 +82,10 @@ public class NetexDao {
 
     public Map<String, JourneyPattern> getJourneyPatternByStopPointId() {
         return journeyPatternByStopPointId;
+    }
+
+    public Map<String, StopPointInJourneyPattern> getStopPointInJourneyPatternById() {
+        return stopPointInJourneyPatternById;
     }
 
     public Map<String, Boolean> getDayTypeAvailable() {
