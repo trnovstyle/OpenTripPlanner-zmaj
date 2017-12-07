@@ -55,6 +55,8 @@ public class TripPatternMapper {
 
             int stopSequence = 0;
 
+            String currentHeadsign = null;
+
             for(TimetabledPassingTime passingTime : timetabledPassingTime){
                 JAXBElement<? extends PointInJourneyPatternRefStructure> pointInJourneyPatternRef = passingTime.getPointInJourneyPatternRef();
                 String ref = pointInJourneyPatternRef.getValue().getRef();
@@ -116,12 +118,21 @@ public class TripPatternMapper {
                 if (stopPoint.getDestinationDisplayRef() != null) {
                     String destinationRef = stopPoint.getDestinationDisplayRef().getRef();
                     if (netexDao.getDestinationDisplayMap().containsKey(destinationRef)) {
-                        stopTime.setStopHeadsign(netexDao.getDestinationDisplayMap().get(destinationRef).getFrontText().getValue());
+                        currentHeadsign = netexDao.getDestinationDisplayMap().get(destinationRef).getFrontText().getValue();
                     }
+                }
+                if (currentHeadsign != null) {
+                    stopTime.setStopHeadsign(currentHeadsign);
                 }
 
                 stopTime.setStop(quay);
                 stopTimes.add(stopTime);
+            }
+
+            // If all stoptime headsigns are the same, move headsign up to trip
+            if (stopTimes.stream().map(s -> s.getStopHeadsign()).distinct().count() == 1) {
+                trip.setTripHeadsign(stopTimes.stream().findFirst().get().getStopHeadsign());
+                stopTimes.stream().forEach(s -> s.setStopHeadsign(null));
             }
 
             transitBuilder.getStopTimesSortedByTrip().put(trip, stopTimes);
