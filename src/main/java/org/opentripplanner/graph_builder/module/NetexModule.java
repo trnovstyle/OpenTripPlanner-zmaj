@@ -259,13 +259,16 @@ public class NetexModule implements GraphBuilderModule {
             //network
             Network network = sf.getNetwork();
             if(network != null){
-                OrganisationRefStructure orgRef = network.getTransportOrganisationRef().getValue();
-                netexDao.getAuthoritiesByNetworkId().put(network.getId(), orgRef.getRef());
+                String orgRef = network.getTransportOrganisationRef().getValue().getRef();
+                netexDao.getNetworkById().put(network.getId(), network);
+                if (netexDao.getAuthorities().containsKey(orgRef)) {
+                    netexDao.getAuthoritiesByNetworkId().put(network.getId(), netexDao.getAuthorities().get(orgRef));
+                }
                 if (network.getGroupsOfLines() != null) {
                     GroupsOfLinesInFrame_RelStructure groupsOfLines = network.getGroupsOfLines();
                     List<GroupOfLines> groupOfLines = groupsOfLines.getGroupOfLines();
                     for (GroupOfLines group : groupOfLines) {
-                        netexDao.getAuthoritiesByGroupOfLinesId().put(group.getId(), orgRef.getRef());
+                        netexDao.getAuthoritiesByGroupOfLinesId().put(group.getId(), orgRef);
                     }
                 }
             }
@@ -279,8 +282,11 @@ public class NetexModule implements GraphBuilderModule {
                     if (element.getValue() instanceof Line) {
                         Line line = (Line) element.getValue();
                         netexDao.getLineById().put(line.getId(), line);
+                        String groupRef = line.getRepresentedByGroupRef().getRef();
+                        if (netexDao.getNetworkById().containsKey(groupRef)) {
+                            netexDao.getNetworkByLineId().put(line.getId(), netexDao.getNetworkById().get(groupRef));
+                        }
                     }
-
                 }
             }
 

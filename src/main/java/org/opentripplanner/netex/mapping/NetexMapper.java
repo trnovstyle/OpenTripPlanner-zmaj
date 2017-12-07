@@ -6,6 +6,7 @@ import org.opentripplanner.model.Route;
 import org.opentripplanner.model.Stop;
 import org.opentripplanner.model.Transfer;
 import org.opentripplanner.model.impl.OtpTransitDaoBuilder;
+import org.rutebanken.netex.model.Authority;
 import org.rutebanken.netex.model.JourneyPattern;
 import org.rutebanken.netex.model.Line;
 import org.rutebanken.netex.model.Notice;
@@ -47,9 +48,9 @@ public class NetexMapper {
     public OtpTransitDaoBuilder mapNetexToOtp(NetexDao netexDao) {
         AgencyAndIdFactory.setAgencyId(agencyId);
 
-        for (Operator operator : netexDao.getOperators().values()) {
-            if (operator != null) {
-                transitBuilder.getAgencies().add(agencyMapper.mapAgency(operator, netexDao.getTimeZone()));
+        for (Authority authority : netexDao.getAuthorities().values()) {
+            if (authority != null) {
+                transitBuilder.getAgencies().add(agencyMapper.mapAgency(authority, netexDao.getTimeZone()));
             }
         }
 

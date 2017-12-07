@@ -8,6 +8,7 @@ import org.rutebanken.netex.model.DayTypeAssignment;
 import org.rutebanken.netex.model.DestinationDisplay;
 import org.rutebanken.netex.model.JourneyPattern;
 import org.rutebanken.netex.model.Line;
+import org.rutebanken.netex.model.Network;
 import org.rutebanken.netex.model.Notice;
 import org.rutebanken.netex.model.NoticeAssignment;
 import org.rutebanken.netex.model.OperatingPeriod;
@@ -39,12 +40,14 @@ public class NetexDao {
     private final Map<String, Operator> operators = new HashMap<>();
     private final Map<String, Authority> authorities = new HashMap<>();
     private final Map<String, String> authoritiesByGroupOfLinesId = new HashMap<>();
-    private final Map<String, String> authoritiesByNetworkId = new HashMap<>();
+    private final Map<String, Authority> authoritiesByNetworkId = new HashMap<>();
+    private final Map<String, Network> networkByLineId = new HashMap<>();
+    private final Map<String, Network> networkById = new HashMap<>();
     private final Map<String, String> serviceIds = new HashMap<>();
     private final Map<String, Notice> noticeMap = new HashMap<>();
     private final Map<String, NoticeAssignment> noticeAssignmentMap = new HashMap<>();
     private final Multimap<String, StopPlace> stopsById = ArrayListMultimap.create();
-    private final Multimap<String, Quay> quayById = ArrayListMultimap.create();;
+    private final Multimap<String, Quay> quayById = ArrayListMultimap.create();
     private final Map<Quay, StopPlace> stopPlaceByQuay = new HashMap<>();
     private Map<String, JourneyPattern> journeyPatternByStopPointId = new HashMap<>();
     private final Map<String, ServiceJourneyInterchange> interchanges = new HashMap<>();
@@ -135,13 +138,13 @@ public class NetexDao {
         return operators;
     }
 
-    public Map<String, String> getAuthoritiesByGroupOfLinesId() {
-        return authoritiesByGroupOfLinesId;
-    }
+    public Map<String, String> getAuthoritiesByGroupOfLinesId() { return authoritiesByGroupOfLinesId; }
 
-    public Map<String, String> getAuthoritiesByNetworkId() {
-        return authoritiesByNetworkId;
-    }
+    public Map<String, Authority> getAuthoritiesByNetworkId() { return authoritiesByNetworkId; }
+
+    public Map<String, Network> getNetworkByLineId() { return networkByLineId; }
+
+    public Map<String, Network> getNetworkById() { return networkById; }
 
     public Map<String, String> getStopPointQuayMap() {
         return stopPointQuayMap;
