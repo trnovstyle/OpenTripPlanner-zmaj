@@ -34,6 +34,8 @@ public class TripPatternMapper {
 
     private static final int DAY_IN_SECONDS = 3600 * 24;
 
+    private String currentHeadsign;
+
     public void mapTripPattern(JourneyPattern journeyPattern, OtpTransitBuilder transitBuilder,
             NetexDao netexDao) {
         TripMapper tripMapper = new TripMapper();
@@ -69,6 +71,12 @@ public class TripPatternMapper {
 
             if (stopTimes != null) {
                 transitBuilder.getStopTimesSortedByTrip().put(trip, stopTimes);
+
+                // If all stoptime headsigns are the same, move headsign up to trip
+                if (stopTimes.stream().map(StopTime::getStopHeadsign).distinct().count() == 1) {
+                    trip.setTripHeadsign(stopTimes.stream().findFirst().get().getStopHeadsign());
+                    stopTimes.forEach(s -> s.setStopHeadsign(null));
+                }
 
                 // We only generate a stopPattern for the first trip in the JourneyPattern.
                 // We can do this because we assume the stopPatterrns are the same for all trips in a
@@ -159,8 +167,12 @@ public class TripPatternMapper {
         if (stopPoint.getDestinationDisplayRef() != null) {
             String destinationRef = stopPoint.getDestinationDisplayRef().getRef();
             if (netexDao.getDestinationDisplayMap().containsKey(destinationRef)) {
-                stopTime.setStopHeadsign(netexDao.getDestinationDisplayMap().get(destinationRef).getFrontText().getValue());
+                currentHeadsign = netexDao.getDestinationDisplayMap().get(destinationRef).getFrontText().getValue();
             }
+        }
+
+        if (currentHeadsign != null) {
+            stopTime.setStopHeadsign(currentHeadsign);
         }
 
         return stopTime;
