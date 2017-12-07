@@ -336,6 +336,7 @@ public class NetexLoader {
                             if (pointInLinkSequence_versionedChildStructure instanceof StopPointInJourneyPattern) {
                                 StopPointInJourneyPattern stopPointInJourneyPattern = (StopPointInJourneyPattern) pointInLinkSequence_versionedChildStructure;
                                 currentNetexDao().addJourneyPatternByStopPointId(stopPointInJourneyPattern.getId(), journeyPattern);
+                                currentNetexDao().addStopPointInJourneyPattern(stopPointInJourneyPattern);
                             }
                         }
                     }

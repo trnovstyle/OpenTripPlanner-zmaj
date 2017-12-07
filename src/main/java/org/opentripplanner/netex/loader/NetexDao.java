@@ -17,6 +17,7 @@ import org.rutebanken.netex.model.Quay;
 import org.rutebanken.netex.model.Route;
 import org.rutebanken.netex.model.ServiceJourney;
 import org.rutebanken.netex.model.StopPlace;
+import org.rutebanken.netex.model.StopPointInJourneyPattern;
 
 import java.util.Collection;
 import java.util.Comparator;
@@ -44,6 +45,8 @@ public class NetexDao {
     private final Map<String, JourneyPattern> journeyPatternsById = new HashMap<>();
 
     private final Map<String, JourneyPattern> journeyPatternByStopPointId = new HashMap<>();
+
+    private final Map<String, StopPointInJourneyPattern> stopPointInJourneyPatternById = new HashMap<>();
 
     private final Map<String, Route> routeById = new HashMap<>();
 
@@ -232,9 +235,24 @@ public class NetexDao {
         journeyPatternByStopPointId.put(stopPointId, journeyPattern);
     }
 
+    /**
+     * Lookup JourneyPattern in this class and if not found delegate up to the parent NetexDao.
+     */
     public JourneyPattern lookupJourneyPatternByStopPointId(String id) {
         JourneyPattern v = journeyPatternByStopPointId.get(id);
         return returnLocalValue(v) ? v : parent.lookupJourneyPatternByStopPointId(id);
+    }
+
+    public void addStopPointInJourneyPattern(StopPointInJourneyPattern value) {
+        stopPointInJourneyPatternById.put(value.getId(), value);
+    }
+
+    /**
+     * Lookup StopPointInJourneyPattern in this class and if not found delegate up to the parent NetexDao.
+     */
+    public StopPointInJourneyPattern lookupStopPointInJourneyPatternById(String id) {
+        StopPointInJourneyPattern v = stopPointInJourneyPatternById.get(id);
+        return returnLocalValue(v) ? v : parent.lookupStopPointInJourneyPatternById(id);
     }
 
     void addLine(Line line) {
