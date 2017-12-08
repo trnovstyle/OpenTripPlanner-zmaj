@@ -6,6 +6,7 @@ import org.rutebanken.netex.model.Authority;
 import org.rutebanken.netex.model.DayType;
 import org.rutebanken.netex.model.DayTypeAssignment;
 import org.rutebanken.netex.model.DestinationDisplay;
+import org.rutebanken.netex.model.GroupOfLines;
 import org.rutebanken.netex.model.JourneyPattern;
 import org.rutebanken.netex.model.Line;
 import org.rutebanken.netex.model.Network;
@@ -20,6 +21,7 @@ import org.rutebanken.netex.model.ServiceJourneyInterchange;
 import org.rutebanken.netex.model.StopPlace;
 import org.rutebanken.netex.model.StopPointInJourneyPattern;
 
+import java.security.acl.Group;
 import java.util.*;
 
 public class NetexDao {
@@ -40,8 +42,10 @@ public class NetexDao {
     private final Map<String, OperatingPeriod> operatingPeriodById = new HashMap<>();
     private final Map<String, Operator> operators = new HashMap<>();
     private final Map<String, Authority> authorities = new HashMap<>();
-    private final Map<String, String> authoritiesByGroupOfLinesId = new HashMap<>();
+    private final Map<String, Authority> authoritiesByGroupOfLinesId = new HashMap<>();
     private final Map<String, Authority> authoritiesByNetworkId = new HashMap<>();
+    private final Map<String, GroupOfLines> groupOfLinesByLineId = new HashMap<>();
+    private final Map<String, GroupOfLines> groupOfLinesById = new HashMap<>();
     private final Map<String, Network> networkByLineId = new HashMap<>();
     private final Map<String, Network> networkById = new HashMap<>();
     private final Map<String, String> serviceIds = new HashMap<>();
@@ -144,7 +148,11 @@ public class NetexDao {
         return operators;
     }
 
-    public Map<String, String> getAuthoritiesByGroupOfLinesId() { return authoritiesByGroupOfLinesId; }
+    public Map<String, Authority> getAuthoritiesByGroupOfLinesId() { return authoritiesByGroupOfLinesId; }
+
+    public Map<String, GroupOfLines> getGroupOfLinesByLineId() { return groupOfLinesByLineId; }
+
+    public Map<String, GroupOfLines> getGroupOfLinesById() { return groupOfLinesById; }
 
     public Map<String, Authority> getAuthoritiesByNetworkId() { return authoritiesByNetworkId; }
 

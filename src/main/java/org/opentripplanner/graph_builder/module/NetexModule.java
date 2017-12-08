@@ -268,7 +268,10 @@ public class NetexModule implements GraphBuilderModule {
                     GroupsOfLinesInFrame_RelStructure groupsOfLines = network.getGroupsOfLines();
                     List<GroupOfLines> groupOfLines = groupsOfLines.getGroupOfLines();
                     for (GroupOfLines group : groupOfLines) {
-                        netexDao.getAuthoritiesByGroupOfLinesId().put(group.getId(), orgRef);
+                        netexDao.getGroupOfLinesById().put(group.getId(), group);
+                        if (netexDao.getAuthorities().containsKey(orgRef)) {
+                            netexDao.getAuthoritiesByGroupOfLinesId().put(group.getId(), netexDao.getAuthorities().get(orgRef));
+                        }
                     }
                 }
             }
@@ -285,6 +288,10 @@ public class NetexModule implements GraphBuilderModule {
                         String groupRef = line.getRepresentedByGroupRef().getRef();
                         if (netexDao.getNetworkById().containsKey(groupRef)) {
                             netexDao.getNetworkByLineId().put(line.getId(), netexDao.getNetworkById().get(groupRef));
+                        }
+                        else if (netexDao.getGroupOfLinesById().containsKey(groupRef)) {
+                            netexDao.getGroupOfLinesByLineId().put(line.getId(),
+                                    netexDao.getGroupOfLinesById().get(groupRef));
                         }
                     }
                 }
