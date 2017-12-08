@@ -32,6 +32,7 @@ import org.opentripplanner.api.model.TripPlan;
 import org.opentripplanner.api.model.VertexType;
 import org.opentripplanner.api.parameter.QualifiedModeSet;
 import org.opentripplanner.common.geometry.RecursiveGridIsolineBuilder;
+import org.opentripplanner.common.model.GenericLocation;
 import org.opentripplanner.gtfs.GtfsLibrary;
 import org.opentripplanner.index.GraphQlPlanner;
 import org.opentripplanner.index.model.StopTimesInPattern;
@@ -672,7 +673,11 @@ public class TransmodelIndexGraphQLSchema {
                                                                          .description("Locale for returned text")
                                                                          .type(Scalars.GraphQLString)
                                                                          .build())
-                                                       .dataFetcher(environment -> new GraphQlPlanner(index).plan(environment))
+                                                       .dataFetcher(environment -> {
+                                                           environment.getArguments().put("fromPlace", preparePlaceRef(environment.getArgument("fromPlace")));
+                                                           environment.getArguments().put("toPlace", preparePlaceRef(environment.getArgument("toPlace")));
+                                                           return new GraphQlPlanner(index).plan(environment);
+                                                       })
                                                        .build();
 
         fuzzyTripMatcher = new GtfsRealtimeFuzzyTripMatcher(index);
@@ -2803,4 +2808,22 @@ public class TransmodelIndexGraphQLSchema {
         }
         return GtfsLibrary.convertIdFromString(id);
     }
+
+
+    /**
+     * Add agency id prefix to vertexIds if fixed agency is set.
+     */
+    private String preparePlaceRef(String input) {
+        if (fixedAgencyId != null && input != null) {
+            GenericLocation location = GenericLocation.fromOldStyleString(input);
+
+            if (location.hasVertexId()) {
+                String prefixedPlace = fixedAgencyId + ":" + location.place;
+                return new GenericLocation(location.name, prefixedPlace).toString();
+            }
+
+        }
+        return input;
+    }
+
 }
