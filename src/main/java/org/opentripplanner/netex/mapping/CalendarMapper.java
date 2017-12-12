@@ -158,7 +158,7 @@ public class CalendarMapper {
         if (returnDates.size() == 0) {
             LOG.warn("ServiceCode " + serviceId + " does not contain any serviceDates");
             // Add one date exception when list is empty to ensure serviceId is not lost
-            serviceCalendarDates.add(mapServiceCalendarDate(LocalDate.now().atStartOfDay(), serviceId, 2));
+            returnDates.add(mapServiceCalendarDate(LocalDate.now().atStartOfDay(), serviceId, 2));
         }
 
         return returnDates;
