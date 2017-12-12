@@ -136,8 +136,6 @@ public class IndexGraphQLSchema {
 
     private final GtfsRealtimeFuzzyTripMatcher fuzzyTripMatcher;
 
-    public GraphQLOutputType noticeType = new GraphQLTypeReference("Notice");
-
     public GraphQLOutputType agencyType = new GraphQLTypeReference("Agency");
 
     public GraphQLOutputType alertType = new GraphQLTypeReference("Alert");
@@ -612,27 +610,28 @@ public class IndexGraphQLSchema {
         fuzzyTripMatcher = new GtfsRealtimeFuzzyTripMatcher(index);
         index.clusterStopsAsNeeded();
 
-        noticeType = GraphQLObjectType.newObject()
-                .name("Notice")
-                .field(GraphQLFieldDefinition.newFieldDefinition()
-                        .name("id")
-                        .type(Scalars.GraphQLString)
-                        .dataFetcher(
-                                environment -> ((Notice) environment.getSource()).getId())
-                        .build())
-                .field(GraphQLFieldDefinition.newFieldDefinition()
-                        .name("text")
-                        .type(Scalars.GraphQLString)
-                        .dataFetcher(
-                                environment -> ((Notice) environment.getSource()).getText())
-                        .build())
-                .field(GraphQLFieldDefinition.newFieldDefinition()
-                        .name("publicCode")
-                        .type(Scalars.GraphQLString)
-                        .dataFetcher(
-                                environment -> ((Notice) environment.getSource()).getPublicCode())
-                        .build())
-                .build();
+//  TODO TGR - enable after notices is merges into rb_dev
+//        noticeType = GraphQLObjectType.newObject()
+//                .name("Notice")
+//                .field(GraphQLFieldDefinition.newFieldDefinition()
+//                        .name("id")
+//                        .type(Scalars.GraphQLString)
+//                        .dataFetcher(
+//                                environment -> ((Notice) environment.getSource()).getId())
+//                        .build())
+//                .field(GraphQLFieldDefinition.newFieldDefinition()
+//                        .name("text")
+//                        .type(Scalars.GraphQLString)
+//                        .dataFetcher(
+//                                environment -> ((Notice) environment.getSource()).getText())
+//                        .build())
+//                .field(GraphQLFieldDefinition.newFieldDefinition()
+//                        .name("publicCode")
+//                        .type(Scalars.GraphQLString)
+//                        .dataFetcher(
+//                                environment -> ((Notice) environment.getSource()).getPublicCode())
+//                        .build())
+//                .build();
 
         translatedStringType = GraphQLObjectType.newObject()
             .name("TranslatedString")
@@ -1335,14 +1334,15 @@ public class IndexGraphQLSchema {
               	.type(Scalars.GraphQLString)
               	.dataFetcher(environment -> ((TripTimeShort) environment.getSource()).headsign)
               	.build())
-            .field(GraphQLFieldDefinition.newFieldDefinition()
-                    .name("notices")
-                    .type(new GraphQLList(noticeType))
-                    .dataFetcher(environment -> {
-                        TripTimeShort tripTimeShort = (TripTimeShort) environment.getSource();
-                        return index.getNoticesForElement(tripTimeShort.stopTimeId);
-                    })
-                    .build())
+// TODO TGR - enable after notices is merges into rb_dev
+//            .field(GraphQLFieldDefinition.newFieldDefinition()
+//                    .name("notices")
+//                    .type(new GraphQLList(noticeType))
+//                    .dataFetcher(environment -> {
+//                        TripTimeShort tripTimeShort = (TripTimeShort) environment.getSource();
+//                        return index.getNoticesForElement(tripTimeShort.stopTimeId);
+//                    })
+//                    .build())
             .build();
 
         tripType = GraphQLObjectType.newObject()
@@ -1482,14 +1482,15 @@ public class IndexGraphQLSchema {
                     }
                 })
                 .build())
-            .field(GraphQLFieldDefinition.newFieldDefinition()
-                    .name("notices")
-                    .type(new GraphQLList(noticeType))
-                    .dataFetcher(environment -> {
-                        Trip trip = (Trip) environment.getSource();
-                        return index.getNoticesForElement(trip.getId());
-                    })
-                    .build())
+// TODO TGR - enable after notices is merges into rb_dev
+//            .field(GraphQLFieldDefinition.newFieldDefinition()
+//                    .name("notices")
+//                    .type(new GraphQLList(noticeType))
+//                    .dataFetcher(environment -> {
+//                        Trip trip = (Trip) environment.getSource();
+//                        return index.getNoticesForElement(trip.getId());
+//                    })
+//                    .build())
             .field(GraphQLFieldDefinition.newFieldDefinition()
                 .name("geometry")
                 .type(new GraphQLList(new GraphQLList(Scalars.GraphQLFloat))) //TODO: Should be geometry
@@ -1619,14 +1620,15 @@ public class IndexGraphQLSchema {
                 .dataFetcher(dataFetchingEnvironment -> index.getAlertsForPattern(
                     dataFetchingEnvironment.getSource()))
                 .build())
-            .field(GraphQLFieldDefinition.newFieldDefinition()
-                    .name("notices")
-                    .type(new GraphQLList(noticeType))
-                    .dataFetcher(environment -> {
-                        TripPattern tripPattern = (TripPattern) environment.getSource();
-                        return index.getNoticesForElement(tripPattern.id);
-                    })
-                    .build())
+// TODO TGR - enable after notices is merges into rb_dev
+//            .field(GraphQLFieldDefinition.newFieldDefinition()
+//                    .name("notices")
+//                    .type(new GraphQLList(noticeType))
+//                    .dataFetcher(environment -> {
+//                        TripPattern tripPattern = (TripPattern) environment.getSource();
+//                        return index.getNoticesForElement(tripPattern.id);
+//                    })
+//                    .build())
             .build();
 
 
@@ -1718,14 +1720,15 @@ public class IndexGraphQLSchema {
                     .distinct()
                     .collect(Collectors.toList()))
                 .build())
-            .field(GraphQLFieldDefinition.newFieldDefinition()
-                    .name("notices")
-                    .type(new GraphQLList(noticeType))
-                    .dataFetcher(environment -> {
-                        Route route = (Route) environment.getSource();
-                        return index.getNoticesForElement(route.getId());
-                    })
-                    .build())
+// TODO TGR - enable after notices is merges into rb_dev
+//            .field(GraphQLFieldDefinition.newFieldDefinition()
+//                    .name("notices")
+//                    .type(new GraphQLList(noticeType))
+//                    .dataFetcher(environment -> {
+//                        Route route = (Route) environment.getSource();
+//                        return index.getNoticesForElement(route.getId());
+//                    })
+//                    .build())
             .field(GraphQLFieldDefinition.newFieldDefinition()
                 .name("alerts")
                 .description("Get all alerts active for the route")
@@ -2048,11 +2051,12 @@ public class IndexGraphQLSchema {
                 .type(new GraphQLList(agencyType))
                 .dataFetcher(environment -> new ArrayList<>(index.getAllAgencies()))
                 .build())
-            .field(GraphQLFieldDefinition.newFieldDefinition()
-                .name("notices")
-                .type(new GraphQLList(noticeType))
-                .dataFetcher(environment -> index.getNoticeMap().values())
-                .build())
+//  TODO TGR - enable after notices is merges into rb_dev
+//            .field(GraphQLFieldDefinition.newFieldDefinition()
+//                .name("notices")
+//                .type(new GraphQLList(noticeType))
+//                .dataFetcher(environment -> index.getNoticeMap().values())
+//                .build())
             .field(GraphQLFieldDefinition.newFieldDefinition()
                 .name("agency")
                 .description("Get a single agency based on agency ID")

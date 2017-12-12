@@ -103,7 +103,7 @@ public class TripPattern implements Cloneable, Serializable {
      * realtime updates applied. If realtime stoptime updates are applied, next/previous departure
      * searches will be conducted using a different, updated timetable in a snapshot.
      */
-    public Timetable scheduledTimetable = new Timetable(this);
+    public final Timetable scheduledTimetable;
 
     /** The human-readable, unique name for this trip pattern. */
     public String name;
@@ -113,12 +113,6 @@ public class TripPattern implements Cloneable, Serializable {
      * generally in the format Agency:RouteId:DirectionId:PatternNumber.
      */
     public String code;
-
-    /**
-     * Currently used for NeTEx id
-     */
-
-    public AgencyAndId id;
 
     /* The vertices in the Graph that correspond to each Stop in this pattern. */
     public final TransitStop[] stopVertices; // these are not unique to this pattern, can be shared. FIXME they appear to be all null. are they even used?
@@ -169,15 +163,18 @@ public class TripPattern implements Cloneable, Serializable {
     // TODO MOVE codes INTO Timetable or TripTimes
     BitSet services;
 
-    public TripPattern(Route route, StopPattern stopPattern, ServiceDate serviceDate) {
-        this(route, stopPattern);
-        this.scheduledTimetable = new Timetable(this, serviceDate);
-    }
 
     public TripPattern(Route route, StopPattern stopPattern) {
+        this(route, stopPattern, null);
+    }
+
+    public TripPattern(Route route, StopPattern stopPattern, ServiceDate serviceDate) {
         this.route = route;
         this.mode = GtfsLibrary.getTraverseMode(this.route);
         this.stopPattern = stopPattern;
+        this.scheduledTimetable = serviceDate == null
+                ? new Timetable(this)
+                : new Timetable(this, serviceDate);
         int size = stopPattern.size;
         setStopsFromStopPattern(stopPattern);
 

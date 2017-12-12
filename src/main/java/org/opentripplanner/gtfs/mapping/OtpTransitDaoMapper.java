@@ -14,7 +14,7 @@
 package org.opentripplanner.gtfs.mapping;
 
 import org.opentripplanner.model.StopTime;
-import org.opentripplanner.model.impl.OtpTransitDaoBuilder;
+import org.opentripplanner.model.impl.OtpTransitBuilder;
 
 
 public class OtpTransitDaoMapper {
@@ -50,14 +50,14 @@ public class OtpTransitDaoMapper {
             routeMapper, fareAttributeMapper
     );
 
-    public static OtpTransitDaoBuilder mapGtfsDaoToBuilder(
+    public static OtpTransitBuilder mapGtfsDaoToBuilder(
             org.onebusaway.gtfs.services.GtfsRelationalDao data
     ) {
         return new OtpTransitDaoMapper().map(data);
     }
 
-    private OtpTransitDaoBuilder map(org.onebusaway.gtfs.services.GtfsRelationalDao data) {
-        OtpTransitDaoBuilder builder = new OtpTransitDaoBuilder();
+    private OtpTransitBuilder map(org.onebusaway.gtfs.services.GtfsRelationalDao data) {
+        OtpTransitBuilder builder = new OtpTransitBuilder();
 
         builder.getAgencies().addAll(agencyMapper.map(data.getAllAgencies()));
         builder.getCalendarDates().addAll(serviceCalendarDateMapper.map(data.getAllCalendarDates()));

@@ -25,10 +25,9 @@ import org.opentripplanner.model.Trip;
 import org.opentripplanner.model.calendar.CalendarServiceData;
 import org.opentripplanner.model.calendar.LocalizedServiceId;
 import org.opentripplanner.model.calendar.ServiceDate;
-import org.opentripplanner.model.OtpTransitDao;
 import org.opentripplanner.model.CalendarService;
 import org.opentripplanner.model.impl.MultipleCalendarsForServiceIdException;
-import org.opentripplanner.model.impl.OtpTransitDaoBuilder;
+import org.opentripplanner.model.impl.OtpTransitBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -65,18 +64,18 @@ public class CalendarServiceDataFactoryImpl {
     private final Map<AgencyAndId, List<String>> tripAgencyIdsByServiceId;
     private final Set<AgencyAndId> serviceIds;
 
-    public static CalendarService createCalendarService(OtpTransitDaoBuilder transitBuilder) {
-        return new CalendarServiceImpl(createCalendarServiceData(transitBuilder));
+    public static CalendarService createCalendarService(OtpTransitBuilder transitDaoBuilder) {
+        return new CalendarServiceImpl(createCalendarServiceData(transitDaoBuilder));
     }
 
-    public static CalendarServiceData createCalendarServiceData(OtpTransitDaoBuilder transitBuilder) {
-        return new CalendarServiceDataFactoryImpl(transitBuilder).createData();
+    public static CalendarServiceData createCalendarServiceData(OtpTransitBuilder transitDaoBuilder) {
+        return new CalendarServiceDataFactoryImpl(transitDaoBuilder).createData();
     }
 
     public static CalendarServiceData createCalendarSrvDataWithoutDatesForLocalizedSrvId(
-            OtpTransitDaoBuilder transitBuilder
+            OtpTransitBuilder transitDaoBuilder
     ) {
-        return (new CalendarServiceDataFactoryImpl(transitBuilder) {
+        return (new CalendarServiceDataFactoryImpl(transitDaoBuilder) {
             @Override void addDatesForLocalizedServiceId(
                     AgencyAndId serviceId, List<ServiceDate> serviceDates, CalendarServiceData data
             ) {
@@ -85,7 +84,7 @@ public class CalendarServiceDataFactoryImpl {
         }).createData();
     }
 
-    private CalendarServiceDataFactoryImpl(OtpTransitDaoBuilder transitBuilder) {
+    private CalendarServiceDataFactoryImpl(OtpTransitBuilder transitBuilder) {
         agencies = transitBuilder.getAgencies();
         calendarDatesByServiceId = transitBuilder.getCalendarDates()
                 .stream()
@@ -279,15 +278,18 @@ public class CalendarServiceDataFactoryImpl {
         return c.getTime();
     }
 
-    static Map<AgencyAndId, List<String>> createTripAgencyIdByServiceIdMap(Collection<Trip> trips) {
+    private static Map<AgencyAndId, List<String>> createTripAgencyIdByServiceIdMap(Collection<Trip> trips) {
         Map<AgencyAndId, Set<String>> agencyIdsByServiceIds = new HashMap<>();
 
-        for (Trip trip : trips) {
-            AgencyAndId tripId = trip.getId();
-            String tripAgencyId = tripId.getAgencyId();
-            AgencyAndId tripServiceId = trip.getServiceId();
-            Set<String> agencyIds = agencyIdsByServiceIds.computeIfAbsent(tripServiceId, k -> new HashSet<>());
-            agencyIds.add(tripAgencyId);
+        for (Trip t : trips) {
+            // In GFTS providing an agency is optional, but we add an empty set
+            // anyway to make sure all trips are represented in the map.
+            Collection<String> agencyIds = agencyIdsByServiceIds
+                    .computeIfAbsent(t.getServiceId(), key -> new HashSet<>());
+
+            if(t.getRoute().getAgency() != null) {
+                agencyIds.add(t.getRoute().getAgency().getId());
+            }
         }
 
         Map<AgencyAndId, List<String>> map = new HashMap<>();

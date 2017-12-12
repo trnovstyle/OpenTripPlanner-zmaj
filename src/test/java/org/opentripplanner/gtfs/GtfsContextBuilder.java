@@ -27,7 +27,7 @@ import org.opentripplanner.model.ServiceCalendarDate;
 import org.opentripplanner.model.ShapePoint;
 import org.opentripplanner.model.Stop;
 import org.opentripplanner.model.Trip;
-import org.opentripplanner.model.impl.OtpTransitDaoBuilder;
+import org.opentripplanner.model.impl.OtpTransitBuilder;
 import org.opentripplanner.routing.graph.AddBuilderAnnotation;
 import org.opentripplanner.routing.graph.Graph;
 import org.opentripplanner.routing.trippattern.Deduplicator;
@@ -46,7 +46,7 @@ public class GtfsContextBuilder {
 
     private final GtfsFeedId feedId;
 
-    private final OtpTransitDaoBuilder transitBuilder;
+    private final OtpTransitBuilder transitBuilder;
 
     private CalendarService calendarService = null;
 
@@ -65,11 +65,11 @@ public class GtfsContextBuilder {
     public static GtfsContextBuilder contextBuilder(String defaultFeedId, String path) throws IOException {
         GtfsImport gtfsImport = gtfsImport(defaultFeedId, path);
         GtfsFeedId feedId = gtfsImport.getFeedId();
-        OtpTransitDaoBuilder transitBuilder = OtpTransitDaoMapper.mapGtfsDaoToBuilder(gtfsImport.getDao());
+        OtpTransitBuilder transitBuilder = OtpTransitDaoMapper.mapGtfsDaoToBuilder(gtfsImport.getDao());
         return new GtfsContextBuilder(feedId, transitBuilder);
     }
 
-    public GtfsContextBuilder(GtfsFeedId feedId, OtpTransitDaoBuilder transitBuilder) {
+    public GtfsContextBuilder(GtfsFeedId feedId, OtpTransitBuilder transitBuilder) {
         this.feedId = feedId;
         this.transitBuilder = transitBuilder;
     }
@@ -78,7 +78,7 @@ public class GtfsContextBuilder {
         return feedId;
     }
 
-    public OtpTransitDaoBuilder getTransitBuilder() {
+    public OtpTransitBuilder getTransitBuilder() {
         return transitBuilder;
     }
 
@@ -109,41 +109,9 @@ public class GtfsContextBuilder {
         return this;
     }
 
-    public GtfsContextBuilder turnOnsetAgencyToFeedIdForAllElements() {
+    public GtfsContextBuilder turnOnSetAgencyToFeedIdForAllElements() {
         this.setAgencyToFeedIdForAllElements = true;
         return this;
-    }
-
-    public void setAgencyToFeedIdForAllElements() {
-
-        for (ShapePoint shapePoint : transitBuilder.getShapePoints()) {
-            shapePoint.getShapeId().setAgencyId(this.feedId.getId());
-        }
-        for (Route route : transitBuilder.getRoutes().values()) {
-            route.getId().setAgencyId(this.feedId.getId());
-        }
-        for (Stop stop : transitBuilder.getStops().values()) {
-            stop.getId().setAgencyId(this.feedId.getId());
-        }
-
-        for (Trip trip : transitBuilder.getTrips().values()) {
-            trip.getId().setAgencyId(this.feedId.getId());
-        }
-
-        for (ServiceCalendar serviceCalendar : transitBuilder.getCalendars()) {
-            serviceCalendar.getServiceId().setAgencyId(this.feedId.getId());
-        }
-        for (ServiceCalendarDate serviceCalendarDate : transitBuilder.getCalendarDates()) {
-            serviceCalendarDate.getServiceId().setAgencyId(this.feedId.getId());
-        }
-
-        for (FareAttribute fareAttribute : transitBuilder.getFareAttributes()) {
-            fareAttribute.getId().setAgencyId(this.feedId.getId());
-        }
-
-        for (Pathway pathway : transitBuilder.getPathways()) {
-            pathway.getId().setAgencyId(this.feedId.getId());
-        }
     }
 
     /**
@@ -193,6 +161,40 @@ public class GtfsContextBuilder {
 
     /* private stuff */
 
+    private void setAgencyToFeedIdForAllElements() {
+
+        for (ShapePoint shapePoint : transitBuilder.getShapePoints()) {
+            shapePoint.getShapeId().setAgencyId(this.feedId.getId());
+        }
+        for (Route route : transitBuilder.getRoutes().values()) {
+            route.getId().setAgencyId(this.feedId.getId());
+        }
+        for (Stop stop : transitBuilder.getStops().values()) {
+            stop.getId().setAgencyId(this.feedId.getId());
+        }
+
+        for (Trip trip : transitBuilder.getTrips().values()) {
+            trip.getId().setAgencyId(this.feedId.getId());
+        }
+
+        for (ServiceCalendar serviceCalendar : transitBuilder.getCalendars()) {
+            serviceCalendar.getServiceId().setAgencyId(this.feedId.getId());
+        }
+        for (ServiceCalendarDate serviceCalendarDate : transitBuilder.getCalendarDates()) {
+            serviceCalendarDate.getServiceId().setAgencyId(this.feedId.getId());
+        }
+
+        for (FareAttribute fareAttribute : transitBuilder.getFareAttributes()) {
+            fareAttribute.getId().setAgencyId(this.feedId.getId());
+        }
+
+        for (Pathway pathway : transitBuilder.getPathways()) {
+            pathway.getId().setAgencyId(this.feedId.getId());
+        }
+
+        transitBuilder.regenerateIndexes();
+    }
+
     private void repairStopTimesForEachTrip() {
         new RepairStopTimesForEachTripOperation(
                 transitBuilder.getStopTimesSortedByTrip(),
@@ -235,9 +237,9 @@ public class GtfsContextBuilder {
 
         private final GtfsFeedId feedId;
 
-        private final OtpTransitDaoBuilder transitBuilder;
+        private final OtpTransitBuilder transitBuilder;
 
-        private GtfsContextImpl(GtfsFeedId feedId, OtpTransitDaoBuilder transitBuilder) {
+        private GtfsContextImpl(GtfsFeedId feedId, OtpTransitBuilder transitBuilder) {
             this.feedId = feedId;
             this.transitBuilder = transitBuilder;
         }
@@ -248,7 +250,7 @@ public class GtfsContextBuilder {
         }
 
         @Override
-        public OtpTransitDaoBuilder getTransitBuilder() {
+        public OtpTransitBuilder getTransitBuilder() {
             return transitBuilder;
         }
     }

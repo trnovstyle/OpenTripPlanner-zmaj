@@ -20,8 +20,6 @@ import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.util.Version;
 import org.opentripplanner.model.Stop;
-import org.opentripplanner.gtfs.GtfsLibrary;
-import org.opentripplanner.model.Stop;
 import org.opentripplanner.profile.StopCluster;
 import org.opentripplanner.routing.edgetype.StreetEdge;
 import org.opentripplanner.routing.graph.GraphIndex;
@@ -35,6 +33,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static org.opentripplanner.gtfs.GtfsLibrary.convertIdToString;
 
 /**
  * Lucene based index of streets, stops, etc.
@@ -106,7 +106,7 @@ public class LuceneIndex {
         }
         doc.add(new DoubleField("lat", stop.getLat(), Field.Store.YES));
         doc.add(new DoubleField("lon", stop.getLon(), Field.Store.YES));
-        doc.add(new StringField("id", GtfsLibrary.convertIdToString(stop.getId()), Field.Store.YES));
+        doc.add(new StringField("id", convertIdToString(stop.getId()), Field.Store.YES));
         doc.add(new StringField("category", Category.STOP.name(), Field.Store.YES));
         iwriter.addDocument(doc);
     }

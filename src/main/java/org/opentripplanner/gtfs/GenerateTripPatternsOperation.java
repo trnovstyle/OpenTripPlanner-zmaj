@@ -25,7 +25,7 @@ import org.opentripplanner.model.Route;
 import org.opentripplanner.model.StopPattern;
 import org.opentripplanner.model.StopTime;
 import org.opentripplanner.model.Trip;
-import org.opentripplanner.model.impl.OtpTransitDaoBuilder;
+import org.opentripplanner.model.impl.OtpTransitBuilder;
 import org.opentripplanner.routing.edgetype.TripPattern;
 import org.opentripplanner.routing.edgetype.factory.PatternHopFactory;
 import org.opentripplanner.routing.graph.AddBuilderAnnotation;
@@ -49,7 +49,7 @@ public class GenerateTripPatternsOperation {
 
     private static final int UNKNOWN_DIRECTION_ID = -1;
 
-    private final OtpTransitDaoBuilder transitDaoBuilder;
+    private final OtpTransitBuilder transitDaoBuilder;
     private final AddBuilderAnnotation builderAnnotation;
     private final Deduplicator deduplicator;
     private final CalendarService calendarService;
@@ -63,7 +63,7 @@ public class GenerateTripPatternsOperation {
 
 
 
-    public GenerateTripPatternsOperation(OtpTransitDaoBuilder builder, AddBuilderAnnotation builderAnnotation,
+    public GenerateTripPatternsOperation(OtpTransitBuilder builder, AddBuilderAnnotation builderAnnotation,
             Deduplicator deduplicator, CalendarService calendarService) {
         this.transitDaoBuilder = builder;
         this.builderAnnotation = builderAnnotation;

@@ -53,4 +53,15 @@ public class EntityMap<I extends Serializable, E extends IdentityBean<I>> {
     public boolean containsKey(I id) {
         return map.containsKey(id);
     }
+
+    @Override
+    public String toString() {
+        return map.toString();
+    }
+
+    public void reindex() {
+        HashMap<I, E> temp = new HashMap<>(map);
+        map.clear();
+        map.putAll(temp);
+    }
 }

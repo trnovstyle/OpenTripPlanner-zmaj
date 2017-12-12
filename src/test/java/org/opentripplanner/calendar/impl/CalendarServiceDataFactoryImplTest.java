@@ -15,7 +15,7 @@ import org.opentripplanner.model.ServiceCalendarDate;
 import org.opentripplanner.model.calendar.CalendarServiceData;
 import org.opentripplanner.model.calendar.LocalizedServiceId;
 import org.opentripplanner.model.calendar.ServiceDate;
-import org.opentripplanner.model.impl.OtpTransitDaoBuilder;
+import org.opentripplanner.model.impl.OtpTransitBuilder;
 
 import java.io.IOException;
 import java.text.SimpleDateFormat;
@@ -62,7 +62,7 @@ public class CalendarServiceDataFactoryImplTest {
 
     @BeforeClass
     public static void setup() throws IOException {
-        OtpTransitDaoBuilder transitBuilder = createCtxBuilder().getTransitBuilder();
+        OtpTransitBuilder transitBuilder = createCtxBuilder().getTransitBuilder();
         data = createCalendarServiceData(transitBuilder);
         calendarService = createCalendarService(transitBuilder);
     }
@@ -166,7 +166,7 @@ public class CalendarServiceDataFactoryImplTest {
 
     private static GtfsContext createCtxBuilder() throws IOException {
         GtfsContextBuilder contextBuilder = contextBuilder(FEED_ID, ConstantsForTests.FAKE_GTFS);
-        OtpTransitDaoBuilder builder = contextBuilder.getTransitBuilder();
+        OtpTransitBuilder builder = contextBuilder.getTransitBuilder();
         Agency agency = agency(builder);
 
         // Supplement test data with at least one entity in all collections
@@ -178,7 +178,7 @@ public class CalendarServiceDataFactoryImplTest {
         return contextBuilder.build();
     }
 
-    private static Agency agency(OtpTransitDaoBuilder builder) {
+    private static Agency agency(OtpTransitBuilder builder) {
         return first(builder.getAgencies());
     }
 

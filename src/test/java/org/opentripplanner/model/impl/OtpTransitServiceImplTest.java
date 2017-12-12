@@ -29,7 +29,7 @@ import org.opentripplanner.model.Stop;
 import org.opentripplanner.model.StopTime;
 import org.opentripplanner.model.Transfer;
 import org.opentripplanner.model.Trip;
-import org.opentripplanner.model.OtpTransitDao;
+import org.opentripplanner.model.OtpTransitService;
 import org.opentripplanner.ConstantsForTests;
 
 import java.io.IOException;
@@ -42,26 +42,27 @@ import static java.util.stream.Collectors.toList;
 import static org.junit.Assert.assertEquals;
 import static org.opentripplanner.gtfs.GtfsContextBuilder.contextBuilder;
 
-public class OtpTransitDaoImplTest {
+public class OtpTransitServiceImplTest {
     private static final String FEED_ID = "Z";
 
     private static final AgencyAndId STATION_ID = new AgencyAndId(FEED_ID, "station");
 
     // The subject is used as read only; hence static is ok
-    private static OtpTransitDao subject;
+    private static OtpTransitService subject;
 
     private static Agency agency;
 
     @BeforeClass
     public static void setup() throws IOException {
         GtfsContextBuilder contextBuilder = contextBuilder(FEED_ID, ConstantsForTests.FAKE_GTFS);
-        OtpTransitDaoBuilder builder = contextBuilder.getTransitBuilder();
+        OtpTransitBuilder builder = contextBuilder.getTransitBuilder();
 
         agency = first(builder.getAgencies());
 
         // Supplement test data with at least one entity in all collections
-        builder.getFareAttributes().add(createFareAttribute());
-        builder.getFareRules().add(new FareRule());
+        FareRule rule = createFareRule();
+        builder.getFareAttributes().add(rule.getFare());
+        builder.getFareRules().add(rule);
         builder.getFeedInfos().add(new FeedInfo());
 
         subject = builder.build();
@@ -90,7 +91,10 @@ public class OtpTransitDaoImplTest {
         Collection<FareRule> fareRules = subject.getAllFareRules();
 
         assertEquals(1, fareRules.size());
-        assertEquals("<FareRule 1>", first(fareRules).toString());
+        assertEquals(
+                "<FareRule  origin='Zone A' contains='Zone B' destination='Zone C'>",
+                first(fareRules).toString()
+        );
     }
 
     @Test
@@ -100,7 +104,6 @@ public class OtpTransitDaoImplTest {
         assertEquals(1, feedInfos.size());
         assertEquals("<FeedInfo 1>", first(feedInfos).toString());
     }
-
 
     @Test
     public void testGetAllPathways() {
@@ -115,7 +118,7 @@ public class OtpTransitDaoImplTest {
         Collection<Transfer> transfers = subject.getAllTransfers();
 
         assertEquals(9, transfers.size());
-        assertEquals("<Transfer 1>", first(transfers).toString());
+        assertEquals("<Transfer stop=Z_F..Z_E>", first(transfers).toString());
     }
 
     @Test
@@ -162,7 +165,7 @@ public class OtpTransitDaoImplTest {
     public void testGetShapePointsForShapeId() {
         Collection<ShapePoint> shapePoints = subject.getShapePointsForShapeId(new AgencyAndId("Z", "5"));
         assertEquals("[#1 (41,-72), #2 (41,-72), #3 (40,-72), #4 (41,-73), #5 (41,-74)]",
-                shapePoints.stream().map(OtpTransitDaoImplTest::toString).collect(toList()).toString());
+                shapePoints.stream().map(OtpTransitServiceImplTest::toString).collect(toList()).toString());
     }
 
     @Test
@@ -180,10 +183,15 @@ public class OtpTransitDaoImplTest {
         assertEquals("Z_alldays", first(serviceIds).toString());
     }
 
-    private static FareAttribute createFareAttribute() {
+    private static FareRule createFareRule() {
         FareAttribute fa = new FareAttribute();
         fa.setId(new AgencyAndId(agency.getId(), "FA"));
-        return fa;
+        FareRule rule = new FareRule();
+        rule.setOriginId("Zone A");
+        rule.setContainsId("Zone B");
+        rule.setDestinationId("Zone C");
+        rule.setFare(fa);
+        return rule;
     }
 
     private static <T> T first(Collection<? extends T> c) {

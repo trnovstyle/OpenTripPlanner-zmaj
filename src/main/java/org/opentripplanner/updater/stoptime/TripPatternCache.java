@@ -13,15 +13,15 @@
 
 package org.opentripplanner.updater.stoptime;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.opentripplanner.model.AgencyAndId;
 import org.opentripplanner.model.Route;
 import org.opentripplanner.model.calendar.ServiceDate;
 import org.opentripplanner.model.StopPattern;
 import org.opentripplanner.routing.edgetype.TripPattern;
 import org.opentripplanner.routing.graph.Graph;
-
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * A synchronized cache of trip patterns that are added to the graph due to GTFS-realtime messages.

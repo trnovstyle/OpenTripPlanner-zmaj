@@ -13,6 +13,9 @@
 
 package org.opentripplanner.updater.alerts;
 
+import java.util.*;
+
+import org.opentripplanner.model.AgencyAndId;
 import com.google.transit.realtime.GtfsRealtime;
 import com.google.transit.realtime.GtfsRealtime.*;
 import org.opentripplanner.model.AgencyAndId;

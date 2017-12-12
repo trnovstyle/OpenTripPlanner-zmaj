@@ -27,12 +27,12 @@ import static java.util.Collections.singletonList;
 import static java.util.Comparator.comparing;
 import static org.junit.Assert.assertEquals;
 import static org.opentripplanner.gtfs.GtfsContextBuilder.contextBuilder;
-import static org.opentripplanner.model.impl.OtpTransitDaoBuilder.generateNoneExistingIds;
+import static org.opentripplanner.model.impl.OtpTransitBuilder.generateNoneExistingIds;
 
 /**
  * @author Thomas Gran (Capra) - tgr@capraconsulting.no (30.10.2017)
  */
-public class OtpTransitDaoBuilderTest {
+public class OtpTransitServiceBuilderTest {
 
     private static final Integer ID_1 = valueOf(1);
 
@@ -47,7 +47,7 @@ public class OtpTransitDaoBuilderTest {
     private static final AgencyAndId SERVICE_WEEKDAYS_ID = new AgencyAndId(FEED_ID, "weekdays");
 
 
-    private static OtpTransitDaoBuilder subject;
+    private static OtpTransitBuilder subject;
 
     @BeforeClass
     public static void setUpClass() throws IOException {
@@ -59,7 +59,7 @@ public class OtpTransitDaoBuilderTest {
         List<? extends IdentityBean<Integer>> list;
 
         // An empty list should not cause any trouble (Exception)
-        generateNoneExistingIds(Collections.<FareRule>emptyList());
+        generateNoneExistingIds(Collections.<FeedInfo>emptyList());
 
 
         // Generate id for one value
@@ -107,7 +107,10 @@ public class OtpTransitDaoBuilderTest {
         Collection<Frequency> frequencies = subject.getFrequencies();
 
         assertEquals(2, frequencies.size());
-        assertEquals("<Frequency 1 start=06:00:00 end=10:00:01>", first(frequencies).toString());
+        assertEquals(
+                "<Frequency trip=agency_15.1 start=06:00:00 end=10:00:01>",
+                first(frequencies).toString()
+        );
     }
 
     @Test
@@ -138,15 +141,15 @@ public class OtpTransitDaoBuilderTest {
     }
 
     private static IdentityBean<Integer> newEntity(Integer id) {
-        FareRule e = new FareRule();
+        FeedInfo e = new FeedInfo();
         if(id != null) {
             e.setId(id);
         }
         return e;
     }
 
-    private static OtpTransitDaoBuilder createBuilder() throws IOException {
-        OtpTransitDaoBuilder builder = contextBuilder(FEED_ID, ConstantsForTests.FAKE_GTFS).getTransitBuilder();
+    private static OtpTransitBuilder createBuilder() throws IOException {
+        OtpTransitBuilder builder = contextBuilder(FEED_ID, ConstantsForTests.FAKE_GTFS).getTransitBuilder();
         Agency agency = agency(builder);
 
         // Supplement test data with at least one entity in all collections
@@ -158,7 +161,7 @@ public class OtpTransitDaoBuilderTest {
         return builder;
     }
 
-    private static Agency agency(OtpTransitDaoBuilder builder) {
+    private static Agency agency(OtpTransitBuilder builder) {
         return first(builder.getAgencies());
     }
 

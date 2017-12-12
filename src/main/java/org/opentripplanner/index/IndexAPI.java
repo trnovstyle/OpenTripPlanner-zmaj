@@ -23,7 +23,8 @@ import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Envelope;
 import org.opentripplanner.model.Agency;
 import org.opentripplanner.model.AgencyAndId;
-import org.opentripplanner.model.FeedInfo;
+// TODO TGR
+//import org.opentripplanner.model.FeedInfo;
 import org.opentripplanner.model.Route;
 import org.opentripplanner.model.Stop;
 import org.opentripplanner.model.Trip;
@@ -123,16 +124,17 @@ public class IndexAPI {
         return Response.status(Status.OK).entity(index.agenciesForFeedId.keySet()).build();
     }
 
-    @GET
-    @Path("/feeds/{feedId}")
-    public Response getFeedInfo(@PathParam("feedId") String feedId) {
-        FeedInfo feedInfo = index.feedInfoForId.get(feedId);
-        if (feedInfo == null) {
-            return Response.status(Status.NOT_FOUND).entity(MSG_404).build();
-        } else {
-            return Response.status(Status.OK).entity(feedInfo).build();
-        }
-    }
+// TODO TGR - What is this used for?
+//    @GET
+//    @Path("/feeds/{feedId}")
+//    public Response getFeedInfo(@PathParam("feedId") String feedId) {
+//        FeedInfo feedInfo = index.feedInfoForId.get(feedId);
+//        if (feedInfo == null) {
+//            return Response.status(Status.NOT_FOUND).entity(MSG_404).build();
+//        } else {
+//            return Response.status(Status.OK).entity(feedInfo).build();
+//        }
+//    }
 
    /** Return a list of all agencies in the graph. */
    @GET

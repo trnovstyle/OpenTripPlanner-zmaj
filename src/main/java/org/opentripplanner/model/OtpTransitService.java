@@ -4,12 +4,11 @@ import org.opentripplanner.routing.edgetype.TripPattern;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Methods for accessing imported entities.
  */
-public interface OtpTransitDao {
+public interface OtpTransitService {
 
     Collection<Agency> getAllAgencies();
 
@@ -19,10 +18,6 @@ public interface OtpTransitDao {
 
     Collection<FeedInfo> getAllFeedInfos();
 
-    Map<AgencyAndId, NoticeAssignment> getNoticeAssignmentById();
-
-    Map<AgencyAndId, Notice> getNoticeById();
-
     Collection<Pathway> getAllPathways();
 
     /** @return all ids for both Calendars and CalendarDates merged into on list without duplicates */
@@ -31,8 +26,6 @@ public interface OtpTransitDao {
     Collection<ShapePoint> getShapePointsForShapeId(AgencyAndId shapeId);
 
     Stop getStopForId(AgencyAndId id);
-
-    Iterable<Map.Entry<Stop, Collection<Stop>>> getStationsByMultiModalStop();
 
     List<Stop> getStopsForStation(Stop station);
 

@@ -146,7 +146,6 @@ public class GraphBuilderParameters {
      */
     public final int pruningThresholdIslandWithStops;
 
-
     /**
      * This field indicates whether walking should be allowed on OSM ways
      * tagged with "foot=discouraged".
@@ -164,10 +163,6 @@ public class GraphBuilderParameters {
      */
     public final double maxTransferDistance;
 
-    /**
-     * Netex spesific build parameters.
-     */
-    public final NetexParameters netex;
 
     /**
      * This will add extra edges when linking a stop to a platform, to prevent detours along the platform edge.
@@ -175,10 +170,9 @@ public class GraphBuilderParameters {
     public final Boolean extraEdgesStopPlatformLink;
 
     /**
-     *  Link multimodal stops to their containing stops
+     * Netex spesific build parameters.
      */
-
-    public final boolean linkMultiModalStopsToParentStations;
+    public final NetexParameters netex;
 
     /**
      * Set all parameters from the given Jackson JSON tree, applying defaults.
@@ -216,7 +210,6 @@ public class GraphBuilderParameters {
         maxTransferDistance = config.path("maxTransferDistance").asDouble(2000);
         extraEdgesStopPlatformLink = config.path("extraEdgesStopPlatformLink").asBoolean(false);
         netex = new NetexParameters(config.path("netex"));
-        linkMultiModalStopsToParentStations = config.path("linkMultiModalStopsToParentStations").asBoolean(false);
     }
 
 }

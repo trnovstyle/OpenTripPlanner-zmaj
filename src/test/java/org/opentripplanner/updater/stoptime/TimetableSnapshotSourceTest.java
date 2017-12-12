@@ -29,15 +29,8 @@ import java.util.List;
 
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.opentripplanner.model.AgencyAndId;
-import org.opentripplanner.model.FareAttribute;
-import org.opentripplanner.model.Pathway;
-import org.opentripplanner.model.Route;
-import org.opentripplanner.model.ServiceCalendar;
-import org.opentripplanner.model.ServiceCalendarDate;
-import org.opentripplanner.model.ShapePoint;
 import org.opentripplanner.model.Stop;
 import org.opentripplanner.model.Trip;
 import org.opentripplanner.model.calendar.CalendarServiceData;
@@ -45,7 +38,6 @@ import org.opentripplanner.model.calendar.ServiceDate;
 import org.opentripplanner.ConstantsForTests;
 import org.opentripplanner.gtfs.GtfsContext;
 import org.opentripplanner.gtfs.GtfsContextBuilder;
-import org.opentripplanner.model.impl.OtpTransitDaoBuilder;
 import org.opentripplanner.routing.edgetype.Timetable;
 import org.opentripplanner.routing.edgetype.TimetableSnapshot;
 import org.opentripplanner.routing.edgetype.TransitBoardAlight;
@@ -64,7 +56,6 @@ import com.google.transit.realtime.GtfsRealtime.TripUpdate;
 import com.google.transit.realtime.GtfsRealtime.TripUpdate.StopTimeEvent;
 import com.google.transit.realtime.GtfsRealtime.TripUpdate.StopTimeUpdate;
 
-@Ignore
 public class TimetableSnapshotSourceTest {
 
     private static byte cancellation[];
@@ -82,37 +73,11 @@ public class TimetableSnapshotSourceTest {
                 .withGraphBuilderAnnotationsAndDeduplicator(graph);
 
         context = contextBuilder
+                .turnOnSetAgencyToFeedIdForAllElements()
                 .turnOffRepairStopTimesAndTripPatternsGeneration()
                 .build();
 
-        OtpTransitDaoBuilder builder = context.getTransitBuilder();
-
         feedId = context.getFeedId().getId();
-
-        for (ShapePoint shapePoint : builder.getShapePoints()) {
-            shapePoint.getShapeId().setAgencyId(feedId);
-        }
-        for (Route route : builder.getRoutes().values()) {
-            route.getId().setAgencyId(feedId);
-        }
-        for (Stop stop : builder.getStops().values()) {
-            stop.getId().setAgencyId(feedId);
-        }
-        for (Trip trip : builder.getTrips().values()) {
-            trip.getId().setAgencyId(feedId);
-        }
-        for (ServiceCalendar serviceCalendar : builder.getCalendars()) {
-            serviceCalendar.getServiceId().setAgencyId(feedId);
-        }
-        for (ServiceCalendarDate serviceCalendarDate : builder.getCalendarDates()) {
-            serviceCalendarDate.getServiceId().setAgencyId(feedId);
-        }
-        for (FareAttribute fareAttribute : builder.getFareAttributes()) {
-            fareAttribute.getId().setAgencyId(feedId);
-        }
-        for (Pathway pathway : builder.getPathways()) {
-            pathway.getId().setAgencyId(feedId);
-        }
 
         contextBuilder.repairStopTimesAndGenerateTripPatterns();
 

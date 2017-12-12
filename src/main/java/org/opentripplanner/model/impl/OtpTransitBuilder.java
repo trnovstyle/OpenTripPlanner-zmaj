@@ -24,8 +24,6 @@ import org.opentripplanner.model.FareRule;
 import org.opentripplanner.model.FeedInfo;
 import org.opentripplanner.model.Frequency;
 import org.opentripplanner.model.IdentityBean;
-import org.opentripplanner.model.Notice;
-import org.opentripplanner.model.NoticeAssignment;
 import org.opentripplanner.model.Pathway;
 import org.opentripplanner.model.Route;
 import org.opentripplanner.model.ServiceCalendar;
@@ -36,7 +34,7 @@ import org.opentripplanner.model.StopPattern;
 import org.opentripplanner.model.StopTime;
 import org.opentripplanner.model.Transfer;
 import org.opentripplanner.model.Trip;
-import org.opentripplanner.model.OtpTransitDao;
+import org.opentripplanner.model.OtpTransitService;
 import org.opentripplanner.routing.edgetype.TripPattern;
 
 import java.util.ArrayList;
@@ -45,7 +43,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class OtpTransitDaoBuilder {
+public class OtpTransitBuilder {
     private final List<Agency> agencies = new ArrayList<>();
 
     private final List<ServiceCalendarDate> calendarDates = new ArrayList<>();
@@ -59,14 +57,6 @@ public class OtpTransitDaoBuilder {
     private final List<FeedInfo> feedInfos = new ArrayList<>();
 
     private final List<Frequency> frequencies = new ArrayList<>();
-
-    private final EntityMap<AgencyAndId, Notice> noticesById = new EntityMap<>();
-
-    private final EntityMap<AgencyAndId, NoticeAssignment> noticeAssignmentsById = new EntityMap<>();
-
-    private final EntityMap<AgencyAndId, Stop> multiModalStops = new EntityMap<>();
-
-    private final ListMultimap<Stop, Stop> stationsByMultiModalStop = ArrayListMultimap.create();
 
     private final List<Pathway> pathways = new ArrayList<>();
 
@@ -115,14 +105,6 @@ public class OtpTransitDaoBuilder {
         return frequencies;
     }
 
-    public EntityMap<AgencyAndId, Stop> getMultiModalStops() {
-        return multiModalStops;
-    }
-
-    public ListMultimap<Stop, Stop> getStationsByMultiModalStop() {
-        return stationsByMultiModalStop;
-    }
-
     public List<Pathway> getPathways() {
         return pathways;
     }
@@ -156,14 +138,6 @@ public class OtpTransitDaoBuilder {
     }
 
 
-    public EntityMap<AgencyAndId, Notice> getNoticesById() {
-        return noticesById;
-    }
-
-    public EntityMap<AgencyAndId, NoticeAssignment> getNoticeAssignmentsById() {
-        return noticeAssignmentsById;
-    }
-
     /**
      * Find all serviceIds in both CalendarServices and CalendarServiceDates.
      */
@@ -178,19 +152,14 @@ public class OtpTransitDaoBuilder {
         return serviceIds;
     }
 
-    public OtpTransitDao build() {
+    public OtpTransitService build() {
         createNoneExistingIds();
 
-        return new OtpTransitDaoImpl(this);
+        return new OtpTransitServiceImpl(this);
     }
 
     private void createNoneExistingIds() {
-        generateNoneExistingIds(calendarDates);
-        generateNoneExistingIds(calendars);
-        generateNoneExistingIds(fareRules);
         generateNoneExistingIds(feedInfos);
-        generateNoneExistingIds(frequencies);
-        generateNoneExistingIds(transfers);
     }
 
     static <T extends IdentityBean<Integer>> void generateNoneExistingIds(Collection<T> entities) {
@@ -207,5 +176,12 @@ public class OtpTransitDaoBuilder {
 
     private static boolean zeroOrNull(Integer id) {
         return id == null || id == 0;
+    }
+
+    public void regenerateIndexes() {
+        trips.reindex();
+        this.stopsById.reindex();
+        this.routesById.reindex();
+        this.stopTimesByTrip.reindex();
     }
 }

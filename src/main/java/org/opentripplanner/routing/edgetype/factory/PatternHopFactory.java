@@ -36,7 +36,7 @@ import org.opentripplanner.model.Stop;
 import org.opentripplanner.model.StopTime;
 import org.opentripplanner.model.Transfer;
 import org.opentripplanner.model.Trip;
-import org.opentripplanner.model.OtpTransitDao;
+import org.opentripplanner.model.OtpTransitService;
 import org.opentripplanner.common.geometry.GeometryUtils;
 import org.opentripplanner.common.geometry.PackedCoordinateSequence;
 import org.opentripplanner.common.geometry.SphericalDistanceLibrary;
@@ -48,8 +48,6 @@ import org.opentripplanner.graph_builder.annotation.NonStationParentStation;
 import org.opentripplanner.graph_builder.module.GtfsFeedId;
 import org.opentripplanner.gtfs.GtfsContext;
 import org.opentripplanner.gtfs.GtfsLibrary;
-import org.opentripplanner.model.Notice;
-import org.opentripplanner.model.NoticeAssignment;
 import org.opentripplanner.routing.core.StopTransfer;
 import org.opentripplanner.routing.core.TransferTable;
 import org.opentripplanner.routing.core.TraverseMode;
@@ -275,7 +273,7 @@ public class PatternHopFactory {
 
     private GtfsFeedId _feedId;
 
-    private OtpTransitDao _dao;
+    private OtpTransitService _transitService;
 
     private Map<ShapeSegmentKey, LineString> _geometriesByShapeSegmentKey = new HashMap<ShapeSegmentKey, LineString>();
 
@@ -297,25 +295,24 @@ public class PatternHopFactory {
 
     public int maxInterlineDistance = 200;
 
-    public boolean allowDuplicateStops;
 
     public PatternHopFactory(GtfsContext context) {
         this._feedId = context.getFeedId();
-        this._dao = context.getTransitBuilder().build();
+        this._transitService = context.getTransitBuilder().build();
     }
     
     public PatternHopFactory() {
         this._feedId = null;
-        this._dao = null;
+        this._transitService = null;
     }
 
     public PatternHopFactory(
-            GtfsFeedId feedId, OtpTransitDao dao, FareServiceFactory fareServiceFactory,
+            GtfsFeedId feedId, OtpTransitService transitService, FareServiceFactory fareServiceFactory,
             double maxStopToShapeSnapDistance, int subwayAccessTime, int maxInterlineDistance
     ) {
 
         this._feedId = feedId;
-        this._dao = dao;
+        this._transitService = transitService;
         this.fareServiceFactory = fareServiceFactory;
         this.maxStopToShapeSnapDistance = maxStopToShapeSnapDistance;
         this.subwayAccessTime = subwayAccessTime;
@@ -327,7 +324,7 @@ public class PatternHopFactory {
         if (fareServiceFactory == null) {
             fareServiceFactory = new DefaultFareServiceFactory();
         }
-        fareServiceFactory.processGtfs(_dao);
+        fareServiceFactory.processGtfs(_transitService);
 
         // TODO: Why are we loading stops? The Javadoc above says this method assumes stops are aleady loaded.
         loadStops(graph);
@@ -339,7 +336,7 @@ public class PatternHopFactory {
         clearCachedData(); 
 
         /* Assign 0-based numeric codes to all GTFS service IDs. */
-        for (AgencyAndId serviceId : _dao.getAllServiceIds()) {
+        for (AgencyAndId serviceId : _transitService.getAllServiceIds()) {
             // TODO: FIX Service code collision for multiple feeds.
             graph.serviceCodes.put(serviceId, graph.serviceCodes.size());
         }
@@ -355,7 +352,7 @@ public class PatternHopFactory {
          */
         Map<TripPattern, LineString[]> geometriesByTripPattern = Maps.newHashMap();
 
-        Collection<TripPattern> tripPatterns = _dao.getTripPatterns();
+        Collection<TripPattern> tripPatterns = _transitService.getTripPatterns();
 
         /* Loop over all new TripPatterns, creating edges, setting the service codes and geometries, etc. */
         for (TripPattern tripPattern : tripPatterns) {
@@ -367,7 +364,7 @@ public class PatternHopFactory {
                         && trip.getShapeId().getId() != null && !trip.getShapeId().getId().equals("")) {
                     // save the geometry to later be applied to the hops
                     geometriesByTripPattern.put(tripPattern,
-                            createGeometry(graph, trip, _dao.getStopTimesForTrip(trip)));
+                            createGeometry(graph, trip, _transitService.getStopTimesForTrip(trip)));
                 }
             }
         }
@@ -397,9 +394,6 @@ public class PatternHopFactory {
             /* Iterate over all stops in this pattern recording mode information. */
             TraverseMode mode = GtfsLibrary.getTraverseMode(tripPattern.route);
             for (TransitStop tstop : tripPattern.stopVertices) {
-                if (mode == null || tstop == null) {
-                    LOG.warn("null");
-                }
                 tstop.addMode(mode);
                 if (mode == TraverseMode.SUBWAY) {
                     tstop.setStreetToStopTime(subwayAccessTime);
@@ -427,17 +421,6 @@ public class PatternHopFactory {
         // it is already done at deserialization, but standalone mode allows using graphs without serializing them.
         for (TripPattern tableTripPattern : tripPatterns) {
             tableTripPattern.scheduledTimetable.finish();
-        }
-
-        graph.setNoticeMap(_dao.getNoticeById());
-        for (NoticeAssignment noticeAssignment : _dao.getNoticeAssignmentById().values()) {
-            Notice notice = _dao.getNoticeById().get(noticeAssignment.getNoticeId());
-            if (graph.getNoticeAssignmentMap().containsKey(noticeAssignment.getElementId())) {
-                graph.getNoticeAssignmentMap().get(noticeAssignment.getElementId()).add(notice);
-            } else {
-                graph.getNoticeAssignmentMap()
-                        .put(noticeAssignment.getElementId(), new ArrayList(Arrays.asList(notice)));
-            }
         }
         
         clearCachedData(); // eh?
@@ -693,7 +676,6 @@ public class PatternHopFactory {
     /**
      * Find a consistent, increasing list of LinearLocations along a shape for a set of stops.
      * Handles loops routes.
-     * @return
      */
     private List<LinearLocation> getStopLocations(List<List<IndexedLineSegment>> possibleSegmentsForStop,
             List<StopTime> stopTimes, int index, int prevSegmentIndex) {
@@ -723,19 +705,19 @@ public class PatternHopFactory {
     }
 
     private void loadAgencies(Graph graph) {
-        for (Agency agency : _dao.getAllAgencies()) {
+        for (Agency agency : _transitService.getAllAgencies()) {
             graph.addAgency(_feedId.getId(), agency);
         }
     }
 
     private void loadFeedInfo(Graph graph) {
-        for (FeedInfo info : _dao.getAllFeedInfos()) {
+        for (FeedInfo info : _transitService.getAllFeedInfos()) {
             graph.addFeedInfo(info);
         }
     }
 
     private void loadPathways(Graph graph) {
-        for (Pathway pathway : _dao.getAllPathways()) {
+        for (Pathway pathway : _transitService.getAllPathways()) {
             Vertex fromVertex = context.stationStopNodes.get(pathway.getFromStop());
             Vertex toVertex = context.stationStopNodes.get(pathway.getToStop());
             if (pathway.isWheelchairTraversalTimeSet()) {
@@ -747,11 +729,9 @@ public class PatternHopFactory {
     }
 
     private void loadStops(Graph graph) {
-        for (Stop stop : _dao.getAllStops()) {
+        for (Stop stop : _transitService.getAllStops()) {
             if (context.stops.contains(stop.getId())) {
-                if(!allowDuplicateStops) {
-                	LOG.error("Skipping stop {} because we already loaded an identical ID.", stop.getId());
-                }
+                LOG.error("Skipping stop {} because we already loaded an identical ID.", stop.getId());
                 continue;
             }
             context.stops.add(stop.getId());
@@ -794,7 +774,7 @@ public class PatternHopFactory {
     }
 
     private void loadTransfers(Graph graph) {
-        Collection<Transfer> transfers = _dao.getAllTransfers();
+        Collection<Transfer> transfers = _transitService.getAllTransfers();
         TransferTable transferTable = graph.getTransferTable();
         for (Transfer sourceTransfer : transfers) {
             // Transfers may be specified using parent stations (https://developers.google.com/transit/gtfs/reference/transfers-file)
@@ -965,7 +945,7 @@ public class PatternHopFactory {
      * which we do not want.
      */
     private List<ShapePoint> getUniqueShapePointsForShapeId(AgencyAndId shapeId) {
-        Collection<ShapePoint> points = _dao.getShapePointsForShapeId(shapeId);
+        Collection<ShapePoint> points = _transitService.getShapePointsForShapeId(shapeId);
         ArrayList<ShapePoint> filtered = new ArrayList<ShapePoint>(points.size());
         ShapePoint last = null;
         for (ShapePoint sp : points) {
@@ -1069,7 +1049,7 @@ public class PatternHopFactory {
      * but has been separated out since it is really a separate process.
      */
     public void createParentStationTransfers() {
-        for (Stop stop : _dao.getAllStops()) {
+        for (Stop stop : _transitService.getAllStops()) {
             String parentStation = stop.getParentStation();
             if (parentStation != null) {
                 Vertex stopVertex = context.stationStopNodes.get(stop);
@@ -1077,7 +1057,7 @@ public class PatternHopFactory {
                 String agencyId = stop.getId().getAgencyId();
                 AgencyAndId parentStationId = new AgencyAndId(agencyId, parentStation);
 
-                Stop parentStop = _dao.getStopForId(parentStationId);
+                Stop parentStop = _transitService.getStopForId(parentStationId);
                 Vertex parentStopVertex = context.stationStopNodes.get(parentStop);
 
                 new FreeEdge(parentStopVertex, stopVertex);
@@ -1115,13 +1095,13 @@ public class PatternHopFactory {
      * the long distance path service anywhere but the beginning or end of a path.
      */
     public void linkStopsToParentStations(Graph graph) {
-        for (Stop stop : _dao.getAllStops()) {
+        for (Stop stop : _transitService.getAllStops()) {
             String parentStation = stop.getParentStation();
             if (parentStation != null) {
                 TransitStop stopVertex = (TransitStop) context.stationStopNodes.get(stop);
                 String agencyId = stop.getId().getAgencyId();
                 AgencyAndId parentStationId = new AgencyAndId(agencyId, parentStation);
-                Stop parentStop = _dao.getStopForId(parentStationId);
+                Stop parentStop = _transitService.getStopForId(parentStationId);
                 if(context.stationStopNodes.get(parentStop) instanceof TransitStation) {
                     TransitStation parentStopVertex = (TransitStation)
                             context.stationStopNodes.get(parentStop);
@@ -1133,31 +1113,7 @@ public class PatternHopFactory {
             }
         }
     }
-
-    /**
-     * Links multimodal stops to stops the same way as parent stops are linked in linkStopsToParentStations
-     * @param graph
-     */
-
-    public void linkMultiModalStops(Graph graph) {
-        for (Map.Entry<Stop, Collection<Stop>> entry : _dao.getStationsByMultiModalStop()) {
-            Stop multiModalStop = entry.getKey();
-            TransitStation multiModalStopVertex = (TransitStation) context.stationStopNodes.get(multiModalStop);
-            if(!entry.getValue().isEmpty()) {
-                for (Stop station : entry.getValue()) {
-                    for (Stop stop : _dao.getStopsForStation(station)) {
-                        TransitStop stopVertex = (TransitStop) context.stationStopNodes.get(stop);
-                        new StationStopEdge(multiModalStopVertex, stopVertex);
-                        new StationStopEdge(stopVertex, multiModalStopVertex);
-                    }
-                }
-            }
-            else {
-                LOG.warn("Multimodal stop " + multiModalStop.getId() + " does not contain any stations.");
-            }
-        }
-    }
-
+    
     /**
      * Create transfer edges between stops which are listed in transfers.txt.
      * 
@@ -1167,7 +1123,7 @@ public class PatternHopFactory {
     public void createTransfersTxtTransfers() {
 
         /* Create transfer edges based on transfers.txt. */
-        for (Transfer transfer : _dao.getAllTransfers()) {
+        for (Transfer transfer : _transitService.getAllTransfers()) {
 
             int type = transfer.getTransferType();
             if (type == 3) // type 3 = transfer not possible
@@ -1222,13 +1178,13 @@ public class PatternHopFactory {
             List<Stop> toStops;
 
             if (fromStop.getLocationType() == PARENT_STATION_LOCATION_TYPE) {
-                fromStops = _dao.getStopsForStation(fromStop);
+                fromStops = _transitService.getStopsForStation(fromStop);
             } else {
                 fromStops = Arrays.asList(fromStop);
             }
 
             if (toStop.getLocationType() == PARENT_STATION_LOCATION_TYPE) {
-                toStops = _dao.getStopsForStation(toStop);
+                toStops = _transitService.getStopsForStation(toStop);
             } else {
                 toStops = Arrays.asList(toStop);
             }

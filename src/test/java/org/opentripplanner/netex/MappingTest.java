@@ -6,20 +6,21 @@ import org.joda.time.MutableDateTime;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.opentripplanner.model.Agency;
+import org.opentripplanner.netex.loader.NetexLoader;
 import org.opentripplanner.gtfs.GtfsContextBuilder;
 import org.opentripplanner.model.Route;
 import org.opentripplanner.model.ServiceCalendar;
 import org.opentripplanner.model.ServiceCalendarDate;
 import org.opentripplanner.model.StopTime;
 import org.opentripplanner.model.calendar.ServiceDate;
-import org.opentripplanner.model.impl.OtpTransitDaoBuilder;
-import org.opentripplanner.graph_builder.model.NetexBundle;
+import org.opentripplanner.model.impl.OtpTransitBuilder;
+import org.opentripplanner.netex.loader.NetexBundle;
 import org.opentripplanner.graph_builder.module.NetexModule;
 import org.opentripplanner.standalone.GraphBuilderParameters;
 import org.opentripplanner.standalone.OTPMain;
 
 import java.io.File;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -29,21 +30,17 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+
 public class MappingTest {
+    static final String gtfsFile = "src/test/resources/netex_mapping_test/gtfs_minimal_fileset/gtfs_minimal.zip";
+    static final File netexFile = new File("src/test/resources/netex_mapping_test/netex_minimal_fileset/netex_minimal.zip");
+    static final File netexConfigFile = new File("src/test/resources/netex_mapping_test/build-config.json");
 
-
-    static String gtfsFile = "src/test/resources/netex_mapping_test/gtfs_minimal_fileset/gtfs_minimal.zip";
-    static File netexFile = new File("src/test/resources/netex_mapping_test/netex_minimal_fileset/netex_minimal.zip");
-    static File netexConfigFile = new File("src/test/resources/netex_mapping_test/build-config.json");
-
-    private static OtpTransitDaoBuilder otpBuilderFromGtfs;
-    private static OtpTransitDaoBuilder otpBuilderFromNetex;
+    private static OtpTransitBuilder otpBuilderFromGtfs;
+    private static OtpTransitBuilder otpBuilderFromNetex;
 
     @BeforeClass
     public static void setUpNetexMapping() throws Exception {
-        if (gtfsFile == null || netexFile == null) {
-            Assert.fail();
-        }
         JsonNode buildConfig = OTPMain.loadJson(netexConfigFile);
         NetexBundle netexBundle = new NetexBundle(netexFile, new GraphBuilderParameters(buildConfig));
         NetexModule netexModule = new NetexModule(new ArrayList<NetexBundle>() {
@@ -51,9 +48,20 @@ public class MappingTest {
                 add(netexBundle);
             }
         });
-        otpBuilderFromNetex = netexModule.getOtpDao().stream().findFirst().get();
-        otpBuilderFromGtfs = GtfsContextBuilder.contextBuilder(gtfsFile).turnOnsetAgencyToFeedIdForAllElements().build()
+        otpBuilderFromNetex = new NetexLoader(netexBundle).loadBundle();
+        otpBuilderFromGtfs = GtfsContextBuilder
+                .contextBuilder(gtfsFile)
+                .turnOnSetAgencyToFeedIdForAllElements().build()
                 .getTransitBuilder();
+    }
+
+    @Test
+    public void testAgencies() {
+        List<Agency> ga = otpBuilderFromGtfs.getAgencies();
+        List<Agency> na = otpBuilderFromNetex.getAgencies();
+
+        // TODO TGR - fix this test
+        Assert.assertEquals(ga.size(), na.size());
     }
 
     @Test
@@ -103,13 +111,13 @@ public class MappingTest {
 
         Collection<ServiceCalendarDate> datesGtfs = otpBuilderFromGtfs.getCalendarDates().stream()
                 .filter(d -> d.getExceptionType() == 1).collect(Collectors.toList());
-        Collection<ServiceCalendarDate> datesNetex = new ArrayList<>(otpBuilderFromNetex.getCalendarDates());
+        final Collection<ServiceCalendarDate> datesNetex = new ArrayList<>(otpBuilderFromNetex.getCalendarDates());
 
-        Set<String> removeGtfs = datesGtfs.stream().map(ServiceCalendarDate::naturalId).collect(Collectors.toSet());
-        Set<String> removeNetex = datesNetex.stream().map(ServiceCalendarDate::naturalId).collect(Collectors.toSet());
+        Set<ServiceCalendarDate> removeGtfs = new HashSet<>(datesGtfs);
+        Set<ServiceCalendarDate> removeNetex = new HashSet<>(datesNetex);
 
-        datesGtfs = datesGtfs.stream().filter(it -> !removeNetex.contains(it.naturalId())).collect(Collectors.toList());
-        datesNetex = datesNetex.stream().filter(it -> !removeGtfs.contains(it.naturalId())).collect(Collectors.toList());
+        datesGtfs.removeAll(removeNetex);
+        datesNetex.removeAll(removeGtfs);
 
         Assert.assertEquals(0, datesGtfs.size());
         Assert.assertEquals(0, datesNetex.size());

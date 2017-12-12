@@ -1,6 +1,18 @@
 package org.opentripplanner.routing.graph;
 
-import com.google.common.collect.*;
+import com.google.common.collect.ArrayListMultimap;
+import java.util.BitSet;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.Calendar;
+
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Envelope;
@@ -10,6 +22,13 @@ import graphql.GraphQL;
 import graphql.schema.GraphQLSchema;
 import org.apache.lucene.util.PriorityQueue;
 import org.joda.time.LocalDate;
+import org.opentripplanner.model.Agency;
+import org.opentripplanner.model.AgencyAndId;
+import org.opentripplanner.model.Route;
+import org.opentripplanner.model.Stop;
+import org.opentripplanner.model.Trip;
+import org.opentripplanner.model.calendar.ServiceDate;
+import org.opentripplanner.model.CalendarService;
 import org.opentripplanner.common.LuceneIndex;
 import org.opentripplanner.common.geometry.HashGridSpatialIndex;
 import org.opentripplanner.common.geometry.SphericalDistanceLibrary;
@@ -20,8 +39,6 @@ import org.opentripplanner.index.IndexGraphQLSchema;
 import org.opentripplanner.index.ResourceConstrainedExecutorServiceExecutionStrategy;
 import org.opentripplanner.index.model.StopTimesInPattern;
 import org.opentripplanner.index.model.TripTimeShort;
-import org.opentripplanner.model.*;
-import org.opentripplanner.model.calendar.ServiceDate;
 import org.opentripplanner.profile.ProfileTransfer;
 import org.opentripplanner.profile.StopCluster;
 import org.opentripplanner.profile.StopNameNormalizer;
@@ -58,6 +75,10 @@ import java.nio.file.Files;
 import java.nio.file.attribute.FileAttribute;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -82,7 +103,9 @@ public class GraphIndex {
     // TODO: consistently key on model object or id string
     public final Map<String, Vertex> vertexForId = Maps.newHashMap();
     public final Map<String, Map<String, Agency>> agenciesForFeedId = Maps.newHashMap();
-    public final Map<String, FeedInfo> feedInfoForId = Maps.newHashMap();
+
+    // TODO TGR - Is this needed? Why is feedInfo exposed in the API?
+    //    public final Map<String, FeedInfo> feedInfoForId = Maps.newHashMap();
     public final Map<AgencyAndId, Stop> stopForId = Maps.newHashMap();
     public final Map<AgencyAndId, Stop> stationForId = Maps.newHashMap();
     public final Map<AgencyAndId, Trip> tripForId = Maps.newHashMap();
@@ -95,12 +118,11 @@ public class GraphIndex {
     public final Multimap<Route, TripPattern> patternsForRoute = ArrayListMultimap.create();
     public final Multimap<Stop, TripPattern> patternsForStop = ArrayListMultimap.create();
     public final Multimap<AgencyAndId, Stop> stopsForParentStation = ArrayListMultimap.create();
-    public final Multimap<String, Stop> parentStationsForMultimodalStop = ArrayListMultimap.create();
+// TODO TGR - Enabme after MultimodalStop is merge in
+//    public final Multimap<String, Stop> parentStationsForMultimodalStop = ArrayListMultimap.create();
     final HashGridSpatialIndex<TransitStop> stopSpatialIndex = new HashGridSpatialIndex<TransitStop>();
     public final Map<Stop, StopCluster> stopClusterForStop = Maps.newHashMap();
     public final Map<String, StopCluster> stopClusterForId = Maps.newHashMap();
-    private Map<AgencyAndId, Notice> noticeMap = new HashMap<>();
-    private Map<AgencyAndId, List<Notice>> noticeAssignmentMap = new HashMap<>();
 
     /* Should eventually be replaced with new serviceId indexes. */
     private final CalendarService calendarService;
@@ -135,7 +157,8 @@ public class GraphIndex {
                 agencyForId.put(agency.getId(), agency);
                 this.agenciesForFeedId.put(feedId, agencyForId);
             }
-            this.feedInfoForId.put(feedId, graph.getFeedInfo(feedId));
+// TODO TGR
+//            this.feedInfoForId.put(feedId, graph.getFeedInfo(feedId));
         }
 
         Collection<Edge> edges = graph.getEdges();
@@ -189,9 +212,6 @@ public class GraphIndex {
         for (Route route : patternsForRoute.asMap().keySet()) {
             routeForId.put(route.getId(), route);
         }
-
-        noticeMap = graph.getNoticeMap();
-        noticeAssignmentMap = graph.getNoticeAssignmentMap();
 
         // Copy these two service indexes from the graph until we have better ones.
         calendarService = graph.getCalendarService();
@@ -724,10 +744,11 @@ public class GraphIndex {
      *            Searches forward for timeRange seconds from startTime
      * @param numberOfDepartures
      *            Number of departures to fetch per pattern
+     * @param omitNonPickups If true, do not include vehicles that will not pick up passengers.
      * @return
      */
-    public List<TripTimeShort> stopTimesForPattern(final Stop stop, final TripPattern pattern, long startTime, final int timeRange,
-            int numberOfDepartures, boolean omitNonPickups) {
+    public List<TripTimeShort> stopTimesForPattern(final Stop stop, final TripPattern pattern, long startTime, final int timeRange, int numberOfDepartures, boolean omitNonPickups) {
+    //public List<StopTimesInPattern> stopTimesForStop(Stop stop, long startTime, int timeRange, int numberOfDepartures, boolean omitNonPickups) {
 
         if (pattern == null) {
             return Collections.emptyList();
@@ -1134,25 +1155,5 @@ public class GraphIndex {
             allAgencies.addAll(agencyForId.values());
         }
         return allAgencies;
-    }
-
-    public void setNoticeMap(Map<AgencyAndId, Notice> noticeMap) {
-        this.noticeMap = noticeMap;
-    }
-
-    public void setNoticeAssignmentMap(Map<AgencyAndId, List<Notice>> noticeAssignmentMap) {
-        this.noticeAssignmentMap = noticeAssignmentMap;
-    }
-
-    public Map<AgencyAndId, Notice> getNoticeMap() {
-        return noticeMap;
-    }
-
-    public Map<AgencyAndId, List<Notice>> getNoticeAssignmentMap() {
-        return noticeAssignmentMap;
-    }
-
-    public Collection<Notice> getNoticesForElement(AgencyAndId id) {
-        return this.noticeAssignmentMap.containsKey(id) ? this.noticeAssignmentMap.get(id) : new ArrayList<>();
     }
 }

@@ -5,11 +5,7 @@ import java.util.List;
 import org.opentripplanner.model.AgencyAndId;
 import org.opentripplanner.model.Stop;
 import org.opentripplanner.model.Trip;
-import org.opentripplanner.model.calendar.ServiceDate;
 import com.beust.jcommander.internal.Lists;
-import org.opentripplanner.model.AgencyAndId;
-import org.opentripplanner.model.Stop;
-import org.opentripplanner.model.Trip;
 import org.opentripplanner.routing.core.ServiceDay;
 import org.opentripplanner.routing.edgetype.Timetable;
 import org.opentripplanner.routing.trippattern.RealTimeState;
@@ -21,7 +17,6 @@ public class TripTimeShort {
 
     public static final int UNDEFINED = -1;
     public AgencyAndId stopId;
-    public AgencyAndId stopTimeId;
     public int stopIndex;
     public int stopCount;
     public int scheduledArrival = UNDEFINED ;
@@ -43,7 +38,6 @@ public class TripTimeShort {
      */
     public TripTimeShort(TripTimes tt, int i, Stop stop) {
         stopId = stop.getId();
-        stopTimeId = tt.getStopTimeIdByIndex(i);
         stopIndex          = i;
         stopCount          = tt.getNumStops();
         scheduledArrival   = tt.getScheduledArrivalTime(i);
@@ -66,7 +60,6 @@ public class TripTimeShort {
             serviceDay = sd.time(0);
         }
     }
-
 
     /**
      * must pass in both table and trip, because tripTimes do not have stops.

@@ -96,4 +96,10 @@ public class SortedMultimap<K, V extends Comparable<? super V>> {
         Collections.sort(values);
         return values;
     }
+
+    public void reindex() {
+        HashMap<K, List<V>> temp = new HashMap<>(map);
+        map.clear();
+        map.putAll(temp);
+    }
 }

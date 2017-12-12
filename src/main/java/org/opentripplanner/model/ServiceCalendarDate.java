@@ -17,16 +17,14 @@ package org.opentripplanner.model;
 
 import org.opentripplanner.model.calendar.ServiceDate;
 
+import java.io.Serializable;
 import java.util.Objects;
 
 /**
- * Note: this class has a natural ordering that is inconsistent with equals witch
- * uses the <em>id</em> only.
- *
  * @author bdferris
+ *
  */
-public final class ServiceCalendarDate extends IdentityBean<Integer>
-        implements Comparable<ServiceCalendarDate> {
+public final class ServiceCalendarDate implements Serializable, Comparable<ServiceCalendarDate> {
 
     private static final long serialVersionUID = 1L;
 
@@ -34,21 +32,11 @@ public final class ServiceCalendarDate extends IdentityBean<Integer>
 
     public static final int EXCEPTION_TYPE_REMOVE = 2;
 
-    private int id;
-
     private AgencyAndId serviceId;
 
     private ServiceDate date;
 
     private int exceptionType;
-
-    public Integer getId() {
-        return id;
-    }
-
-    public void setId(Integer id) {
-        this.id = id;
-    }
 
     public AgencyAndId getServiceId() {
         return serviceId;
@@ -75,15 +63,26 @@ public final class ServiceCalendarDate extends IdentityBean<Integer>
     }
 
     @Override
+    public boolean equals(Object o) {
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
+        ServiceCalendarDate that = (ServiceCalendarDate) o;
+        return Objects.equals(serviceId, that.serviceId) && Objects.equals(date, that.date);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(serviceId, date);
+    }
+
+    @Override
     public String toString() {
         return "<CalendarDate serviceId=" + this.serviceId + " date=" + this.date + " exception="
                 + this.exceptionType + ">";
     }
 
-    /**
-     * Note: this class has a natural ordering that is inconsistent with equals witch
-     * uses the <em>id</em> only.
-     */
     @Override
     public int compareTo(ServiceCalendarDate other) {
         int c = serviceId.compareTo(other.serviceId);
@@ -91,9 +90,5 @@ public final class ServiceCalendarDate extends IdentityBean<Integer>
             c = date.compareTo(other.date);
         }
         return c;
-    }
-
-    public String naturalId() {
-        return serviceId.toString() + "_" + date.toString();
     }
 }

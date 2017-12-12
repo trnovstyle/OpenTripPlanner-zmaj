@@ -26,7 +26,6 @@ import org.joda.time.DateTime;
 import org.opentripplanner.calendar.impl.CalendarServiceImpl;
 import org.opentripplanner.model.Agency;
 import org.opentripplanner.model.AgencyAndId;
-import org.opentripplanner.model.Notice;
 import org.opentripplanner.model.Stop;
 import org.opentripplanner.model.FeedInfo;
 import org.opentripplanner.model.calendar.CalendarServiceData;
@@ -86,25 +85,6 @@ public class Graph implements Serializable, AddBuilderAnnotation {
     private final Map<Edge, List<TurnRestriction>> turnRestrictions = Maps.newHashMap();
 
     public final StreetNotesService streetNotesService = new StreetNotesService();
-
-    public void setNoticeMap(Map<AgencyAndId, Notice> noticeMap) {
-        this.noticeMap = noticeMap;
-    }
-
-    public void setNoticeAssignmentMap(Map<AgencyAndId, List<Notice>> noticeAssignmentMap) {
-        this.noticeAssignmentMap = noticeAssignmentMap;
-    }
-
-    public Map<AgencyAndId, Notice> getNoticeMap() {
-        return noticeMap;
-    }
-
-    public Map<AgencyAndId, List<Notice>> getNoticeAssignmentMap() {
-        return noticeAssignmentMap;
-    }
-
-    private Map<AgencyAndId, Notice> noticeMap = new HashMap<>();
-    private Map<AgencyAndId, List<Notice>> noticeAssignmentMap = new HashMap<>();
 
     // transit feed validity information in seconds since epoch
     private long transitServiceStarts = Long.MAX_VALUE;
@@ -219,7 +199,7 @@ public class Graph implements Serializable, AddBuilderAnnotation {
 
     /** Has information how different transport modes are weighted. By default a weight of 1 is assigned. higher weight means higher cost. */
     public Map<TraverseMode, Double> modeWeights = Collections.EMPTY_MAP;
-    
+
     /** Has information how much time alighting a vehicle takes. Can be significant eg in airplanes or ferries. */
     public Map<TraverseMode, Integer> alightTimes = Collections.EMPTY_MAP;
 
@@ -234,9 +214,6 @@ public class Graph implements Serializable, AddBuilderAnnotation {
 
     /** Parent stops **/
     public Map<AgencyAndId, Stop> parentStopById = new HashMap<>();
-
-    /** Multimodal stops **/
-    public Map<AgencyAndId, Stop> multiModalStopById = new HashMap<>();
 
     public Graph(Graph basedOn) {
         this();

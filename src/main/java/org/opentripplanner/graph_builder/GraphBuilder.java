@@ -16,7 +16,7 @@ package org.opentripplanner.graph_builder;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.collect.Lists;
 import org.opentripplanner.graph_builder.model.GtfsBundle;
-import org.opentripplanner.graph_builder.model.NetexBundle;
+import org.opentripplanner.netex.loader.NetexBundle;
 import org.opentripplanner.graph_builder.module.DirectTransferGenerator;
 import org.opentripplanner.graph_builder.module.EmbedConfig;
 import org.opentripplanner.graph_builder.module.GtfsModule;
@@ -270,7 +270,6 @@ public class GraphBuilder implements Runnable {
                 gtfsBundle.parentStationTransfers = builderParams.stationTransfers;
                 gtfsBundle.subwayAccessTime = (int)(builderParams.subwayAccessTime * 60);
                 gtfsBundle.maxInterlineDistance = builderParams.maxInterlineDistance;
-                gtfsBundle.allowDuplicateStops = builderParams.allowDuplicateStops;
                 gtfsBundles.add(gtfsBundle);
             }
             GtfsModule gtfsModule = new GtfsModule(gtfsBundles);
@@ -304,12 +303,6 @@ public class GraphBuilder implements Runnable {
         streetLinkerModule.setAddExtraEdgesToAreas(builderParams.extraEdgesStopPlatformLink);
         graphBuilder.addModule(streetLinkerModule);
 
-        
-        //if(hasOSM) {
-            // Do not prune before transit stops are read
-        //    graphBuilder.addModule(new PruneFloatingIslands());
-        //}
-        
         // Load elevation data and apply it to the streets.
         // We want to do run this module after loading the OSM street network but before finding transfers.
         if (builderParams.elevationBucket != null) {

@@ -15,7 +15,6 @@ package org.opentripplanner.gtfs.mapping;
 
 import org.opentripplanner.model.StopTime;
 import org.opentripplanner.util.MapUtils;
-import org.opentripplanner.netex.mapping.AgencyAndIdFactory;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -44,7 +43,6 @@ class StopTimeMapper {
     private StopTime doMap(org.onebusaway.gtfs.model.StopTime rhs) {
         StopTime lhs = new StopTime();
 
-        lhs.setId(AgencyAndIdFactory.getAgencyAndId(rhs.getId().toString()));
         lhs.setTrip(tripMapper.map(rhs.getTrip()));
         lhs.setStop(stopMapper.map(rhs.getStop()));
         lhs.setArrivalTime(rhs.getArrivalTime());

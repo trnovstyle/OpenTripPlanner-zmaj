@@ -3,9 +3,9 @@ package org.opentripplanner.netex.mapping;
 import org.opentripplanner.model.AgencyAndId;
 
 public class AgencyAndIdFactory {
-    private static String agencyId = "";
+    private static String agencyId = "NETEX_AGENCY_ID_NOT_SET";
 
-    public static AgencyAndId getAgencyAndId(String netexId) {
+    public static AgencyAndId createAgencyAndId(String netexId) {
         return new AgencyAndId(agencyId, netexId);
     }
 

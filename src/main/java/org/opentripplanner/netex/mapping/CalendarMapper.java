@@ -17,32 +17,34 @@ package org.opentripplanner.netex.mapping;
 import org.opentripplanner.model.AgencyAndId;
 import org.opentripplanner.model.ServiceCalendarDate;
 import org.opentripplanner.model.calendar.ServiceDate;
-import org.opentripplanner.graph_builder.model.NetexDao;
+import org.opentripplanner.netex.loader.NetexDao;
 import org.rutebanken.netex.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
 
 
 // TODO TGR - Add Unit tests
 public class CalendarMapper {
-
     private static final Logger LOG = LoggerFactory.getLogger(CalendarMapper.class);
 
     public static Collection<ServiceCalendarDate> mapToCalendarDates(AgencyAndId serviceId, NetexDao netexDao) {
         Collection<ServiceCalendarDate> serviceCalendarDates = new ArrayList<>();
-        Collection<ServiceCalendarDate> serviceCalendarDatesRemove = new ArrayList<>();
+        Collection<ServiceCalendarDate> serviceCalendarDatesRemove = new HashSet<>();
         String[] dayTypeIds = serviceId.getId().split("\\+");
 
         for(String dayTypeId : dayTypeIds) {
-            List<DayTypeAssignment> dayTypeAssignmentList = netexDao.getDayTypeAssignment().get(dayTypeId);
+            Collection<DayTypeAssignment> dayTypeAssignmentList = netexDao.lookupDayTypeAssignment(dayTypeId);
 
 
             for (DayTypeAssignment dayTypeAssignment : dayTypeAssignmentList) {
-                Boolean isAvailable = netexDao.getDayTypeAvailable().get(dayTypeAssignment.getId());
+                Boolean isAvailable = netexDao.lookupDayTypeAvailable(dayTypeAssignment.getId());
 
                 // Add or remove single days
                 if (dayTypeAssignment.getDate() != null) {
@@ -56,14 +58,14 @@ public class CalendarMapper {
                 }
                 // Add or remove periods
                 else if (dayTypeAssignment.getOperatingPeriodRef() != null &&
-                        netexDao.getOperatingPeriodById().containsKey(dayTypeAssignment.getOperatingPeriodRef().getRef())) {
+                        netexDao.operatingPeriodExist(dayTypeAssignment.getOperatingPeriodRef().getRef())) {
 
-                    OperatingPeriod operatingPeriod = netexDao.getOperatingPeriodById().get(dayTypeAssignment.getOperatingPeriodRef().getRef());
+                    OperatingPeriod operatingPeriod = netexDao.lookupOperatingPeriodById(dayTypeAssignment.getOperatingPeriodRef().getRef());
                     LocalDateTime fromDate = operatingPeriod.getFromDate();
                     LocalDateTime toDate = operatingPeriod.getToDate();
 
                     List<DayOfWeekEnumeration> daysOfWeek = new ArrayList<>();
-                    DayType dayType = netexDao.getDayTypeById().get(dayTypeId);
+                    DayType dayType = netexDao.getDayTypeById(dayTypeId);
                     if (dayType.getProperties() != null) {
                         List<PropertyOfDay> propertyOfDays = dayType.getProperties().getPropertyOfDay();
                         for (PropertyOfDay property : propertyOfDays) {
@@ -149,16 +151,15 @@ public class CalendarMapper {
             }
         }
 
-        Set<String> removeServiceCodeDates = serviceCalendarDatesRemove.stream().map(ServiceCalendarDate::naturalId).collect(Collectors.toSet());
+        serviceCalendarDates.removeAll(serviceCalendarDatesRemove);
 
-        Collection<ServiceCalendarDate> returnDates = serviceCalendarDates.stream()
-                .filter(it -> !removeServiceCodeDates.contains(it.naturalId())).collect(Collectors.toList());
-
-        if (returnDates.size() == 0) {
+        if (serviceCalendarDates.isEmpty()) {
             LOG.warn("ServiceCode " + serviceId + " does not contain any serviceDates");
+            // Add one date exception when list is empty to ensure serviceId is not lost
+            serviceCalendarDates.add(mapServiceCalendarDate(LocalDate.now().atStartOfDay(), serviceId, 2));
         }
 
-        return returnDates;
+        return serviceCalendarDates;
     }
 
     private static ServiceCalendarDate mapServiceCalendarDate(LocalDateTime date, AgencyAndId serviceId, Integer exceptionType) {
