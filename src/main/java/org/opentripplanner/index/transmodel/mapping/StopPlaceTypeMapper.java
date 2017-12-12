@@ -56,7 +56,7 @@ public class StopPlaceTypeMapper {
             case 7:
                 return TransmodelStopPlaceType.OTHER;
             default:
-                throw new IllegalArgumentException("unknown gtfs route type " + gtfsVehicleType);
+                return TransmodelStopPlaceType.OTHER;
         }
     }
 }
