@@ -105,7 +105,6 @@ public class GraphIndex {
     // TODO: consistently key on model object or id string
     public final Map<String, Vertex> vertexForId = Maps.newHashMap();
     public final Map<String, Map<String, Agency>> agenciesForFeedId = Maps.newHashMap();
-
     public final Map<String, FeedInfo> feedInfoForId = Maps.newHashMap();
     public final Map<AgencyAndId, Stop> stopForId = Maps.newHashMap();
     public final Map<AgencyAndId, Stop> stationForId = Maps.newHashMap();
@@ -753,7 +752,6 @@ public class GraphIndex {
      * @return
      */
     public List<TripTimeShort> stopTimesForPattern(final Stop stop, final TripPattern pattern, long startTime, final int timeRange, int numberOfDepartures, boolean omitNonPickups) {
-    //public List<StopTimesInPattern> stopTimesForStop(Stop stop, long startTime, int timeRange, int numberOfDepartures, boolean omitNonPickups) {
 
         if (pattern == null) {
             return Collections.emptyList();

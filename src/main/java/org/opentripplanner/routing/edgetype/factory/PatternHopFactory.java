@@ -1126,7 +1126,7 @@ public class PatternHopFactory {
             }
         }
     }
-    
+
     /**
      * Links multimodal stops to stops the same way as parent stops are linked in linkStopsToParentStations
      * @param graph

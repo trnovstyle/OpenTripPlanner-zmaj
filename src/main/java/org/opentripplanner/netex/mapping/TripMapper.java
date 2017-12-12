@@ -38,6 +38,10 @@ public class TripMapper {
 
         trip.setServiceId(AgencyAndIdFactory.createAgencyAndId(serviceId));
 
+        if (serviceJourney.getPrivateCode() != null) {
+            trip.setTripShortName(serviceJourney.getPrivateCode().getValue());
+        }
+
         return trip;
     }
 }
