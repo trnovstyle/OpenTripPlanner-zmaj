@@ -58,6 +58,7 @@ public class NetexMapper {
             if (stopPlace != null) {
                 Stop stop = stopMapper.mapMultiModalStop(stopPlace);
                 transitBuilder.getMultiModalStops().add(stop);
+                transitBuilder.getStops().add(stop);
             }
         }
 
