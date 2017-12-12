@@ -7,14 +7,41 @@ import com.vividsolutions.jts.geom.LineString;
 import graphql.Scalars;
 import graphql.relay.Relay;
 import graphql.relay.SimpleListConnection;
-import graphql.schema.*;
+import graphql.schema.DataFetcher;
+import graphql.schema.DataFetchingEnvironment;
+import graphql.schema.DataFetchingEnvironmentImpl;
+import graphql.schema.GraphQLArgument;
+import graphql.schema.GraphQLEnumType;
+import graphql.schema.GraphQLFieldDefinition;
+import graphql.schema.GraphQLInputObjectField;
+import graphql.schema.GraphQLInputObjectType;
+import graphql.schema.GraphQLInterfaceType;
+import graphql.schema.GraphQLList;
+import graphql.schema.GraphQLNonNull;
+import graphql.schema.GraphQLObjectType;
+import graphql.schema.GraphQLOutputType;
+import graphql.schema.GraphQLSchema;
+import graphql.schema.GraphQLType;
+import graphql.schema.GraphQLTypeReference;
+import graphql.schema.PropertyDataFetcher;
+import graphql.schema.TypeResolver;
 import org.opentripplanner.api.common.Message;
-import org.opentripplanner.api.model.*;
+import org.opentripplanner.api.model.Itinerary;
+import org.opentripplanner.api.model.Leg;
+import org.opentripplanner.api.model.Place;
+import org.opentripplanner.api.model.TripPlan;
+import org.opentripplanner.api.model.VertexType;
 import org.opentripplanner.api.parameter.QualifiedModeSet;
 import org.opentripplanner.gtfs.GtfsLibrary;
 import org.opentripplanner.index.model.StopTimesInPattern;
 import org.opentripplanner.index.model.TripTimeShort;
-import org.opentripplanner.model.*;
+import org.opentripplanner.model.Agency;
+import org.opentripplanner.model.AgencyAndId;
+import org.opentripplanner.model.Notice;
+import org.opentripplanner.model.Route;
+import org.opentripplanner.model.Stop;
+import org.opentripplanner.model.StopPattern;
+import org.opentripplanner.model.Trip;
 import org.opentripplanner.model.calendar.ServiceDate;
 import org.opentripplanner.profile.StopCluster;
 import org.opentripplanner.routing.alertpatch.Alert;
@@ -24,7 +51,12 @@ import org.opentripplanner.routing.bike_rental.BikeRentalStation;
 import org.opentripplanner.routing.bike_rental.BikeRentalStationService;
 import org.opentripplanner.routing.car_park.CarPark;
 import org.opentripplanner.routing.car_park.CarParkService;
-import org.opentripplanner.routing.core.*;
+import org.opentripplanner.routing.core.Fare;
+import org.opentripplanner.routing.core.FareComponent;
+import org.opentripplanner.routing.core.Money;
+import org.opentripplanner.routing.core.OptimizeType;
+import org.opentripplanner.routing.core.ServiceDay;
+import org.opentripplanner.routing.core.TraverseMode;
 import org.opentripplanner.routing.edgetype.SimpleTransfer;
 import org.opentripplanner.routing.edgetype.Timetable;
 import org.opentripplanner.routing.edgetype.TimetableSnapshot;
@@ -41,7 +73,18 @@ import org.opentripplanner.util.TranslatedString;
 import org.opentripplanner.util.model.EncodedPolylineBean;
 
 import java.text.ParseException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.BitSet;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -154,6 +197,8 @@ public class IndexGraphQLSchema {
 
     public GraphQLOutputType patternType = new GraphQLTypeReference("Pattern");
 
+    public GraphQLOutputType noticeType = new GraphQLTypeReference("Notice");
+
     public GraphQLOutputType routeType = new GraphQLTypeReference("Route");
 
     public GraphQLOutputType stoptimeType = new GraphQLTypeReference("Stoptime");
@@ -203,6 +248,9 @@ public class IndexGraphQLSchema {
             }
             if (o instanceof Agency) {
                 return (GraphQLObjectType) agencyType;
+            }
+            if (o instanceof Notice) {
+                return (GraphQLObjectType) noticeType;
             }
             if (o instanceof AlertPatch) {
                 return (GraphQLObjectType) alertType;
@@ -610,28 +658,27 @@ public class IndexGraphQLSchema {
         fuzzyTripMatcher = new GtfsRealtimeFuzzyTripMatcher(index);
         index.clusterStopsAsNeeded();
 
-//  TODO TGR - enable after notices is merges into rb_dev
-//        noticeType = GraphQLObjectType.newObject()
-//                .name("Notice")
-//                .field(GraphQLFieldDefinition.newFieldDefinition()
-//                        .name("id")
-//                        .type(Scalars.GraphQLString)
-//                        .dataFetcher(
-//                                environment -> ((Notice) environment.getSource()).getId())
-//                        .build())
-//                .field(GraphQLFieldDefinition.newFieldDefinition()
-//                        .name("text")
-//                        .type(Scalars.GraphQLString)
-//                        .dataFetcher(
-//                                environment -> ((Notice) environment.getSource()).getText())
-//                        .build())
-//                .field(GraphQLFieldDefinition.newFieldDefinition()
-//                        .name("publicCode")
-//                        .type(Scalars.GraphQLString)
-//                        .dataFetcher(
-//                                environment -> ((Notice) environment.getSource()).getPublicCode())
-//                        .build())
-//                .build();
+        noticeType = GraphQLObjectType.newObject()
+                .name("Notice")
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("id")
+                        .type(Scalars.GraphQLString)
+                        .dataFetcher(
+                                environment -> ((Notice) environment.getSource()).getId())
+                        .build())
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("text")
+                        .type(Scalars.GraphQLString)
+                        .dataFetcher(
+                                environment -> ((Notice) environment.getSource()).getText())
+                        .build())
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("publicCode")
+                        .type(Scalars.GraphQLString)
+                        .dataFetcher(
+                                environment -> ((Notice) environment.getSource()).getPublicCode())
+                        .build())
+                .build();
 
         translatedStringType = GraphQLObjectType.newObject()
             .name("TranslatedString")
@@ -1334,15 +1381,14 @@ public class IndexGraphQLSchema {
               	.type(Scalars.GraphQLString)
               	.dataFetcher(environment -> ((TripTimeShort) environment.getSource()).headsign)
               	.build())
-// TODO TGR - enable after notices is merges into rb_dev
-//            .field(GraphQLFieldDefinition.newFieldDefinition()
-//                    .name("notices")
-//                    .type(new GraphQLList(noticeType))
-//                    .dataFetcher(environment -> {
-//                        TripTimeShort tripTimeShort = (TripTimeShort) environment.getSource();
-//                        return index.getNoticesForElement(tripTimeShort.stopTimeId);
-//                    })
-//                    .build())
+            .field(GraphQLFieldDefinition.newFieldDefinition()
+                    .name("notices")
+                    .type(new GraphQLList(noticeType))
+                    .dataFetcher(environment -> {
+                        TripTimeShort tripTimeShort = (TripTimeShort) environment.getSource();
+                        return index.getNoticesForElement(tripTimeShort.stopTimeId);
+                    })
+                    .build())
             .build();
 
         tripType = GraphQLObjectType.newObject()
@@ -1482,15 +1528,14 @@ public class IndexGraphQLSchema {
                     }
                 })
                 .build())
-// TODO TGR - enable after notices is merges into rb_dev
-//            .field(GraphQLFieldDefinition.newFieldDefinition()
-//                    .name("notices")
-//                    .type(new GraphQLList(noticeType))
-//                    .dataFetcher(environment -> {
-//                        Trip trip = (Trip) environment.getSource();
-//                        return index.getNoticesForElement(trip.getId());
-//                    })
-//                    .build())
+            .field(GraphQLFieldDefinition.newFieldDefinition()
+                    .name("notices")
+                    .type(new GraphQLList(noticeType))
+                    .dataFetcher(environment -> {
+                        Trip trip = (Trip) environment.getSource();
+                        return index.getNoticesForElement(trip.getId());
+                    })
+                    .build())
             .field(GraphQLFieldDefinition.newFieldDefinition()
                 .name("geometry")
                 .type(new GraphQLList(new GraphQLList(Scalars.GraphQLFloat))) //TODO: Should be geometry
@@ -1620,15 +1665,14 @@ public class IndexGraphQLSchema {
                 .dataFetcher(dataFetchingEnvironment -> index.getAlertsForPattern(
                     dataFetchingEnvironment.getSource()))
                 .build())
-// TODO TGR - enable after notices is merges into rb_dev
-//            .field(GraphQLFieldDefinition.newFieldDefinition()
-//                    .name("notices")
-//                    .type(new GraphQLList(noticeType))
-//                    .dataFetcher(environment -> {
-//                        TripPattern tripPattern = (TripPattern) environment.getSource();
-//                        return index.getNoticesForElement(tripPattern.id);
-//                    })
-//                    .build())
+            .field(GraphQLFieldDefinition.newFieldDefinition()
+                    .name("notices")
+                    .type(new GraphQLList(noticeType))
+                    .dataFetcher(environment -> {
+                        TripPattern tripPattern = (TripPattern) environment.getSource();
+                        return index.getNoticesForElement(tripPattern.id);
+                    })
+                    .build())
             .build();
 
 
@@ -1720,15 +1764,14 @@ public class IndexGraphQLSchema {
                     .distinct()
                     .collect(Collectors.toList()))
                 .build())
-// TODO TGR - enable after notices is merges into rb_dev
-//            .field(GraphQLFieldDefinition.newFieldDefinition()
-//                    .name("notices")
-//                    .type(new GraphQLList(noticeType))
-//                    .dataFetcher(environment -> {
-//                        Route route = (Route) environment.getSource();
-//                        return index.getNoticesForElement(route.getId());
-//                    })
-//                    .build())
+            .field(GraphQLFieldDefinition.newFieldDefinition()
+                    .name("notices")
+                    .type(new GraphQLList(noticeType))
+                    .dataFetcher(environment -> {
+                        Route route = (Route) environment.getSource();
+                        return index.getNoticesForElement(route.getId());
+                    })
+                    .build())
             .field(GraphQLFieldDefinition.newFieldDefinition()
                 .name("alerts")
                 .description("Get all alerts active for the route")
@@ -2051,12 +2094,11 @@ public class IndexGraphQLSchema {
                 .type(new GraphQLList(agencyType))
                 .dataFetcher(environment -> new ArrayList<>(index.getAllAgencies()))
                 .build())
-//  TODO TGR - enable after notices is merges into rb_dev
-//            .field(GraphQLFieldDefinition.newFieldDefinition()
-//                .name("notices")
-//                .type(new GraphQLList(noticeType))
-//                .dataFetcher(environment -> index.getNoticeMap().values())
-//                .build())
+            .field(GraphQLFieldDefinition.newFieldDefinition()
+                    .name("notices")
+                    .type(new GraphQLList(noticeType))
+                    .dataFetcher(environment -> index.getNoticeMap().values())
+                    .build())
             .field(GraphQLFieldDefinition.newFieldDefinition()
                 .name("agency")
                 .description("Get a single agency based on agency ID")

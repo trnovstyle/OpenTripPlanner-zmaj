@@ -1,5 +1,6 @@
 package org.opentripplanner.netex.mapping;
 
+import org.opentripplanner.model.NoticeAssignment;
 import org.opentripplanner.netex.loader.NetexDao;
 import org.opentripplanner.model.Route;
 import org.opentripplanner.model.Stop;
@@ -8,6 +9,7 @@ import org.opentripplanner.model.Transfer;
 import org.rutebanken.netex.model.Authority;
 import org.rutebanken.netex.model.JourneyPattern;
 import org.rutebanken.netex.model.Line;
+import org.rutebanken.netex.model.Notice;
 import org.rutebanken.netex.model.StopPlace;
 
 import java.util.Collection;
@@ -17,6 +19,10 @@ import static org.opentripplanner.netex.mapping.CalendarMapper.mapToCalendarDate
 public class NetexMapper {
 
     private final AgencyMapper agencyMapper = new AgencyMapper();
+
+    private final NoticeMapper noticeMapper = new NoticeMapper();
+
+    private final NoticeAssignmentMapper noticeAssignmentMapper = new NoticeAssignmentMapper();
 
     private final RouteMapper routeMapper = new RouteMapper();
 
@@ -80,6 +86,17 @@ public class NetexMapper {
                     transitBuilder.getTransfers().add(transfer);
                 }
             }
+        }
+
+        for (Notice notice : netexDao.getNotices()) {
+            org.opentripplanner.model.Notice otpNotice = noticeMapper.mapNotice(notice);
+            transitBuilder.getNoticesById().add(otpNotice);
+        }
+
+        for (org.rutebanken.netex.model.NoticeAssignment noticeAssignment : netexDao.getNoticeAssignments()) {
+            Collection<NoticeAssignment> otpNoticeAssignments = noticeAssignmentMapper.mapNoticeAssignment(noticeAssignment, netexDao);
+            for (NoticeAssignment otpNoticeAssignment : otpNoticeAssignments){
+            transitBuilder.getNoticeAssignmentsById().add( otpNoticeAssignment);}
         }
     }
 }

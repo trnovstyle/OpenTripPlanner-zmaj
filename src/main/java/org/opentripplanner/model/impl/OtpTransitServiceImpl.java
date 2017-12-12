@@ -22,6 +22,8 @@ import org.opentripplanner.model.AgencyAndId;
 import org.opentripplanner.model.FareAttribute;
 import org.opentripplanner.model.FareRule;
 import org.opentripplanner.model.FeedInfo;
+import org.opentripplanner.model.Notice;
+import org.opentripplanner.model.NoticeAssignment;
 import org.opentripplanner.model.OtpTransitService;
 import org.opentripplanner.model.Pathway;
 import org.opentripplanner.model.ShapePoint;
@@ -64,6 +66,10 @@ class OtpTransitServiceImpl implements OtpTransitService {
 
     private final Collection<FeedInfo> feedInfos;
 
+    private final Map<AgencyAndId, NoticeAssignment> noticeAssignmentById;
+
+    private final Map<AgencyAndId, Notice> noticeById;
+
     private final Collection<Pathway> pathways;
 
     private final Collection<AgencyAndId> serviceIds;
@@ -98,6 +104,8 @@ class OtpTransitServiceImpl implements OtpTransitService {
         this.fareAttributes = nullSafeUnmodifiableList(builder.getFareAttributes());
         this.fareRules = nullSafeUnmodifiableList(builder.getFareRules());
         this.feedInfos = nullSafeUnmodifiableList(builder.getFeedInfos());
+        this.noticeById = unmodifiableMap(builder.getNoticesById().asMap());
+        this.noticeAssignmentById = unmodifiableMap(builder.getNoticeAssignmentsById().asMap());
         this.pathways = nullSafeUnmodifiableList(builder.getPathways());
         this.serviceIds = nullSafeUnmodifiableList(builder.findAllServiceIds());
         this.shapePointsByShapeId = mapShapePoints(builder.getShapePoints());
@@ -128,6 +136,12 @@ class OtpTransitServiceImpl implements OtpTransitService {
     public Collection<FeedInfo> getAllFeedInfos() {
         return feedInfos;
     }
+
+    @Override
+    public Map<AgencyAndId, Notice> getNoticeById() { return noticeById; }
+
+    @Override
+    public Map<AgencyAndId, NoticeAssignment> getNoticeAssignmentById() { return noticeAssignmentById; }
 
     @Override
     public Collection<Pathway> getAllPathways() {

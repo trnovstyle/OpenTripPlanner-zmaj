@@ -96,8 +96,8 @@ public class TripPatternMapper {
 
         TripPattern tripPattern = new TripPattern(otpRoute, stopPattern);
         tripPattern.code = journeyPattern.getId();
-        tripPattern.name =
-                journeyPattern.getName() == null ? "" : journeyPattern.getName().getValue();
+        tripPattern.name = journeyPattern.getName() == null ? "" : journeyPattern.getName().getValue();
+        tripPattern.id = AgencyAndIdFactory.createAgencyAndId(journeyPattern.getId());
 
         Deduplicator deduplicator = new Deduplicator();
 
@@ -143,6 +143,7 @@ public class TripPatternMapper {
     private StopTime mapToStopTime(Trip trip, StopPointInJourneyPattern stopPoint, Stop quay,
                                    TimetabledPassingTime passingTime, int stopSequence, NetexDao netexDao) {
         StopTime stopTime = new StopTime();
+        stopTime.setId(AgencyAndIdFactory.createAgencyAndId(passingTime.getId()));
         stopTime.setTrip(trip);
         stopTime.setStopSequence(stopSequence);
         stopTime.setStop(quay);

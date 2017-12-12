@@ -17,6 +17,7 @@ public class TripTimeShort {
 
     public static final int UNDEFINED = -1;
     public AgencyAndId stopId;
+    public AgencyAndId stopTimeId;
     public int stopIndex;
     public int stopCount;
     public int scheduledArrival = UNDEFINED ;
@@ -38,6 +39,7 @@ public class TripTimeShort {
      */
     public TripTimeShort(TripTimes tt, int i, Stop stop) {
         stopId = stop.getId();
+        stopTimeId = tt.getStopTimeIdByIndex(i);
         stopIndex          = i;
         stopCount          = tt.getNumStops();
         scheduledArrival   = tt.getScheduledArrivalTime(i);
