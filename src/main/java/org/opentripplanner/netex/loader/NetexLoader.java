@@ -30,6 +30,7 @@ import org.rutebanken.netex.model.DayTypes_RelStructure;
 import org.rutebanken.netex.model.DestinationDisplay;
 import org.rutebanken.netex.model.GroupOfLines;
 import org.rutebanken.netex.model.GroupsOfLinesInFrame_RelStructure;
+import org.rutebanken.netex.model.Interchange_VersionStructure;
 import org.rutebanken.netex.model.JourneyPattern;
 import org.rutebanken.netex.model.JourneyPatternsInFrame_RelStructure;
 import org.rutebanken.netex.model.Journey_VersionStructure;
@@ -49,6 +50,7 @@ import org.rutebanken.netex.model.RoutesInFrame_RelStructure;
 import org.rutebanken.netex.model.ServiceCalendarFrame;
 import org.rutebanken.netex.model.ServiceFrame;
 import org.rutebanken.netex.model.ServiceJourney;
+import org.rutebanken.netex.model.ServiceJourneyInterchange;
 import org.rutebanken.netex.model.SiteFrame;
 import org.rutebanken.netex.model.StopAssignment_VersionStructure;
 import org.rutebanken.netex.model.StopAssignmentsInFrame_RelStructure;
@@ -106,7 +108,7 @@ public class NetexLoader {
 
         // Add a global(this zip file) shared NeTEX DAO  
         netexDaoStack.addFirst(new NetexDao());
-        
+
         // Load global shared files
         loadFiles(entries.sharedEntries(), zipFile);
         mapCurrentNetexDaoIntoOtpTransitObjects();
@@ -369,6 +371,15 @@ public class NetexLoader {
                         }
                     } else {
                         LOG.warn("JourneyPattern not found. " + journeyPatternId);
+                    }
+                }
+            }
+            if (timetableFrame.getJourneyInterchanges() != null) {
+                for (Interchange_VersionStructure interchange_versionStructure : timetableFrame.getJourneyInterchanges()
+                        .getServiceJourneyPatternInterchangeOrServiceJourneyInterchange()) {
+                    if (interchange_versionStructure instanceof ServiceJourneyInterchange) {
+                        ServiceJourneyInterchange interchange = (ServiceJourneyInterchange) interchange_versionStructure;
+                        currentNetexDao().addInterchange(interchange);
                     }
                 }
             }

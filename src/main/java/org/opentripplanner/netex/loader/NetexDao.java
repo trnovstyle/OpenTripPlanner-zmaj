@@ -14,6 +14,7 @@ import org.rutebanken.netex.model.OperatingPeriod;
 import org.rutebanken.netex.model.Quay;
 import org.rutebanken.netex.model.Route;
 import org.rutebanken.netex.model.ServiceJourney;
+import org.rutebanken.netex.model.ServiceJourneyInterchange;
 import org.rutebanken.netex.model.StopPlace;
 
 import java.util.Collection;
@@ -76,6 +77,8 @@ public class NetexDao {
     private final Multimap<String, Quay> quayById = ArrayListMultimap.create();
 
     private final Map<String, DestinationDisplay> destinationDisplayMap = new HashMap<>();
+
+    private final Map<String, ServiceJourneyInterchange> interchanges = new HashMap<>();
 
     private String timeZone;
 
@@ -343,6 +346,14 @@ public class NetexDao {
         return returnLocalValue(v) ? v : parent.lookupNetworkById(networkId);
     }
 
+
+    public void addInterchange(ServiceJourneyInterchange interchange) {
+        interchanges.put(interchange.getId(), interchange);
+    }
+
+    public Collection<ServiceJourneyInterchange> getInterchanges() {
+        return interchanges.values();
+    }
 
     /* private methods */
 
