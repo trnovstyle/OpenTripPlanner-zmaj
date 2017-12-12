@@ -175,6 +175,12 @@ public class GraphBuilderParameters {
     public final NetexParameters netex;
 
     /**
+     *  Link multimodal stops to their containing stops
+     */
+
+    public final boolean linkMultiModalStopsToParentStations;
+
+    /**
      * Set all parameters from the given Jackson JSON tree, applying defaults.
      * Supplying MissingNode.getInstance() will cause all the defaults to be applied.
      * This could be done automatically with the "reflective query scraper" but it's less type safe and less clear.
@@ -210,6 +216,7 @@ public class GraphBuilderParameters {
         maxTransferDistance = config.path("maxTransferDistance").asDouble(2000);
         extraEdgesStopPlatformLink = config.path("extraEdgesStopPlatformLink").asBoolean(false);
         netex = new NetexParameters(config.path("netex"));
+        linkMultiModalStopsToParentStations = config.path("linkMultiModalStopsToParentStations").asBoolean(false);
     }
 
 }

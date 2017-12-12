@@ -48,10 +48,17 @@ public class NetexMapper {
             transitBuilder.getRoutes().add(route);
         }
 
+        for (StopPlace stopPlace : netexDao.getMultimodalStops()) {
+            if (stopPlace != null) {
+                Stop stop = stopMapper.mapMultiModalStop(stopPlace);
+                transitBuilder.getMultiModalStops().add(stop);
+            }
+        }
+
         for (String stopPlaceId : netexDao.getStopPlaceIds()) {
             Collection<StopPlace> stopPlaceAllVersions = netexDao.lookupStopPlacesById(stopPlaceId);
             if (stopPlaceAllVersions != null) {
-                Collection<Stop> stops = stopMapper.mapParentAndChildStops(stopPlaceAllVersions, netexDao);
+                Collection<Stop> stops = stopMapper.mapParentAndChildStops(stopPlaceAllVersions, transitBuilder, netexDao);
                 for (Stop stop : stops) {
                     transitBuilder.getStops().add(stop);
                 }

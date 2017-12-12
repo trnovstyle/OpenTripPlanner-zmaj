@@ -24,6 +24,7 @@ import org.apache.lucene.util.PriorityQueue;
 import org.joda.time.LocalDate;
 import org.opentripplanner.model.Agency;
 import org.opentripplanner.model.AgencyAndId;
+import org.opentripplanner.model.FeedInfo;
 import org.opentripplanner.model.Route;
 import org.opentripplanner.model.Stop;
 import org.opentripplanner.model.Trip;
@@ -104,8 +105,7 @@ public class GraphIndex {
     public final Map<String, Vertex> vertexForId = Maps.newHashMap();
     public final Map<String, Map<String, Agency>> agenciesForFeedId = Maps.newHashMap();
 
-    // TODO TGR - Is this needed? Why is feedInfo exposed in the API?
-    //    public final Map<String, FeedInfo> feedInfoForId = Maps.newHashMap();
+    public final Map<String, FeedInfo> feedInfoForId = Maps.newHashMap();
     public final Map<AgencyAndId, Stop> stopForId = Maps.newHashMap();
     public final Map<AgencyAndId, Stop> stationForId = Maps.newHashMap();
     public final Map<AgencyAndId, Trip> tripForId = Maps.newHashMap();
@@ -118,8 +118,7 @@ public class GraphIndex {
     public final Multimap<Route, TripPattern> patternsForRoute = ArrayListMultimap.create();
     public final Multimap<Stop, TripPattern> patternsForStop = ArrayListMultimap.create();
     public final Multimap<AgencyAndId, Stop> stopsForParentStation = ArrayListMultimap.create();
-// TODO TGR - Enabme after MultimodalStop is merge in
-//    public final Multimap<String, Stop> parentStationsForMultimodalStop = ArrayListMultimap.create();
+    public final Multimap<String, Stop> parentStationsForMultimodalStop = ArrayListMultimap.create();
     final HashGridSpatialIndex<TransitStop> stopSpatialIndex = new HashGridSpatialIndex<TransitStop>();
     public final Map<Stop, StopCluster> stopClusterForStop = Maps.newHashMap();
     public final Map<String, StopCluster> stopClusterForId = Maps.newHashMap();
@@ -157,8 +156,7 @@ public class GraphIndex {
                 agencyForId.put(agency.getId(), agency);
                 this.agenciesForFeedId.put(feedId, agencyForId);
             }
-// TODO TGR
-//            this.feedInfoForId.put(feedId, graph.getFeedInfo(feedId));
+            this.feedInfoForId.put(feedId, graph.getFeedInfo(feedId));
         }
 
         Collection<Edge> edges = graph.getEdges();
@@ -205,8 +203,9 @@ public class GraphIndex {
                 tripForId.put(trip.getId(), trip);
             }
             for (Stop stop: pattern.getStops()) {
-                if (!patternsForStop.containsEntry(stop, pattern))
+                if (!patternsForStop.containsEntry(stop, pattern)) {
                     patternsForStop.put(stop, pattern);
+                }
             }
         }
         for (Route route : patternsForRoute.asMap().keySet()) {

@@ -218,13 +218,22 @@ public class NetexLoader {
             StopPlacesInFrame_RelStructure stopPlaces = sf.getStopPlaces();
             List<StopPlace> stopPlaceList = stopPlaces.getStopPlace();
             for (StopPlace stopPlace : stopPlaceList) {
-                currentNetexDao().addStopPlace(stopPlace);
-                if (stopPlace.getQuays() != null) {
-                    List<Object> quayRefOrQuay = stopPlace.getQuays().getQuayRefOrQuay();
-                    for (Object quayObject : quayRefOrQuay) {
-                        if (quayObject instanceof Quay) {
-                            Quay quay = (Quay) quayObject;
-                            currentNetexDao().addQuay(quay);
+                if (stopPlace.getKeyList().getKeyValue().stream().anyMatch(keyValueStructure ->
+                        keyValueStructure.getKey().equals("IS_PARENT_STOP_PLACE") && keyValueStructure.getValue().equals("true"))) {
+                    currentNetexDao().addMultimodalStopPlace(stopPlace);
+                } else {
+                    currentNetexDao().addStopPlace(stopPlace);
+                    if (stopPlace.getQuays() == null) {
+                        LOG.warn(stopPlace.getId() + " does not contain any quays");
+                    } else {
+                        List<Object> quayRefOrQuay = stopPlace.getQuays().getQuayRefOrQuay();
+                        for (Object quayObject : quayRefOrQuay) {
+                            if (quayObject instanceof Quay) {
+                                Quay quay = (Quay) quayObject;
+                                currentNetexDao().addQuay(quay);
+                                // TODO TGR - Remove this before PR??
+                                //currentNetexDao().getStopPlaceByQuay().put(quay, stopPlace);
+                            }
                         }
                     }
                 }
