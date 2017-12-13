@@ -582,60 +582,25 @@ public class Timetable implements Serializable {
             return oldTimes;
         }
 
-        EstimatedVehicleJourney.EstimatedCalls journeyCalls = journey.getEstimatedCalls();
-        EstimatedVehicleJourney.RecordedCalls recordedCalls = journey.getRecordedCalls();
+        EstimatedVehicleJourney.EstimatedCalls journeyEstimatedCalls = journey.getEstimatedCalls();
+        EstimatedVehicleJourney.RecordedCalls journeyRecordedCalls = journey.getRecordedCalls();
 
-        if (journeyCalls == null) {
+        if (journeyEstimatedCalls == null) {
             LOG.error("Part of a TripUpdate object could not be applied successfully.");
             return null;
         }
 
-        List<EstimatedCall> estimatedCalls = journeyCalls.getEstimatedCalls();
-
-        int numberOfRecordedCalls = (recordedCalls != null ? (recordedCalls.getRecordedCalls() != null ? recordedCalls.getRecordedCalls().size():0):0);
+        List<EstimatedCall> estimatedCalls = journeyEstimatedCalls.getEstimatedCalls();
+        List<RecordedCall> recordedCalls;
+        if (journeyRecordedCalls != null) {
+            recordedCalls = journeyRecordedCalls.getRecordedCalls();
+        } else {
+            recordedCalls = new ArrayList<>();
+        }
 
         boolean stopPatternChanged = false;
 
-        //Get all scheduled stops with dropoff or pickup
-        Stop[] stops = pattern.stopPattern.stops;
-
-        List<Stop> modifiedStops = new ArrayList<>();
-        for (int i = 0; i < stops.length; i++) {
-            Stop stop = stops[i];
-
-            boolean foundMatch = false;
-            if (i >= numberOfRecordedCalls) {
-                for (EstimatedCall estimatedCall : estimatedCalls) {
-
-                    //Current stop is being updated
-                    boolean stopsMatchById = stop.getId().getId().equals(estimatedCall.getStopPointRef().getValue());
-
-                    if (!stopsMatchById && stop.getParentStation() != null) {
-                        Stop alternativeStop = graph.index.stopForId.get(new AgencyAndId(stop.getId().getAgencyId(), estimatedCall.getStopPointRef().getValue()));
-                        if (alternativeStop != null && stop.getParentStation().equals(alternativeStop.getParentStation())) {
-                            stopsMatchById = true;
-                            stopPatternChanged = true;
-                            stop = alternativeStop;
-                        }
-                    }
-
-                    if (stopsMatchById) {
-                        foundMatch = true;
-                        boolean isCancelled = estimatedCall.isCancellation() != null && estimatedCall.isCancellation();
-
-                        modifiedStops.add(stop);
-
-                        if (isCancelled) {
-                            stopPatternChanged = true;
-                        }
-                        break;
-                    }
-                }
-            }
-            if (!foundMatch) {
-                modifiedStops.add(stop);
-            }
-        }
+        List<Stop> modifiedStops = createModifiedStops(journey, graph.index);
 
         Trip trip = getTrip(tripId);
 
@@ -650,22 +615,23 @@ public class Timetable implements Serializable {
 
         int callCounter = 0;
         ZonedDateTime departureDate = null;
-        Set<EstimatedCall> alreadyVisited = new HashSet<>();
+        Set<Object> alreadyVisited = new HashSet<>();
 
         int departureFromPreviousStop = 0;
         int lastArrivalDelay = 0;
         int lastDepartureDelay = 0;
         for (Stop stop : modifiedStops) {
             boolean foundMatch = false;
-            for (EstimatedCall estimatedCall : estimatedCalls) {
-                if (alreadyVisited.contains(estimatedCall)) {
+
+            for (RecordedCall recordedCall : recordedCalls) {
+                if (alreadyVisited.contains(recordedCall)) {
                     continue;
                 }
                 //Current stop is being updated
-                foundMatch = stop.getId().getId().equals(estimatedCall.getStopPointRef().getValue());
+                foundMatch = stop.getId().getId().equals(recordedCall.getStopPointRef().getValue());
 
                 if (!foundMatch && stop.getParentStation() != null) {
-                    Stop alternativeStop = graph.index.stopForId.get(new AgencyAndId(stop.getId().getAgencyId(), estimatedCall.getStopPointRef().getValue()));
+                    Stop alternativeStop = graph.index.stopForId.get(new AgencyAndId(stop.getId().getAgencyId(), recordedCall.getStopPointRef().getValue()));
                     if (alternativeStop != null && stop.getParentStation().equals(alternativeStop.getParentStation())) {
                         foundMatch = true;
                     }
@@ -673,18 +639,20 @@ public class Timetable implements Serializable {
 
                 if (foundMatch) {
                     if (departureDate == null) {
-                        departureDate = estimatedCall.getAimedDepartureTime();
+                        departureDate = recordedCall.getAimedDepartureTime();
                         if (departureDate == null) {
-                            departureDate = estimatedCall.getAimedArrivalTime();
+                            departureDate = recordedCall.getAimedArrivalTime();
                         }
                     }
 
                     int arrivalTime = newTimes.getArrivalTime(callCounter);
                     int realtimeArrivalTime = arrivalTime;
-                    if (estimatedCall.getExpectedArrivalTime() != null) {
-                        realtimeArrivalTime = calculateSecondsSinceMidnight(departureDate, estimatedCall.getExpectedArrivalTime());
-                    } else if (estimatedCall.getAimedArrivalTime() != null) {
-                        realtimeArrivalTime = calculateSecondsSinceMidnight(departureDate, estimatedCall.getAimedArrivalTime());
+                    if (recordedCall.getActualArrivalTime() != null) {
+                        realtimeArrivalTime = calculateSecondsSinceMidnight(departureDate, recordedCall.getActualArrivalTime());
+                    } else if (recordedCall.getExpectedArrivalTime() != null) {
+                        realtimeArrivalTime = calculateSecondsSinceMidnight(departureDate, recordedCall.getExpectedArrivalTime());
+                    } else if (recordedCall.getAimedArrivalTime() != null) {
+                        realtimeArrivalTime = calculateSecondsSinceMidnight(departureDate, recordedCall.getAimedArrivalTime());
                     }
                     int arrivalDelay = realtimeArrivalTime - arrivalTime;
                     newTimes.updateArrivalDelay(callCounter, arrivalDelay);
@@ -692,10 +660,12 @@ public class Timetable implements Serializable {
 
                     int departureTime = newTimes.getDepartureTime(callCounter);
                     int realtimeDepartureTime = departureTime;
-                    if (estimatedCall.getExpectedDepartureTime() != null) {
-                        realtimeDepartureTime = calculateSecondsSinceMidnight(departureDate, estimatedCall.getExpectedDepartureTime());
-                    } else if (estimatedCall.getAimedDepartureTime() != null) {
-                        realtimeDepartureTime = calculateSecondsSinceMidnight(departureDate, estimatedCall.getAimedDepartureTime());
+                    if (recordedCall.getActualDepartureTime() != null) {
+                        realtimeArrivalTime = calculateSecondsSinceMidnight(departureDate, recordedCall.getActualDepartureTime());
+                    } else if (recordedCall.getExpectedDepartureTime() != null) {
+                        realtimeDepartureTime = calculateSecondsSinceMidnight(departureDate, recordedCall.getExpectedDepartureTime());
+                    } else if (recordedCall.getAimedDepartureTime() != null) {
+                        realtimeDepartureTime = calculateSecondsSinceMidnight(departureDate, recordedCall.getAimedDepartureTime());
                     }
                     if (realtimeDepartureTime < realtimeArrivalTime){
                         realtimeDepartureTime = realtimeArrivalTime;
@@ -706,8 +676,63 @@ public class Timetable implements Serializable {
                     lastDepartureDelay = departureDelay;
                     departureFromPreviousStop = newTimes.getDepartureTime(callCounter);
 
-                    alreadyVisited.add(estimatedCall);
+                    alreadyVisited.add(recordedCall);
                     break;
+                }
+            }
+            if (!foundMatch) {
+                for (EstimatedCall estimatedCall : estimatedCalls) {
+                    if (alreadyVisited.contains(estimatedCall)) {
+                        continue;
+                    }
+                    //Current stop is being updated
+                    foundMatch = stop.getId().getId().equals(estimatedCall.getStopPointRef().getValue());
+
+                    if (!foundMatch && stop.getParentStation() != null) {
+                        Stop alternativeStop = graph.index.stopForId.get(new AgencyAndId(stop.getId().getAgencyId(), estimatedCall.getStopPointRef().getValue()));
+                        if (alternativeStop != null && stop.getParentStation().equals(alternativeStop.getParentStation())) {
+                            foundMatch = true;
+                        }
+                    }
+
+                    if (foundMatch) {
+                        if (departureDate == null) {
+                            departureDate = estimatedCall.getAimedDepartureTime();
+                            if (departureDate == null) {
+                                departureDate = estimatedCall.getAimedArrivalTime();
+                            }
+                        }
+
+                        int arrivalTime = newTimes.getArrivalTime(callCounter);
+                        int realtimeArrivalTime = arrivalTime;
+                        if (estimatedCall.getExpectedArrivalTime() != null) {
+                            realtimeArrivalTime = calculateSecondsSinceMidnight(departureDate, estimatedCall.getExpectedArrivalTime());
+                        } else if (estimatedCall.getAimedArrivalTime() != null) {
+                            realtimeArrivalTime = calculateSecondsSinceMidnight(departureDate, estimatedCall.getAimedArrivalTime());
+                        }
+                        int arrivalDelay = realtimeArrivalTime - arrivalTime;
+                        newTimes.updateArrivalDelay(callCounter, arrivalDelay);
+                        lastArrivalDelay = arrivalDelay;
+
+                        int departureTime = newTimes.getDepartureTime(callCounter);
+                        int realtimeDepartureTime = departureTime;
+                        if (estimatedCall.getExpectedDepartureTime() != null) {
+                            realtimeDepartureTime = calculateSecondsSinceMidnight(departureDate, estimatedCall.getExpectedDepartureTime());
+                        } else if (estimatedCall.getAimedDepartureTime() != null) {
+                            realtimeDepartureTime = calculateSecondsSinceMidnight(departureDate, estimatedCall.getAimedDepartureTime());
+                        }
+                        if (realtimeDepartureTime < realtimeArrivalTime) {
+                            realtimeDepartureTime = realtimeArrivalTime;
+                        }
+                        int departureDelay = realtimeDepartureTime - departureTime;
+
+                        newTimes.updateDepartureDelay(callCounter, departureDelay);
+                        lastDepartureDelay = departureDelay;
+                        departureFromPreviousStop = newTimes.getDepartureTime(callCounter);
+
+                        alreadyVisited.add(estimatedCall);
+                        break;
+                    }
                 }
             }
             if (!foundMatch) {
@@ -787,45 +812,79 @@ public class Timetable implements Serializable {
             return null;
         }
 
-        EstimatedVehicleJourney.EstimatedCalls journeyCalls = journey.getEstimatedCalls();
+        EstimatedVehicleJourney.EstimatedCalls journeyEstimatedCalls = journey.getEstimatedCalls();
+        EstimatedVehicleJourney.RecordedCalls journeyRecordedCalls = journey.getRecordedCalls();
 
-        if (journeyCalls == null) {
+        if (journeyEstimatedCalls == null) {
             LOG.error("Part of a TripUpdate object could not be applied successfully.");
             return null;
         }
 
+        List<EstimatedCall> estimatedCalls = journeyEstimatedCalls.getEstimatedCalls();
 
-        List<EstimatedCall> estimatedCalls = journeyCalls.getEstimatedCalls();
+        List<RecordedCall> recordedCalls;
+        if (journeyRecordedCalls != null) {
+            recordedCalls = journeyRecordedCalls.getRecordedCalls();
+        } else {
+            recordedCalls = new ArrayList<>();
+        }
 
         //Get all scheduled stops
         Stop[] stops = pattern.stopPattern.stops;
 
         List<Stop> modifiedStops = new ArrayList<>();
 
-        for (Stop stop : stops) {
+        for (int i = 0; i < stops.length; i++) {
+            Stop stop = stops[i];
 
-            String id = stop.getId().getId();
             boolean foundMatch = false;
-            for (EstimatedCall estimatedCall : estimatedCalls) {
-                //Current stop is being updated
-                if (id.equals(estimatedCall.getStopPointRef().getValue())) {
-                    foundMatch = true;
-                    modifiedStops.add(stop);
-                    break;
-                } else if (stop.getParentStation() != null) {
-                    Stop alternativeStop = graphIndex.stopForId.get(new AgencyAndId(stop.getId().getAgencyId(), estimatedCall.getStopPointRef().getValue()));
-                    if (alternativeStop != null && stop.getParentStation().equals(alternativeStop.getParentStation())) {
-                        foundMatch = true;
-                        modifiedStops.add(alternativeStop);
-                        break;
+            if (i < recordedCalls.size()) {
+                for (RecordedCall recordedCall : recordedCalls) {
+
+                    //Current stop is being updated
+                    boolean stopsMatchById = stop.getId().getId().equals(recordedCall.getStopPointRef().getValue());
+
+                    if (!stopsMatchById && stop.getParentStation() != null) {
+                        Stop alternativeStop = graphIndex.stopForId.get(new AgencyAndId(stop.getId().getAgencyId(), recordedCall.getStopPointRef().getValue()));
+                        if (alternativeStop != null && stop.getParentStation().equals(alternativeStop.getParentStation())) {
+                            stopsMatchById = true;
+                            stop = alternativeStop;
+                        }
                     }
 
+                    if (stopsMatchById) {
+                        foundMatch = true;
+                        modifiedStops.add(stop);
+                        break;
+                    }
+                }
+            } else {
+                for (EstimatedCall estimatedCall : estimatedCalls) {
+
+                    //Current stop is being updated
+                    boolean stopsMatchById = stop.getId().getId().equals(estimatedCall.getStopPointRef().getValue());
+
+                    if (!stopsMatchById && stop.getParentStation() != null) {
+                        Stop alternativeStop = graphIndex.stopForId.get(new AgencyAndId(stop.getId().getAgencyId(), estimatedCall.getStopPointRef().getValue()));
+                        if (alternativeStop != null && stop.getParentStation().equals(alternativeStop.getParentStation())) {
+                            stopsMatchById = true;
+                            stop = alternativeStop;
+                        }
+                    }
+
+                    if (stopsMatchById) {
+                        foundMatch = true;
+                        modifiedStops.add(stop);
+                        break;
+                    }
                 }
             }
             if (!foundMatch) {
                 modifiedStops.add(stop);
             }
         }
+
+
         return modifiedStops;
     }
 
