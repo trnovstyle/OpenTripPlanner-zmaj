@@ -19,6 +19,7 @@ import java.util.stream.Collectors;
 
 public class StopMapper {
     private static final Logger LOG = LoggerFactory.getLogger(StopMapper.class);
+    private StopPlaceTypeMapper transportModeMapper  = new StopPlaceTypeMapper();
 
     public Collection<Stop> mapParentAndChildStops(Collection<StopPlace> stopPlaceAllVersions, OtpTransitDaoBuilder transitBuilder, NetexDao netexDao){
         ArrayList<Stop> stops = new ArrayList<>();
@@ -64,6 +65,9 @@ public class StopMapper {
         }
 
         stop.setId(AgencyAndIdFactory.getAgencyAndId(stopPlaceLatest.getId()));
+
+        stop.setVehicleType(transportModeMapper.getTransportMode(stopPlaceLatest));
+
         stops.add(stop);
 
         // Get quays from all versions of stop place
@@ -88,10 +92,10 @@ public class StopMapper {
                         stopQuay.setLon(quay.getCentroid().getLocation().getLongitude().doubleValue());
                         stopQuay.setId(AgencyAndIdFactory.getAgencyAndId(quay.getId()));
                         stopQuay.setParentStation(stop.getId().getId());
+                        stopQuay.setVehicleType(stop.getVehicleType());
                         if (multiModalStop != null) {
                             stopQuay.setMultiModalStation(multiModalStop.getId().getId());
                         }
-
 
                         // Continue if this is not newest version of quay
                         if (netexDao.getQuayById().get(stopQuay.getId().getId().toString()).stream()
