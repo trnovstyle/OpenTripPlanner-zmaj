@@ -135,6 +135,14 @@ public class AgencyAndId implements Serializable, Comparable<AgencyAndId> {
     public static String convertToString(AgencyAndId aid) {
         if (aid == null)
             return null;
-        return aid.getAgencyId() + ID_SEPARATOR + aid.getId();
+        return concatenateId(aid.getAgencyId(), aid.getId());
     }
+
+    /**
+     * Concatenate agencyId and id into a string.
+     */
+    public static String concatenateId(String agencyId, String id) {
+        return agencyId + ID_SEPARATOR + id;
+    }
+
 }

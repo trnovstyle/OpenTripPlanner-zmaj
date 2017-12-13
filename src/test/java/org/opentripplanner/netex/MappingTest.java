@@ -5,6 +5,7 @@ import org.joda.time.DateTime;
 import org.joda.time.MutableDateTime;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.opentripplanner.model.Agency;
 import org.opentripplanner.netex.loader.NetexLoader;
@@ -78,6 +79,7 @@ public class MappingTest {
     }
 
     @Test
+    @Ignore
     public void testNetexStopTimes() {
         HashSet<StopTime> stopTimesGtfs = new HashSet<>(otpBuilderFromGtfs.getStopTimesSortedByTrip().values());
         HashSet<StopTime> stopTimesNetex = new HashSet<>(otpBuilderFromNetex.getStopTimesSortedByTrip().values());

@@ -46,6 +46,7 @@ import org.opentripplanner.index.transmodel.model.TransmodelStopPlaceType;
 import org.opentripplanner.index.transmodel.model.TransmodelTransportSubmode;
 import org.opentripplanner.model.Agency;
 import org.opentripplanner.model.AgencyAndId;
+import org.opentripplanner.model.Notice;
 import org.opentripplanner.model.Route;
 import org.opentripplanner.model.Stop;
 import org.opentripplanner.model.Trip;
@@ -213,8 +214,7 @@ public class TransmodelIndexGraphQLSchema {
 
     private final GtfsRealtimeFuzzyTripMatcher fuzzyTripMatcher;
 
-    // TODO TGR - enable after notices is merges into rb_dev
-    // public GraphQLOutputType noticeType = new GraphQLTypeReference("Notice");
+    public GraphQLOutputType noticeType = new GraphQLTypeReference("Notice");
 
     public GraphQLOutputType organisationType = new GraphQLTypeReference("Organisation");
 
@@ -684,8 +684,8 @@ public class TransmodelIndexGraphQLSchema {
                                                            environment.getArguments().put("modes", mapListOfModes(environment.getArgument("modes")));
 
                                                            // TODO using AgencyAndId separator instead of GtfsLibrary because GraphqlPlanner expects this. Should be cleaned up.
-                                                           environment.getArguments().put("startTransitStopId", prepareAgencyAndId(environment.getArgument("startTransitQuayId"), AgencyAndId.ID_SEPARATOR));
-                                                           environment.getArguments().put("startTransitTripId", prepareAgencyAndId(environment.getArgument("startTransitServiceJourneyId"), AgencyAndId.ID_SEPARATOR));
+                                                           environment.getArguments().put("startTransitStopId", prepareAgencyAndId(environment.getArgument("startTransitQuayId")));
+                                                           environment.getArguments().put("startTransitTripId", prepareAgencyAndId(environment.getArgument("startTransitServiceJourneyId")));
 
                                                            Map<String, Object> unpreferred = environment.getArgument("unpreferred");
                                                            if (unpreferred != null) {
@@ -706,9 +706,9 @@ public class TransmodelIndexGraphQLSchema {
                                                                // Using double underscore as separator as expected format is agency_routeName_routeId, and we are only supplying routeId
                                                                banned.put("routes", prepareListOfAgencyAndId((String) banned.get("lines"), "__"));
                                                                banned.put("agencies", banned.get("organisations"));
-                                                               banned.put("trips", prepareListOfAgencyAndId((String) banned.get("serviceJourneys"), GTFS_LIBRARY_ID_SEPARATOR));
-                                                               banned.put("stops", prepareListOfAgencyAndId((String) banned.get("quay"), GTFS_LIBRARY_ID_SEPARATOR));
-                                                               banned.put("stopsHard", prepareListOfAgencyAndId((String) banned.get("quaysHard"), GTFS_LIBRARY_ID_SEPARATOR));
+                                                               banned.put("trips", prepareListOfAgencyAndId((String) banned.get("serviceJourneys")));
+                                                               banned.put("stops", prepareListOfAgencyAndId((String) banned.get("quay")));
+                                                               banned.put("stopsHard", prepareListOfAgencyAndId((String) banned.get("quaysHard")));
                                                            }
 
                                                            environment.getArguments().put("fromPlace", preparePlaceRef(environment.getArgument("fromPlace")));
@@ -719,28 +719,27 @@ public class TransmodelIndexGraphQLSchema {
 
         fuzzyTripMatcher = new GtfsRealtimeFuzzyTripMatcher(index);
 
-// TODO TGR - enable after notices is merges into rb_dev
-//        noticeType = GraphQLObjectType.newObject()
-//                             .name("Notice")
-//                             .field(GraphQLFieldDefinition.newFieldDefinition()
-//                                            .name("id")
-//                                            .type(Scalars.GraphQLString)
-//                                            .dataFetcher(
-//                                                    environment -> ((Notice) environment.getSource()).getId())
-//                                            .build())
-//                             .field(GraphQLFieldDefinition.newFieldDefinition()
-//                                            .name("text")
-//                                            .type(Scalars.GraphQLString)
-//                                            .dataFetcher(
-//                                                    environment -> ((Notice) environment.getSource()).getText())
-//                                            .build())
-//                             .field(GraphQLFieldDefinition.newFieldDefinition()
-//                                            .name("publicCode")
-//                                            .type(Scalars.GraphQLString)
-//                                            .dataFetcher(
-//                                                    environment -> ((Notice) environment.getSource()).getPublicCode())
-//                                            .build())
-//                             .build();
+        noticeType = GraphQLObjectType.newObject()
+                             .name("Notice")
+                             .field(GraphQLFieldDefinition.newFieldDefinition()
+                                            .name("id")
+                                            .type(Scalars.GraphQLString)
+                                            .dataFetcher(
+                                                    environment -> ((Notice) environment.getSource()).getId())
+                                            .build())
+                             .field(GraphQLFieldDefinition.newFieldDefinition()
+                                            .name("text")
+                                            .type(Scalars.GraphQLString)
+                                            .dataFetcher(
+                                                    environment -> ((Notice) environment.getSource()).getText())
+                                            .build())
+                             .field(GraphQLFieldDefinition.newFieldDefinition()
+                                            .name("publicCode")
+                                            .type(Scalars.GraphQLString)
+                                            .dataFetcher(
+                                                    environment -> ((Notice) environment.getSource()).getPublicCode())
+                                            .build())
+                             .build();
 
         translatedStringType = GraphQLObjectType.newObject()
                                        .name("TranslatedString")
@@ -1599,15 +1598,14 @@ public class TransmodelIndexGraphQLSchema {
                                                  .type(Scalars.GraphQLString)
                                                  .dataFetcher(environment -> ((TripTimeShort) environment.getSource()).headsign)
                                                  .build())
-// TODO TGR - Enable after notices are merged in
-//                                  .field(GraphQLFieldDefinition.newFieldDefinition()
-//                                                 .name("notices")
-//                                                 .type(new GraphQLList(noticeType))
-//                                                 .dataFetcher(environment -> {
-//                                                     TripTimeShort tripTimeShort = environment.getSource();
-//                                                     return index.getNoticesForElement(tripTimeShort.stopTimeId);
-//                                                 })
-//                                                 .build())
+                                  .field(GraphQLFieldDefinition.newFieldDefinition()
+                                                 .name("notices")
+                                                 .type(new GraphQLList(noticeType))
+                                                 .dataFetcher(environment -> {
+                                                     TripTimeShort tripTimeShort = environment.getSource();
+                                                     return index.getNoticesForElement(tripTimeShort.stopTimeId);
+                                                 })
+                                                 .build())
                 .build();
 
         serviceJourneyType = GraphQLObjectType.newObject()
@@ -1850,15 +1848,14 @@ public class TransmodelIndexGraphQLSchema {
                                                     .dataFetcher(dataFetchingEnvironment -> index.getAlertsForPattern(
                                                             dataFetchingEnvironment.getSource()))
                                                     .build())
-// TODO TGR - Enable after notices are merged in
-//                                     .field(GraphQLFieldDefinition.newFieldDefinition()
-//                                                    .name("notices")
-//                                                    .type(new GraphQLList(noticeType))
-//                                                    .dataFetcher(environment -> {
-//                                                        TripPattern tripPattern = environment.getSource();
-//                                                        return index.getNoticesForElement(tripPattern.id);
-//                                                    })
-//                                                    .build())
+                                     .field(GraphQLFieldDefinition.newFieldDefinition()
+                                                    .name("notices")
+                                                    .type(new GraphQLList(noticeType))
+                                                    .dataFetcher(environment -> {
+                                                        TripPattern tripPattern = environment.getSource();
+                                                        return index.getNoticesForElement(tripPattern.id);
+                                                    })
+                                                    .build())
                                      .build();
 
 
@@ -1947,15 +1944,14 @@ public class TransmodelIndexGraphQLSchema {
                                                                               .distinct()
                                                                               .collect(Collectors.toList()))
                                           .build())
-// TODO TGR - enable after notices is merges into rb_dev
-//                           .field(GraphQLFieldDefinition.newFieldDefinition()
-//                                          .name("notices")
-//                                          .type(new GraphQLList(noticeType))
-//                                          .dataFetcher(environment -> {
-//                                              Route route = environment.getSource();
-//                                              return index.getNoticesForElement(route.getId());
-//                                          })
-//                                          .build())
+                           .field(GraphQLFieldDefinition.newFieldDefinition()
+                                          .name("notices")
+                                          .type(new GraphQLList(noticeType))
+                                          .dataFetcher(environment -> {
+                                              Route route = environment.getSource();
+                                              return index.getNoticesForElement(route.getId());
+                                          })
+                                          .build())
                            .field(GraphQLFieldDefinition.newFieldDefinition()
                                           .name("alerts")
                                           .description("Get all alerts active for the line")
@@ -2252,12 +2248,11 @@ public class TransmodelIndexGraphQLSchema {
                                            .type(new GraphQLList(organisationType))
                                            .dataFetcher(environment -> new ArrayList<>(index.getAllAgencies()))
                                            .build())
-// TODO TGR - Enable after notices are merged in
-//                            .field(GraphQLFieldDefinition.newFieldDefinition()
-//                                           .name("notices")
-//                                           .type(new GraphQLList(noticeType))
-//                                           .dataFetcher(environment -> index.getNoticeMap().values())
-//                                           .build())
+                            .field(GraphQLFieldDefinition.newFieldDefinition()
+                                           .name("notices")
+                                           .type(new GraphQLList(noticeType))
+                                           .dataFetcher(environment -> index.getNoticeMap().values())
+                                           .build())
                             .field(GraphQLFieldDefinition.newFieldDefinition()
                                            .name("organisation")
                                            .description("Get a single organisation based on ID")
@@ -3085,7 +3080,7 @@ public class TransmodelIndexGraphQLSchema {
             GenericLocation location = GenericLocation.fromOldStyleString(input);
 
             if (location.hasVertexId()) {
-                String prefixedPlace = prepareAgencyAndId(location.place, GTFS_LIBRARY_ID_SEPARATOR);
+                String prefixedPlace = prepareAgencyAndId(location.place);
                 return new GenericLocation(location.name, prefixedPlace).toString();
             }
 
@@ -3093,13 +3088,23 @@ public class TransmodelIndexGraphQLSchema {
         return input;
     }
 
-    private String prepareListOfAgencyAndId(String ids, Object separator) {
+    private String prepareListOfAgencyAndId(String ids) {
+        return mapListOfValues(ids, this::prepareAgencyAndId);
+    }
+
+    private String prepareListOfAgencyAndId(String ids, String separator) {
         return mapListOfValues(ids, value -> prepareAgencyAndId(value, separator));
     }
 
-    private String prepareAgencyAndId(String id, Object separator) {
+    private String prepareAgencyAndId(String id) {
+        return prepareAgencyAndId(id, null);
+    }
+
+    private String prepareAgencyAndId(String id, String separator) {
         if (fixedAgencyId != null && id != null) {
-            return fixedAgencyId + separator + id;
+            return separator == null
+                    ? AgencyAndId.concatenateId(fixedAgencyId, id)
+                    : fixedAgencyId + separator + id;
         }
         return id;
     }

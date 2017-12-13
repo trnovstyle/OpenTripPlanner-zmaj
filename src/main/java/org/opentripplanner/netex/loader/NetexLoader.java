@@ -235,8 +235,6 @@ public class NetexLoader {
                             if (quayObject instanceof Quay) {
                                 Quay quay = (Quay) quayObject;
                                 currentNetexDao().addQuay(quay);
-                                // TODO TGR - Remove this before PR??
-                                //currentNetexDao().getStopPlaceByQuay().put(quay, stopPlace);
                             }
                         }
                     }
@@ -501,10 +499,6 @@ public class NetexLoader {
                     Authority authority = (Authority) element.getValue();
                     currentNetexDao().addAuthority(authority);
                 }
-                // TODO TGR - remove this before PR
-                // if (element.getValue() instanceof Operator) {
-                //    currentNetexDao().addOperator((Operator) element.getValue());
-                //}
             }
         }
     }
