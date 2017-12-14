@@ -381,12 +381,12 @@ public class TransmodelIndexGraphQLSchema {
                                                             .field(GraphQLInputObjectField.newInputObjectField()
                                                                            .name("lines")
                                                                            .description("Set of preferred lines by user.")
-                                                                           .type(Scalars.GraphQLString)
+                                                                           .type(new GraphQLList(Scalars.GraphQLString))
                                                                            .build())
                                                             .field(GraphQLInputObjectField.newInputObjectField()
                                                                            .name("organisations")
                                                                            .description("Set of preferred organisations by user.")
-                                                                           .type(Scalars.GraphQLString)
+                                                                           .type(new GraphQLList(Scalars.GraphQLString))
                                                                            .build())
                                                             .field(GraphQLInputObjectField.newInputObjectField()
                                                                            .name("otherThanPreferredLinesPenalty")
@@ -400,12 +400,12 @@ public class TransmodelIndexGraphQLSchema {
                                                               .field(GraphQLInputObjectField.newInputObjectField()
                                                                              .name("lines")
                                                                              .description("Set of unpreferred lines for given user.")
-                                                                             .type(Scalars.GraphQLString)
+                                                                             .type(new GraphQLList(Scalars.GraphQLString))
                                                                              .build())
                                                               .field(GraphQLInputObjectField.newInputObjectField()
                                                                              .name("organisations")
                                                                              .description("Set of unpreferred organisations for given user.")
-                                                                             .type(Scalars.GraphQLString)
+                                                                             .type(new GraphQLList(Scalars.GraphQLString))
                                                                              .build())
                                                               .build();
 
@@ -414,29 +414,29 @@ public class TransmodelIndexGraphQLSchema {
                                                          .field(GraphQLInputObjectField.newInputObjectField()
                                                                         .name("lines")
                                                                         .description("Do not use certain named lines")
-                                                                        .type(Scalars.GraphQLString)
+                                                                        .type(new GraphQLList(Scalars.GraphQLString))
                                                                         .build())
                                                          .field(GraphQLInputObjectField.newInputObjectField()
                                                                         .name("organisations")
                                                                         .description("Do not use certain named organisations")
-                                                                        .type(Scalars.GraphQLString)
+                                                                        .type(new GraphQLList(Scalars.GraphQLString))
                                                                         .build())
                                                          // TODO trip ids (serviceJourneys) are expected on format AgencyId:trip-id[:stop ordinal:stop ordinal..] and thus will not work with serviceJourney ids containing ':'.
                                                          // Need to subclass GraphQLPlanner if this field is to be supported
 //                                                         .field(GraphQLInputObjectField.newInputObjectField()
 //                                                                        .name("serviceJourneys")
 //                                                                        .description("Do not use certain named serviceJourneys")
-//                                                                        .type(Scalars.GraphQLString)
+//                                                                        .type(new GraphQLList(Scalars.GraphQLString))
 //                                                                        .build())
                                                          .field(GraphQLInputObjectField.newInputObjectField()
                                                                         .name("quay")
                                                                         .description("Do not use certain quays. See for more information the bannedStops property in the RoutingResource class.")
-                                                                        .type(Scalars.GraphQLString)
+                                                                        .type(new GraphQLList(Scalars.GraphQLString))
                                                                         .build())
                                                          .field(GraphQLInputObjectField.newInputObjectField()
                                                                         .name("quaysHard")
                                                                         .description("Do not use certain quays. See for more information the bannedStopsHard property in the RoutingResource class.")
-                                                                        .type(Scalars.GraphQLString)
+                                                                        .type(new GraphQLList(Scalars.GraphQLString))
                                                                         .build())
                                                          .build();
 
@@ -548,7 +548,7 @@ public class TransmodelIndexGraphQLSchema {
                                                        .argument(GraphQLArgument.newArgument()
                                                                          .name("modes")
                                                                          .description("The set of modes that a user is willing to use. Defaults to foot | transit.")
-                                                                         .type(Scalars.GraphQLString)
+                                                                         .type(new GraphQLList(Scalars.GraphQLString))
                                                                          .build())
                                                        .argument(GraphQLArgument.newArgument()
                                                                          .name("allowBikeRental")
@@ -596,13 +596,13 @@ public class TransmodelIndexGraphQLSchema {
                                                            Map<String, Object> unpreferred = environment.getArgument("unpreferred");
                                                            if (unpreferred != null) {
                                                                // Using double underscore as separator as expected format is agency_routeName_routeId, and we are only supplying routeId
-                                                               unpreferred.put("routes", prepareListOfAgencyAndId((String) unpreferred.get("lines"), "__"));
+                                                               unpreferred.put("routes", prepareListOfAgencyAndId((List<String>) unpreferred.get("lines"), "__"));
                                                                unpreferred.put("agencies", unpreferred.get("organisations"));
                                                            }
                                                            Map<String, Object> preferred = environment.getArgument("preferred");
                                                            if (preferred != null) {
                                                                // Using double underscore as separator as expected format is agency_routeName_routeId, and we are only supplying routeId
-                                                               preferred.put("routes", prepareListOfAgencyAndId((String) preferred.get("lines"), "__"));
+                                                               preferred.put("routes", prepareListOfAgencyAndId((List<String>) preferred.get("lines"), "__"));
                                                                preferred.put("agencies", preferred.get("organisations"));
                                                                preferred.put("otherThanPreferredRoutesPenalty", preferred.get("otherThanPreferredLinesPenalty"));
                                                            }
@@ -610,11 +610,11 @@ public class TransmodelIndexGraphQLSchema {
                                                            Map<String, Object> banned = environment.getArgument("banned");
                                                            if (banned != null) {
                                                                // Using double underscore as separator as expected format is agency_routeName_routeId, and we are only supplying routeId
-                                                               banned.put("routes", prepareListOfAgencyAndId((String) banned.get("lines"), "__"));
+                                                               banned.put("routes", prepareListOfAgencyAndId((List<String>) banned.get("lines"), "__"));
                                                                banned.put("agencies", banned.get("organisations"));
-                                                               banned.put("trips", prepareListOfAgencyAndId((String) banned.get("serviceJourneys")));
-                                                               banned.put("stops", prepareListOfAgencyAndId((String) banned.get("quay")));
-                                                               banned.put("stopsHard", prepareListOfAgencyAndId((String) banned.get("quaysHard")));
+                                                               banned.put("trips", prepareListOfAgencyAndId((List<String>) banned.get("serviceJourneys")));
+                                                               banned.put("stops", prepareListOfAgencyAndId((List<String>) banned.get("quay")));
+                                                               banned.put("stopsHard", prepareListOfAgencyAndId((List<String>) banned.get("quaysHard")));
                                                            }
 
                                                            environment.getArguments().put("fromPlace", preparePlaceRef(environment.getArgument("fromPlace")));
@@ -2945,12 +2945,12 @@ public class TransmodelIndexGraphQLSchema {
         return input;
     }
 
-    private String prepareListOfAgencyAndId(String ids) {
-        return mapListOfValues(ids, this::prepareAgencyAndId);
+    private String prepareListOfAgencyAndId(List<String> ids) {
+        return mapCollectionOfValues(ids, this::prepareAgencyAndId);
     }
 
-    private String prepareListOfAgencyAndId(String ids, String separator) {
-        return mapListOfValues(ids, value -> prepareAgencyAndId(value, separator));
+    private String prepareListOfAgencyAndId(List<String> ids, String separator) {
+        return mapCollectionOfValues(ids, value -> prepareAgencyAndId(value, separator));
     }
 
     private String prepareAgencyAndId(String id) {
@@ -2969,15 +2969,16 @@ public class TransmodelIndexGraphQLSchema {
     /**
      * Convert a comma separated list of transmodel mode values into a corresponding comma separated list of otp modes.
      */
-    private String mapListOfModes(String transmodelModes) {
-        return mapListOfValues(transmodelModes, value -> mapMode(value));
+    private String mapListOfModes(List<String> transmodelModes) {
+        return mapCollectionOfValues(transmodelModes, this::mapMode);
     }
 
-    private String mapListOfValues(String listOfValues, Function<String, String> mapElementFunction) {
-        if (listOfValues == null) {
+
+    private String mapCollectionOfValues(Collection<String> values, Function<String, String> mapElementFunction) {
+        if (values == null) {
             return null;
         }
-        List<String> otpModelModes = Arrays.stream(listOfValues.split(LIST_VALUE_SEPARATOR)).map(value -> mapElementFunction.apply(value)).collect(Collectors.toList());
+        List<String> otpModelModes = values.stream().map(value -> mapElementFunction.apply(value)).collect(Collectors.toList());
 
         return Joiner.on(LIST_VALUE_SEPARATOR).join(otpModelModes);
     }
