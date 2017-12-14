@@ -185,6 +185,12 @@ public class GraphIndex {
                     stopsForParentStation.put(
                         new AgencyAndId(stop.getId().getAgencyId(), stop.getParentStation()), stop);
                 }
+
+                // Temporary solution until multimodal stations are fully part of the stop hierarchy
+                if (stop.getMultiModalStation() != null) {
+                    stopsForParentStation.put(
+                            new AgencyAndId(stop.getId().getAgencyId(), stop.getMultiModalStation()), stop);
+                }
             }
             else if (vertex instanceof TransitStation) {
                 TransitStation transitStation = (TransitStation) vertex;
