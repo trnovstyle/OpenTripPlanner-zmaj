@@ -3080,7 +3080,7 @@ public class TransmodelIndexGraphQLSchema {
             GenericLocation location = GenericLocation.fromOldStyleString(input);
 
             if (location.hasVertexId()) {
-                String prefixedPlace = prepareAgencyAndId(location.place);
+                String prefixedPlace = prepareAgencyAndId(location.place, GTFS_LIBRARY_ID_SEPARATOR);
                 return new GenericLocation(location.name, prefixedPlace).toString();
             }
 
