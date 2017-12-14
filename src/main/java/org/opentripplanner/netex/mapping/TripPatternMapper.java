@@ -76,7 +76,9 @@ public class TripPatternMapper {
                 // If all stoptime headsigns are the same, move headsign up to trip
                 if (stopTimes.stream().map(StopTime::getStopHeadsign).distinct().count() == 1) {
                     trip.setTripHeadsign(stopTimes.stream().findFirst().get().getStopHeadsign());
-                    stopTimes.forEach(s -> s.setStopHeadsign(null));
+
+                    // Temp fix
+                    //stopTimes.forEach(s -> s.setStopHeadsign(null));
                 }
 
                 // We only generate a stopPattern for the first trip in the JourneyPattern.
