@@ -2145,7 +2145,6 @@ public class TransmodelIndexGraphQLSchema {
 
         queryType = GraphQLObjectType.newObject()
                             .name("QueryType")
-                            .field(relay.nodeField(nodeInterface, nodeDataFetcher))
                             .field(tripFieldType)
                             .field(GraphQLFieldDefinition.newFieldDefinition()
                                            .name("departure")
