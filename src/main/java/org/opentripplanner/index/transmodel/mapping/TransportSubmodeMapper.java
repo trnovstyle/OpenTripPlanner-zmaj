@@ -40,7 +40,7 @@ public class TransportSubmodeMapper {
 
     private void init() {
 
-        addTwoWayMapping(TransmodelTransportSubmode.LOCAL, 100);
+    //    addTwoWayMapping(TransmodelTransportSubmode.LOCAL, 100);
         addTwoWayMapping(TransmodelTransportSubmode.HIGH_SPEED_RAIL, 101);
         addTwoWayMapping(TransmodelTransportSubmode.LONG_DISTANCE, 102);
         addTwoWayMapping(TransmodelTransportSubmode.CAR_TRANSPORT_RAIL_SERVICE, 104);

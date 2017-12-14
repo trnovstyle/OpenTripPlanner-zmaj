@@ -5,7 +5,6 @@ import graphql.GraphQL;
 import graphql.execution.ExecutorServiceExecutionStrategy;
 import org.opentripplanner.GtfsTest;
 
-import java.util.List;
 import java.util.Map;
 
 public class TransmodelGraphQLTest extends GtfsTest {
@@ -34,30 +33,8 @@ public class TransmodelGraphQLTest extends GtfsTest {
         ExecutionResult result = new GraphQL(transmodelIndexGraphQLSchema.indexSchema, new ExecutorServiceExecutionStrategy(graph.index.threadPool)
         ).execute(query);
         assertTrue(result.getErrors().isEmpty());
-        Map<String, Object> data = (Map<String, Object>) result.getData();
-        assertEquals("Fake Agency", ((Map) data.get("organisation")).get("name"));
-    }
-
-
-    public void testGraphQLNested() {
-        String query =
-                "query Organisation{\n" +
-                        "    viewer {" +
-                        "    organisation(id: \"agency\"){\n" +
-                        "        name\n" +
-                        "        lines{\n" +
-                        "            publicCode" +
-                        "        }" +
-                        "    }}\n" +
-                        "}\n";
-
-        ExecutionResult result = new GraphQL(
-                                                    transmodelIndexGraphQLSchema.indexSchema, new ExecutorServiceExecutionStrategy(graph.index.threadPool)
-        ).execute(query);
-        assertTrue(result.getErrors().isEmpty());
         Map<String, Object> data = result.getData();
-        assertEquals(18, ((List) ((Map) ((Map) data.get("viewer")).get("organisation")).get("lines")).size());
-
+        assertEquals("Fake Agency", ((Map) data.get("organisation")).get("name"));
     }
 
     public void testGraphQLIntrospectionQuery() {
