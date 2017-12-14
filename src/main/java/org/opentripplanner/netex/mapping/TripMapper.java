@@ -42,6 +42,11 @@ public class TripMapper {
             trip.setTripShortName(serviceJourney.getPrivateCode().getValue());
         }
 
+        // Temp fix to prevent frontend from breaking
+        if (trip.getTripShortName() == null) {
+            trip.setTripShortName("");
+        }
+
         return trip;
     }
 }

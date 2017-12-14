@@ -51,6 +51,10 @@ public class RouteMapper {
         otpRoute.setShortName(line.getPublicCode());
         otpRoute.setType(transportModeMapper.getTransportMode(line.getTransportMode(), line.getTransportSubmode()));
 
+        // Temp fix
+        if (otpRoute.getShortName() == null)
+            otpRoute.setShortName("");
+
         return otpRoute;
     }
 }

@@ -9,6 +9,7 @@ import org.opentripplanner.model.impl.OtpTransitBuilder;
 import org.opentripplanner.routing.edgetype.TripPattern;
 import org.opentripplanner.routing.trippattern.Deduplicator;
 import org.opentripplanner.routing.trippattern.TripTimes;
+import org.rutebanken.netex.model.DestinationDisplay;
 import org.rutebanken.netex.model.JourneyPattern;
 import org.rutebanken.netex.model.PointInJourneyPatternRefStructure;
 import org.rutebanken.netex.model.PointInLinkSequence_VersionedChildStructure;
@@ -75,7 +76,9 @@ public class TripPatternMapper {
                 // If all stoptime headsigns are the same, move headsign up to trip
                 if (stopTimes.stream().map(StopTime::getStopHeadsign).distinct().count() == 1) {
                     trip.setTripHeadsign(stopTimes.stream().findFirst().get().getStopHeadsign());
-                    stopTimes.forEach(s -> s.setStopHeadsign(null));
+
+                    // Temp fix
+                    //stopTimes.forEach(s -> s.setStopHeadsign(null));
                 }
 
                 // We only generate a stopPattern for the first trip in the JourneyPattern.
@@ -166,9 +169,9 @@ public class TripPatternMapper {
         }
 
         if (stopPoint.getDestinationDisplayRef() != null) {
-            String destinationRef = stopPoint.getDestinationDisplayRef().getRef();
-            if (netexDao.getDestinationDisplayMap().containsKey(destinationRef)) {
-                currentHeadsign = netexDao.getDestinationDisplayMap().get(destinationRef).getFrontText().getValue();
+            DestinationDisplay value = netexDao.lookUpDestinationDisplayById(stopPoint.getDestinationDisplayRef().getRef());
+            if (value != null) {
+                currentHeadsign = value.getFrontText().getValue();
             }
         }
 
