@@ -151,7 +151,7 @@ public class TransmodelIndexGraphQLSchema {
                                                      .build();
 
 
-    public static Map<String, TraverseMode> traverseModeMap = modeEnum.getValues().stream().collect(Collectors.toMap(GraphQLEnumValueDefinition::getName, valueDef -> (TraverseMode) valueDef.getValue()));
+    public static Map<String, TraverseMode> traverseModeMap = modeEnum.getValues().stream().filter(valueDef -> valueDef.getValue() instanceof TraverseMode).collect(Collectors.toMap(GraphQLEnumValueDefinition::getName, valueDef -> (TraverseMode) valueDef.getValue()));
 
     public static GraphQLEnumType transportModeEnum = GraphQLEnumType.newEnum()
                                                               .name("TransportMode")
@@ -164,6 +164,7 @@ public class TransmodelIndexGraphQLSchema {
                                                               .value("rail", TraverseMode.RAIL)
                                                               .value("metro", TraverseMode.SUBWAY)
                                                               .value("tram", TraverseMode.TRAM)
+                                                              .value("unknown", "unknown")
                                                               .build();
 
     public static GraphQLEnumType stopPlaceTypeEnum;
@@ -2991,9 +2992,13 @@ public class TransmodelIndexGraphQLSchema {
     }
 
     // Create a dummy route to be able to reuse GtfsLibrary functionality
-    private TraverseMode mapVehicleTypeToTraverseMode(int vehicleType) {
+    private Object mapVehicleTypeToTraverseMode(int vehicleType) {
         Route dummyRoute = new Route();
         dummyRoute.setType(vehicleType);
-        return GtfsLibrary.getTraverseMode(dummyRoute);
+        try {
+            return GtfsLibrary.getTraverseMode(dummyRoute);
+        } catch (IllegalArgumentException iae) {
+            return "unknown";
+        }
     }
 }
