@@ -35,7 +35,6 @@ import org.opentripplanner.api.parameter.QualifiedModeSet;
 import org.opentripplanner.common.model.GenericLocation;
 import org.opentripplanner.gtfs.GtfsLibrary;
 import org.opentripplanner.index.GraphQlPlanner;
-import org.opentripplanner.index.model.StopTimesInPattern;
 import org.opentripplanner.index.model.TripTimeShort;
 import org.opentripplanner.index.transmodel.mapping.TransportSubmodeMapper;
 import org.opentripplanner.index.transmodel.model.TransmodelTransportSubmode;
@@ -223,7 +222,7 @@ public class TransmodelIndexGraphQLSchema {
 
     private GraphQLOutputType lineType = new GraphQLTypeReference("Line");
 
-    private GraphQLOutputType passingTimeType = new GraphQLTypeReference("PassingTime");
+    private GraphQLOutputType timetabledPassingTimeType = new GraphQLTypeReference("TimetabledPassingTime");
 
     private GraphQLOutputType estimatedCallType = new GraphQLTypeReference("EstimatedCall");
 
@@ -1115,157 +1114,157 @@ public class TransmodelIndexGraphQLSchema {
                                           .build())
                            .build();
 
-        passingTimeType = GraphQLObjectType.newObject()
-                                  .name("PassingTime")
-                                  .field(GraphQLFieldDefinition.newFieldDefinition()
-                                                 .name("quay")
-                                                 .type(quayType)
-                                                 .dataFetcher(environment -> index.stopForId
-                                                                                     .get(((TripTimeShort) environment.getSource()).stopId))
-                                                 .build())
-                                  .field(GraphQLFieldDefinition.newFieldDefinition()
-                                                 .name("arrivalTime")
-                                                 .type(Scalars.GraphQLInt)
-                                                 .dataFetcher(
-                                                         environment -> ((TripTimeShort) environment.getSource()).scheduledArrival)
-                                                 .build())
-                                  .field(GraphQLFieldDefinition.newFieldDefinition()
-                                                 .name("departureTime")
-                                                 .type(Scalars.GraphQLInt)
-                                                 .dataFetcher(
-                                                         environment -> ((TripTimeShort) environment.getSource()).scheduledDeparture)
-                                                 .build())
-                                  .field(GraphQLFieldDefinition.newFieldDefinition()
-                                                 .name("timingPoint")
-                                                 .type(Scalars.GraphQLBoolean)
-                                                 .dataFetcher(environment -> ((TripTimeShort) environment.getSource()).timepoint)
-                                                 .build())
-                                  .field(GraphQLFieldDefinition.newFieldDefinition()
-                                                 .name("forBoarding")
-                                                 .type(Scalars.GraphQLBoolean)
-                                                 .dataFetcher(environment -> index.patternForTrip
-                                                                                     .get(index.tripForId.get(((TripTimeShort) environment.getSource()).tripId))
-                                                                                     .getBoardType(((TripTimeShort) environment.getSource()).stopIndex) != PICKDROP_NONE)
-                                                 .build())
-                                  .field(GraphQLFieldDefinition.newFieldDefinition()
-                                                 .name("forAlighting")
-                                                 .type(Scalars.GraphQLBoolean)
-                                                 .dataFetcher(environment -> index.patternForTrip
-                                                                                     .get(index.tripForId.get(((TripTimeShort) environment.getSource()).tripId))
-                                                                                     .getAlightType(((TripTimeShort) environment.getSource()).stopIndex) != PICKDROP_NONE)
-                                                 .build())
-                                  .field(GraphQLFieldDefinition.newFieldDefinition()
-                                                 .name("operatingDay")
-                                                 .type(Scalars.GraphQLLong)
-                                                 .dataFetcher(environment -> ((TripTimeShort) environment.getSource()).serviceDay)
-                                                 .build())
-                                  .field(GraphQLFieldDefinition.newFieldDefinition()
-                                                 .name("serviceJourney")
-                                                 .type(serviceJourneyType)
-                                                 .dataFetcher(environment -> index.tripForId
-                                                                                     .get(((TripTimeShort) environment.getSource()).tripId))
-                                                 .build())
-                                  .field(GraphQLFieldDefinition.newFieldDefinition()
-                                                 .name("destinationDisplay")
-                                                 .type(Scalars.GraphQLString)
-                                                 .dataFetcher(environment -> ((TripTimeShort) environment.getSource()).headsign)
-                                                 .build())
-                                  .field(GraphQLFieldDefinition.newFieldDefinition()
-                                                 .name("notices")
-                                                 .type(new GraphQLList(noticeType))
-                                                 .dataFetcher(environment -> {
-                                                     TripTimeShort tripTimeShort = environment.getSource();
-                                                     return index.getNoticesForElement(tripTimeShort.stopTimeId);
-                                                 })
-                                                 .build())
-                                  .build();
+        timetabledPassingTimeType = GraphQLObjectType.newObject()
+                                            .name("TimetabledPassingTime")
+                                            .field(GraphQLFieldDefinition.newFieldDefinition()
+                                                           .name("quay")
+                                                           .type(quayType)
+                                                           .dataFetcher(environment -> index.stopForId
+                                                                                               .get(((TripTimeShort) environment.getSource()).stopId))
+                                                           .build())
+                                            .field(GraphQLFieldDefinition.newFieldDefinition()
+                                                           .name("arrivalTime")
+                                                           .type(Scalars.GraphQLInt)
+                                                           .dataFetcher(
+                                                                   environment -> ((TripTimeShort) environment.getSource()).scheduledArrival)
+                                                           .build())
+                                            .field(GraphQLFieldDefinition.newFieldDefinition()
+                                                           .name("departureTime")
+                                                           .type(Scalars.GraphQLInt)
+                                                           .dataFetcher(
+                                                                   environment -> ((TripTimeShort) environment.getSource()).scheduledDeparture)
+                                                           .build())
+                                            .field(GraphQLFieldDefinition.newFieldDefinition()
+                                                           .name("timingPoint")
+                                                           .type(Scalars.GraphQLBoolean)
+                                                           .dataFetcher(environment -> ((TripTimeShort) environment.getSource()).timepoint)
+                                                           .build())
+                                            .field(GraphQLFieldDefinition.newFieldDefinition()
+                                                           .name("forBoarding")
+                                                           .type(Scalars.GraphQLBoolean)
+                                                           .dataFetcher(environment -> index.patternForTrip
+                                                                                               .get(index.tripForId.get(((TripTimeShort) environment.getSource()).tripId))
+                                                                                               .getBoardType(((TripTimeShort) environment.getSource()).stopIndex) != PICKDROP_NONE)
+                                                           .build())
+                                            .field(GraphQLFieldDefinition.newFieldDefinition()
+                                                           .name("forAlighting")
+                                                           .type(Scalars.GraphQLBoolean)
+                                                           .dataFetcher(environment -> index.patternForTrip
+                                                                                               .get(index.tripForId.get(((TripTimeShort) environment.getSource()).tripId))
+                                                                                               .getAlightType(((TripTimeShort) environment.getSource()).stopIndex) != PICKDROP_NONE)
+                                                           .build())
+                                            .field(GraphQLFieldDefinition.newFieldDefinition()
+                                                           .name("operatingDay")
+                                                           .type(Scalars.GraphQLLong)
+                                                           .dataFetcher(environment -> ((TripTimeShort) environment.getSource()).serviceDay)
+                                                           .build())
+                                            .field(GraphQLFieldDefinition.newFieldDefinition()
+                                                           .name("serviceJourney")
+                                                           .type(serviceJourneyType)
+                                                           .dataFetcher(environment -> index.tripForId
+                                                                                               .get(((TripTimeShort) environment.getSource()).tripId))
+                                                           .build())
+                                            .field(GraphQLFieldDefinition.newFieldDefinition()
+                                                           .name("destinationDisplay")
+                                                           .type(Scalars.GraphQLString)
+                                                           .dataFetcher(environment -> ((TripTimeShort) environment.getSource()).headsign)
+                                                           .build())
+                                            .field(GraphQLFieldDefinition.newFieldDefinition()
+                                                           .name("notices")
+                                                           .type(new GraphQLList(noticeType))
+                                                           .dataFetcher(environment -> {
+                                                               TripTimeShort tripTimeShort = environment.getSource();
+                                                               return index.getNoticesForElement(tripTimeShort.stopTimeId);
+                                                           })
+                                                           .build())
+                                            .build();
 
         estimatedCallType = GraphQLObjectType.newObject()
-                                  .name("EstimatedCall")
-                                  .field(GraphQLFieldDefinition.newFieldDefinition()
-                                                 .name("quay")
-                                                 .type(quayType)
-                                                 .dataFetcher(environment -> index.stopForId
-                                                                                     .get(((TripTimeShort) environment.getSource()).stopId))
-                                                 .build())
-                                  .field(GraphQLFieldDefinition.newFieldDefinition()
-                                                 .name("aimedArrivalTime")
-                                                 .type(Scalars.GraphQLInt)
-                                                 .dataFetcher(
-                                                         environment -> ((TripTimeShort) environment.getSource()).scheduledArrival)
-                                                 .build())
-                                  .field(GraphQLFieldDefinition.newFieldDefinition()
-                                                 .name("expectedArrivalTime")
-                                                 .type(Scalars.GraphQLInt)
-                                                 .dataFetcher(
-                                                         environment -> ((TripTimeShort) environment.getSource()).realtimeArrival)
-                                                 .build())
-                                  .field(GraphQLFieldDefinition.newFieldDefinition()
-                                                 .name("aimedDepartureTime")
-                                                 .type(Scalars.GraphQLInt)
-                                                 .dataFetcher(
-                                                         environment -> ((TripTimeShort) environment.getSource()).scheduledDeparture)
-                                                 .build())
-                                  .field(GraphQLFieldDefinition.newFieldDefinition()
-                                                 .name("expectedDepartureTime")
-                                                 .type(Scalars.GraphQLInt)
-                                                 .dataFetcher(
-                                                         environment -> ((TripTimeShort) environment.getSource()).realtimeDeparture)
-                                                 .build())
-                                  .field(GraphQLFieldDefinition.newFieldDefinition()
-                                                 .name("timingPoint")
-                                                 .type(Scalars.GraphQLBoolean)
-                                                 .dataFetcher(environment -> ((TripTimeShort) environment.getSource()).timepoint)
-                                                 .build())
-                                  .field(GraphQLFieldDefinition.newFieldDefinition()
-                                                 .name("realtime")
-                                                 .type(Scalars.GraphQLBoolean)
-                                                 .dataFetcher(environment -> ((TripTimeShort) environment.getSource()).realtime)
-                                                 .build())
-                                  .field(GraphQLFieldDefinition.newFieldDefinition()
-                                                 .name("realtimeState")
-                                                 .type(realtimeStateEnum)
-                                                 .dataFetcher(environment -> ((TripTimeShort) environment.getSource()).realtimeState)
-                                                 .build())
-                                  .field(GraphQLFieldDefinition.newFieldDefinition()
-                                                 .name("forBoarding")
-                                                 .type(Scalars.GraphQLBoolean)
-                                                 .dataFetcher(environment -> index.patternForTrip
-                                                                                     .get(index.tripForId.get(((TripTimeShort) environment.getSource()).tripId))
-                                                                                     .getBoardType(((TripTimeShort) environment.getSource()).stopIndex) != PICKDROP_NONE)
-                                                 .build())
-                                  .field(GraphQLFieldDefinition.newFieldDefinition()
-                                                 .name("forAlighting")
-                                                 .type(Scalars.GraphQLBoolean)
-                                                 .dataFetcher(environment -> index.patternForTrip
-                                                                                     .get(index.tripForId.get(((TripTimeShort) environment.getSource()).tripId))
-                                                                                     .getAlightType(((TripTimeShort) environment.getSource()).stopIndex) != PICKDROP_NONE)
-                                                 .build())
-                                  .field(GraphQLFieldDefinition.newFieldDefinition()
-                                                 .name("operatingDay")
-                                                 .type(Scalars.GraphQLLong)
-                                                 .dataFetcher(environment -> ((TripTimeShort) environment.getSource()).serviceDay)
-                                                 .build())
-                                  .field(GraphQLFieldDefinition.newFieldDefinition()
-                                                 .name("serviceJourney")
-                                                 .type(serviceJourneyType)
-                                                 .dataFetcher(environment -> index.tripForId
-                                                                                     .get(((TripTimeShort) environment.getSource()).tripId))
-                                                 .build())
-                                  .field(GraphQLFieldDefinition.newFieldDefinition()
-                                                 .name("destinationDisplay")
-                                                 .type(Scalars.GraphQLString)
-                                                 .dataFetcher(environment -> ((TripTimeShort) environment.getSource()).headsign)
-                                                 .build())
-                                  .field(GraphQLFieldDefinition.newFieldDefinition()
-                                                 .name("notices")
-                                                 .type(new GraphQLList(noticeType))
-                                                 .dataFetcher(environment -> {
-                                                     TripTimeShort tripTimeShort = environment.getSource();
-                                                     return index.getNoticesForElement(tripTimeShort.stopTimeId);
-                                                 })
-                                                 .build())
-                                  .build();
+                                    .name("EstimatedCall")
+                                    .field(GraphQLFieldDefinition.newFieldDefinition()
+                                                   .name("quay")
+                                                   .type(quayType)
+                                                   .dataFetcher(environment -> index.stopForId
+                                                                                       .get(((TripTimeShort) environment.getSource()).stopId))
+                                                   .build())
+                                    .field(GraphQLFieldDefinition.newFieldDefinition()
+                                                   .name("aimedArrivalTime")
+                                                   .type(Scalars.GraphQLInt)
+                                                   .dataFetcher(
+                                                           environment -> ((TripTimeShort) environment.getSource()).scheduledArrival)
+                                                   .build())
+                                    .field(GraphQLFieldDefinition.newFieldDefinition()
+                                                   .name("expectedArrivalTime")
+                                                   .type(Scalars.GraphQLInt)
+                                                   .dataFetcher(
+                                                           environment -> ((TripTimeShort) environment.getSource()).realtimeArrival)
+                                                   .build())
+                                    .field(GraphQLFieldDefinition.newFieldDefinition()
+                                                   .name("aimedDepartureTime")
+                                                   .type(Scalars.GraphQLInt)
+                                                   .dataFetcher(
+                                                           environment -> ((TripTimeShort) environment.getSource()).scheduledDeparture)
+                                                   .build())
+                                    .field(GraphQLFieldDefinition.newFieldDefinition()
+                                                   .name("expectedDepartureTime")
+                                                   .type(Scalars.GraphQLInt)
+                                                   .dataFetcher(
+                                                           environment -> ((TripTimeShort) environment.getSource()).realtimeDeparture)
+                                                   .build())
+                                    .field(GraphQLFieldDefinition.newFieldDefinition()
+                                                   .name("timingPoint")
+                                                   .type(Scalars.GraphQLBoolean)
+                                                   .dataFetcher(environment -> ((TripTimeShort) environment.getSource()).timepoint)
+                                                   .build())
+                                    .field(GraphQLFieldDefinition.newFieldDefinition()
+                                                   .name("realtime")
+                                                   .type(Scalars.GraphQLBoolean)
+                                                   .dataFetcher(environment -> ((TripTimeShort) environment.getSource()).realtime)
+                                                   .build())
+                                    .field(GraphQLFieldDefinition.newFieldDefinition()
+                                                   .name("realtimeState")
+                                                   .type(realtimeStateEnum)
+                                                   .dataFetcher(environment -> ((TripTimeShort) environment.getSource()).realtimeState)
+                                                   .build())
+                                    .field(GraphQLFieldDefinition.newFieldDefinition()
+                                                   .name("forBoarding")
+                                                   .type(Scalars.GraphQLBoolean)
+                                                   .dataFetcher(environment -> index.patternForTrip
+                                                                                       .get(index.tripForId.get(((TripTimeShort) environment.getSource()).tripId))
+                                                                                       .getBoardType(((TripTimeShort) environment.getSource()).stopIndex) != PICKDROP_NONE)
+                                                   .build())
+                                    .field(GraphQLFieldDefinition.newFieldDefinition()
+                                                   .name("forAlighting")
+                                                   .type(Scalars.GraphQLBoolean)
+                                                   .dataFetcher(environment -> index.patternForTrip
+                                                                                       .get(index.tripForId.get(((TripTimeShort) environment.getSource()).tripId))
+                                                                                       .getAlightType(((TripTimeShort) environment.getSource()).stopIndex) != PICKDROP_NONE)
+                                                   .build())
+                                    .field(GraphQLFieldDefinition.newFieldDefinition()
+                                                   .name("operatingDay")
+                                                   .type(Scalars.GraphQLLong)
+                                                   .dataFetcher(environment -> ((TripTimeShort) environment.getSource()).serviceDay)
+                                                   .build())
+                                    .field(GraphQLFieldDefinition.newFieldDefinition()
+                                                   .name("serviceJourney")
+                                                   .type(serviceJourneyType)
+                                                   .dataFetcher(environment -> index.tripForId
+                                                                                       .get(((TripTimeShort) environment.getSource()).tripId))
+                                                   .build())
+                                    .field(GraphQLFieldDefinition.newFieldDefinition()
+                                                   .name("destinationDisplay")
+                                                   .type(Scalars.GraphQLString)
+                                                   .dataFetcher(environment -> ((TripTimeShort) environment.getSource()).headsign)
+                                                   .build())
+                                    .field(GraphQLFieldDefinition.newFieldDefinition()
+                                                   .name("notices")
+                                                   .type(new GraphQLList(noticeType))
+                                                   .dataFetcher(environment -> {
+                                                       TripTimeShort tripTimeShort = environment.getSource();
+                                                       return index.getNoticesForElement(tripTimeShort.stopTimeId);
+                                                   })
+                                                   .build())
+                                    .build();
 
         serviceJourneyType = GraphQLObjectType.newObject()
                                      .name("ServiceJourney")
@@ -1297,11 +1296,6 @@ public class TransmodelIndexGraphQLSchema {
                                                     .dataFetcher(environment -> (((Trip) environment.getSource()).getTripShortName()))
                                                     .build())
                                      .field(GraphQLFieldDefinition.newFieldDefinition()
-                                                    .name("destinationDisplay")
-                                                    .type(Scalars.GraphQLString)
-                                                    .dataFetcher(environment -> (((Trip) environment.getSource()).getTripHeadsign()))
-                                                    .build())
-                                     .field(GraphQLFieldDefinition.newFieldDefinition()
                                                     .name("linePublicCode")
                                                     .type(Scalars.GraphQLString)
                                                     .dataFetcher(environment -> (((Trip) environment.getSource()).getRouteShortName()))
@@ -1331,8 +1325,8 @@ public class TransmodelIndexGraphQLSchema {
                                                                                         .get(environment.getSource()).getStops())
                                                     .build())
                                      .field(GraphQLFieldDefinition.newFieldDefinition()
-                                                    .name("passingTimes")
-                                                    .type(new GraphQLList(passingTimeType))
+                                                    .name("timetabledPassingTimes")
+                                                    .type(new GraphQLList(timetabledPassingTimeType))
                                                     .description("Returns scheduled passing times only - without realtime-updates, for realtime-data use 'estimatedCalls'")
                                                     .dataFetcher(environment -> TripTimeShort.fromTripTimes(
                                                             index.patternForTrip.get((Trip) environment.getSource()).scheduledTimetable,
@@ -1345,6 +1339,7 @@ public class TransmodelIndexGraphQLSchema {
                                                     .argument(GraphQLArgument.newArgument()
                                                                       .name("operatingDay")
                                                                       .type(Scalars.GraphQLString)
+                                                                      .description("Operating day to get estimated calls for. Format:  \"YYYYMMDD\"")
                                                                       .defaultValue(null)
                                                                       .build())
                                                     .dataFetcher(environment -> {
