@@ -57,6 +57,7 @@ public final class StopTime extends IdentityBean<AgencyAndId> implements Compara
     }
 
     public StopTime(StopTime st) {
+        this.id = st.id;
         this.arrivalTime = st.arrivalTime;
         this.departureTime = st.departureTime;
         this.dropOffType = st.dropOffType;
