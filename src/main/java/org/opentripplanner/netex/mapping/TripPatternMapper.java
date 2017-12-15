@@ -27,7 +27,9 @@ import java.math.BigInteger;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class TripPatternMapper {
 
@@ -73,12 +75,18 @@ public class TripPatternMapper {
             if (stopTimes != null) {
                 transitBuilder.getStopTimesSortedByTrip().put(trip, stopTimes);
 
-                // If all stoptime headsigns are the same, move headsign up to trip
-                if (stopTimes.stream().map(StopTime::getStopHeadsign).distinct().count() == 1) {
-                    trip.setTripHeadsign(stopTimes.stream().findFirst().get().getStopHeadsign());
+                List<StopTime> stopTimesWithHeadsign = stopTimes.stream()
+                        .filter(s -> s.getStopHeadsign() != null && s.getStopHeadsign() != "")
+                        .collect(Collectors.toList());
 
-                    // Temp fix
-                    //stopTimes.forEach(s -> s.setStopHeadsign(null));
+                // Set first non-empty headsign as trip headsign
+                if (stopTimesWithHeadsign.size() > 0) {
+                    trip.setTripHeadsign(stopTimesWithHeadsign.stream()
+                            .sorted(Comparator.comparingInt(StopTime::getStopSequence)).findFirst()
+                            .get().getStopHeadsign());
+                }
+                else {
+                    trip.setTripHeadsign("");
                 }
 
                 // We only generate a stopPattern for the first trip in the JourneyPattern.
