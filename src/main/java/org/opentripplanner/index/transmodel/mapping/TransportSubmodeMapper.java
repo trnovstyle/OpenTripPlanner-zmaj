@@ -12,11 +12,6 @@ public class TransportSubmodeMapper {
     private Map<Integer, TransmodelTransportSubmode> fromOtpMap = new HashMap<>();
 
     private static final TransmodelTransportSubmode DEFAULT_TRANSMODEL_VALUE = TransmodelTransportSubmode.UNKNOWN;
-
-    // TODO do we need this?
-    // 3= BUS
-    private static final Integer DEFAULT_OTP_VALUE = 3;
-
     public TransportSubmodeMapper() {
         init();
     }
@@ -28,15 +23,6 @@ public class TransportSubmodeMapper {
         }
         return DEFAULT_TRANSMODEL_VALUE;
     }
-
-    public int fromTransmodel(TransmodelTransportSubmode transmodelTransportSubmode) {
-        Integer otpTransportSubmode = fromTransmodelMap.get(transmodelTransportSubmode);
-        if (otpTransportSubmode != null) {
-            return otpTransportSubmode;
-        }
-        return DEFAULT_OTP_VALUE;
-    }
-
 
     private void init() {
 
