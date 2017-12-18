@@ -14,11 +14,6 @@
 package org.opentripplanner.routing.edgetype;
 
 import com.beust.jcommander.internal.Lists;
-
-import org.opentripplanner.model.AgencyAndId;
-import org.opentripplanner.model.Stop;
-import org.opentripplanner.model.Trip;
-import org.opentripplanner.model.calendar.ServiceDate;
 import com.google.transit.realtime.GtfsRealtime.TripDescriptor;
 import com.google.transit.realtime.GtfsRealtime.TripUpdate;
 import com.google.transit.realtime.GtfsRealtime.TripUpdate.StopTimeEvent;
@@ -600,7 +595,7 @@ public class Timetable implements Serializable {
 
         boolean stopPatternChanged = false;
 
-        List<Stop> modifiedStops = createModifiedStops(journey, graph.index);
+        Stop[] modifiedStops = pattern.stopPattern.stops;
 
         Trip trip = getTrip(tripId);
 
@@ -634,6 +629,7 @@ public class Timetable implements Serializable {
                     Stop alternativeStop = graph.index.stopForId.get(new AgencyAndId(stop.getId().getAgencyId(), recordedCall.getStopPointRef().getValue()));
                     if (alternativeStop != null && stop.getParentStation().equals(alternativeStop.getParentStation())) {
                         foundMatch = true;
+                        stopPatternChanged = true;
                     }
                 }
 
@@ -692,6 +688,7 @@ public class Timetable implements Serializable {
                         Stop alternativeStop = graph.index.stopForId.get(new AgencyAndId(stop.getId().getAgencyId(), estimatedCall.getStopPointRef().getValue()));
                         if (alternativeStop != null && stop.getParentStation().equals(alternativeStop.getParentStation())) {
                             foundMatch = true;
+                            stopPatternChanged = true;
                         }
                     }
 
@@ -916,21 +913,20 @@ public class Timetable implements Serializable {
 
         List<EstimatedCall> estimatedCalls = journeyCalls.getEstimatedCalls();
 
-        //Get all scheduled stops
-        Stop[] stops = pattern.stopPattern.stops;
+        List<Stop> stops = createModifiedStops(journey, graphIndex);
 
         List<StopTime> modifiedStops = new ArrayList<>();
 
         ZonedDateTime departureDate = null;
         int numberOfRecordedCalls = (journey.getRecordedCalls() != null && journey.getRecordedCalls().getRecordedCalls() != null) ? journey.getRecordedCalls().getRecordedCalls().size():0;
 
-        if (estimatedCalls.size() + numberOfRecordedCalls > stops.length) {
+        if (estimatedCalls.size() + numberOfRecordedCalls > stops.size()) {
             return null;
         }
 
         // modify updated stop-times
-        for (int i = 0; i < stops.length; i++) {
-            Stop stop = stops[i];
+        for (int i = 0; i < stops.size(); i++) {
+            Stop stop = stops.get(i);
 
             final StopTime stopTime = new StopTime();
             stopTime.setStop(stop);
