@@ -52,6 +52,10 @@ public abstract class PollingGraphUpdater implements GraphUpdater {
      */
     protected Integer frequencySec;
 
+    private boolean blockReadinessUntilInitialized;
+
+    private boolean isInitialized;
+
     /**
      * The type name in the preferences
      */
@@ -78,6 +82,9 @@ public abstract class PollingGraphUpdater implements GraphUpdater {
                     LOG.error("Error while running polling updater of type {}", type, e);
                     // TODO Should we cancel the task? Or after n consecutive failures?
                     // cancel();
+                } finally {
+                    //Flag as initialized regardless of result
+                    isInitialized = true;
                 }
                 // Sleep a given number of seconds
                 Thread.sleep(frequencySec * 1000);
@@ -95,7 +102,19 @@ public abstract class PollingGraphUpdater implements GraphUpdater {
         // Configure polling system
         frequencySec = config.path("frequencySec").asInt(60);
         type = config.path("type").asText("");
+        blockReadinessUntilInitialized = config.path("blockReadinessUntilInitialized").asBoolean(false);
         // Additional configuration for the concrete subclass
         configurePolling(graph, config);
+    }
+
+    public boolean isReady() {
+        if (blockReadinessUntilInitialized) {
+            return isInitialized;
+        }
+        return true;
+    }
+
+    public String getType() {
+        return type;
     }
 }
