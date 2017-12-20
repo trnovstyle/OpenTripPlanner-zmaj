@@ -13,9 +13,6 @@
 
 package org.opentripplanner.updater.alerts;
 
-import java.util.*;
-
-import org.opentripplanner.model.AgencyAndId;
 import com.google.transit.realtime.GtfsRealtime;
 import com.google.transit.realtime.GtfsRealtime.*;
 import org.opentripplanner.model.AgencyAndId;
@@ -99,6 +96,13 @@ public class AlertsUpdateHandler {
             alert.alertDescriptionText = getTranslatedString(situation.getDetails());
         }
         alert.alertHeaderText = getTranslatedString(situation.getSummaries());
+
+        //ROR-54
+        if ((alert.alertHeaderText == null || alert.alertHeaderText.toString().isEmpty()) &&
+                (alert.alertDescriptionText == null || alert.alertDescriptionText.toString().isEmpty())) {
+            log.info("Empty Alert - ignoring situationNumber: {}", situation.getSituationNumber() != null ? situation.getSituationNumber().getValue():null);
+            return;
+        }
 
         ArrayList<TimePeriod> periods = new ArrayList<>();
         if(situation.getValidityPeriods().size() > 0) {
