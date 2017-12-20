@@ -80,7 +80,7 @@ public class TransmodelMappingUtil {
     public String prepareAgencyAndId(String id, String separator) {
         if (fixedAgencyId != null && id != null) {
             return separator == null
-                           ? fixedAgencyId + AgencyAndId.ID_SEPARATOR + id
+                           ? AgencyAndId.concatenateId(fixedAgencyId, id)
                            : fixedAgencyId + separator + id;
         }
         return id;
