@@ -452,7 +452,7 @@ public class TransmodelIndexGraphQLSchema {
 //                                                                        .type(new GraphQLList(Scalars.GraphQLString))
 //                                                                        .build())
                                                          .field(GraphQLInputObjectField.newInputObjectField()
-                                                                        .name("quay")
+                                                                        .name("quays")
                                                                         .description("Do not use certain quays. See for more information the bannedStops property in the RoutingResource class.")
                                                                         .type(new GraphQLList(Scalars.GraphQLString))
                                                                         .build())
@@ -564,43 +564,8 @@ public class TransmodelIndexGraphQLSchema {
                                                                          .description("When true, realtime updates are ignored during this search.")
                                                                          .type(Scalars.GraphQLBoolean)
                                                                          .build())
-                                                       .dataFetcher(environment -> {
-
-                                                           // TODO Use transmodel in TransmodelGraphqlPlanner
-                                                           environment.getArguments().put("modes", mappingUtil.mapListOfModes(environment.getArgument("modes")));
-
-                                                           // TODO using AgencyAndId separator instead of GtfsLibrary because GraphqlPlanner expects this. Should be cleaned up.
-                                                           environment.getArguments().put("startTransitStopId", mappingUtil.prepareAgencyAndId(environment.getArgument("startTransitQuayId")));
-                                                           environment.getArguments().put("startTransitTripId", mappingUtil.prepareAgencyAndId(environment.getArgument("startTransitServiceJourneyId")));
-
-                                                           Map<String, Object> unpreferred = environment.getArgument("unpreferred");
-                                                           if (unpreferred != null) {
-                                                               // Using double underscore as separator as expected format is agency_routeName_routeId, and we are only supplying routeId
-                                                               unpreferred.put("routes", mappingUtil.prepareListOfAgencyAndId((List<String>) unpreferred.get("lines"), "__"));
-                                                               unpreferred.put("agencies", unpreferred.get("organisations"));
-                                                           }
-                                                           Map<String, Object> preferred = environment.getArgument("preferred");
-                                                           if (preferred != null) {
-                                                               // Using double underscore as separator as expected format is agency_routeName_routeId, and we are only supplying routeId
-                                                               preferred.put("routes", mappingUtil.prepareListOfAgencyAndId((List<String>) preferred.get("lines"), "__"));
-                                                               preferred.put("agencies", preferred.get("organisations"));
-                                                               preferred.put("otherThanPreferredRoutesPenalty", preferred.get("otherThanPreferredLinesPenalty"));
-                                                           }
-
-                                                           Map<String, Object> banned = environment.getArgument("banned");
-                                                           if (banned != null) {
-                                                               // Using double underscore as separator as expected format is agency_routeName_routeId, and we are only supplying routeId
-                                                               banned.put("routes", mappingUtil.prepareListOfAgencyAndId((List<String>) banned.get("lines"), "__"));
-                                                               banned.put("agencies", banned.get("organisations"));
-                                                               banned.put("trips", mappingUtil.prepareListOfAgencyAndId((List<String>) banned.get("serviceJourneys")));
-                                                               banned.put("stops", mappingUtil.prepareListOfAgencyAndId((List<String>) banned.get("quay")));
-                                                               banned.put("stopsHard", mappingUtil.prepareListOfAgencyAndId((List<String>) banned.get("quaysHard")));
-                                                           }
-
-                                                           environment.getArguments().put("fromPlace", mappingUtil.preparePlaceRef(environment.getArgument("fromPlace")));
-                                                           environment.getArguments().put("toPlace", mappingUtil.preparePlaceRef(environment.getArgument("toPlace")));
-                                                           return new TransmodelGraphQLPlanner(mappingUtil).plan(environment);
-                                                       })
+                                                       .dataFetcher(environment ->new TransmodelGraphQLPlanner(mappingUtil).plan(environment)
+                                                       )
                                                        .build();
 
         noticeType = GraphQLObjectType.newObject()

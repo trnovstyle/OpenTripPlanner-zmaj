@@ -25,6 +25,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -177,17 +178,18 @@ public class TransmodelGraphQLPlanner {
         callWith.argument("arriveBy", request::setArriveBy);
         request.showIntermediateStops = true;
         callWith.argument("vias", (List<Map<String, Object>> v) -> request.intermediatePlaces = v.stream().map(this::toGenericLocation).collect(Collectors.toList()));
-        callWith.argument("preferred.routes", request::setPreferredRoutes);
-        callWith.argument("preferred.otherThanPreferredRoutesPenalty", request::setOtherThanPreferredRoutesPenalty);
-        callWith.argument("preferred.agencies", request::setPreferredAgencies);
-        callWith.argument("unpreferred.routes", request::setUnpreferredRoutes);
-        callWith.argument("unpreferred.agencies", request::setUnpreferredAgencies);
+        callWith.argument("preferred.lines", lines -> request.setPreferredRoutes(mappingUtil.prepareListOfAgencyAndId((List<String>) lines, "__")));
+        callWith.argument("preferred.otherThanPreferredLinesPenalty", request::setOtherThanPreferredRoutesPenalty);
+        callWith.argument("preferred.organisations", organisations -> request.setPreferredAgencies(mappingUtil.mapCollectionOfValues((Collection<String>) organisations, in -> in)));
+        callWith.argument("unpreferred.lines", lines -> request.setUnpreferredRoutes(mappingUtil.prepareListOfAgencyAndId((List<String>) lines, "__")));
+        callWith.argument("unpreferred.organisations", organisations -> request.setUnpreferredAgencies(mappingUtil.mapCollectionOfValues((Collection<String>) organisations, in -> in)));
 
-        callWith.argument("banned.routes", request::setBannedRoutes);
-        callWith.argument("banned.agencies", request::setBannedAgencies);
-        callWith.argument("banned.trips", (String v) -> request.bannedTrips = RoutingResource.makeBannedTripMap(v));
-        callWith.argument("banned.stops", request::setBannedStops);
-        callWith.argument("banned.stopsHard", request::setBannedStopsHard);
+        callWith.argument("banned.lines", lines -> request.setBannedRoutes(mappingUtil.prepareListOfAgencyAndId((List<String>) lines, "__")));
+        callWith.argument("banned.organisations", organisations -> request.setBannedAgencies(mappingUtil.mapCollectionOfValues((Collection<String>) organisations, in -> in)));
+        callWith.argument("banned.serviceJourneys", serviceJourneys -> request.bannedTrips = RoutingResource.makeBannedTripMap(mappingUtil.prepareListOfAgencyAndId((List<String>) serviceJourneys)));
+
+        callWith.argument("banned.quays", quays -> request.setBannedStops(mappingUtil.prepareListOfAgencyAndId((List<String>) quays)));
+        callWith.argument("banned.quaysHard", quaysHard -> request.setBannedStopsHard(mappingUtil.prepareListOfAgencyAndId((List<String>) quaysHard)));
         callWith.argument("transferPenalty", (Integer v) -> request.transferPenalty = v);
         if (optimize == OptimizeType.TRANSFERS) {
             optimize = OptimizeType.QUICK;
@@ -201,7 +203,7 @@ public class TransmodelGraphQLPlanner {
         }
 
         if (hasArgument(environment, "modes")) {
-            new QualifiedModeSet(environment.getArgument("modes")).applyToRoutingRequest(request);
+            new QualifiedModeSet(mappingUtil.mapListOfModes(environment.getArgument("modes"))).applyToRoutingRequest(request);
             request.setModes(request.modes);
         }
 
