@@ -206,7 +206,7 @@ public class InputStreamGraphSource implements GraphSource {
         try (InputStream is = streams.getGraphInputStream()) {
             LOG.info("Loading graph...");
             try {
-                newGraph = Graph.load(new ObjectInputStream(is), loadLevel,
+                newGraph = Graph.load(new ObjectInputStream(new BufferedInputStream(is, 65536)), loadLevel,
                         streetVertexIndexFactory);
             } catch (Exception ex) {
                 LOG.error("Exception while loading graph '{}'.", routerId, ex);
