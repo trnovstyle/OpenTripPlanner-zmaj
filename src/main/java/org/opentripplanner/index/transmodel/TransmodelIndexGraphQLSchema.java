@@ -658,17 +658,17 @@ public class TransmodelIndexGraphQLSchema {
                                          .field(GraphQLFieldDefinition.newFieldDefinition()
                                                         .name("lines")
                                                         .type(new GraphQLList(lineType))
-                                                        .dataFetcher(environment -> index.routeForId.get(((AlertPatch) environment.getSource()).getRoute()))
+                                                        .dataFetcher(environment -> wrapInListUnlessNull(index.routeForId.get(((AlertPatch) environment.getSource()).getRoute())))
                                                         .build())
                                          .field(GraphQLFieldDefinition.newFieldDefinition()
                                                         .name("serviceJourneys")
                                                         .type(new GraphQLList(serviceJourneyType))
-                                                        .dataFetcher(environment -> index.tripForId.get(((AlertPatch) environment.getSource()).getTrip()))
+                                                        .dataFetcher(environment -> wrapInListUnlessNull(index.tripForId.get(((AlertPatch) environment.getSource()).getTrip())))
                                                         .build())
                                          .field(GraphQLFieldDefinition.newFieldDefinition()
                                                         .name("quays")
                                                         .type(new GraphQLList(quayType))
-                                                        .dataFetcher(environment -> index.stopForId.get(((AlertPatch) environment.getSource()).getStop()))
+                                                        .dataFetcher(environment -> wrapInListUnlessNull(index.stopForId.get(((AlertPatch) environment.getSource()).getStop())))
                                                         .build())
                                          .field(GraphQLFieldDefinition.newFieldDefinition()
                                                         .name("journeyPatterns")
@@ -2399,5 +2399,12 @@ public class TransmodelIndexGraphQLSchema {
                            .build();
     }
 
+
+    private <T> List<T> wrapInListUnlessNull(T element) {
+        if (element == null) {
+            return emptyList();
+        }
+        return Arrays.asList(element);
+    }
 
 }
