@@ -1181,6 +1181,7 @@ public class TransmodelIndexGraphQLSchema {
                                      .field(GraphQLFieldDefinition.newFieldDefinition()
                                                     .name("directionType")
                                                     .type(directionTypeEnum)
+                                                    .dataFetcher(environment -> directIdStringToInt(((Trip) environment.getSource()).getDirectionId()))
                                                     .build())
                                      .field(GraphQLFieldDefinition.newFieldDefinition()
                                                     .name("wheelchairAccessible")
@@ -2407,4 +2408,11 @@ public class TransmodelIndexGraphQLSchema {
         return Arrays.asList(element);
     }
 
+    public int directIdStringToInt(String directionId) {
+        try {
+            return Integer.parseInt(directionId);
+        } catch (NumberFormatException nfe) {
+            return -1;
+        }
+    }
 }
