@@ -1945,7 +1945,7 @@ public class TransmodelIndexGraphQLSchema {
                                                              .build())
                                            .argument(GraphQLArgument.newArgument()
                                                              .name("transportModes")
-                                                             .type(Scalars.GraphQLString)
+                                                             .type(new GraphQLList(transportModeEnum))
                                                              .build())
                                            .dataFetcher(environment -> {
                                                if ((environment.getArgument("ids") instanceof List)) {
@@ -1970,10 +1970,8 @@ public class TransmodelIndexGraphQLSchema {
                                                                     );
                                                }
                                                if (environment.getArgument("transportModes") != null) {
-                                                   Set<TraverseMode> modes = new QualifiedModeSet(
-                                                                                                         environment.getArgument("transportModes")).qModes
-                                                                                     .stream()
-                                                                                     .map(qualifiedMode -> qualifiedMode.mode)
+
+                                                   Set<TraverseMode> modes = ((List<TraverseMode>)environment.getArgument("transportModes")).stream()
                                                                                      .filter(TraverseMode::isTransit)
                                                                                      .collect(Collectors.toSet());
                                                    stream = stream
