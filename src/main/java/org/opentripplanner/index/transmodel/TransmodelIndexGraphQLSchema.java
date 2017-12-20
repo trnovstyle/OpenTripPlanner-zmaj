@@ -164,7 +164,7 @@ public class TransmodelIndexGraphQLSchema {
     private static GraphQLEnumType transportSubmode;
 
     static {
-        GraphQLEnumType.Builder transportSubmodeEnumBuilder = GraphQLEnumType.newEnum().name("TransmodelTransportSubmode");
+        GraphQLEnumType.Builder transportSubmodeEnumBuilder = GraphQLEnumType.newEnum().name("TransportSubmode");
         Arrays.stream(TransmodelTransportSubmode.values()).forEach(type -> transportSubmodeEnumBuilder.value(type.getValue(), type));
         transportSubmode = transportSubmodeEnumBuilder.build();
     }
@@ -246,6 +246,7 @@ public class TransmodelIndexGraphQLSchema {
     private GraphQLScalarType dateTimeScalar;
     private GraphQLObjectType timeType;
     private GraphQLScalarType dateScalar;
+    private GraphQLObjectType destinationDisplayType;
 
     public GraphQLSchema indexSchema;
 
@@ -360,6 +361,17 @@ public class TransmodelIndexGraphQLSchema {
                                                                             .type(new GraphQLNonNull(Scalars.GraphQLFloat))
                                                                             .build())
                                                              .build();
+
+
+        destinationDisplayType = GraphQLObjectType.newObject()
+                                         .name("DestinationDisplay")
+                                         .field(GraphQLFieldDefinition.newFieldDefinition()
+                                                        .name("frontText")
+                                                        .type(Scalars.GraphQLString)
+                                                        .dataFetcher(environment -> environment.getSource())
+                                                        .build())
+                                         .build();
+
 
         locationType = GraphQLInputObjectType.newInputObject()
                                .name("Location")
@@ -564,7 +576,7 @@ public class TransmodelIndexGraphQLSchema {
                                                                          .description("When true, realtime updates are ignored during this search.")
                                                                          .type(Scalars.GraphQLBoolean)
                                                                          .build())
-                                                       .dataFetcher(environment ->new TransmodelGraphQLPlanner(mappingUtil).plan(environment)
+                                                       .dataFetcher(environment -> new TransmodelGraphQLPlanner(mappingUtil).plan(environment)
                                                        )
                                                        .build();
 
@@ -1011,7 +1023,7 @@ public class TransmodelIndexGraphQLSchema {
                                                            .build())
                                             .field(GraphQLFieldDefinition.newFieldDefinition()
                                                            .name("destinationDisplay")
-                                                           .type(Scalars.GraphQLString)
+                                                           .type(destinationDisplayType)
                                                            .dataFetcher(environment -> ((TripTimeShort) environment.getSource()).headsign)
                                                            .build())
                                             .field(GraphQLFieldDefinition.newFieldDefinition()
@@ -1098,7 +1110,7 @@ public class TransmodelIndexGraphQLSchema {
                                                    .build())
                                     .field(GraphQLFieldDefinition.newFieldDefinition()
                                                    .name("destinationDisplay")
-                                                   .type(Scalars.GraphQLString)
+                                                   .type(destinationDisplayType)
                                                    .dataFetcher(environment -> ((TripTimeShort) environment.getSource()).headsign)
                                                    .build())
                                     .field(GraphQLFieldDefinition.newFieldDefinition()
@@ -1169,7 +1181,7 @@ public class TransmodelIndexGraphQLSchema {
                                                                                         .get(environment.getSource()).getStops())
                                                     .build())
                                      .field(GraphQLFieldDefinition.newFieldDefinition()
-                                                    .name("timetabledPassingTimes")
+                                                    .name("passingTimes")
                                                     .type(new GraphQLList(timetabledPassingTimeType))
                                                     .description("Returns scheduled passing times only - without realtime-updates, for realtime-data use 'estimatedCalls'")
                                                     .dataFetcher(environment -> TripTimeShort.fromTripTimes(
@@ -1260,7 +1272,7 @@ public class TransmodelIndexGraphQLSchema {
                                                     .build())
                                      .field(GraphQLFieldDefinition.newFieldDefinition()
                                                     .name("destinationDisplay")
-                                                    .type(Scalars.GraphQLString)
+                                                    .type(destinationDisplayType)
                                                     .dataFetcher(environment -> ((TripPattern) environment.getSource()).getDirection())
                                                     .build())
                                      .field(GraphQLFieldDefinition.newFieldDefinition()
@@ -1318,6 +1330,19 @@ public class TransmodelIndexGraphQLSchema {
                                                     .build())
                                      .build();
 
+        GraphQLObjectType presentationType = GraphQLObjectType.newObject()
+                                                     .name("Presentation")
+                                                     .field(GraphQLFieldDefinition.newFieldDefinition()
+                                                                    .name("colour")
+                                                                    .type(Scalars.GraphQLString)
+                                                                    .dataFetcher(environment -> ((Route) environment.getSource()).getColor())
+                                                                    .build())
+                                                     .field(GraphQLFieldDefinition.newFieldDefinition()
+                                                                    .name("textColour")
+                                                                    .type(Scalars.GraphQLString)
+                                                                    .dataFetcher(environment -> ((Route) environment.getSource()).getTextColor())
+                                                                    .build())
+                                                     .build();
 
         lineType = GraphQLObjectType.newObject()
                            .name("Line")
@@ -1364,13 +1389,9 @@ public class TransmodelIndexGraphQLSchema {
                                           .type(Scalars.GraphQLString)
                                           .build())
                            .field(GraphQLFieldDefinition.newFieldDefinition()
-                                          .name("colourName")
-                                          .type(Scalars.GraphQLString)
-                                          .dataFetcher(environment -> ((Route) environment.getSource()).getColor())
-                                          .build())
-                           .field(GraphQLFieldDefinition.newFieldDefinition()
-                                          .name("textColourName")
-                                          .type(Scalars.GraphQLString)
+                                          .name("presentation")
+                                          .type(presentationType)
+                                          .dataFetcher(environment -> environment.getSource())
                                           .build())
                            .field(GraphQLFieldDefinition.newFieldDefinition()
                                           .name("bikesAllowed")
