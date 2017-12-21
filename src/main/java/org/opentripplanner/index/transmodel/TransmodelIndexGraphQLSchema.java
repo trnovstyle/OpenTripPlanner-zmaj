@@ -23,13 +23,13 @@ import graphql.schema.GraphQLSchema;
 import graphql.schema.GraphQLType;
 import graphql.schema.GraphQLTypeReference;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.opentripplanner.api.common.Message;
 import org.opentripplanner.api.model.Itinerary;
 import org.opentripplanner.api.model.Leg;
 import org.opentripplanner.api.model.Place;
 import org.opentripplanner.api.model.TripPlan;
 import org.opentripplanner.api.model.VertexType;
-import org.opentripplanner.api.parameter.QualifiedModeSet;
 import org.opentripplanner.gtfs.GtfsLibrary;
 import org.opentripplanner.index.model.TripTimeShort;
 import org.opentripplanner.index.transmodel.mapping.TransmodelMappingUtil;
@@ -617,6 +617,29 @@ public class TransmodelIndexGraphQLSchema {
                                                         .build())
                                          .build();
 
+        GraphQLObjectType validityPeriodType = GraphQLObjectType.newObject()
+                                                       .name("ValidityPeriod")
+                                                       .field(GraphQLFieldDefinition.newFieldDefinition()
+                                                                      .name("startTime")
+                                                                      .type(dateTimeScalar)
+                                                                      .description("Start of validity period")
+                                                                      .dataFetcher(environment -> {
+                                                                          Pair<Long, Long> period = environment.getSource();
+                                                                          return period != null ? period.getLeft() : null;
+                                                                      })
+                                                                      .build())
+                                                       .field(GraphQLFieldDefinition.newFieldDefinition()
+                                                                      .name("endTime")
+                                                                      .type(dateTimeScalar)
+                                                                      .description("End of validity period")
+                                                                      .dataFetcher(environment -> {
+                                                                          Pair<Long, Long> period = environment.getSource();
+                                                                          return period != null ? period.getRight() : null;
+                                                                      })
+                                                                      .build())
+                                                       .build();
+
+
         ptSituationElementType = GraphQLObjectType.newObject()
                                          .name("PtSituationElement")
                                          .withInterface(nodeInterface)
@@ -692,21 +715,14 @@ public class TransmodelIndexGraphQLSchema {
                                                         .dataFetcher(environment -> ((AlertPatch) environment.getSource()).getAlert().alertUrl)
                                                         .build())
                                          .field(GraphQLFieldDefinition.newFieldDefinition()
-                                                        .name("effectiveStartTime")
-                                                        .type(dateTimeScalar)
-                                                        .description("When this situation comes into effect")
+                                                        .name("validityPeriod")
+                                                        .type(validityPeriodType)
+                                                        .description("Period this situation is in effect")
                                                         .dataFetcher(environment -> {
                                                             Alert alert = ((AlertPatch) environment.getSource()).getAlert();
-                                                            return alert.effectiveStartDate != null ? alert.effectiveStartDate.getTime() : null;
-                                                        })
-                                                        .build())
-                                         .field(GraphQLFieldDefinition.newFieldDefinition()
-                                                        .name("effectiveEndTime")
-                                                        .type(dateTimeScalar)
-                                                        .description("When this situation is not in effect anymore")
-                                                        .dataFetcher(environment -> {
-                                                            Alert alert = ((AlertPatch) environment.getSource()).getAlert();
-                                                            return alert.effectiveEndDate != null ? alert.effectiveEndDate.getTime() : null;
+                                                            Long startTime = alert.effectiveStartDate != null ? alert.effectiveStartDate.getTime() : null;
+                                                            Long endTime = alert.effectiveEndDate != null ? alert.effectiveEndDate.getTime() : null;
+                                                            return Pair.of(startTime, endTime);
                                                         })
                                                         .build())
                                          .build();
@@ -1971,7 +1987,7 @@ public class TransmodelIndexGraphQLSchema {
                                                }
                                                if (environment.getArgument("transportModes") != null) {
 
-                                                   Set<TraverseMode> modes = ((List<TraverseMode>)environment.getArgument("transportModes")).stream()
+                                                   Set<TraverseMode> modes = ((List<TraverseMode>) environment.getArgument("transportModes")).stream()
                                                                                      .filter(TraverseMode::isTransit)
                                                                                      .collect(Collectors.toSet());
                                                    stream = stream
