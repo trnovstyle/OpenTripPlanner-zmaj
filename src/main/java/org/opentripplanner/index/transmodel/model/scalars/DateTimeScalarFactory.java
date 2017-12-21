@@ -23,7 +23,7 @@ public class DateTimeScalarFactory {
 
     public static final String PARSE_DATE_TIME_PATTERN = "[yyyyMMdd][yyyy-MM-dd][yyyy-DDD]['T'[HHmmss][HHmm][HH:mm:ss][HH:mm][.SSSSSSSSS][.SSSSSS][.SSS][.SS][.S]][OOOO][O][z][XXXXX][XXXX]['['VV']']";
 
-    public static final String DATE_SCALAR_DESCRIPTION = "Date accepting ISO dates. Return values on format: " + DATE_TIME_PATTERN + ". Example: " + EXAMPLE_DATE_TIME;
+    public static final String DATE_SCALAR_DESCRIPTION = "DateTime format accepting ISO dates. Return values on format: " + DATE_TIME_PATTERN + ". Example: " + EXAMPLE_DATE_TIME;
 
     public static final DateTimeFormatter PARSER = new DateTimeFormatterBuilder().appendPattern(PARSE_DATE_TIME_PATTERN)
                                                            .toFormatter();
