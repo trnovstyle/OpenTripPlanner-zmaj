@@ -190,6 +190,10 @@ public class TransmodelGraphQLPlanner {
 
         callWith.argument("banned.quays", quays -> request.setBannedStops(mappingUtil.prepareListOfAgencyAndId((List<String>) quays)));
         callWith.argument("banned.quaysHard", quaysHard -> request.setBannedStopsHard(mappingUtil.prepareListOfAgencyAndId((List<String>) quaysHard)));
+
+        callWith.argument("whiteListed.lines", lines -> request.setWhiteListedRoutes(mappingUtil.prepareListOfAgencyAndId((List<String>) lines, "__")));
+        callWith.argument("whiteListed.organisations", organisations -> request.setWhiteListedAgencies(mappingUtil.mapCollectionOfValues((Collection<String>) organisations, in -> in)));
+
         callWith.argument("transferPenalty", (Integer v) -> request.transferPenalty = v);
         if (optimize == OptimizeType.TRANSFERS) {
             optimize = OptimizeType.QUICK;
