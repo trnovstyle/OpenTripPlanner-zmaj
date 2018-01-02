@@ -2845,6 +2845,12 @@ public class IndexGraphQLSchema {
                     .filter(Objects::nonNull)
                     .collect(Collectors.toList()))
                 .build())
+             .field(GraphQLFieldDefinition.newFieldDefinition()
+                .name("intermediateStoptimes")
+                .description("For transit legs, stop time for intermediate stops between the Place where the leg originates and the Place where the leg ends. For non-transit legs, null.")
+                .type(new GraphQLList(stoptimeType))
+                 .dataFetcher(environment -> getIntermediateTripTimeShortsForLeg(index, environment.getSource()))
+                .build())
             .field(GraphQLFieldDefinition.newFieldDefinition()
                 .name("intermediatePlace")
                 .description("Do we continue from a specified intermediate place")
@@ -3026,5 +3032,49 @@ public class IndexGraphQLSchema {
                 .dataFetcher(environment -> (((Map)environment.getSource()).get("debugOutput")))
                 .build())
             .build();
+    }
+
+    /**
+     * Find trip time shorts for all intermediate stops for a lev.
+     *
+     */
+    private List<TripTimeShort> getIntermediateTripTimeShortsForLeg(GraphIndex index, Leg leg) {
+        Trip trip = index.tripForId.get(leg.tripId);
+
+        if (trip == null) {
+
+            return null;
+        }
+        ServiceDate serviceDate;
+        try {
+            serviceDate = ServiceDate.parseString(leg.serviceDate);
+        } catch (ParseException pe) {
+            throw new RuntimeException("Unparsable service date: " + leg.serviceDate, pe);
+        }
+
+        final ServiceDay serviceDay = new ServiceDay(index.graph, serviceDate,
+                                                            index.graph.getCalendarService(), trip.getRoute().getAgency().getId());
+        TimetableSnapshotSource timetableSnapshotSource = index.graph.timetableSnapshotSource;
+        Timetable timetable = null;
+        if (timetableSnapshotSource != null) {
+            TimetableSnapshot timetableSnapshot = timetableSnapshotSource.getTimetableSnapshot();
+            if (timetableSnapshot != null) {
+                // Check if realtime-data is available for trip
+                TripPattern pattern = timetableSnapshot.getLastAddedTripPattern(timetableSnapshotSource.getFeedId(), trip.getId().getId(), serviceDate);
+                if (pattern == null) {
+                    pattern = index.patternForTrip.get(trip);
+                }
+                timetable = timetableSnapshot.resolve(pattern, serviceDate);
+            }
+        }
+        if (timetable == null) {
+            timetable = index.patternForTrip.get(trip).scheduledTimetable;
+        }
+        Set<AgencyAndId> intermediateQuayIds = leg.stop.stream().map(place -> place.stopId).filter(Objects::nonNull).collect(Collectors.toSet());
+
+        long startTimeSeconds = (leg.startTime.toInstant().toEpochMilli() - serviceDate.getAsDate().getTime()) / 1000;
+        long endTimeSeconds = (leg.endTime.toInstant().toEpochMilli() - serviceDate.getAsDate().getTime()) / 1000;
+        return TripTimeShort.fromTripTimes(timetable, trip, serviceDay).stream().filter(tripTime -> intermediateQuayIds.contains(tripTime.stopId))
+                       .filter(tripTime -> tripTime.realtimeDeparture >= startTimeSeconds && tripTime.realtimeDeparture <= endTimeSeconds).collect(Collectors.toList());
     }
 }
