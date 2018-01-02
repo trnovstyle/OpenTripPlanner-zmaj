@@ -37,15 +37,13 @@ public class TripPatternMapper {
 
     private String currentHeadsign;
 
-    public void mapTripPattern(JourneyPattern journeyPattern, OtpTransitBuilder transitBuilder,
-            NetexDao netexDao) {
+    public void mapTripPattern(JourneyPattern journeyPattern, OtpTransitBuilder transitBuilder, NetexDao netexDao) {
         TripMapper tripMapper = new TripMapper();
 
         List<Trip> trips = new ArrayList<>();
 
         //find matching journey pattern
-        Collection<ServiceJourney> serviceJourneys = netexDao.lookupServiceJourneysById(
-                journeyPattern.getId());
+        Collection<ServiceJourney> serviceJourneys = netexDao.lookupServiceJourneysById(journeyPattern.getId());
 
         StopPattern stopPattern = null;
 
@@ -54,8 +52,7 @@ public class TripPatternMapper {
                 .get(AgencyAndIdFactory.createAgencyAndId(route.getLineRef().getValue().getRef()));
 
         if (serviceJourneys == null || serviceJourneys.isEmpty()) {
-            LOG.warn("ServiceJourneyPattern " + journeyPattern.getId()
-                    + " does not contain any serviceJourneys.");
+            LOG.warn("ServiceJourneyPattern " + journeyPattern.getId() + " does not contain any serviceJourneys.");
             return;
         }
 
@@ -98,8 +95,7 @@ public class TripPatternMapper {
 
         TripPattern tripPattern = new TripPattern(otpRoute, stopPattern);
         tripPattern.code = journeyPattern.getId();
-        tripPattern.name =
-                journeyPattern.getName() == null ? "" : journeyPattern.getName().getValue();
+        tripPattern.name = journeyPattern.getName() == null ? "" : journeyPattern.getName().getValue();
 
         Deduplicator deduplicator = new Deduplicator();
 
