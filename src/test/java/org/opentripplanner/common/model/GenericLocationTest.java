@@ -17,6 +17,9 @@ import com.vividsolutions.jts.geom.Coordinate;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import static org.junit.Assert.*;
 
 public class GenericLocationTest {
@@ -285,11 +288,40 @@ public class GenericLocationTest {
                 new ParsingTestCase(
                         "AA::X:2,2.2,1.1edgeId=2heading=15.1",
                         "AA::X:2 (2.2, 1.1) h=15.1 e=2"
+                ),
+                new ParsingTestCase(
+                        "AA  (RB:StopPlace:0001)::2.5,1.7",
+                        "AA  (RB:StopPlace:0001)::RB:StopPlace:0001 (2.5, 1.7) h=null e=null"
                 )
         };
 
         for (ParsingTestCase tc : testCases) {
             tc.test();
+        }
+    }
+
+    @Test
+    public void testRemoveMatchFromString() {
+        Pattern p = Pattern.compile("(?:a)(A)");
+        Matcher m;
+        String result;
+        String[][] testCases = {
+                { "aA", "" },
+                { " aA ", "" },
+                { "aaAA", "aA" },
+                { "b aA c", "b  c" },
+        };
+
+        for (int i = 0; i < testCases.length; i++) {
+            String input = testCases[i][0];
+            String expRes = testCases[i][1];
+
+            //When
+            m = p.matcher(input);
+            assertTrue("Find pattern /" + p +"/ in '" + input + "' ", m.find());
+            result = GenericLocation.removeMatchFromString(m, input);
+            //Then
+            assertEquals("Match removed from string '" + input + "'", expRes, result);
         }
     }
 

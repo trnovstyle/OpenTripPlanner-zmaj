@@ -134,7 +134,7 @@ public class TransmodelGraphQLPlanner {
         String placeRef = mappingUtil.preparePlaceRef((String) m.get("place"));
         String name = m.get("name") == null ? "" : (String) m.get("name");
 
-        String place = Joiner.on(",").join(Arrays.asList(placeRef, lat, lon).stream().filter(o -> o != null).collect(Collectors.toList()));
+        String place = Joiner.on(",").skipNulls().join(placeRef, lat, lon);
 
         return new GenericLocation(name, place);
     }
