@@ -70,6 +70,7 @@ import org.opentripplanner.util.model.EncodedPolylineBean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.text.ParseException;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -485,7 +486,7 @@ public class TransmodelIndexGraphQLSchema {
 
 
         GraphQLFieldDefinition tripFieldType = GraphQLFieldDefinition.newFieldDefinition()
-                                                       .name("Trip")
+                                                       .name("trip")
                                                        .description("Input type for executing a travel search for a trip between two locations. Returns trip patterns describing suggested alternatives for the trip.")
                                                        .type(tripType)
                                                        .argument(GraphQLArgument.newArgument()
@@ -2070,7 +2071,7 @@ public class TransmodelIndexGraphQLSchema {
                                            .build())
                             .field(GraphQLFieldDefinition.newFieldDefinition()
                                            .name("bikeRentalStation")
-                                    .description("Get all bike rental stations")
+                                           .description("Get all bike rental stations")
                                            .type(bikeRentalStationType)
                                            .argument(GraphQLArgument.newArgument()
                                                              .name("id")
@@ -2100,7 +2101,7 @@ public class TransmodelIndexGraphQLSchema {
                                            .build())
                             .field(GraphQLFieldDefinition.newFieldDefinition()
                                            .name("bikeParks")
-                                    .description("Get all bike parks")
+                                           .description("Get all bike parks")
                                            .type(new GraphQLList(bikeParkType))
                                            .dataFetcher(dataFetchingEnvironment -> new ArrayList<>(index.graph.getService(BikeRentalStationService.class).getBikeParks()))
                                            .build())
@@ -2346,6 +2347,13 @@ public class TransmodelIndexGraphQLSchema {
                                                                                                      .collect(Collectors.toList()))
                                                                  .build())
                                                   .field(GraphQLFieldDefinition.newFieldDefinition()
+                                                                 .name("intermediateEstimatedCalls")
+                                                                 .description("For ride legs, estimated calls for quays between the Place where the leg originates and the Place where the leg ends. For non-ride legs, null.")
+                                                                 .type(new GraphQLList(estimatedCallType))
+                                                                 .dataFetcher(environment -> getIntermediateTripTimeShortsForLeg(index, environment.getSource()))
+                                                                 .build())
+
+                                                  .field(GraphQLFieldDefinition.newFieldDefinition()
                                                                  .name("via")
                                                                  .description("Do we continue from a specified via place")
                                                                  .type(Scalars.GraphQLBoolean)
@@ -2458,6 +2466,50 @@ public class TransmodelIndexGraphQLSchema {
                                           .dataFetcher(environment -> (((Map) environment.getSource()).get("debugOutput")))
                                           .build())
                            .build();
+    }
+
+    /**
+     * Find trip time shorts for all intermediate stops for a lev.
+     *
+     */
+    private List<TripTimeShort> getIntermediateTripTimeShortsForLeg(GraphIndex index, Leg leg) {
+        Trip trip = index.tripForId.get(leg.tripId);
+
+        if (trip == null) {
+
+            return null;
+        }
+        ServiceDate serviceDate;
+        try {
+            serviceDate = ServiceDate.parseString(leg.serviceDate);
+        } catch (ParseException pe) {
+            throw new RuntimeException("Unparsable service date: " + leg.serviceDate, pe);
+        }
+
+        final ServiceDay serviceDay = new ServiceDay(index.graph, serviceDate,
+                                                            index.graph.getCalendarService(), trip.getRoute().getAgency().getId());
+        TimetableSnapshotSource timetableSnapshotSource = index.graph.timetableSnapshotSource;
+        Timetable timetable = null;
+        if (timetableSnapshotSource != null) {
+            TimetableSnapshot timetableSnapshot = timetableSnapshotSource.getTimetableSnapshot();
+            if (timetableSnapshot != null) {
+                // Check if realtime-data is available for trip
+                TripPattern pattern = timetableSnapshot.getLastAddedTripPattern(timetableSnapshotSource.getFeedId(), trip.getId().getId(), serviceDate);
+                if (pattern == null) {
+                    pattern = index.patternForTrip.get(trip);
+                }
+                timetable = timetableSnapshot.resolve(pattern, serviceDate);
+            }
+        }
+        if (timetable == null) {
+            timetable = index.patternForTrip.get(trip).scheduledTimetable;
+        }
+        Set<AgencyAndId> intermediateQuayIds = leg.stop.stream().map(place -> place.stopId).filter(Objects::nonNull).collect(Collectors.toSet());
+
+        long startTimeSeconds = (leg.startTime.toInstant().toEpochMilli() - serviceDate.getAsDate().getTime()) / 1000;
+        long endTimeSeconds = (leg.endTime.toInstant().toEpochMilli() - serviceDate.getAsDate().getTime()) / 1000;
+        return TripTimeShort.fromTripTimes(timetable, trip, serviceDay).stream().filter(tripTime -> intermediateQuayIds.contains(tripTime.stopId))
+                       .filter(tripTime -> tripTime.realtimeDeparture >= startTimeSeconds && tripTime.realtimeDeparture <= endTimeSeconds).collect(Collectors.toList());
     }
 
 
