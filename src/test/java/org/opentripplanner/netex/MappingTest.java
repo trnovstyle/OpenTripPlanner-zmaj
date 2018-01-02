@@ -41,16 +41,9 @@ public class MappingTest {
 
     @BeforeClass
     public static void setUpNetexMapping() throws Exception {
-        if (gtfsFile == null || netexFile == null) {
-            Assert.fail();
-        }
         JsonNode buildConfig = OTPMain.loadJson(netexConfigFile);
         NetexBundle netexBundle = new NetexBundle(netexFile, new GraphBuilderParameters(buildConfig));
-        NetexModule netexModule = new NetexModule(new ArrayList<NetexBundle>() {
-            {
-                add(netexBundle);
-            }
-        });
+
         otpBuilderFromNetex = new NetexLoader(netexBundle).loadBundle();
         otpBuilderFromGtfs = GtfsContextBuilder
                 .contextBuilder(gtfsFile)
