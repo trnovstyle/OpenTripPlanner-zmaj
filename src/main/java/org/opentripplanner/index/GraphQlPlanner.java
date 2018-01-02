@@ -181,7 +181,9 @@ public class GraphQlPlanner {
         callWith.argument("walkBoardCost", request::setWalkBoardCost);
         callWith.argument("bikeBoardCost", request::setBikeBoardCost);
         callWith.argument("banned.routes", request::setBannedRoutes);
+        callWith.argument("whiteListed.routes", request::setWhiteListedRoutes);
         callWith.argument("banned.agencies", request::setBannedAgencies);
+        callWith.argument("whiteListed.agencies", request::setWhiteListedAgencies);
         callWith.argument("banned.trips", (String v) -> request.bannedTrips = RoutingResource.makeBannedTripMap(v));
         callWith.argument("banned.stops", request::setBannedStops);
         callWith.argument("banned.stopsHard", request::setBannedStopsHard);
