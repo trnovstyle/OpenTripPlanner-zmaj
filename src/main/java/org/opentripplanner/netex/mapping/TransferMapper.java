@@ -8,7 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class TransferMapper {
-    private static final Logger LOG = LoggerFactory.getLogger(AgencyMapper.class);
+    private static final Logger LOG = LoggerFactory.getLogger(TransferMapper.class);
 
     public Transfer mapTransfer(ServiceJourneyInterchange interchange,
             OtpTransitBuilder transitBuilder, NetexDao netexDao) {
@@ -16,8 +16,8 @@ public class TransferMapper {
 
         transfer.setTransferType(1);
 
-        String fromStopId = netexDao.lookupQuayIdByStopPointRef(interchange.getFromPointRef().getRef());
-        String toStopId = netexDao.lookupQuayIdByStopPointRef(interchange.getToPointRef().getRef());
+        String fromStopId = netexDao.quayIdByStopPointRef.lookup(interchange.getFromPointRef().getRef());
+        String toStopId = netexDao.quayIdByStopPointRef.lookup(interchange.getToPointRef().getRef());
 
         transfer.setFromStop(
                 transitBuilder.getStops().get(AgencyAndIdFactory.createAgencyAndId(fromStopId)));

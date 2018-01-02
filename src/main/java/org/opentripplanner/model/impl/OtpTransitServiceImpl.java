@@ -24,6 +24,7 @@ import org.opentripplanner.model.FareRule;
 import org.opentripplanner.model.FeedInfo;
 import org.opentripplanner.model.Notice;
 import org.opentripplanner.model.NoticeAssignment;
+import org.opentripplanner.model.Operator;
 import org.opentripplanner.model.OtpTransitService;
 import org.opentripplanner.model.Pathway;
 import org.opentripplanner.model.ShapePoint;
@@ -60,6 +61,8 @@ import static java.util.stream.Collectors.groupingBy;
 class OtpTransitServiceImpl implements OtpTransitService {
 
     private final Collection<Agency> agencies;
+
+    private final Collection<Operator> operators;
 
     private final Collection<FareAttribute> fareAttributes;
 
@@ -110,6 +113,7 @@ class OtpTransitServiceImpl implements OtpTransitService {
         this.parkings = nullSafeUnmodifiableList(builder.getParkings());
         this.noticeById = unmodifiableMap(builder.getNoticesById().asMap());
         this.noticeAssignmentById = unmodifiableMap(builder.getNoticeAssignmentsById().asMap());
+        this.operators = nullSafeUnmodifiableList(builder.getOperatorsById().values());
         this.pathways = nullSafeUnmodifiableList(builder.getPathways());
         this.serviceIds = nullSafeUnmodifiableList(builder.findAllServiceIds());
         this.shapePointsByShapeId = mapShapePoints(builder.getShapePoints());
@@ -155,6 +159,11 @@ class OtpTransitServiceImpl implements OtpTransitService {
     @Override
     public Collection<Pathway> getAllPathways() {
         return pathways;
+    }
+
+    @Override
+    public Collection<Operator> getAllOperators() {
+        return operators;
     }
 
     @Override

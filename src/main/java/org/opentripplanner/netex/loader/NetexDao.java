@@ -1,7 +1,9 @@
 package org.opentripplanner.netex.loader;
 
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.Multimap;
+import org.opentripplanner.netex.loader.support.HierarchicalMap;
+import org.opentripplanner.netex.loader.support.HierarchicalMapById;
+import org.opentripplanner.netex.loader.support.HierarchicalMultimap;
+import org.opentripplanner.netex.loader.support.HierarchicalMultimapById;
 import org.rutebanken.netex.model.Authority;
 import org.rutebanken.netex.model.DayType;
 import org.rutebanken.netex.model.DayTypeAssignment;
@@ -13,6 +15,7 @@ import org.rutebanken.netex.model.Network;
 import org.rutebanken.netex.model.Notice;
 import org.rutebanken.netex.model.NoticeAssignment;
 import org.rutebanken.netex.model.OperatingPeriod;
+import org.rutebanken.netex.model.Operator;
 import org.rutebanken.netex.model.Parking;
 import org.rutebanken.netex.model.Quay;
 import org.rutebanken.netex.model.Route;
@@ -21,11 +24,7 @@ import org.rutebanken.netex.model.ServiceJourneyInterchange;
 import org.rutebanken.netex.model.StopPlace;
 import org.rutebanken.netex.model.StopPointInJourneyPattern;
 
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -34,173 +33,116 @@ import java.util.Set;
  * <p>
  * A NeTEx import is grouped into several levels: <em>shard data</em>, <em>group shared data</em>,
  * and <em>singel files</em>. To discard objects not needed any more; this class support the
- * creation of multiple levels, by storing a refernece to a parent at an higher level. All
- * <code>lookupX</code> methods first look in the local index, and then if nothing is found
+ * creation of multiple levels, by storing a refernece to a parent at an higher level. The
+ * <code>HierarchicalMap.lookup</code> method first look in the local index, and then if nothing is found
  * delegate the lookup to its parent.
  * <p>
- * Accessors like {@link #getStopPlaceIds()} return ONLY the local elements, not elements
- * present in the parent NetexDao.
  */
 public class NetexDao {
 
-    private final Map<String, JourneyPattern> journeyPatternsById = new HashMap<>();
-
-    private final Map<String, JourneyPattern> journeyPatternByStopPointId = new HashMap<>();
-
-    private final Map<String, StopPointInJourneyPattern> stopPointInJourneyPatternById = new HashMap<>();
-
-    private final Map<String, Route> routeById = new HashMap<>();
-
-    private final Map<String, Line> lineById = new HashMap<>();
-
-    private final Multimap<String, ServiceJourney> serviceJourneyById = ArrayListMultimap.create();
-
-    private final Map<String, DayType> dayTypeById = new HashMap<>();
-
-    private final Multimap<String, DayTypeAssignment> dayTypeAssignment = ArrayListMultimap.create();
-
-    private final Map<String, Boolean> dayTypeAvailable = new HashMap<>();
-
-    private final Map<String, OperatingPeriod> operatingPeriodById = new HashMap<>();
-
-    private final Map<String, Authority> authoritiesById = new HashMap<>();
-
-    private final Map<String, Authority> authoritiesByGroupOfLinesId = new HashMap<>();
-
-    private final Map<String, Authority> authoritiesByNetworkId = new HashMap<>();
-
-    private final Map<String, GroupOfLines> groupOfLinesByLineId = new HashMap<>();
-
-    private final Map<String, GroupOfLines> groupOfLinesById = new HashMap<>();
-
-    private final Map<String, Network> networkByLineId = new HashMap<>();
-
-    private final Map<String, Network> networkById = new HashMap<>();
+    public final HierarchicalMap<String, Authority> authoritiesByGroupOfLinesId;
+    public final HierarchicalMapById<Authority> authoritiesById;
+    public final HierarchicalMap<String, Authority> authoritiesByNetworkId;
+    public final HierarchicalMultimap<String, DayTypeAssignment> dayTypeAssignmentByDayTypeId;
+    public final HierarchicalMap<String, Boolean> dayTypeAvailable;
+    public final HierarchicalMapById<DayType> dayTypeById;
+    public final HierarchicalMapById<DestinationDisplay> destinationDisplayById;
+    public final HierarchicalMapById<GroupOfLines> groupOfLinesById;
+    public final HierarchicalMap<String, GroupOfLines> groupOfLinesByLineId;
+    public final HierarchicalMap<String, ServiceJourneyInterchange> interchanges;
+    public final HierarchicalMapById<JourneyPattern> journeyPatternsById;
+    public final HierarchicalMap<String, JourneyPattern> journeyPatternsByStopPointId;
+    public final HierarchicalMapById<Line> lineById;
+    public final HierarchicalMapById<StopPlace> multimodalStopPlaceById;
+    public final HierarchicalMapById<Network> networkById;
+    public final HierarchicalMap<String, Network> networkByLineId;
+    public final HierarchicalMapById<NoticeAssignment> noticeAssignmentById;
+    public final HierarchicalMapById<Notice> noticeById;
+    public final HierarchicalMapById<Route> routeById;
+    public final HierarchicalMapById<OperatingPeriod> operatingPeriodById;
+    public final HierarchicalMapById<Operator> operatorsById;
+    public final HierarchicalMultimapById<Parking> parkingById;
+    public final HierarchicalMultimapById<Quay> quayById;
+    public final HierarchicalMap<String, String> quayIdByStopPointRef;
+    public final HierarchicalMultimap<String, ServiceJourney> serviceJourneyByPatternId;
+    public final HierarchicalMultimapById<StopPlace> stopPlaceById;
+    public final HierarchicalMapById<StopPointInJourneyPattern> stopPointInJourneyPatternById;
 
     private final Set<String> calendarServiceIds = new HashSet<>();
 
-    private final Map<String, Notice> noticeById = new HashMap<>();
-
-    private final Map<String, NoticeAssignment> noticeAssignmentMap = new HashMap<>();
-
-    private final Multimap<String, StopPlace> stopPlaceById = ArrayListMultimap.create();
-
-    private final Multimap<String, Quay> quayById = ArrayListMultimap.create();
-
-    private final Multimap<String, Parking> parkingById = ArrayListMultimap.create();
-
-    private final Map<String, DestinationDisplay> destinationDisplayMap = new HashMap<>();
-
-    private final Map<String, ServiceJourneyInterchange> interchanges = new HashMap<>();
-
-    private final Map<String, String> quayIdByStopPointRef = new HashMap<>();
-
-    private final Map<String, StopPlace> multimodalStopPlaceById = new HashMap<>();
-
-    private String timeZone;
+    private String timeZone = null;
 
     private final NetexDao parent;
 
+    /**
+     * Create a root node.
+     */
     NetexDao() {
         this.parent = null;
+
+        this.authoritiesByGroupOfLinesId = new HierarchicalMap<>();
+        this.authoritiesById = new HierarchicalMapById<>();
+        this.authoritiesByNetworkId = new HierarchicalMap<>();
+        this.dayTypeAssignmentByDayTypeId = new HierarchicalMultimap<>();
+        this.dayTypeAvailable = new HierarchicalMap<>();
+        this.dayTypeById = new HierarchicalMapById<>();
+        this.destinationDisplayById = new HierarchicalMapById<>();
+        this.groupOfLinesById = new HierarchicalMapById<>();
+        this.groupOfLinesByLineId = new HierarchicalMap<>();
+        this.interchanges = new HierarchicalMap<>();
+        this.journeyPatternsById = new HierarchicalMapById<>();
+        this.journeyPatternsByStopPointId = new HierarchicalMap<>();
+        this.lineById = new HierarchicalMapById<>();
+        this.multimodalStopPlaceById = new HierarchicalMapById<>();
+        this.networkById = new HierarchicalMapById<>();
+        this.networkByLineId = new HierarchicalMap<>();
+        this.noticeAssignmentById = new HierarchicalMapById<>();
+        this.noticeById = new HierarchicalMapById<>();
+        this.operatingPeriodById = new HierarchicalMapById<>();
+        this.operatorsById = new HierarchicalMapById<>();
+        this.parkingById = new HierarchicalMultimapById<>();
+        this.quayById = new HierarchicalMultimapById<>();
+        this.quayIdByStopPointRef = new HierarchicalMap<>();
+        this.routeById = new HierarchicalMapById<>();
+        this.serviceJourneyByPatternId = new HierarchicalMultimap<>();
+        this.stopPlaceById = new HierarchicalMultimapById<>();
+        this.stopPointInJourneyPatternById = new HierarchicalMapById<>();
     }
 
+    /**
+     * Create a child node.
+     * @param parent can not be <code>null</code>.
+     */
     NetexDao(NetexDao parent) {
         this.parent = parent;
-    }
 
-    void addStopPlace(StopPlace stopPlace) {
-        stopPlaceById.put(stopPlace.getId(), stopPlace);
-    }
-
-    public Set<String> getStopPlaceIds() {
-        return stopPlaceById.keySet();
-    }
-
-    /**
-     * Lookup elements in this class and if not found delegate up to the parent NetexDao.
-     * NB! elements of this class and its parents are NOT merged, the closest win.
-     * @return an empty collection if no element are found.
-     */
-    public Collection<StopPlace> lookupStopPlacesById(String id) {
-        Collection<StopPlace> v = stopPlaceById.get(id);
-        return returnLocalValue(v) ? v : parent.lookupStopPlacesById(id);
-    }
-
-    void addQuayIdByStopPointRef(String stopPointRef, String quayId) {
-        quayIdByStopPointRef.put(stopPointRef, quayId);
-    }
-
-    /**
-     * Lookup quayId in this class and if not found delegate up to the parent NetexDao.
-     */
-    public String lookupQuayIdByStopPointRef(String stopRef) {
-        String v = quayIdByStopPointRef.get(stopRef);
-        return returnLocalValue(v) ? v : parent.lookupQuayIdByStopPointRef(stopRef);
-    }
-
-    void addQuay(Quay quay) {
-        quayById.put(quay.getId(), quay);
-    }
-
-    /**
-     * Lookup quay in this class and if not found delegate up to the parent NetexDao.
-     */
-    public Collection<Quay> lookupQuayById(String id) {
-        Collection<Quay> v = quayById.get(id);
-        return returnLocalValue(v) ? v : parent.lookupQuayById(id);
-    }
-
-    Quay lookupQuayLastVersionById(String id) {
-        return lookupQuayById(id).stream()
-                .max(Comparator.comparingInt(o2 -> Integer.parseInt(o2.getVersion())))
-                .orElse(null);
-    }
-
-    void addParking(Parking parking) { parkingById.put(parking.getId(), parking); }
-
-    public Set<String> getParkingIds() {
-        return parkingById.keySet();
-    }
-
-    /**
-     * Lookup parking in this class and if not found delegate up to the parent NetexDao.
-     */
-    public Collection<Parking> lookupParkingById(String id) {
-        Collection<Parking> v = parkingById.get(id);
-        return returnLocalValue(v) ? v : parent.lookupParkingById(id);
-    }
-
-    public Parking lookupParkingLastVersionById(String id) {
-        return lookupParkingById(id).stream()
-                .max(Comparator.comparingInt(o2 -> Integer.parseInt(o2.getVersion())))
-                .orElse(null);
-    }
-
-    void addDayTypeAvailable(String dayType, Boolean available) {
-        dayTypeAvailable.put(dayType, available);
-    }
-
-    /**
-     * Lookup dayType availability in this class and if not found delegate up to the parent NetexDao.
-     */
-    public Boolean lookupDayTypeAvailable(String dayType) {
-        Boolean v = dayTypeAvailable.get(dayType);
-        return returnLocalValue(v) ? v : parent.lookupDayTypeAvailable(dayType);
-    }
-
-    void addDayTypeAssignment(String ref, DayTypeAssignment assignment) {
-        dayTypeAssignment.put(ref, assignment);
-    }
-
-    /**
-     * Lookup elements in this class and if not found delegate up to the parent NetexDao.
-     * NB! elements of this class and its parents are NOT merged, the closest win.
-     * @return an empty collection if no element are found.
-     */
-    public Collection<DayTypeAssignment> lookupDayTypeAssignment(String ref) {
-        Collection<DayTypeAssignment> v = dayTypeAssignment.get(ref);
-        return returnLocalValue(v) ? v : parent.lookupDayTypeAssignment(ref);
+        this.authoritiesByGroupOfLinesId = new HierarchicalMap<>(parent.authoritiesByGroupOfLinesId);
+        this.authoritiesById = new HierarchicalMapById<>(parent.authoritiesById);
+        this.authoritiesByNetworkId = new HierarchicalMap<>(parent.authoritiesByNetworkId);
+        this.dayTypeAssignmentByDayTypeId = new HierarchicalMultimap<>(parent.dayTypeAssignmentByDayTypeId);
+        this.dayTypeAvailable = new HierarchicalMap<>(parent.dayTypeAvailable);
+        this.dayTypeById = new HierarchicalMapById<>(parent.dayTypeById);
+        this.destinationDisplayById = new HierarchicalMapById<>(parent.destinationDisplayById);
+        this.groupOfLinesById = new HierarchicalMapById<>(parent.groupOfLinesById);
+        this.groupOfLinesByLineId = new HierarchicalMap<>(parent.groupOfLinesByLineId);
+        this.interchanges = new HierarchicalMap<>(parent.interchanges);
+        this.journeyPatternsById = new HierarchicalMapById<>(parent.journeyPatternsById);
+        this.journeyPatternsByStopPointId = new HierarchicalMap<>(parent.journeyPatternsByStopPointId);
+        this.lineById = new HierarchicalMapById<>(parent.lineById);
+        this.multimodalStopPlaceById = new HierarchicalMapById<>(parent.multimodalStopPlaceById);
+        this.networkById = new HierarchicalMapById<>(parent.networkById);
+        this.networkByLineId = new HierarchicalMap<>(parent.networkByLineId);
+        this.noticeAssignmentById = new HierarchicalMapById<>(parent.noticeAssignmentById);
+        this.noticeById = new HierarchicalMapById<>(parent.noticeById);
+        this.operatingPeriodById = new HierarchicalMapById<>(parent.operatingPeriodById);
+        this.operatorsById = new HierarchicalMapById<>(parent.operatorsById);
+        this.parkingById = new HierarchicalMultimapById<>(parent.parkingById);
+        this.quayById = new HierarchicalMultimapById<>(parent.quayById);
+        this.quayIdByStopPointRef = new HierarchicalMap<>(parent.quayIdByStopPointRef);
+        this.routeById = new HierarchicalMapById<>(parent.routeById);
+        this.serviceJourneyByPatternId = new HierarchicalMultimap<>(parent.serviceJourneyByPatternId);
+        this.stopPlaceById = new HierarchicalMultimapById<>(parent.stopPlaceById);
+        this.stopPointInJourneyPatternById = new HierarchicalMapById<>(parent.stopPointInJourneyPatternById);
     }
 
     public void addCalendarServiceId(String serviceId) {
@@ -215,257 +157,11 @@ public class NetexDao {
      * Retrive timezone from this class, if not found delegate up to the parent NetexDao.
      */
     public String getTimeZone() {
-        return returnLocalValue(timeZone) ? timeZone : parent.getTimeZone();
+        return (timeZone != null || parent == null) ? timeZone : parent.getTimeZone();
     }
 
     public void setTimeZone(String timeZone) {
         this.timeZone = timeZone;
     }
 
-    void addServiceJourneyById(String journeyPatternId, ServiceJourney serviceJourney) {
-        serviceJourneyById.put(journeyPatternId, serviceJourney);
-    }
-
-    /**
-     * @return true if at least one ServiceJourney exist for id in this class or in one of the parents.
-     */
-    public boolean serviceJourneysExist(String journeyPatternId) {
-        return serviceJourneyById.containsKey(journeyPatternId) ||
-                (parent != null && parent.serviceJourneysExist(journeyPatternId));
-    }
-
-    /**
-     * Lookup elements in this class and if not found delegate up to the parent NetexDao.
-     * NB! elements of this class and its parents are NOT merged, the closest win.
-     * @return an empty collection if no element are found.
-     */
-    public Collection<ServiceJourney> lookupServiceJourneysById(String id) {
-        Collection<ServiceJourney> v = serviceJourneyById.get(id);
-        return returnLocalValue(v) ? v : parent.lookupServiceJourneysById(id);
-    }
-
-    void addJourneyPattern(JourneyPattern journeyPattern) {
-        journeyPatternsById.put(journeyPattern.getId(), journeyPattern);
-    }
-
-    /**
-     * Lookup JourneyPattern in this class and if not found delegate up to the parent NetexDao.
-     */
-    public JourneyPattern lookupJourneyPatternById(String id) {
-        JourneyPattern v = journeyPatternsById.get(id);
-        return returnLocalValue(v) ? v : parent.lookupJourneyPatternById(id);
-    }
-
-    public Collection<JourneyPattern> getJourneyPatterns() {
-        return journeyPatternsById.values();
-    }
-
-    public void addJourneyPatternByStopPointId(String stopPointId, JourneyPattern journeyPattern) {
-        journeyPatternByStopPointId.put(stopPointId, journeyPattern);
-    }
-
-    /**
-     * Lookup JourneyPattern in this class and if not found delegate up to the parent NetexDao.
-     */
-    public JourneyPattern lookupJourneyPatternByStopPointId(String id) {
-        JourneyPattern v = journeyPatternByStopPointId.get(id);
-        return returnLocalValue(v) ? v : parent.lookupJourneyPatternByStopPointId(id);
-    }
-
-    public void addStopPointInJourneyPattern(StopPointInJourneyPattern value) {
-        stopPointInJourneyPatternById.put(value.getId(), value);
-    }
-
-    /**
-     * Lookup StopPointInJourneyPattern in this class and if not found delegate up to the parent NetexDao.
-     */
-    public StopPointInJourneyPattern lookupStopPointInJourneyPatternById(String id) {
-        StopPointInJourneyPattern v = stopPointInJourneyPatternById.get(id);
-        return returnLocalValue(v) ? v : parent.lookupStopPointInJourneyPatternById(id);
-    }
-
-    void addLine(Line line) {
-        lineById.put(line.getId(), line);
-    }
-
-    public Collection<Line> getLines() {
-        return lineById.values();
-    }
-
-    void addRoute(Route route) {
-        routeById.put(route.getId(), route);
-    }
-
-    /**
-     * Lookup route in this class and if not found delegate up to the parent NetexDao.
-     */
-    public Route lookupRouteById(String id) {
-        Route v = routeById.get(id);
-        return returnLocalValue(v) ? v : parent.lookupRouteById(id);
-    }
-
-    void addDayType(DayType dayType) {
-        dayTypeById.put(dayType.getId(), dayType);
-    }
-
-    public DayType getDayTypeById(String id) {
-        DayType v = dayTypeById.get(id);
-        return returnLocalValue(v) ? v : parent.getDayTypeById(id);
-    }
-
-    void addOperatingPeriod(OperatingPeriod operatingPeriod) {
-        operatingPeriodById.put(operatingPeriod.getId(), operatingPeriod);
-    }
-
-    public void addAuthority(Authority authority){
-        authoritiesById.put(authority.getId(), authority);
-    }
-
-    /**
-     * Lookup Authority in this class and if not found delegate up to the parent NetexDao.
-     */
-    public Authority lookupAuthorityById(String id){
-        Authority v = authoritiesById.get(id);
-        return returnLocalValue(v) ? v : parent.lookupAuthorityById(id);
-    }
-
-    public Collection<Authority> getAuthorities(){
-        return authoritiesById.values();
-    }
-
-    /**
-     * Lookup operating period in this class and if not found delegate up to the parent NetexDao.
-     */
-    public OperatingPeriod lookupOperatingPeriodById(String id) {
-        OperatingPeriod v = operatingPeriodById.get(id);
-        return returnLocalValue(v) ? v : parent.lookupOperatingPeriodById(id);
-    }
-
-    /**
-     * @return true if id exist in this class or in one of the parents.
-     */
-    public boolean operatingPeriodExist(String id) {
-        return operatingPeriodById.containsKey(id) ||
-                (parent != null && parent.operatingPeriodExist(id));
-    }
-
-    public void addAuthorityByGroupOfLinesId(Authority authority, String groupOfLinesId) {
-        authoritiesByGroupOfLinesId.put(groupOfLinesId, authority);
-    }
-
-    /**
-     * Lookup authority in this class and if not found delegate up to the parent NetexDao.
-     */
-    public Authority lookupAuthorityByGroupOfLinesId(String groupOfLinesId) {
-        Authority v = authoritiesByGroupOfLinesId.get(groupOfLinesId);
-        return returnLocalValue(v) ? v : parent.lookupAuthorityByGroupOfLinesId(groupOfLinesId);
-    }
-
-    public void addAuthorityByNetworkId(Authority authority, String networkId) {
-        authoritiesByNetworkId.put(networkId, authority);
-    }
-
-    /**
-     * Lookup authority in this class and if not found delegate up to the parent NetexDao.
-     */
-    public Authority lookupAuthorityByNetworkId(String networkId) {
-        Authority v = authoritiesByNetworkId.get(networkId);
-        return returnLocalValue(v) ? v : parent.lookupAuthorityByNetworkId(networkId);
-    }
-
-    public void addGroupOfLines(GroupOfLines groupOfLines) {
-        groupOfLinesById.put(groupOfLines.getId(), groupOfLines);
-    }
-
-    /**
-     * Lookup authority in this class and if not found delegate up to the parent NetexDao.
-     */
-    public GroupOfLines lookupGroupOfLinesById(String id) {
-        GroupOfLines v = groupOfLinesById.get(id);
-        return returnLocalValue(v) ? v : parent.lookupGroupOfLinesById(id);
-    }
-
-    public void addGroupOfLinesByLineId(GroupOfLines groupOfLines, String lineId) {
-        groupOfLinesByLineId.put(lineId, groupOfLines);
-    }
-
-    /**
-     * Lookup authority in this class and if not found delegate up to the parent NetexDao.
-     */
-    public GroupOfLines lookupGroupOfLinesByLineId(String lineId) {
-        GroupOfLines v = groupOfLinesByLineId.get(lineId);
-        return returnLocalValue(v) ? v : parent.lookupGroupOfLinesByLineId(lineId);
-    }
-
-    public void addNetworkByLineId(Network network, String lineId) {
-        networkByLineId.put(lineId, network);
-    }
-
-    public Network lookupNetworkByLineId(String lineId) {
-        Network v = networkByLineId.get(lineId);
-        return returnLocalValue(v) ? v : parent.lookupNetworkByLineId(lineId);
-    }
-
-    public void addNetwork(Network network) {
-        networkById.put(network.getId(), network);
-    }
-
-    public Network lookupNetworkById(String networkId) {
-        Network v = networkById.get(networkId);
-        return returnLocalValue(v) ? v : parent.lookupNetworkById(networkId);
-    }
-
-    public void addInterchange(ServiceJourneyInterchange interchange) {
-        interchanges.put(interchange.getId(), interchange);
-    }
-
-    public Collection<ServiceJourneyInterchange> getInterchanges() {
-        return interchanges.values();
-    }
-
-    public void addMultimodalStopPlace(StopPlace stopPlace) {
-        multimodalStopPlaceById.put(stopPlace.getId(), stopPlace);
-    }
-
-    public Collection<StopPlace> getMultimodalStops() {
-        return multimodalStopPlaceById.values();
-    }
-    public void addNotice(Notice notice) {
-        noticeById.put(notice.getId(), notice);
-    }
-
-    public Collection<Notice> getNotices() {
-        return noticeById.values();
-    }
-
-    public void addNoticeAssignment(NoticeAssignment noticeAssignment) {
-        noticeAssignmentMap.put(noticeAssignment.getId(), noticeAssignment);
-    }
-
-    public Collection<NoticeAssignment> getNoticeAssignments() {
-        return noticeAssignmentMap.values();
-    }
-
-    public void addDestinationDisplay(DestinationDisplay value) {
-        destinationDisplayMap.put(value.getId(), value);
-    }
-
-    public DestinationDisplay lookUpDestinationDisplayById(String id) {
-        DestinationDisplay v = destinationDisplayMap.get(id);
-        return returnLocalValue(v) ? v : parent.lookUpDestinationDisplayById(id);
-    }
-
-    /* private methods */
-
-    private boolean returnLocalValue(Object value) {
-        return value != null || parent == null;
-    }
-
-    private boolean returnLocalValue(Collection value) {
-        return notEmpty(value) || parent == null;
-    }
-
-    private static boolean notEmpty(Collection c) {
-        return !(c == null || c.isEmpty());
-    }
 }

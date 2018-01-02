@@ -187,13 +187,13 @@ public class CalendarServiceDataFactoryImpl {
     }
 
     private void setTimeZonesForAgencies(CalendarServiceData data) {
-        for (Agency agency : agencies) {
-            TimeZone timeZone = TimeZone.getTimeZone(agency.getTimezone());
-            if (timeZone.getID().equals("GMT") && !agency.getTimezone().toUpperCase()
+        for (Agency organization : agencies) {
+            TimeZone timeZone = TimeZone.getTimeZone(organization.getTimezone());
+            if (timeZone.getID().equals("GMT") && !organization.getTimezone().toUpperCase()
                     .equals("GMT")) {
-                throw new UnknownAgencyTimezoneException(agency.getName(), agency.getTimezone());
+                throw new UnknownAgencyTimezoneException(organization.getName(), organization.getTimezone());
             }
-            data.putTimeZoneForAgencyId(agency.getId(), timeZone);
+            data.putTimeZoneForAgencyId(organization.getId(), timeZone);
         }
     }
 

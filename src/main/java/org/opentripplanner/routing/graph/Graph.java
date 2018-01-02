@@ -27,6 +27,7 @@ import org.opentripplanner.calendar.impl.CalendarServiceImpl;
 import org.opentripplanner.model.Agency;
 import org.opentripplanner.model.AgencyAndId;
 import org.opentripplanner.model.Notice;
+import org.opentripplanner.model.Operator;
 import org.opentripplanner.model.Stop;
 import org.opentripplanner.model.FeedInfo;
 import org.opentripplanner.model.calendar.CalendarServiceData;
@@ -54,7 +55,6 @@ import org.opentripplanner.routing.services.notes.StreetNotesService;
 import org.opentripplanner.routing.trippattern.Deduplicator;
 import org.opentripplanner.routing.vertextype.PatternArriveVertex;
 import org.opentripplanner.routing.vertextype.TransitStop;
-import org.opentripplanner.standalone.Router;
 import org.opentripplanner.traffic.StreetSpeedSnapshotSource;
 import org.opentripplanner.updater.GraphUpdaterConfigurator;
 import org.opentripplanner.updater.GraphUpdaterManager;
@@ -150,6 +150,8 @@ public class Graph implements Serializable, AddBuilderAnnotation {
     private transient List<GraphBuilderAnnotation> graphBuilderAnnotations = new LinkedList<GraphBuilderAnnotation>(); // initialize for tests
 
     private Map<String, Collection<Agency>> agenciesForFeedId = new HashMap<>();
+
+    private Collection<Operator> operators = new ArrayList<>();
 
     private Collection<String> feedIds = new HashSet<>();
 
@@ -979,7 +981,11 @@ public class Graph implements Serializable, AddBuilderAnnotation {
         }
         return timeZone;
     }
-    
+
+    public Collection<Operator> getOperators() {
+        return operators;
+    }
+
     /**
      * The timezone is cached by the graph. If you've done something to the graph that has the
      * potential to change the time zone, you should call this to ensure it is reset. 

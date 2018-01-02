@@ -20,12 +20,12 @@ public class NoticeAssignmentMapper {
         String journeyPatternRef = netexNoticeAssignment.getNoticedObjectRef().getRef();
 
         if (getObjectType(netexNoticeAssignment).equals("StopPointInJourneyPattern")) {
-            JourneyPattern journeyPattern = netexDao.lookupJourneyPatternByStopPointId(journeyPatternRef);
+            JourneyPattern journeyPattern = netexDao.journeyPatternsByStopPointId.lookup(journeyPatternRef);
 
-            if (journeyPattern != null && netexDao.serviceJourneysExist(journeyPattern.getId())) {
+            if (journeyPattern != null && netexDao.serviceJourneyByPatternId.containsKey(journeyPattern.getId())) {
                 // Map notice from StopPointInJourneyPattern to corresponding TimeTabledPassingTimes
-                for (ServiceJourney serviceJourney : netexDao.lookupServiceJourneysById(journeyPattern.getId())) {
-                    int order = netexDao.lookupStopPointInJourneyPatternById(journeyPatternRef).getOrder().intValue();
+                for (ServiceJourney serviceJourney : netexDao.serviceJourneyByPatternId.lookup(journeyPattern.getId())) {
+                    int order = netexDao.stopPointInJourneyPatternById.lookup(journeyPatternRef).getOrder().intValue();
 
                     TimetabledPassingTime passingTime = serviceJourney.getPassingTimes().getTimetabledPassingTime().get(order - 1);
 

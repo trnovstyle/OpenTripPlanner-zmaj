@@ -18,7 +18,7 @@ import static org.opentripplanner.netex.mapping.CalendarMapper.mapToCalendarDate
 
 public class NetexMapper {
 
-    private final AgencyMapper agencyMapper = new AgencyMapper();
+    private final AuthorityToAgencyMapper authorityToAgencyMapper = new AuthorityToAgencyMapper();
 
     private final NoticeMapper noticeMapper = new NoticeMapper();
 
@@ -34,6 +34,8 @@ public class NetexMapper {
 
     private final OtpTransitBuilder transitBuilder;
 
+    private final OperatorMapper operatorMapper = new OperatorMapper();
+
     private final TransferMapper transferMapper = new TransferMapper();
 
     private final String agencyId;
@@ -47,16 +49,20 @@ public class NetexMapper {
     public void mapNetexToOtp(NetexDao netexDao) {
         AgencyAndIdFactory.setAgencyId(agencyId);
 
-        for (Authority authority : netexDao.getAuthorities()) {
-            transitBuilder.getAgencies().add(agencyMapper.mapAgency(authority, netexDao.getTimeZone()));
+        for (Authority authority : netexDao.authoritiesById.values()) {
+            transitBuilder.getAgencies().add(authorityToAgencyMapper.mapAgency(authority, netexDao.getTimeZone()));
         }
 
-        for (Line line : netexDao.getLines()) {
+        for (org.rutebanken.netex.model.Operator operator : netexDao.operatorsById.values()) {
+            transitBuilder.getOperatorsById().add(operatorMapper.map(operator));
+        }
+
+        for (Line line : netexDao.lineById.values()) {
             Route route = routeMapper.mapRoute(line, transitBuilder, netexDao, netexDao.getTimeZone());
             transitBuilder.getRoutes().add(route);
         }
 
-        for (StopPlace stopPlace : netexDao.getMultimodalStops()) {
+        for (StopPlace stopPlace : netexDao.multimodalStopPlaceById.values()) {
             if (stopPlace != null) {
                 Stop stop = stopMapper.mapMultiModalStop(stopPlace);
                 transitBuilder.getMultiModalStops().add(stop);
@@ -64,8 +70,8 @@ public class NetexMapper {
             }
         }
 
-        for (String stopPlaceId : netexDao.getStopPlaceIds()) {
-            Collection<StopPlace> stopPlaceAllVersions = netexDao.lookupStopPlacesById(stopPlaceId);
+        for (String stopPlaceId : netexDao.stopPlaceById.keys()) {
+            Collection<StopPlace> stopPlaceAllVersions = netexDao.stopPlaceById.lookup(stopPlaceId);
             if (stopPlaceAllVersions != null) {
                 Collection<Stop> stops = stopMapper.mapParentAndChildStops(stopPlaceAllVersions, transitBuilder, netexDao);
                 for (Stop stop : stops) {
@@ -74,7 +80,7 @@ public class NetexMapper {
             }
         }
 
-        for (JourneyPattern journeyPattern : netexDao.getJourneyPatterns()) {
+        for (JourneyPattern journeyPattern : netexDao.journeyPatternsById.values()) {
             tripPatternMapper.mapTripPattern(journeyPattern, transitBuilder, netexDao);
         }
 
@@ -82,11 +88,11 @@ public class NetexMapper {
             transitBuilder.getCalendarDates().addAll(mapToCalendarDates(AgencyAndIdFactory.createAgencyAndId(serviceId), netexDao));
         }
 
-        for (String parkingId : netexDao.getParkingIds()) {
-            transitBuilder.getParkings().add(parkingMapper.mapParking( netexDao.lookupParkingLastVersionById(parkingId)));
+        for (String parkingId : netexDao.parkingById.keys()) {
+            transitBuilder.getParkings().add(parkingMapper.mapParking(netexDao.parkingById.lookupLastVersionById(parkingId)));
         }
 
-        for (org.rutebanken.netex.model.ServiceJourneyInterchange interchange : netexDao.getInterchanges()) {
+        for (org.rutebanken.netex.model.ServiceJourneyInterchange interchange : netexDao.interchanges.values()) {
             if (interchange != null) {
                 Transfer transfer = transferMapper.mapTransfer(interchange, transitBuilder, netexDao);
                 if (transfer != null) {
@@ -95,12 +101,12 @@ public class NetexMapper {
             }
         }
 
-        for (Notice notice : netexDao.getNotices()) {
+        for (Notice notice : netexDao.noticeById.values()) {
             org.opentripplanner.model.Notice otpNotice = noticeMapper.mapNotice(notice);
             transitBuilder.getNoticesById().add(otpNotice);
         }
 
-        for (org.rutebanken.netex.model.NoticeAssignment noticeAssignment : netexDao.getNoticeAssignments()) {
+        for (org.rutebanken.netex.model.NoticeAssignment noticeAssignment : netexDao.noticeAssignmentById.values()) {
             Collection<NoticeAssignment> otpNoticeAssignments = noticeAssignmentMapper.mapNoticeAssignment(noticeAssignment, netexDao);
             for (NoticeAssignment otpNoticeAssignment : otpNoticeAssignments){
             transitBuilder.getNoticeAssignmentsById().add( otpNoticeAssignment);}

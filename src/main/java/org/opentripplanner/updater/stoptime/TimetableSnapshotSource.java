@@ -124,9 +124,10 @@ public class TimetableSnapshotSource {
         graphIndex = graph.index;
 
         // Create dummy agency for added trips
-        dummyAgency = new Agency();
-        dummyAgency.setId("");
-        dummyAgency.setName("");
+        Agency dummy = new Agency();
+        dummy.setId("");
+        dummy.setName("");
+        dummyAgency = dummy;
 
         siriFuzzyTripMatcher = new SiriFuzzyTripMatcher(graphIndex);
         SIRI_FEED_ID = graphIndex.agenciesForFeedId.keySet().iterator().next();

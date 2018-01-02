@@ -13,42 +13,30 @@
 
 package org.opentripplanner.api.adapters;
 
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import org.opentripplanner.model.AgencyAndId;
+import org.opentripplanner.model.Operator;
+
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import org.opentripplanner.model.Agency;
+@XmlRootElement(name = "Operator")
+public class OperatorType {
 
-@XmlRootElement(name = "Agency")
-public class AgencyType {
-
-    public AgencyType(String id, String name, String url, String timezone, String lang,
-            String phone, String fareUrl) {
-        this.id = id;
-        this.name = name;
-        this.url = url;
-        this.timezone = timezone;
-        this.lang = lang;
-        this.phone = phone;
-        this.fareUrl = fareUrl;
-    }
-
-    public AgencyType(Agency arg) {
+    public OperatorType(Operator arg) {
         this.id = arg.getId();
         this.name = arg.getName();
         this.url = arg.getUrl();
-        this.timezone = arg.getTimezone();
-        this.lang = arg.getLang();
         this.phone = arg.getPhone();
-        this.fareUrl = arg.getFareUrl();
     }
 
-    public AgencyType() {
+    public OperatorType() {
     }
 
-    @XmlAttribute
+    @XmlJavaTypeAdapter(AgencyAndIdAdapter.class)
     @JsonSerialize
-    String id;
+    AgencyAndId id;
 
     @XmlAttribute
     @JsonSerialize
@@ -60,18 +48,5 @@ public class AgencyType {
 
     @XmlAttribute
     @JsonSerialize
-    String timezone;
-
-    @XmlAttribute
-    @JsonSerialize
-    String lang;
-
-    @XmlAttribute
-    @JsonSerialize
     String phone;
-
-    @XmlAttribute
-    @JsonSerialize
-    String fareUrl;
-
 }

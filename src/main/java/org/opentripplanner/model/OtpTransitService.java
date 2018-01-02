@@ -11,7 +11,15 @@ import java.util.Map;
  */
 public interface OtpTransitService {
 
+    /**
+     * Return a list of Agencies (NeTEx Authorities)
+     */
     Collection<Agency> getAllAgencies();
+
+    /**
+     * NeTEx Operator. Not applicable for GTFS.
+     */
+    Collection<Operator> getAllOperators();
 
     Collection<FareAttribute> getAllFareAttributes();
 

@@ -71,11 +71,11 @@ public class OtpTransitServiceImplTest {
     @Test
     public void testGetAllAgencies() {
         Collection<Agency> agencies = subject.getAllAgencies();
-        Agency agency = first(agencies);
+        Agency organization = first(agencies);
 
         assertEquals(1, agencies.size());
-        assertEquals("agency", agency.getId());
-        assertEquals("Fake Agency", agency.getName());
+        assertEquals("agency", organization.getId());
+        assertEquals("Fake Agency", organization.getName());
     }
 
     @Test

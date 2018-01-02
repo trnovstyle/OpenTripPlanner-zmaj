@@ -144,6 +144,8 @@ public class IndexGraphQLSchema {
 
     public GraphQLOutputType agencyType = new GraphQLTypeReference("Agency");
 
+    public GraphQLOutputType operatorType = new GraphQLTypeReference("Operator");
+
     public GraphQLOutputType alertType = new GraphQLTypeReference("Alert");
 
     public GraphQLOutputType serviceTimeRangeType = new GraphQLTypeReference("ServiceTimeRange");
@@ -212,6 +214,9 @@ public class IndexGraphQLSchema {
             if (o instanceof Agency) {
                 return (GraphQLObjectType) agencyType;
             }
+            if (o instanceof Operator) {
+                return (GraphQLObjectType) operatorType;
+            }
             if (o instanceof Notice) {
                 return (GraphQLObjectType) noticeType;
             }
@@ -275,24 +280,8 @@ public class IndexGraphQLSchema {
         }).build();
 
     private Agency getAgency(GraphIndex index, String agencyId) {
-        //xxx what if there are duplciate agency ids?
-        //now we return the first
-        for (Map<String, Agency> feedAgencies : index.agenciesForFeedId.values()) {
-            if (feedAgencies.get(agencyId) != null) {
-                return feedAgencies.get(agencyId);
-            }
-        }
-        return null;
-    }
+        return index.getAgencyWithoutFeedId(agencyId);
 
-    private List<Agency> getAllAgencies(GraphIndex index) {
-        //xxx what if there are duplciate agency ids?
-        //now we return the first
-        ArrayList<Agency> agencies = new ArrayList<Agency>();
-        for (Map<String, Agency> feedAgencies : index.agenciesForFeedId.values()) {
-            agencies.addAll(feedAgencies.values());
-        }
-        return agencies;
     }
 
     @SuppressWarnings("unchecked")
@@ -1412,6 +1401,11 @@ public class IndexGraphQLSchema {
                 .dataFetcher(environment -> ((Trip) environment.getSource()).getRoute())
                 .build())
             .field(GraphQLFieldDefinition.newFieldDefinition()
+                .name("operator")
+                .type(operatorType)
+                .dataFetcher(environment -> ((Trip) environment.getSource()).getOperator())
+                .build())
+            .field(GraphQLFieldDefinition.newFieldDefinition()
                 .name("serviceId")
                 .type(Scalars.GraphQLString) //TODO:Should be serviceType
                 .dataFetcher(environment -> GtfsLibrary
@@ -1696,6 +1690,10 @@ public class IndexGraphQLSchema {
                 .type(agencyType)
                 .build())
             .field(GraphQLFieldDefinition.newFieldDefinition()
+                    .name("operator")
+                    .type(operatorType)
+                    .build())
+            .field(GraphQLFieldDefinition.newFieldDefinition()
                 .name("shortName")
                 .type(Scalars.GraphQLString)
                 .build())
@@ -1782,7 +1780,7 @@ public class IndexGraphQLSchema {
 
         agencyType = GraphQLObjectType.newObject()
             .name("Agency")
-            .description("Agency in the graph")
+            .description("In GTFS Agency or NeTEx Authority")
             .withInterface(nodeInterface)
             .field(GraphQLFieldDefinition.newFieldDefinition()
                 .name("id")
@@ -1836,6 +1834,58 @@ public class IndexGraphQLSchema {
                     dataFetchingEnvironment.getSource()))
                 .build())
             .build();
+
+        operatorType = GraphQLObjectType.newObject()
+                .name("Operator")
+                .description("NeTEx Operator, not available for data imported by GTFS")
+                .withInterface(nodeInterface)
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("id")
+                        .type(new GraphQLNonNull(Scalars.GraphQLID))
+                        .dataFetcher(environment -> relay.toGlobalId(
+                                        operatorType.getName(),
+                                        GtfsLibrary.convertIdToString(((Operator) environment.getSource()).getId())))
+                        .build())
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("gtfsId")
+                        .description("Operator id")
+                        .type(new GraphQLNonNull(Scalars.GraphQLString))
+                        .dataFetcher(environment ->
+                                GtfsLibrary.convertIdToString(((Operator) environment.getSource()).getId()))
+                        .build())
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("name")
+                        .type(new GraphQLNonNull(Scalars.GraphQLString))
+                        .build())
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("url")
+                        .type(Scalars.GraphQLString)
+                        .build())
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("phone")
+                        .type(Scalars.GraphQLString)
+                        .build())
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("fareUrl")
+                        .type(Scalars.GraphQLString)
+                        .build())
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("routes")
+                        .type(new GraphQLList(routeType))
+                        .dataFetcher(environment -> index.routeForId.values()
+                                .stream()
+                                .filter(route -> route.getOperator() == environment.getSource())
+                                .collect(Collectors.toList()))
+                        .build())
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("trips")
+                        .type(new GraphQLList(tripType))
+                        .dataFetcher(environment -> index.tripForId.values()
+                                .stream()
+                                .filter(trip -> trip.getOperator() == environment.getSource())
+                                .collect(Collectors.toList()))
+                        .build())
+                .build();
 
         bikeRentalStationType = GraphQLObjectType.newObject()
             .name("BikeRentalStation")
@@ -2043,6 +2093,9 @@ public class IndexGraphQLSchema {
                 if (id.type.equals(agencyType.getName())) {
                     return index.getAgencyWithoutFeedId(id.id);
                 }
+                if (id.type.equals(operatorType.getName())) {
+                    return index.operatorForId.get(GtfsLibrary.convertIdFromString(id.id));
+                }
                 if (id.type.equals(alertType.getName())) {
                     return index.getAlertForId(id.id);
                 }
@@ -2094,21 +2147,38 @@ public class IndexGraphQLSchema {
                 .dataFetcher(environment -> new ArrayList<>(index.getAllAgencies()))
                 .build())
             .field(GraphQLFieldDefinition.newFieldDefinition()
-                .name("notices")
-                .type(new GraphQLList(noticeType))
-                .dataFetcher(environment -> index.getNoticeMap().values())
+                    .name("agency")
+                    .description("Get a single agency based on agency ID")
+                    .type(agencyType)
+                    .argument(GraphQLArgument.newArgument()
+                            .name("id")
+                            .type(new GraphQLNonNull(Scalars.GraphQLString))
+                            .build())
+                    .dataFetcher(environment ->
+                            index.getAgencyWithoutFeedId(environment.getArgument("id")))
+                    .build())
+            .field(GraphQLFieldDefinition.newFieldDefinition()
+                .name("operators")
+                .description("Get all operators for the specified graph")
+                .type(new GraphQLList(operatorType))
+                .dataFetcher(environment -> new ArrayList<>(index.getAllOperators()))
                 .build())
             .field(GraphQLFieldDefinition.newFieldDefinition()
-                .name("agency")
-                .description("Get a single agency based on agency ID")
-                .type(agencyType)
-                .argument(GraphQLArgument.newArgument()
-                    .name("id")
-                    .type(new GraphQLNonNull(Scalars.GraphQLString))
+                    .name("operator")
+                    .description("Get a single operator based on operator ID")
+                    .type(operatorType)
+                    .argument(GraphQLArgument.newArgument()
+                            .name("id")
+                            .type(new GraphQLNonNull(Scalars.GraphQLString))
+                            .build())
+                    .dataFetcher(environment -> index.operatorForId.get(
+                            GtfsLibrary.convertIdFromString((String)environment.getArgument("id"))))
                     .build())
-                .dataFetcher(environment ->
-                    index.getAgencyWithoutFeedId(environment.getArgument("id")))
-                .build())
+            .field(GraphQLFieldDefinition.newFieldDefinition()
+                    .name("notices")
+                    .type(new GraphQLList(noticeType))
+                    .dataFetcher(environment -> index.getNoticeMap().values())
+                    .build())
             .field(GraphQLFieldDefinition.newFieldDefinition()
                 .name("stops")
                 .description("Get all stops for the specified graph")

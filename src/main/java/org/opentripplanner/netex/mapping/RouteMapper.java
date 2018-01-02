@@ -1,12 +1,14 @@
 package org.opentripplanner.netex.mapping;
 
 import org.opentripplanner.model.Agency;
+import org.opentripplanner.model.Operator;
 import org.opentripplanner.model.impl.OtpTransitBuilder;
 import org.opentripplanner.netex.loader.NetexDao;
 import org.rutebanken.netex.model.Authority;
 import org.rutebanken.netex.model.GroupOfLines;
 import org.rutebanken.netex.model.Line;
 import org.rutebanken.netex.model.Network;
+import org.rutebanken.netex.model.OperatorRefStructure;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -14,39 +16,16 @@ public class RouteMapper {
 
     private static final Logger LOG = LoggerFactory.getLogger(RouteMapper.class);
 
-    TransportModeMapper transportModeMapper = new TransportModeMapper();
-    AgencyMapper agencyMapper = new AgencyMapper();
+    private TransportModeMapper transportModeMapper = new TransportModeMapper();
+    private AuthorityToAgencyMapper authorityToAgencyMapper = new AuthorityToAgencyMapper();
 
-    public org.opentripplanner.model.Route mapRoute(Line line, OtpTransitBuilder transitBuilder, NetexDao netexDao, String timeZone){
+    public org.opentripplanner.model.Route mapRoute(Line line, OtpTransitBuilder transitBuilder, NetexDao netexDao, String timeZone) {
 
         org.opentripplanner.model.Route otpRoute = new org.opentripplanner.model.Route();
-        Network network = netexDao.lookupNetworkByLineId(line.getId());
-        GroupOfLines groupOfLines = netexDao.lookupGroupOfLinesByLineId(line.getId());
-
-        Agency agency;
-
-        if (network != null && netexDao.lookupAuthorityByNetworkId(network.getId()) != null) {
-            Authority authority = netexDao.lookupAuthorityByNetworkId(network.getId());
-            String agencyId = authority.getId();
-            agency = transitBuilder.getAgencies().stream().filter(a -> a.getId().equals(agencyId)).findFirst().get();
-            otpRoute.setAgency(agency);
-        } else if (groupOfLines != null && netexDao.lookupAuthorityByGroupOfLinesId(groupOfLines.getId()) != null) {
-            Authority authority = netexDao.lookupAuthorityByGroupOfLinesId(groupOfLines.getId());
-            String agencyId = authority.getId();
-            agency = transitBuilder.getAgencies().stream().filter(a -> a.getId().equals(agencyId)).findFirst().get();
-            otpRoute.setAgency(agency);
-        } else {
-            LOG.warn("No authority found for " + line.getId());
-            agency = agencyMapper.getDefaultAgency(timeZone);
-            String agencyId = agency.getId();
-            if (!transitBuilder.getAgencies().stream().anyMatch(a -> a.getId().equals(agencyId))) {
-                transitBuilder.getAgencies().add(agency);
-            }
-        }
-
-        otpRoute.setAgency(agency);
 
         otpRoute.setId(AgencyAndIdFactory.createAgencyAndId(line.getId()));
+        otpRoute.setAgency(findAuthorityForRoute(transitBuilder, netexDao, line, timeZone));
+        otpRoute.setOperator(findLineOperator(line, transitBuilder));
         otpRoute.setLongName(line.getName().getValue());
         otpRoute.setShortName(line.getPublicCode());
         otpRoute.setType(transportModeMapper.getTransportMode(line.getTransportMode(), line.getTransportSubmode()));
@@ -57,5 +36,43 @@ public class RouteMapper {
             otpRoute.setShortName("");
 
         return otpRoute;
+    }
+
+    private Operator findLineOperator(Line line, OtpTransitBuilder transitBuilder) {
+        OperatorRefStructure opeRef = line.getOperatorRef();
+
+        if(opeRef != null) {
+            return transitBuilder.getOperatorsById().get(AgencyAndIdFactory.createAgencyAndId(opeRef.getRef()));
+
+        }
+        return null;
+    }
+
+    private Agency findAuthorityForRoute(OtpTransitBuilder transitBuilder, NetexDao netexDao, Line line, String timeZone) {
+        Agency otpAgency = null;
+        Network network = netexDao.networkByLineId.lookup(line.getId());
+        GroupOfLines groupOfLines = netexDao.groupOfLinesByLineId.lookup(line.getId());
+
+        if (network != null && netexDao.authoritiesByNetworkId.lookup(network.getId()) != null) {
+            Authority authority = netexDao.authoritiesByNetworkId.lookup(network.getId());
+            String agencyId = authority.getId();
+            otpAgency = transitBuilder.findAgencyById(agencyId);
+        } else if (groupOfLines != null && netexDao.authoritiesByGroupOfLinesId.lookup(groupOfLines.getId()) != null) {
+            Authority authority = netexDao.authoritiesByGroupOfLinesId.lookup(groupOfLines.getId());
+            String agencyId = authority.getId();
+            otpAgency = transitBuilder.findAgencyById(agencyId);
+        }
+
+        return otpAgency != null ? otpAgency : getDefaultAgency(transitBuilder, line, timeZone);
+    }
+
+    private Agency getDefaultAgency(OtpTransitBuilder transitBuilder, Line line, String timeZone) {
+        LOG.warn("No authority found for " + line.getId());
+        Agency agency = authorityToAgencyMapper.getDefaultAgency(timeZone);
+
+        if (transitBuilder.findAgencyById(agency.getId()) == null) {
+            transitBuilder.getAgencies().add(agency);
+        }
+        return agency;
     }
 }

@@ -16,7 +16,7 @@
  */
 package org.opentripplanner.model;
 
-public final class Agency extends IdentityBean<String> {
+public final class Agency extends IdentityBean<String>  {
 
     private static final long serialVersionUID = 1L;
 
@@ -40,15 +40,16 @@ public final class Agency extends IdentityBean<String> {
     }
 
     public Agency(Agency a) {
-        this.id = a.id;
-        this.name = a.name;
-        this.url = a.url;
-        this.timezone = a.timezone;
-        this.lang = a.lang;
-        this.phone = a.phone;
-        this.brandingUrl = a.brandingUrl;
+        this.id = a.getId();
+        this.name = a.getName();
+        this.url = a.getUrl();
+        this.timezone = a.getTimezone();
+        this.lang = a.getLang();
+        this.phone = a.getPhone();
+        this.brandingUrl = a.getBrandingUrl();
     }
 
+    @Override
     public String getId() {
         return id;
     }

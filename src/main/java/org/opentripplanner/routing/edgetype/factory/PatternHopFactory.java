@@ -29,6 +29,7 @@ import org.apache.commons.math3.util.FastMath;
 import org.opentripplanner.model.Agency;
 import org.opentripplanner.model.AgencyAndId;
 import org.opentripplanner.model.FeedInfo;
+import org.opentripplanner.model.Operator;
 import org.opentripplanner.model.Parking;
 import org.opentripplanner.model.Pathway;
 import org.opentripplanner.model.Route;
@@ -339,6 +340,8 @@ public class PatternHopFactory {
         loadPathways(graph);
         loadFeedInfo(graph);
         loadAgencies(graph);
+        loadOperators(graph);
+
         // TODO: Why is there cached "data", and why are we clearing it? Due to a general lack of comments, I have no idea.
         // Perhaps it is to allow name collisions with previously loaded feeds.
         clearCachedData(); 
@@ -727,6 +730,10 @@ public class PatternHopFactory {
         for (Agency agency : _transitService.getAllAgencies()) {
             graph.addAgency(_feedId.getId(), agency);
         }
+    }
+
+    private void loadOperators(Graph graph) {
+        graph.getOperators().addAll(_transitService.getAllOperators());
     }
 
     private void loadFeedInfo(Graph graph) {

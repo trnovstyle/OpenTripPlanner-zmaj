@@ -65,6 +65,8 @@ public class AlertPatch implements Serializable {
 
     private String agency;
 
+    private AgencyAndId operatorId;
+
     private AgencyAndId route;
 
     private AgencyAndId trip;
@@ -278,6 +280,11 @@ public class AlertPatch implements Serializable {
     }
 
     @XmlJavaTypeAdapter(AgencyAndIdAdapter.class)
+    public AgencyAndId getOperatorId() {
+        return operatorId;
+    }
+
+    @XmlJavaTypeAdapter(AgencyAndIdAdapter.class)
     public AgencyAndId getRoute() {
         return route;
     }
@@ -294,6 +301,10 @@ public class AlertPatch implements Serializable {
 
     public void setAgencyId(String agency) {
         this.agency = agency;
+    }
+
+    public void setOperatorId(AgencyAndId operatorId) {
+        this.operatorId = operatorId;
     }
 
     public void setRoute(AgencyAndId route) {

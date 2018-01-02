@@ -22,10 +22,10 @@ public class TransmodelGraphQLTest extends GtfsTest {
         transmodelIndexGraphQLSchema = new TransmodelIndexGraphQLSchema(router);
     }
 
-    public void testGraphQLSimple() {
+    public void testGraphQLAuthority() {
         String query =
-                "query Organisation{" +
-                        "    organisation(id: \"agency\"){" +
+                "query Authority {" +
+                        "    authority(id: \"agency\"){" +
                         "        name" +
                         "    }" +
                         "}";
@@ -34,7 +34,7 @@ public class TransmodelGraphQLTest extends GtfsTest {
         ).execute(query);
         assertTrue(result.getErrors().isEmpty());
         Map<String, Object> data = result.getData();
-        assertEquals("Fake Agency", ((Map) data.get("organisation")).get("name"));
+        assertEquals("Fake Agency", ((Map) data.get("authority")).get("name"));
     }
 
     public void testGraphQLIntrospectionQuery() {

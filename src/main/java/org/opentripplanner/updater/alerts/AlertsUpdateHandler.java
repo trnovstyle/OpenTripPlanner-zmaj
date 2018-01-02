@@ -163,14 +163,16 @@ public class AlertsUpdateHandler {
                         continue;
                     }
 
-                    String operator = operatorRef.getValue();
+                    // SIRI Operators are mapped to OTP Agency, this i probably wrong - but
+                    // I leave this for now.
+                    String agencyId = operatorRef.getValue();
 
-                    String id = paddedSituationNumber + operator;
+                    String id = paddedSituationNumber + agencyId;
                     if (expireSituation) {
                         idsToExpire.add(id);
                     } else {
                         AlertPatch alertPatch = new AlertPatch();
-                        alertPatch.setAgencyId(operator);
+                        alertPatch.setAgencyId(agencyId);
                         alertPatch.setTimePeriods(periods);
                         alertPatch.setAlert(alert);
                         alertPatch.setId(id);

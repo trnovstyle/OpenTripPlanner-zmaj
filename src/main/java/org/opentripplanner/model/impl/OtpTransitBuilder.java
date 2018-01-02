@@ -26,6 +26,7 @@ import org.opentripplanner.model.Frequency;
 import org.opentripplanner.model.IdentityBean;
 import org.opentripplanner.model.Notice;
 import org.opentripplanner.model.NoticeAssignment;
+import org.opentripplanner.model.Operator;
 import org.opentripplanner.model.Pathway;
 import org.opentripplanner.model.Route;
 import org.opentripplanner.model.ServiceCalendar;
@@ -49,6 +50,7 @@ import java.util.Set;
 public class OtpTransitBuilder {
     private final List<Agency> agencies = new ArrayList<>();
 
+
     private final List<ServiceCalendarDate> calendarDates = new ArrayList<>();
 
     private final List<ServiceCalendar> calendars = new ArrayList<>();
@@ -71,6 +73,8 @@ public class OtpTransitBuilder {
 
     private final EntityMap<AgencyAndId, NoticeAssignment> noticeAssignmentsById = new EntityMap<>();
 
+    private final EntityMap<AgencyAndId, Operator> operatorsById = new EntityMap<>();
+
     private final List<Pathway> pathways = new ArrayList<>();
 
     private final EntityMap<AgencyAndId, Route> routesById = new EntityMap<>();
@@ -92,6 +96,10 @@ public class OtpTransitBuilder {
 
     public List<Agency> getAgencies() {
         return agencies;
+    }
+
+    public Agency findAgencyById(String id) {
+        return agencies.stream().filter(a -> a.getId().equals(id)).findFirst().orElse(null);
     }
 
     public List<ServiceCalendarDate> getCalendarDates() {
@@ -118,15 +126,23 @@ public class OtpTransitBuilder {
         return frequencies;
     }
 
-    public List<Parking> getParkings() { return parkings; }
-
     public EntityMap<AgencyAndId, Stop> getMultiModalStops() {
         return multiModalStops;
     }
 
-    public ListMultimap<Stop, Stop> getStationsByMultiModalStop() {
-        return stationsByMultiModalStop;
+    public EntityMap<AgencyAndId, Notice> getNoticesById() {
+        return noticesById;
     }
+
+    public EntityMap<AgencyAndId, NoticeAssignment> getNoticeAssignmentsById() {
+        return noticeAssignmentsById;
+    }
+
+    public EntityMap<AgencyAndId, Operator> getOperatorsById() {
+        return operatorsById;
+    }
+
+    public List<Parking> getParkings() { return parkings; }
 
     public List<Pathway> getPathways() {
         return pathways;
@@ -138,6 +154,10 @@ public class OtpTransitBuilder {
 
     public List<ShapePoint> getShapePoints() {
         return shapePoints;
+    }
+
+    public ListMultimap<Stop, Stop> getStationsByMultiModalStop() {
+        return stationsByMultiModalStop;
     }
 
     public EntityMap<AgencyAndId, Stop> getStops() {
@@ -158,15 +178,6 @@ public class OtpTransitBuilder {
 
     public Multimap<StopPattern, TripPattern> getTripPatterns() {
         return tripPatterns;
-    }
-
-
-    public EntityMap<AgencyAndId, Notice> getNoticesById() {
-        return noticesById;
-    }
-
-    public EntityMap<AgencyAndId, NoticeAssignment> getNoticeAssignmentsById() {
-        return noticeAssignmentsById;
     }
 
     /**

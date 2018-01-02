@@ -46,32 +46,32 @@ public class NetexDaoTest {
         StopPlace stopPlaceA = stopPlace(ID, null);
         StopPlace stopPlaceB = stopPlace(ID, "image_1");
 
-        assertEquals(emptyList(), root.lookupStopPlacesById(ID));
-        assertEquals(emptyList(), child.lookupStopPlacesById(ID));
+        assertEquals(emptyList(), root.stopPlaceById.lookup(ID));
+        assertEquals(emptyList(), child.stopPlaceById.lookup(ID));
 
-        root.addStopPlace(stopPlaceA);
+        root.stopPlaceById.add(stopPlaceA);
 
-        assertEquals(singletonList(stopPlaceA), root.lookupStopPlacesById(ID));
-        assertEquals(singletonList(stopPlaceA), child.lookupStopPlacesById(ID));
+        assertEquals(singletonList(stopPlaceA), root.stopPlaceById.lookup(ID));
+        assertEquals(singletonList(stopPlaceA), child.stopPlaceById.lookup(ID));
 
-        child.addStopPlace(stopPlaceB);
+        child.stopPlaceById.add(stopPlaceB);
 
-        assertEquals(singletonList(stopPlaceB), child.lookupStopPlacesById(ID));
+        assertEquals(singletonList(stopPlaceB), child.stopPlaceById.lookup(ID));
     }
 
     @Test
     public void lookupQuayIdByStopPointRef() {
-        assertNull(root.lookupQuayIdByStopPointRef(ID));
-        assertNull(child.lookupQuayIdByStopPointRef(ID));
+        assertNull(root.quayIdByStopPointRef.lookup(ID));
+        assertNull(child.quayIdByStopPointRef.lookup(ID));
 
-        root.addQuayIdByStopPointRef(ID, REF);
+        root.quayIdByStopPointRef.add(ID, REF);
 
-        assertEquals(REF, root.lookupQuayIdByStopPointRef(ID));
-        assertEquals(REF, child.lookupQuayIdByStopPointRef(ID));
+        assertEquals(REF, root.quayIdByStopPointRef.lookup(ID));
+        assertEquals(REF, child.quayIdByStopPointRef.lookup(ID));
 
-        child.addQuayIdByStopPointRef(ID, REF_2);
+        child.quayIdByStopPointRef.add(ID, REF_2);
 
-        assertEquals(REF_2, child.lookupQuayIdByStopPointRef(ID));
+        assertEquals(REF_2, child.quayIdByStopPointRef.lookup(ID));
     }
 
     @Test
@@ -79,32 +79,32 @@ public class NetexDaoTest {
         Quay quayA = quay(ID, null);
         Quay quayB = quay(ID, "image_1");
 
-        assertTrue(root.lookupQuayById(ID).isEmpty());
-        assertTrue(child.lookupQuayById(ID).isEmpty());
+        assertTrue(root.quayById.lookup(ID).isEmpty());
+        assertTrue(child.quayById.lookup(ID).isEmpty());
 
-        root.addQuay(quayA);
+        root.quayById.add(quayA);
 
-        assertEquals(singletonList(quayA), root.lookupQuayById(ID));
-        assertEquals(singletonList(quayA), child.lookupQuayById(ID));
+        assertEquals(singletonList(quayA), root.quayById.lookup(ID));
+        assertEquals(singletonList(quayA), child.quayById.lookup(ID));
 
-        child.addQuay(quayB);
+        child.quayById.add(quayB);
 
-        assertEquals(singletonList(quayB), child.lookupQuayById(ID));
+        assertEquals(singletonList(quayB), child.quayById.lookup(ID));
     }
 
     @Test
     public void lookupDayTypeAvailable() throws Exception {
-        assertNull(root.lookupDayTypeAvailable(ID));
-        assertNull(child.lookupDayTypeAvailable(ID));
+        assertNull(root.dayTypeAvailable.lookup(ID));
+        assertNull(child.dayTypeAvailable.lookup(ID));
 
-        root.addDayTypeAvailable(ID, TRUE);
+        root.dayTypeAvailable.add(ID, TRUE);
 
-        assertEquals(TRUE, root.lookupDayTypeAvailable(ID));
-        assertEquals(TRUE, child.lookupDayTypeAvailable(ID));
+        assertEquals(TRUE, root.dayTypeAvailable.lookup(ID));
+        assertEquals(TRUE, child.dayTypeAvailable.lookup(ID));
 
-        child.addDayTypeAvailable(ID, FALSE);
+        child.dayTypeAvailable.add(ID, FALSE);
 
-        assertEquals(FALSE, child.lookupDayTypeAvailable(ID));
+        assertEquals(FALSE, child.dayTypeAvailable.lookup(ID));
     }
 
     @Test
@@ -112,17 +112,17 @@ public class NetexDaoTest {
         DayTypeAssignment dta = dayTypeAssignment(ID, REF);
         DayTypeAssignment dta2 = dayTypeAssignment(ID, REF_2);
 
-        assertEquals(emptyList(), root.lookupDayTypeAssignment(ID));
-        assertEquals(emptyList(), child.lookupDayTypeAssignment(ID));
+        assertEquals(emptyList(), root.dayTypeAssignmentByDayTypeId.lookup(ID));
+        assertEquals(emptyList(), child.dayTypeAssignmentByDayTypeId.lookup(ID));
 
-        root.addDayTypeAssignment(ID, dta);
+        root.dayTypeAssignmentByDayTypeId.add(ID, dta);
 
-        assertEquals(singletonList(dta), root.lookupDayTypeAssignment(ID));
-        assertEquals(singletonList(dta), child.lookupDayTypeAssignment(ID));
+        assertEquals(singletonList(dta), root.dayTypeAssignmentByDayTypeId.lookup(ID));
+        assertEquals(singletonList(dta), child.dayTypeAssignmentByDayTypeId.lookup(ID));
 
-        child.addDayTypeAssignment(ID, dta2);
+        child.dayTypeAssignmentByDayTypeId.add(ID, dta2);
 
-        assertEquals(singletonList(dta2), child.lookupDayTypeAssignment(ID));
+        assertEquals(singletonList(dta2), child.dayTypeAssignmentByDayTypeId.lookup(ID));
     }
 
     @Test
@@ -143,24 +143,24 @@ public class NetexDaoTest {
     @Test
     public void lookupServiceJourneysById() throws Exception {
         ServiceJourney value = new ServiceJourney();
-        root.addServiceJourneyById(ID, value);
-        assertEquals(singletonList(value), child.lookupServiceJourneysById(ID));
+        root.serviceJourneyByPatternId.add(ID, value);
+        assertEquals(singletonList(value), child.serviceJourneyByPatternId.lookup(ID));
     }
 
     @Test
     public void lookupJourneyPatternById() throws Exception {
         JourneyPattern value = new JourneyPattern();
         value.withId(ID);
-        root.addJourneyPattern(value);
-        assertEquals(value, child.lookupJourneyPatternById(ID));
+        root.journeyPatternsById.add(value);
+        assertEquals(value, child.journeyPatternsById.lookup(ID));
     }
 
     @Test
     public void lookupRouteById() throws Exception {
         Route value = new Route();
         value.withId(ID);
-        root.addRoute(value);
-        assertEquals(value, child.lookupRouteById(ID));
+        root.routeById.add(value);
+        assertEquals(value, child.routeById.lookup(ID));
     }
 
     @Test
@@ -168,19 +168,19 @@ public class NetexDaoTest {
         OperatingPeriod value = new OperatingPeriod();
         value.withId(ID);
 
-        assertFalse(child.operatingPeriodExist(ID));
+        assertFalse(child.operatingPeriodById.containsKey(ID));
 
-        root.addOperatingPeriod(value);
+        root.operatingPeriodById.add(value);
 
-        assertEquals(value, child.lookupOperatingPeriodById(ID));
-        assertTrue(child.operatingPeriodExist(ID));
+        assertEquals(value, child.operatingPeriodById.lookup(ID));
+        assertTrue(child.operatingPeriodById.containsKey(ID));
     }
 
     @Test
     public void operatingPeriodExist() throws Exception {
         Route value = new Route();
         value.withId(ID);
-        root.addRoute(value);
+        root.routeById.add(value);
     }
 
 

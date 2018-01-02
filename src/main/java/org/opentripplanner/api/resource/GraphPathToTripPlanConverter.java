@@ -616,13 +616,13 @@ public abstract class GraphPathToTripPlanConverter {
 
         if (trip != null) {
             Route route = trip.getRoute();
-            Agency agency = route.getAgency();
+            Agency organization = route.getAgency();
             ServiceDay serviceDay = states[states.length - 1].getServiceDay();
 
-            leg.agencyId = agency.getId();
-            leg.agencyName = agency.getName();
-            leg.agencyUrl = agency.getUrl();
-            leg.agencyBrandingUrl = agency.getBrandingUrl();
+            leg.agencyId = organization.getId();
+            leg.agencyName = organization.getName();
+            leg.agencyUrl = organization.getUrl();
+            leg.agencyBrandingUrl = organization.getBrandingUrl();
             leg.headsign = states[1].getBackDirection();
             leg.route = states[states.length - 1].getBackEdge().getName(requestedLocale);
             leg.routeColor = route.getColor();

@@ -82,6 +82,7 @@ public class GraphIndex {
     // TODO: consistently key on model object or id string
     public final Map<String, Vertex> vertexForId = Maps.newHashMap();
     public final Map<String, Map<String, Agency>> agenciesForFeedId = Maps.newHashMap();
+    public final Map<AgencyAndId, Operator> operatorForId = Maps.newHashMap();
     public final Map<String, FeedInfo> feedInfoForId = Maps.newHashMap();
     public final Map<AgencyAndId, Stop> stopForId = Maps.newHashMap();
     public final Map<AgencyAndId, Stop> stationForId = Maps.newHashMap();
@@ -137,6 +138,11 @@ public class GraphIndex {
             }
             this.feedInfoForId.put(feedId, graph.getFeedInfo(feedId));
         }
+
+        for (Operator operator : graph.getOperators()) {
+            this.operatorForId.put(operator.getId(), operator);
+        }
+
 
         Collection<Edge> edges = graph.getEdges();
         /* We will keep a separate set of all vertices in case some have the same label.
@@ -1166,6 +1172,23 @@ public class GraphIndex {
             allAgencies.addAll(agencyForId.values());
         }
         return allAgencies;
+    }
+
+    /**
+     * Get a list of all operators spanning across all feeds.
+     */
+    public Collection<Operator> getAllOperators() {
+        return operatorForId.values();
+    }
+
+    /**
+     * Construct a list of all Agencies and Operators in this graph, spanning across all feed IDs.
+     */
+    public Collection<IdentityBean> getAllOrganizations() {
+        List<IdentityBean> all = new ArrayList<>();
+        all.addAll(getAllAgencies());
+        all.addAll(getAllOperators());
+        return all;
     }
 
     public void setNoticeMap(Map<AgencyAndId, Notice> noticeMap) {

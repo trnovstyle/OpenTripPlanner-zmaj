@@ -45,11 +45,11 @@ public class TripPatternMapper {
         List<Trip> trips = new ArrayList<>();
 
         //find matching journey pattern
-        Collection<ServiceJourney> serviceJourneys = netexDao.lookupServiceJourneysById(journeyPattern.getId());
+        Collection<ServiceJourney> serviceJourneys = netexDao.serviceJourneyByPatternId.lookup(journeyPattern.getId());
 
         StopPattern stopPattern = null;
 
-        Route route = netexDao.lookupRouteById(journeyPattern.getRouteRef().getRef());
+        Route route = netexDao.routeById.lookup(journeyPattern.getRouteRef().getRef());
         org.opentripplanner.model.Route otpRoute = transitBuilder.getRoutes()
                 .get(AgencyAndIdFactory.createAgencyAndId(route.getLineRef().getValue().getRef()));
 
@@ -188,7 +188,7 @@ public class TripPatternMapper {
         }
 
         if (stopPoint.getDestinationDisplayRef() != null) {
-            DestinationDisplay value = netexDao.lookUpDestinationDisplayById(stopPoint.getDestinationDisplayRef().getRef());
+            DestinationDisplay value = netexDao.destinationDisplayById.lookup(stopPoint.getDestinationDisplayRef().getRef());
             if (value != null) {
                 currentHeadsign = value.getFrontText().getValue();
             }
@@ -212,9 +212,7 @@ public class TripPatternMapper {
                 if (stop.getId().equals(pointInJourneyPatterRef)) {
                     JAXBElement<? extends ScheduledStopPointRefStructure> scheduledStopPointRef = ((StopPointInJourneyPattern) point)
                             .getScheduledStopPointRef();
-                    String stopId = netexDao.lookupQuayIdByStopPointRef(
-                            scheduledStopPointRef.getValue().getRef()
-                    );
+                    String stopId = netexDao.quayIdByStopPointRef.lookup(scheduledStopPointRef.getValue().getRef());
                     if (stopId == null) {
                         LOG.warn("No passengerStopAssignment found for " + scheduledStopPointRef
                                 .getValue().getRef());

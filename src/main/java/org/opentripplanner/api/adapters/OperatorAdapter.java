@@ -13,34 +13,24 @@
 
 package org.opentripplanner.api.adapters;
 
+import org.opentripplanner.model.Operator;
+
 import javax.xml.bind.annotation.adapters.XmlAdapter;
 
-import org.opentripplanner.model.Agency;
-
-public class AgencyAdapter extends XmlAdapter<AgencyType, Agency> {
+public class OperatorAdapter extends XmlAdapter<OperatorType, Operator> {
 
     @Override
-    public Agency unmarshal(AgencyType arg) {
-        if (arg == null) {
-            return null;
-        }
-        Agency a = new Agency();
-        a.setId(arg.id);
-        a.setName(arg.name);
-        a.setUrl(arg.url);
-        a.setTimezone(arg.timezone);
-        a.setLang(arg.lang);
-        a.setPhone(arg.phone);
-        a.setFareUrl(arg.fareUrl);
-        return a;
+    public Operator unmarshal(OperatorType arg) {
+        throw new UnsupportedOperationException(
+                "We presently serialize Operator as OperatorType, and thus cannot deserialize them");
     }
 
     @Override
-    public AgencyType marshal(Agency arg) {
+    public OperatorType marshal(Operator arg) {
         if (arg == null) {
             return null;
         }
-        return new AgencyType(arg);
+        return new OperatorType(arg);
     }
 
 }
