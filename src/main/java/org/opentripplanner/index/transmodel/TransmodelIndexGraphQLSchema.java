@@ -339,10 +339,7 @@ public class TransmodelIndexGraphQLSchema {
     @SuppressWarnings("unchecked")
     public TransmodelIndexGraphQLSchema(Router router) {
         GraphIndex index = router.graph.index;
-        RoutingRequest defaultRoutingRequest = router.defaultRoutingRequest;
-        if (defaultRoutingRequest == null) {
-            defaultRoutingRequest = new RoutingRequest();
-        }
+        RoutingRequest defaultRoutingRequest = getDefaultRoutingRequest(router);
         String fixedAgencyIdPropValue = System.getProperty("transmodel.graphql.api.agency.id");
         if (!StringUtils.isEmpty(fixedAgencyIdPropValue)) {
             fixedAgencyId = fixedAgencyIdPropValue;
@@ -547,7 +544,7 @@ public class TransmodelIndexGraphQLSchema {
                                                                          .build())
                                                        .argument(GraphQLArgument.newArgument()
                                                                          .name("optimisationMethod")
-                                                                         .description("The set of characteristics that the user wants to optimise for -- defaults to " + defaultRoutingRequest.optimize)
+                                                                         .description("The set of characteristics that the user wants to optimise for -- defaults to " + reverseMapEnumVal(optimisationMethodEnum, defaultRoutingRequest.optimize))
                                                                          .type(optimisationMethodEnum)
                                                                          .defaultValue(defaultRoutingRequest.optimize)
                                                                          .build())
@@ -586,7 +583,7 @@ public class TransmodelIndexGraphQLSchema {
                                                                          .build())
                                                        .argument(GraphQLArgument.newArgument()
                                                                          .name("modes")
-                                                                         .description("The set of modes that a user is willing to use. Defaults to " + Joiner.on(",").join(defaultRoutingRequest.modes.getModes()))
+                                                                         .description("The set of modes that a user is willing to use. Defaults to " + reverseMapEnumVals(modeEnum, defaultRoutingRequest.modes.getModes()))
                                                                          .type(new GraphQLList(modeEnum))
                                                                          .defaultValue(defaultRoutingRequest.modes.getModes())
                                                                          .build())
@@ -2192,6 +2189,14 @@ public class TransmodelIndexGraphQLSchema {
                               .build(dictionary);
     }
 
+    private RoutingRequest getDefaultRoutingRequest(Router router) {
+        RoutingRequest defaultRoutingRequest = router.defaultRoutingRequest;
+        if (defaultRoutingRequest == null) {
+            defaultRoutingRequest = new RoutingRequest();
+        }
+        return defaultRoutingRequest;
+    }
+
     private List<AgencyAndId> toIdList(List<String> ids) {
         if (ids == null) return Collections.emptyList();
         return ids.stream().map(id -> mappingUtil.fromIdString(id)).collect(Collectors.toList());
@@ -2554,5 +2559,13 @@ public class TransmodelIndexGraphQLSchema {
         } catch (NumberFormatException nfe) {
             return -1;
         }
+    }
+
+    private <T extends Object> List<String> reverseMapEnumVals(GraphQLEnumType enumType, Collection<T> otpVals) {
+        return enumType.getValues().stream().filter(e -> otpVals.contains(e.getValue())).map(e -> e.getName()).collect(Collectors.toList());
+    }
+
+    private String reverseMapEnumVal(GraphQLEnumType enumType, Object otpVal) {
+        return enumType.getValues().stream().filter(e -> e.getValue().equals(otpVal)).findFirst().get().getName();
     }
 }
