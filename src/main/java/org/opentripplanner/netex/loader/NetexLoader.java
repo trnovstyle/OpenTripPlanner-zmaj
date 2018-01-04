@@ -244,9 +244,11 @@ public class NetexLoader {
             }
 
             ParkingsInFrame_RelStructure parkings = sf.getParkings();
-            List<Parking> parkingList = parkings.getParking();
-            for (Parking parking : parkingList) {
-                currentNetexDao().addParking(parking);
+            if (parkings != null) {
+                List<Parking> parkingList = parkings.getParking();
+                for (Parking parking : parkingList) {
+                    currentNetexDao().addParking(parking);
+                }
             }
         }
     }
