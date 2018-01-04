@@ -149,6 +149,9 @@ public class SimpleStreetSplitter {
                 boolean alreadyLinked = v.getOutgoing().stream().anyMatch(e -> e instanceof StreetTransitLink);
                 if (alreadyLinked) continue;
 
+                // Make sure park and ride is also linked to car network
+                if (v instanceof ParkAndRideVertex) { link(v, TraverseMode.CAR); }
+
                 if (!link(v)) {
                     if (v instanceof TransitStop)
                         LOG.warn(graph.addBuilderAnnotation(new StopUnlinked((TransitStop) v)));
@@ -164,6 +167,10 @@ public class SimpleStreetSplitter {
     /** Link this vertex into the graph to the closest walkable edge */
     public boolean link (Vertex vertex) {
         return link(vertex, TraverseMode.WALK, null);
+    }
+
+    public boolean link (Vertex vertex, TraverseMode traverseMode) {
+        return link(vertex, traverseMode, null);
     }
 
     /** Link this vertex into the graph */
