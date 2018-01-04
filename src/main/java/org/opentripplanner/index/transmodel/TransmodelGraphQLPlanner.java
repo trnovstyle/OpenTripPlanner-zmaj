@@ -3,6 +3,7 @@ package org.opentripplanner.index.transmodel;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableMap;
 import graphql.schema.DataFetchingEnvironment;
+import org.apache.commons.lang3.StringUtils;
 import org.opentripplanner.api.common.Message;
 import org.opentripplanner.api.common.ParameterException;
 import org.opentripplanner.api.common.RoutingResource;
@@ -16,6 +17,7 @@ import org.opentripplanner.common.model.GenericLocation;
 import org.opentripplanner.index.transmodel.mapping.TransmodelMappingUtil;
 import org.opentripplanner.routing.core.OptimizeType;
 import org.opentripplanner.routing.core.RoutingRequest;
+import org.opentripplanner.routing.core.TraverseMode;
 import org.opentripplanner.routing.impl.GraphPathFinder;
 import org.opentripplanner.routing.spt.GraphPath;
 import org.opentripplanner.standalone.Router;
@@ -203,8 +205,12 @@ public class TransmodelGraphQLPlanner {
         }
 
         if (hasArgument(environment, "modes")) {
-            new QualifiedModeSet(mappingUtil.mapListOfModes(environment.getArgument("modes"))).applyToRoutingRequest(request);
-            request.setModes(request.modes);
+            // Map modes to comma separated list in string first to be able to reuse logic in QualifiedModeSet
+            String modesAsString = Joiner.on(",").join((Collection<TraverseMode>) environment.getArgument("modes"));
+            if (!StringUtils.isEmpty(modesAsString)) {
+                new QualifiedModeSet(modesAsString).applyToRoutingRequest(request);
+                request.setModes(request.modes);
+            }
         }
 
         if (request.allowBikeRental && !hasArgument(environment, "bikeSpeed")) {
