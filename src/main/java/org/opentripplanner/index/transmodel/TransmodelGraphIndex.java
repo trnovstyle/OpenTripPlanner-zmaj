@@ -26,13 +26,13 @@ public class TransmodelGraphIndex {
 
     public final ExecutorService threadPool;
 
-    public TransmodelGraphIndex(GraphIndex graphIndex) {
+    public TransmodelGraphIndex(Router router) {
         threadPool = Executors.newCachedThreadPool(
-                new ThreadFactoryBuilder().setNameFormat("GraphQLExecutor-" + graphIndex.graph.routerId + "-%d")
+                new ThreadFactoryBuilder().setNameFormat("GraphQLExecutor-" + router.id + "-%d")
                         .build()
         );
 
-        indexSchema = new TransmodelIndexGraphQLSchema(graphIndex).indexSchema;
+        indexSchema = new TransmodelIndexGraphQLSchema(router).indexSchema;
     }
 
     public HashMap<String, Object> getGraphQLExecutionResult(String query, Router router,

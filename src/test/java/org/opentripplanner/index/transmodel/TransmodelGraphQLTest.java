@@ -19,7 +19,7 @@ public class TransmodelGraphQLTest extends GtfsTest {
     @Override
     protected void setUp() {
         super.setUp();
-        transmodelIndexGraphQLSchema = new TransmodelIndexGraphQLSchema(graph.index);
+        transmodelIndexGraphQLSchema = new TransmodelIndexGraphQLSchema(router);
     }
 
     public void testGraphQLSimple() {

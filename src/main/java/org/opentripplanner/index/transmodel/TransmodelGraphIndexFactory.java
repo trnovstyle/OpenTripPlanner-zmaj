@@ -18,7 +18,7 @@ public class TransmodelGraphIndexFactory {
     public static TransmodelGraphIndex getTransmodelGraphIndexForRouter(Router router) {
         TransmodelGraphIndex graphIndex = indexPerRouterId.get(router.id);
         if (graphIndex == null) {
-            graphIndex = new TransmodelGraphIndex(router.graph.index);
+            graphIndex = new TransmodelGraphIndex(router);
             indexPerRouterId.put(router.id, graphIndex);
         }
         return graphIndex;
