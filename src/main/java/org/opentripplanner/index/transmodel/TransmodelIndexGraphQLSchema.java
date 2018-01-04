@@ -1,5 +1,6 @@
 package org.opentripplanner.index.transmodel;
 
+import com.google.common.base.Joiner;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Envelope;
 import com.vividsolutions.jts.geom.LineString;
@@ -53,6 +54,7 @@ import org.opentripplanner.routing.bike_rental.BikeRentalStationService;
 import org.opentripplanner.routing.car_park.CarPark;
 import org.opentripplanner.routing.car_park.CarParkService;
 import org.opentripplanner.routing.core.OptimizeType;
+import org.opentripplanner.routing.core.RoutingRequest;
 import org.opentripplanner.routing.core.ServiceDay;
 import org.opentripplanner.routing.core.TraverseMode;
 import org.opentripplanner.routing.edgetype.Timetable;
@@ -62,6 +64,7 @@ import org.opentripplanner.routing.error.VertexNotFoundException;
 import org.opentripplanner.routing.graph.GraphIndex;
 import org.opentripplanner.routing.trippattern.RealTimeState;
 import org.opentripplanner.routing.vertextype.TransitVertex;
+import org.opentripplanner.standalone.Router;
 import org.opentripplanner.updater.stoptime.TimetableSnapshotSource;
 import org.opentripplanner.util.PolylineEncoder;
 import org.opentripplanner.util.ResourceBundleSingleton;
@@ -334,7 +337,12 @@ public class TransmodelIndexGraphQLSchema {
     }
 
     @SuppressWarnings("unchecked")
-    public TransmodelIndexGraphQLSchema(GraphIndex index) {
+    public TransmodelIndexGraphQLSchema(Router router) {
+        GraphIndex index = router.graph.index;
+        RoutingRequest defaultRoutingRequest = router.defaultRoutingRequest;
+        if (defaultRoutingRequest == null) {
+            defaultRoutingRequest = new RoutingRequest();
+        }
         String fixedAgencyIdPropValue = System.getProperty("transmodel.graphql.api.agency.id");
         if (!StringUtils.isEmpty(fixedAgencyIdPropValue)) {
             fixedAgencyId = fixedAgencyIdPropValue;
@@ -416,6 +424,7 @@ public class TransmodelIndexGraphQLSchema {
 
         createPlanType(index);
 
+
         GraphQLInputObjectType preferredInputType = GraphQLInputObjectType.newInputObject()
                                                             .name("InputPreferred")
                                                             .description("Preferences for trip search.")
@@ -423,16 +432,19 @@ public class TransmodelIndexGraphQLSchema {
                                                                            .name("lines")
                                                                            .description("Set of ids of lines preferred by user.")
                                                                            .type(new GraphQLList(Scalars.GraphQLString))
+                                                                           .defaultValue(new ArrayList<>())
                                                                            .build())
                                                             .field(GraphQLInputObjectField.newInputObjectField()
                                                                            .name("organisations")
                                                                            .description("Set of ids of organisations preferred by user.")
                                                                            .type(new GraphQLList(Scalars.GraphQLString))
+                                                                           .defaultValue(new ArrayList<>())
                                                                            .build())
                                                             .field(GraphQLInputObjectField.newInputObjectField()
                                                                            .name("otherThanPreferredLinesPenalty")
                                                                            .description("Penalty added for using a line that is not preferred if user has set any line as preferred. In number of seconds that user is willing to wait for preferred line.")
                                                                            .type(Scalars.GraphQLInt)
+                                                                           .defaultValue(defaultRoutingRequest.otherThanPreferredRoutesPenalty)
                                                                            .build())
                                                             .build();
 
@@ -513,43 +525,42 @@ public class TransmodelIndexGraphQLSchema {
                                                                          .name("wheelchair")
                                                                          .description("Whether the trip must be wheelchair accessible.")
                                                                          .type(Scalars.GraphQLBoolean)
-                                                                         .defaultValue(false)
+                                                                         .defaultValue(defaultRoutingRequest.wheelchairAccessible)
                                                                          .build())
                                                        .argument(GraphQLArgument.newArgument()
                                                                          .name("numTripPatterns")
                                                                          .description("The maximum number of trip patterns to return.")
-                                                                         .defaultValue(3)
+                                                                         .defaultValue(defaultRoutingRequest.numItineraries)
                                                                          .type(Scalars.GraphQLInt)
                                                                          .build())
                                                        .argument(GraphQLArgument.newArgument()
                                                                          .name("walkSpeed")
                                                                          .description("The maximum walk speed along streets, in meters per second")
                                                                          .type(Scalars.GraphQLFloat)
-                                                                         .defaultValue(1.3d)
+                                                                         .defaultValue(defaultRoutingRequest.walkSpeed)
                                                                          .build())
                                                        .argument(GraphQLArgument.newArgument()
                                                                          .name("bikeSpeed")
                                                                          .description("The maximum bike speed along streets, in meters per second")
                                                                          .type(Scalars.GraphQLFloat)
-                                                                         .defaultValue(5d)
+                                                                         .defaultValue(defaultRoutingRequest.bikeSpeed)
                                                                          .build())
                                                        .argument(GraphQLArgument.newArgument()
                                                                          .name("optimisationMethod")
-                                                                         .description("The set of characteristics that the user wants to optimise for -- defaults to 'quick', or optimise for transit time.")
+                                                                         .description("The set of characteristics that the user wants to optimise for -- defaults to " + defaultRoutingRequest.optimize)
                                                                          .type(optimisationMethodEnum)
-                                                                         .defaultValue(OptimizeType.QUICK)
+                                                                         .defaultValue(defaultRoutingRequest.optimize)
                                                                          .build())
                                                        .argument(GraphQLArgument.newArgument()
                                                                          .name("arriveBy")
                                                                          .description("Whether the trip should depart at dateTime (false, the default), or arrive at dateTime.")
                                                                          .type(Scalars.GraphQLBoolean)
-                                                                         .defaultValue(false)
+                                                                         .defaultValue(defaultRoutingRequest.arriveBy)
                                                                          .build())
                                                        .argument(GraphQLArgument.newArgument()
                                                                          .name("vias")
                                                                          .description("An ordered list of intermediate locations to be visited.")
                                                                          .type(new GraphQLList(locationType))
-                                                                         .defaultValue(new ArrayList<>())
                                                                          .build())
                                                        .argument(GraphQLArgument.newArgument()
                                                                          .name("preferred")
@@ -571,37 +582,37 @@ public class TransmodelIndexGraphQLSchema {
                                                                          .name("transferPenalty")
                                                                          .description("An extra penalty added on transfers (i.e. all boardings except the first one). The transferPenalty is used when a user requests even less transfers. In the latter case, we don't actually optimise for fewest transfers, as this can lead to absurd results. Consider a trip in New York from Grand Army Plaza (the one in Brooklyn) to Kalustyan's at noon. The true lowest transfers trip pattern is to wait until midnight, when the 4 train runs local the whole way. The actual fastest trip pattern is the 2/3 to the 4/5 at Nevins to the 6 at Union Square, which takes half an hour. Even someone optimise for fewest transfers doesn't want to wait until midnight. Maybe they would be willing to walk to 7th Ave and take the Q to Union Square, then transfer to the 6. If this takes less than transferPenalty seconds, then that's what we'll return.")
                                                                          .type(Scalars.GraphQLInt)
-                                                                         .defaultValue(0)
+                                                                         .defaultValue(defaultRoutingRequest.transferPenalty)
                                                                          .build())
                                                        .argument(GraphQLArgument.newArgument()
                                                                          .name("modes")
-                                                                         .description("The set of modes that a user is willing to use. Defaults to [foot, transit].")
+                                                                         .description("The set of modes that a user is willing to use. Defaults to " + Joiner.on(",").join(defaultRoutingRequest.modes.getModes()))
                                                                          .type(new GraphQLList(modeEnum))
-                                                                         .defaultValue(Arrays.asList(TraverseMode.WALK, TraverseMode.TRANSIT))
+                                                                         .defaultValue(defaultRoutingRequest.modes.getModes())
                                                                          .build())
                                                        .argument(GraphQLArgument.newArgument()
                                                                          .name("allowBikeRental")
                                                                          .description("Is bike rental allowed?")
                                                                          .type(Scalars.GraphQLBoolean)
-                                                                         .defaultValue(false)
+                                                                         .defaultValue(defaultRoutingRequest.allowBikeRental)
                                                                          .build())
                                                        .argument(GraphQLArgument.newArgument()
                                                                          .name("minimumTransferTime")
                                                                          .description("A global minimum transfer time (in seconds) that specifies the minimum amount of time that must pass between exiting one public transport vehicle and boarding another. This time is in addition to time it might take to walk between stops.")
                                                                          .type(Scalars.GraphQLInt)
-                                                                         .defaultValue(120)
+                                                                         .defaultValue(defaultRoutingRequest.transferSlack)
                                                                          .build())
                                                        .argument(GraphQLArgument.newArgument()
                                                                          .name("maximumTransfers")
                                                                          .description("Maximum number of transfers")
                                                                          .type(Scalars.GraphQLInt)
-                                                                         .defaultValue(6)
+                                                                         .defaultValue(defaultRoutingRequest.maxTransfers)
                                                                          .build())
                                                        .argument(GraphQLArgument.newArgument()
                                                                          .name("ignoreRealtimeUpdates")
                                                                          .description("When true, realtime updates are ignored during this search.")
                                                                          .type(Scalars.GraphQLBoolean)
-                                                                         .defaultValue(false)
+                                                                         .defaultValue(defaultRoutingRequest.ignoreRealtimeUpdates)
                                                                          .build())
                                                        .dataFetcher(environment -> new TransmodelGraphQLPlanner(mappingUtil).plan(environment)
                                                        )
