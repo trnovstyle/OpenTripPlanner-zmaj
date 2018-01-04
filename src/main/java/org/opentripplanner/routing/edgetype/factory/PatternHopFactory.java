@@ -29,6 +29,7 @@ import org.apache.commons.math3.util.FastMath;
 import org.opentripplanner.model.Agency;
 import org.opentripplanner.model.AgencyAndId;
 import org.opentripplanner.model.FeedInfo;
+import org.opentripplanner.model.Parking;
 import org.opentripplanner.model.Pathway;
 import org.opentripplanner.model.Route;
 import org.opentripplanner.model.ShapePoint;
@@ -50,10 +51,13 @@ import org.opentripplanner.gtfs.GtfsContext;
 import org.opentripplanner.gtfs.GtfsLibrary;
 import org.opentripplanner.model.Notice;
 import org.opentripplanner.model.NoticeAssignment;
+import org.opentripplanner.routing.car_park.CarPark;
+import org.opentripplanner.routing.car_park.CarParkService;
 import org.opentripplanner.routing.core.StopTransfer;
 import org.opentripplanner.routing.core.TransferTable;
 import org.opentripplanner.routing.core.TraverseMode;
 import org.opentripplanner.routing.edgetype.FreeEdge;
+import org.opentripplanner.routing.edgetype.ParkAndRideEdge;
 import org.opentripplanner.routing.edgetype.PathwayEdge;
 import org.opentripplanner.routing.edgetype.PatternInterlineDwell;
 import org.opentripplanner.routing.edgetype.PreAlightEdge;
@@ -72,11 +76,13 @@ import org.opentripplanner.routing.services.FareService;
 import org.opentripplanner.routing.services.FareServiceFactory;
 import org.opentripplanner.routing.services.OnBoardDepartService;
 import org.opentripplanner.routing.trippattern.TripTimes;
+import org.opentripplanner.routing.vertextype.ParkAndRideVertex;
 import org.opentripplanner.routing.vertextype.TransitStation;
 import org.opentripplanner.routing.vertextype.TransitStationStop;
 import org.opentripplanner.routing.vertextype.TransitStop;
 import org.opentripplanner.routing.vertextype.TransitStopArrive;
 import org.opentripplanner.routing.vertextype.TransitStopDepart;
+import org.opentripplanner.util.NonLocalizedString;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -1243,6 +1249,25 @@ public class PatternHopFactory {
                     expandedTransfers.size(), fromStops.size(), toStops.size());
 
             return expandedTransfers;
+        }
+    }
+
+    public void createParkAndRide(Graph graph) {
+        CarParkService carParkService = graph.getService(
+                CarParkService.class, true);
+        for (Parking parking : _transitService.getAllParkings()) {
+            if (parking.getParkingVehicleType().equals(Parking.ParkingVehicleType.CAR)) {
+                CarPark carPark = new CarPark();
+                carPark.id = parking.getId();
+                carPark.name = new NonLocalizedString(parking.getName());
+                carPark.realTimeData = false;
+                carPark.x = parking.getLon();
+                carPark.y = parking.getLat();
+
+                ParkAndRideVertex parkAndRideVertex = new ParkAndRideVertex(graph, carPark);
+                new ParkAndRideEdge(parkAndRideVertex);
+                carParkService.addCarPark(carPark);
+            }
         }
     }
 }

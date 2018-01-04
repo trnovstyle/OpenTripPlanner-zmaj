@@ -29,6 +29,8 @@ public class NetexBundle {
 
     public final NetexParameters netexParameters;
 
+    public final boolean parkAndRideFromTransitData;
+
     public NetexBundle(File netexZipFile, GraphBuilderParameters builderParams) {
         this.file = netexZipFile;
         this.linkStopsToParentStations = builderParams.parentStopLinking;
@@ -37,6 +39,7 @@ public class NetexBundle {
         this.subwayAccessTime = (int)(builderParams.subwayAccessTime * 60);
         this.maxInterlineDistance = builderParams.maxInterlineDistance;
         this.netexParameters = builderParams.netex;
+        this.parkAndRideFromTransitData = builderParams.parkAndRideFromTransitData;
     }
 
     public String getFilename() {

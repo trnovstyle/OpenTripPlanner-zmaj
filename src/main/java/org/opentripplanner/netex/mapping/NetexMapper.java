@@ -30,6 +30,8 @@ public class NetexMapper {
 
     private final TripPatternMapper tripPatternMapper = new TripPatternMapper();
 
+    private final ParkingMapper parkingMapper = new ParkingMapper();
+
     private final OtpTransitBuilder transitBuilder;
 
     private final TransferMapper transferMapper = new TransferMapper();
@@ -78,6 +80,10 @@ public class NetexMapper {
 
         for (String serviceId : netexDao.getCalendarServiceIds()) {
             transitBuilder.getCalendarDates().addAll(mapToCalendarDates(AgencyAndIdFactory.createAgencyAndId(serviceId), netexDao));
+        }
+
+        for (String parkingId : netexDao.getParkingIds()) {
+            transitBuilder.getParkings().add(parkingMapper.mapParking( netexDao.lookupParkingLastVersionById(parkingId)));
         }
 
         for (org.rutebanken.netex.model.ServiceJourneyInterchange interchange : netexDao.getInterchanges()) {

@@ -19,6 +19,8 @@ public interface OtpTransitService {
 
     Collection<FeedInfo> getAllFeedInfos();
 
+    Collection<Parking> getAllParkings();
+
     Map<AgencyAndId, NoticeAssignment> getNoticeAssignmentById();
 
     Map<AgencyAndId, Notice> getNoticeById();
