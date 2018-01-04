@@ -210,11 +210,18 @@ public class TransmodelGraphQLPlanner {
 
         if (hasArgument(environment, "modes")) {
             // Map modes to comma separated list in string first to be able to reuse logic in QualifiedModeSet
-            String modesAsString = Joiner.on(",").join((Collection<TraverseMode>) environment.getArgument("modes"));
+            // Remove CABLE_CAR from collection because QualifiedModeSet does not support mapping (splits on '_')
+            Collection<TraverseMode> modes = environment.getArgument("modes");
+            boolean cableCar = modes.remove(TraverseMode.CABLE_CAR);
+
+            String modesAsString = Joiner.on(",").join(modes);
             if (!StringUtils.isEmpty(modesAsString)) {
                 new QualifiedModeSet(modesAsString).applyToRoutingRequest(request);
                 request.setModes(request.modes);
             }
+
+            // Apply cable car setting 
+            request.modes.setCableCar(cableCar);
         }
 
         if (request.allowBikeRental && !hasArgument(environment, "bikeSpeed")) {
