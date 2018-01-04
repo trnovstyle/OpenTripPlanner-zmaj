@@ -503,7 +503,7 @@ public class TransmodelIndexGraphQLSchema {
 
         GraphQLInputObjectType whiteListedInputType = GraphQLInputObjectType.newInputObject()
                 .name("InputWhiteListed")
-                .description("Filter trips by only allowing trip patterns involving certain elements")
+                .description("Filter trips by only allowing trip patterns involving certain elements. If both lines and organisations are specificed, only one must be valid for each trip to be used.")
                 .field(GraphQLInputObjectField.newInputObjectField()
                         .name("lines")
                         .description("Set of ids for lines that should not be used")
