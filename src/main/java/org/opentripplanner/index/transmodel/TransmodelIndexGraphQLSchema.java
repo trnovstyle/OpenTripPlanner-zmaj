@@ -484,6 +484,21 @@ public class TransmodelIndexGraphQLSchema {
                                                                         .build())
                                                          .build();
 
+        GraphQLInputObjectType whiteListedInputType = GraphQLInputObjectType.newInputObject()
+                .name("InputWhiteListed")
+                .description("Filter trips by only allowing trip patterns involving certain elements")
+                .field(GraphQLInputObjectField.newInputObjectField()
+                        .name("lines")
+                        .description("Set of ids for lines that should not be used")
+                        .type(new GraphQLList(Scalars.GraphQLString))
+                        .build())
+                .field(GraphQLInputObjectField.newInputObjectField()
+                        .name("organisations")
+                        .description("Set of ids for organisations that should not be used")
+                        .type(new GraphQLList(Scalars.GraphQLString))
+                        .build())
+                .build();
+
 
         GraphQLFieldDefinition tripFieldType = GraphQLFieldDefinition.newFieldDefinition()
                                                        .name("trip")
@@ -555,6 +570,12 @@ public class TransmodelIndexGraphQLSchema {
                                                                          .description("Banned")
                                                                          .description("Parameters for indicating organisations, lines or quays not be used in the trip patterns")
                                                                          .type(bannedInputType)
+                                                                         .build())
+                                                       .argument(GraphQLArgument.newArgument()
+                                                                         .name("whiteListed")
+                                                                         .description("Whitelisted")
+                                                                         .description("Parameters for indicating the only organisations, lines or quays to be used in the trip patterns")
+                                                                         .type(whiteListedInputType)
                                                                          .build())
                                                        .argument(GraphQLArgument.newArgument()
                                                                          .name("transferPenalty")
