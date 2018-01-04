@@ -140,7 +140,6 @@ public class TransmodelIndexGraphQLSchema {
                                                       .value("water", TraverseMode.FERRY)
                                                       .value("funicular", TraverseMode.FUNICULAR)
                                                       .value("lift", TraverseMode.GONDOLA)
-                                                      .value("linkSwitch", TraverseMode.LEG_SWITCH)
                                                       .value("rail", TraverseMode.RAIL)
                                                       .value("metro", TraverseMode.SUBWAY)
                                                       .value("tram", TraverseMode.TRAM)
