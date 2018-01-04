@@ -152,7 +152,7 @@ public class TransmodelGraphQLPlanner {
         callWith.argument("dateTime", millisSinceEpoch -> request.setDateTime(new Date((long) millisSinceEpoch)));
 
         callWith.argument("wheelchair", request::setWheelchairAccessible);
-        callWith.argument("numItineraries", request::setNumItineraries);
+        callWith.argument("numTripPatterns", request::setNumItineraries);
         callWith.argument("maxWalkDistance", request::setMaxWalkDistance);
         callWith.argument("maxPreTransitTime", request::setMaxPreTransitTime);
         callWith.argument("walkReluctance", request::setWalkReluctance);
