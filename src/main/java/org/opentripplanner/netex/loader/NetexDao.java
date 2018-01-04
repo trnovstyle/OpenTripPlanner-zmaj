@@ -13,6 +13,7 @@ import org.rutebanken.netex.model.Network;
 import org.rutebanken.netex.model.Notice;
 import org.rutebanken.netex.model.NoticeAssignment;
 import org.rutebanken.netex.model.OperatingPeriod;
+import org.rutebanken.netex.model.Parking;
 import org.rutebanken.netex.model.Quay;
 import org.rutebanken.netex.model.Route;
 import org.rutebanken.netex.model.ServiceJourney;
@@ -86,6 +87,8 @@ public class NetexDao {
 
     private final Multimap<String, Quay> quayById = ArrayListMultimap.create();
 
+    private final Multimap<String, Parking> parkingById = ArrayListMultimap.create();
+
     private final Map<String, DestinationDisplay> destinationDisplayMap = new HashMap<>();
 
     private final Map<String, ServiceJourneyInterchange> interchanges = new HashMap<>();
@@ -150,6 +153,26 @@ public class NetexDao {
 
     Quay lookupQuayLastVersionById(String id) {
         return lookupQuayById(id).stream()
+                .max(Comparator.comparingInt(o2 -> Integer.parseInt(o2.getVersion())))
+                .orElse(null);
+    }
+
+    void addParking(Parking parking) { parkingById.put(parking.getId(), parking); }
+
+    public Set<String> getParkingIds() {
+        return parkingById.keySet();
+    }
+
+    /**
+     * Lookup parking in this class and if not found delegate up to the parent NetexDao.
+     */
+    public Collection<Parking> lookupParkingById(String id) {
+        Collection<Parking> v = parkingById.get(id);
+        return returnLocalValue(v) ? v : parent.lookupParkingById(id);
+    }
+
+    public Parking lookupParkingLastVersionById(String id) {
+        return lookupParkingById(id).stream()
                 .max(Comparator.comparingInt(o2 -> Integer.parseInt(o2.getVersion())))
                 .orElse(null);
     }

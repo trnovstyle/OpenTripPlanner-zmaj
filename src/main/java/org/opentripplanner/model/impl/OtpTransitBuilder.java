@@ -38,6 +38,7 @@ import org.opentripplanner.model.Transfer;
 import org.opentripplanner.model.Trip;
 import org.opentripplanner.model.OtpTransitService;
 import org.opentripplanner.routing.edgetype.TripPattern;
+import org.opentripplanner.model.Parking;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -59,6 +60,8 @@ public class OtpTransitBuilder {
     private final List<FeedInfo> feedInfos = new ArrayList<>();
 
     private final List<Frequency> frequencies = new ArrayList<>();
+
+    private final List<Parking> parkings = new ArrayList<>();
 
     private final EntityMap<AgencyAndId, Stop> multiModalStops = new EntityMap<>();
 
@@ -114,6 +117,8 @@ public class OtpTransitBuilder {
     public List<Frequency> getFrequencies() {
         return frequencies;
     }
+
+    public List<Parking> getParkings() { return parkings; }
 
     public EntityMap<AgencyAndId, Stop> getMultiModalStops() {
         return multiModalStops;

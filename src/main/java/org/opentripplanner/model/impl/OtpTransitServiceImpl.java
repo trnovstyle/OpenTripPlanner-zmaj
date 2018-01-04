@@ -32,6 +32,7 @@ import org.opentripplanner.model.StopTime;
 import org.opentripplanner.model.Transfer;
 import org.opentripplanner.model.Trip;
 import org.opentripplanner.routing.edgetype.TripPattern;
+import org.opentripplanner.model.Parking;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -70,6 +71,8 @@ class OtpTransitServiceImpl implements OtpTransitService {
 
     private final Map<AgencyAndId, Notice> noticeById;
 
+    private final Collection<Parking> parkings;
+
     private final Collection<Pathway> pathways;
 
     private final Collection<AgencyAndId> serviceIds;
@@ -104,6 +107,7 @@ class OtpTransitServiceImpl implements OtpTransitService {
         this.fareAttributes = nullSafeUnmodifiableList(builder.getFareAttributes());
         this.fareRules = nullSafeUnmodifiableList(builder.getFareRules());
         this.feedInfos = nullSafeUnmodifiableList(builder.getFeedInfos());
+        this.parkings = nullSafeUnmodifiableList(builder.getParkings());
         this.noticeById = unmodifiableMap(builder.getNoticesById().asMap());
         this.noticeAssignmentById = unmodifiableMap(builder.getNoticeAssignmentsById().asMap());
         this.pathways = nullSafeUnmodifiableList(builder.getPathways());
@@ -142,6 +146,11 @@ class OtpTransitServiceImpl implements OtpTransitService {
 
     @Override
     public Map<AgencyAndId, NoticeAssignment> getNoticeAssignmentById() { return noticeAssignmentById; }
+
+    @Override
+    public Collection<Parking> getAllParkings() {
+        return parkings;
+    }
 
     @Override
     public Collection<Pathway> getAllPathways() {

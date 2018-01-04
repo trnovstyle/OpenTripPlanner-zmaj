@@ -43,8 +43,10 @@ import org.rutebanken.netex.model.Notice;
 import org.rutebanken.netex.model.NoticeAssignment;
 import org.rutebanken.netex.model.OperatingPeriod;
 import org.rutebanken.netex.model.OperatingPeriod_VersionStructure;
+import org.rutebanken.netex.model.ParkingsInFrame_RelStructure;
 import org.rutebanken.netex.model.PassengerStopAssignment;
 import org.rutebanken.netex.model.PointInLinkSequence_VersionedChildStructure;
+import org.rutebanken.netex.model.Parking;
 import org.rutebanken.netex.model.PublicationDeliveryStructure;
 import org.rutebanken.netex.model.Quay;
 import org.rutebanken.netex.model.ResourceFrame;
@@ -239,6 +241,12 @@ public class NetexLoader {
                         }
                     }
                 }
+            }
+
+            ParkingsInFrame_RelStructure parkings = sf.getParkings();
+            List<Parking> parkingList = parkings.getParking();
+            for (Parking parking : parkingList) {
+                currentNetexDao().addParking(parking);
             }
         }
     }

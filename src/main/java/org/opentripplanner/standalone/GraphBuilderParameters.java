@@ -175,6 +175,12 @@ public class GraphBuilderParameters {
     public final NetexParameters netex;
 
     /**
+     * Link park and ride elements in transit
+     */
+
+    public final boolean parkAndRideFromTransitData;
+
+    /**
      *  Link multimodal stops to their containing stops
      */
 
@@ -216,6 +222,7 @@ public class GraphBuilderParameters {
         maxTransferDistance = config.path("maxTransferDistance").asDouble(2000);
         extraEdgesStopPlatformLink = config.path("extraEdgesStopPlatformLink").asBoolean(false);
         netex = new NetexParameters(config.path("netex"));
+        parkAndRideFromTransitData = config.path("parkAndRideFromTransitData").asBoolean(false);
         linkMultiModalStopsToParentStations = config.path("linkMultiModalStopsToParentStations").asBoolean(false);
     }
 
