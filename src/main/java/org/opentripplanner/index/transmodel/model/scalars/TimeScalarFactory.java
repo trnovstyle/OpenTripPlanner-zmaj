@@ -59,14 +59,14 @@ public class TimeScalarFactory {
             }
 
             @Override
-            public LocalTime parseValue(Object input) {
-                return LocalTime.from(FORMATTER.parse((CharSequence) input));
+            public Integer parseValue(Object input) {
+                return LocalTime.from(FORMATTER.parse((CharSequence) input)).toSecondOfDay();
             }
 
             @Override
-            public Object parseLiteral(Object input) {
+            public Integer parseLiteral(Object input) {
                 if (input instanceof StringValue) {
-                    return parseValue(((StringValue) input).getValue()).toSecondOfDay();
+                    return parseValue(((StringValue) input).getValue());
                 }
                 return null;
             }

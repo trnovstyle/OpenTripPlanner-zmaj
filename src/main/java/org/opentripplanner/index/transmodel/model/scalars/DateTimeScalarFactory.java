@@ -46,7 +46,7 @@ public class DateTimeScalarFactory {
             }
 
             @Override
-            public Instant parseValue(Object input) {
+            public Long parseValue(Object input) {
                 Instant instant;
                 TemporalAccessor temporalAccessor = PARSER.parseBest((CharSequence) input, OffsetDateTime::from, ZonedDateTime::from, LocalDateTime::from);
 
@@ -56,13 +56,13 @@ public class DateTimeScalarFactory {
                     instant = Instant.from(temporalAccessor);
                 }
 
-                return instant;
+                return instant.toEpochMilli();
             }
 
             @Override
-            public Object parseLiteral(Object input) {
+            public Long parseLiteral(Object input) {
                 if (input instanceof StringValue) {
-                    return parseValue(((StringValue) input).getValue()).toEpochMilli();
+                    return parseValue(((StringValue) input).getValue());
                 }
                 return null;
             }
