@@ -1,36 +1,16 @@
 package org.opentripplanner.index.transmodel;
 
-import com.google.common.base.Joiner;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Envelope;
 import com.vividsolutions.jts.geom.LineString;
 import graphql.Scalars;
 import graphql.relay.Relay;
 import graphql.relay.SimpleListConnection;
-import graphql.schema.DataFetchingEnvironmentImpl;
-import graphql.schema.GraphQLArgument;
-import graphql.schema.GraphQLEnumType;
-import graphql.schema.GraphQLEnumValueDefinition;
-import graphql.schema.GraphQLFieldDefinition;
-import graphql.schema.GraphQLInputObjectField;
-import graphql.schema.GraphQLInputObjectType;
-import graphql.schema.GraphQLInterfaceType;
-import graphql.schema.GraphQLList;
-import graphql.schema.GraphQLNonNull;
-import graphql.schema.GraphQLObjectType;
-import graphql.schema.GraphQLOutputType;
-import graphql.schema.GraphQLScalarType;
-import graphql.schema.GraphQLSchema;
-import graphql.schema.GraphQLType;
-import graphql.schema.GraphQLTypeReference;
+import graphql.schema.*;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.opentripplanner.api.common.Message;
-import org.opentripplanner.api.model.Itinerary;
-import org.opentripplanner.api.model.Leg;
-import org.opentripplanner.api.model.Place;
-import org.opentripplanner.api.model.TripPlan;
-import org.opentripplanner.api.model.VertexType;
+import org.opentripplanner.api.model.*;
 import org.opentripplanner.gtfs.GtfsLibrary;
 import org.opentripplanner.index.model.TripTimeShort;
 import org.opentripplanner.index.transmodel.mapping.TransmodelMappingUtil;
@@ -39,12 +19,7 @@ import org.opentripplanner.index.transmodel.model.TransmodelTransportSubmode;
 import org.opentripplanner.index.transmodel.model.scalars.DateScalarFactory;
 import org.opentripplanner.index.transmodel.model.scalars.DateTimeScalarFactory;
 import org.opentripplanner.index.transmodel.model.scalars.TimeScalarFactory;
-import org.opentripplanner.model.Agency;
-import org.opentripplanner.model.AgencyAndId;
-import org.opentripplanner.model.Notice;
-import org.opentripplanner.model.Route;
-import org.opentripplanner.model.Stop;
-import org.opentripplanner.model.Trip;
+import org.opentripplanner.model.*;
 import org.opentripplanner.model.calendar.ServiceDate;
 import org.opentripplanner.routing.alertpatch.Alert;
 import org.opentripplanner.routing.alertpatch.AlertPatch;
@@ -74,18 +49,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.text.ParseException;
-import java.util.AbstractMap;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.BitSet;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -901,7 +865,7 @@ public class TransmodelIndexGraphQLSchema {
                                                    }
 
                                                    Long startTimeMs = environment.getArgument("startTime") == null ? 0l : environment.getArgument("startTime");
-                                                   Long startTimeSeconds = startTimeMs / 10000;
+                                                   Long startTimeSeconds = startTimeMs / 1000;
                                                    return index.stopsForParentStation
                                                                   .get(stop.getId())
                                                                   .stream()
