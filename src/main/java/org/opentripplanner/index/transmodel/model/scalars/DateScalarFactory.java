@@ -42,7 +42,7 @@ public class DateScalarFactory {
 
 
             @Override
-            public Object parseLiteral(Object input) {
+            public Long parseLiteral(Object input) {
                 if (input instanceof StringValue) {
                     return parseValue(((StringValue) input).getValue());
                 }
