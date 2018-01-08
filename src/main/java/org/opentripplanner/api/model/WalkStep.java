@@ -149,11 +149,33 @@ public class WalkStep {
     }
 
     public String toString() {
+        String text = "";
+        if(this.relativeDirection == RelativeDirection.CIRCLE_COUNTERCLOCKWISE || this.relativeDirection == RelativeDirection.CIRCLE_CLOCKWISE) {
+            if (this.relativeDirection == RelativeDirection.CIRCLE_COUNTERCLOCKWISE) {
+                text +=  String.format("Take roundabout counterclockwise to %(ordinal_exit_number)s exit on %(street_name)s", this.exit, this.streetName);
+            } else {
+                text +=  String.format("Take roundabout clockwise to %(ordinal_exit_number)s exit on %(street_name)s", this.exit, this.streetName);
+            }
+        }
+        else {
+            if(this.relativeDirection == RelativeDirection.DEPART) {
+                text += "Start on" + " " + this.streetName + "" + " heading " + "" + this .absoluteDirection.toString() + "";
+            }
+            else {
+                text += "" + this.relativeDirection.toString() + "" + ' ' +
+                        (this.stayOn ? "to continue on" : "on to")  + " " +
+                        this.streetName + "";
+            }
+        }
+        return text;
+
+        /*
         String direction = absoluteDirection.toString();
         if (relativeDirection != null) {
             direction = relativeDirection.toString();
         }
         return "WalkStep(" + direction + " on " + streetName + " for " + distance + ")";
+        */
     }
 
     public static RelativeDirection getRelativeDirection(double lastAngle, double thisAngle,
@@ -226,6 +248,28 @@ public class WalkStep {
     @JsonSerialize
     public List<P2<Double>> getElevation() {
         return elevation;
+    }
+
+    public String getLegStepText() {
+        String text = "";
+        if(this.relativeDirection == RelativeDirection.CIRCLE_COUNTERCLOCKWISE || this.relativeDirection == RelativeDirection.CIRCLE_CLOCKWISE) {
+            if (this.relativeDirection == RelativeDirection.CIRCLE_COUNTERCLOCKWISE) {
+                text +=  String.format("Take roundabout counterclockwise to %(ordinal_exit_number)s exit on %(street_name)s", this.exit, this.streetName);
+            } else {
+                text +=  String.format("Take roundabout clockwise to %(ordinal_exit_number)s exit on %(street_name)s", this.exit, this.streetName);
+            }
+        }
+        else {
+            if(this.relativeDirection == RelativeDirection.DEPART) {
+                text += "Start on" + " " + this.streetName + "" + " heading " + "" + this .absoluteDirection.toString() + "";
+            }
+            else {
+                text += "" + this.relativeDirection.toString() + "" + ' ' +
+                        (this.stayOn ? "to continue on" : "on to")  + " " +
+                        this.streetName + "";
+            }
+        }
+        return text;
     }
 
 }
