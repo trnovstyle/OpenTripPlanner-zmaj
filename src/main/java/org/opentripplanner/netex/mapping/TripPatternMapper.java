@@ -138,6 +138,12 @@ public class TripPatternMapper {
             if (quay != null) {
                 StopPointInJourneyPattern stopPoint = findStopPoint(ref, journeyPattern);
                 StopTime stopTime = mapToStopTime(trip, stopPoint, quay, passingTime, stopSequence, netexDao);
+
+                if (stopTimes.size() > 0 && stopTimeNegative(stopTimes.get(stopTimes.size() - 1), stopTime)) {
+                    LOG.error("Stoptime increased by negative amount in serviceJourney " + trip.getId().getId());
+                    return null;
+                }
+
                 stopTimes.add(stopTime);
                 ++stopSequence;
             } else {
@@ -146,6 +152,13 @@ public class TripPatternMapper {
             }
         }
         return stopTimes;
+    }
+
+    private boolean stopTimeNegative(StopTime stopTime1, StopTime stopTime2) {
+        int time1 = Math.max(stopTime1.getArrivalTime(), stopTime1.getDepartureTime());
+        int time2 = Math.max(stopTime2.getArrivalTime(), stopTime2.getDepartureTime());
+
+        return !(time1 >= 0 && time2 >= 0 && time2 >= time1);
     }
 
     private StopTime mapToStopTime(Trip trip, StopPointInJourneyPattern stopPoint, Stop quay,
