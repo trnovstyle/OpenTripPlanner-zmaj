@@ -571,7 +571,7 @@ public abstract class GraphPathToTripPlanConverter {
                 }
             }
 
-            if (leg.routeId != null) {
+            if (graph.index != null && leg.routeId != null) {
                 if (leg.from != null && leg.from.stopId != null) {
                     addAlertPatchesToLeg(leg, graph.index.getAlertsForStopAndRoute(graph.index.stopForId.get(leg.from.stopId), graph.index.routeForId.get(leg.routeId)), requestedLocale);
                 }
