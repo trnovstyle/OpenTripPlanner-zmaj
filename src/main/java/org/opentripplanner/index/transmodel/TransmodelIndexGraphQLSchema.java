@@ -689,7 +689,16 @@ public class TransmodelIndexGraphQLSchema {
                                          .field(GraphQLFieldDefinition.newFieldDefinition()
                                                         .name("quays")
                                                         .type(new GraphQLList(quayType))
-                                                        .dataFetcher(environment -> wrapInListUnlessNull(index.stopForId.get(((AlertPatch) environment.getSource()).getStop())))
+                                                        .dataFetcher(environment -> {
+                                                            return wrapInListUnlessNull(index.stopForId.get(((AlertPatch) environment.getSource()).getStop()));
+                                                        })
+                                                        .build())
+                                         .field(GraphQLFieldDefinition.newFieldDefinition()
+                                                        .name("stopPlaces")
+                                                        .type(new GraphQLList(stopPlaceType))
+                                                        .dataFetcher(environment -> {
+                                                            return wrapInListUnlessNull(index.stationForId.get(((AlertPatch) environment.getSource()).getStop()));
+                                                        })
                                                         .build())
                                          .field(GraphQLFieldDefinition.newFieldDefinition()
                                                         .name("journeyPatterns")
@@ -2378,6 +2387,12 @@ public class TransmodelIndexGraphQLSchema {
                                                                  .type(Scalars.GraphQLBoolean)
                                                                  .dataFetcher(environment -> ((Leg) environment.getSource()).intermediatePlace)
                                                                  .build())
+                                                  .field(GraphQLFieldDefinition.newFieldDefinition()
+                                                                .name("situations")
+                                                                .description("All relevant situations for this leg")
+                                                                .type(new GraphQLList(ptSituationElementType))
+                                                                .dataFetcher(environment -> ((Leg)environment.getSource()).alertPatches)
+                                                                .build())
                                                   .build();
 
         final GraphQLObjectType tripPatternType = GraphQLObjectType.newObject()
