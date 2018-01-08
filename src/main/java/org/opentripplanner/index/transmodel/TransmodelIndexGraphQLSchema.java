@@ -2293,8 +2293,8 @@ public class TransmodelIndexGraphQLSchema {
 
 
 
-        final GraphQLObjectType walkStepType = GraphQLObjectType.newObject()
-                .name("WalkStep")
+        final GraphQLObjectType pathGuidanceType = GraphQLObjectType.newObject()
+                .name("PathGuidance")
                 .description("A series of turn by turn instructions used for walking, biking and driving.")
                 .field(GraphQLFieldDefinition.newFieldDefinition()
                         .name("distance")
@@ -2315,7 +2315,7 @@ public class TransmodelIndexGraphQLSchema {
                         .dataFetcher(environment -> ((WalkStep) environment.getSource()).streetName)
                         .build())
                 .field(GraphQLFieldDefinition.newFieldDefinition()
-                        .name("absoluteDirection")
+                        .name("heading")
                         .description("The absolute direction of this step.")
                         .type(absoluteDirectionEnum)
                         .dataFetcher(environment -> ((WalkStep) environment.getSource()).absoluteDirection)
@@ -2483,7 +2483,7 @@ public class TransmodelIndexGraphQLSchema {
                                                   .field(GraphQLFieldDefinition.newFieldDefinition()
                                                                  .name("steps")
                                                                  .description("Do we continue from a specified via place")
-                                                                 .type(new GraphQLList(walkStepType))
+                                                                 .type(new GraphQLList(pathGuidanceType))
                                                                  .dataFetcher(environment -> ((Leg) environment.getSource()).walkSteps)
                                                                  .build())
                                                   .build();
