@@ -571,6 +571,15 @@ public abstract class GraphPathToTripPlanConverter {
                 }
             }
 
+            if (leg.routeId != null) {
+                if (leg.from != null && leg.from.stopId != null) {
+                    addAlertPatchesToLeg(leg, graph.index.getAlertsForStopAndRoute(graph.index.stopForId.get(leg.from.stopId), graph.index.routeForId.get(leg.routeId)), requestedLocale);
+                }
+                if (leg.to != null && leg.to.stopId != null) {
+                    addAlertPatchesToLeg(leg, graph.index.getAlertsForStopAndRoute(graph.index.stopForId.get(leg.to.stopId), graph.index.routeForId.get(leg.routeId)), requestedLocale);
+                }
+            }
+
             for (AlertPatch alertPatch : graph.getAlertPatches(edge)) {
                 if (disableAlertFiltering || alertPatch.displayDuring(state)) {
                     if (alertPatch.hasTrip()) {
@@ -584,6 +593,14 @@ public abstract class GraphPathToTripPlanConverter {
                         leg.addAlert(alertPatch.getAlert(), requestedLocale);
                     }
                 }
+            }
+        }
+    }
+
+    private static void addAlertPatchesToLeg(Leg leg, List<AlertPatch> alertsPatches, Locale requestedLocale) {
+        if (alertsPatches != null) {
+            for (AlertPatch alert : alertsPatches) {
+                leg.addAlertPatch(alert);
             }
         }
     }
@@ -1012,21 +1029,21 @@ public abstract class GraphPathToTripPlanConverter {
                                               lastStep.relativeDirection == RelativeDirection.HARD_LEFT) &&
                                              (twoBack.relativeDirection == RelativeDirection.LEFT ||
                                                       twoBack.relativeDirection == RelativeDirection.HARD_LEFT))) {
-                            // in this case, we have two left turns or two right turns in quick 
+                            // in this case, we have two left turns or two right turns in quick
                             // succession; this is probably a U-turn.
 
                             steps.remove(last - 1);
 
                             lastStep.distance += twoBack.distance;
 
-                            // A U-turn to the left, typical in the US. 
+                            // A U-turn to the left, typical in the US.
                             if (lastStep.relativeDirection == RelativeDirection.LEFT ||
                                         lastStep.relativeDirection == RelativeDirection.HARD_LEFT)
                                 lastStep.relativeDirection = RelativeDirection.UTURN_LEFT;
                             else
                                 lastStep.relativeDirection = RelativeDirection.UTURN_RIGHT;
 
-                            // in this case, we're definitely staying on the same street 
+                            // in this case, we're definitely staying on the same street
                             // (since it's zag removal, the street names are the same)
                             lastStep.stayOn = true;
                         } else {

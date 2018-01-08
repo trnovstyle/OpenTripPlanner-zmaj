@@ -7,41 +7,14 @@ import com.vividsolutions.jts.geom.LineString;
 import graphql.Scalars;
 import graphql.relay.Relay;
 import graphql.relay.SimpleListConnection;
-import graphql.schema.DataFetcher;
-import graphql.schema.DataFetchingEnvironment;
-import graphql.schema.DataFetchingEnvironmentImpl;
-import graphql.schema.GraphQLArgument;
-import graphql.schema.GraphQLEnumType;
-import graphql.schema.GraphQLFieldDefinition;
-import graphql.schema.GraphQLInputObjectField;
-import graphql.schema.GraphQLInputObjectType;
-import graphql.schema.GraphQLInterfaceType;
-import graphql.schema.GraphQLList;
-import graphql.schema.GraphQLNonNull;
-import graphql.schema.GraphQLObjectType;
-import graphql.schema.GraphQLOutputType;
-import graphql.schema.GraphQLSchema;
-import graphql.schema.GraphQLType;
-import graphql.schema.GraphQLTypeReference;
-import graphql.schema.PropertyDataFetcher;
-import graphql.schema.TypeResolver;
+import graphql.schema.*;
 import org.opentripplanner.api.common.Message;
-import org.opentripplanner.api.model.Itinerary;
-import org.opentripplanner.api.model.Leg;
-import org.opentripplanner.api.model.Place;
-import org.opentripplanner.api.model.TripPlan;
-import org.opentripplanner.api.model.VertexType;
+import org.opentripplanner.api.model.*;
 import org.opentripplanner.api.parameter.QualifiedModeSet;
 import org.opentripplanner.gtfs.GtfsLibrary;
 import org.opentripplanner.index.model.StopTimesInPattern;
 import org.opentripplanner.index.model.TripTimeShort;
-import org.opentripplanner.model.Agency;
-import org.opentripplanner.model.AgencyAndId;
-import org.opentripplanner.model.Notice;
-import org.opentripplanner.model.Route;
-import org.opentripplanner.model.Stop;
-import org.opentripplanner.model.StopPattern;
-import org.opentripplanner.model.Trip;
+import org.opentripplanner.model.*;
 import org.opentripplanner.model.calendar.ServiceDate;
 import org.opentripplanner.profile.StopCluster;
 import org.opentripplanner.routing.alertpatch.Alert;
@@ -51,12 +24,7 @@ import org.opentripplanner.routing.bike_rental.BikeRentalStation;
 import org.opentripplanner.routing.bike_rental.BikeRentalStationService;
 import org.opentripplanner.routing.car_park.CarPark;
 import org.opentripplanner.routing.car_park.CarParkService;
-import org.opentripplanner.routing.core.Fare;
-import org.opentripplanner.routing.core.FareComponent;
-import org.opentripplanner.routing.core.Money;
-import org.opentripplanner.routing.core.OptimizeType;
-import org.opentripplanner.routing.core.ServiceDay;
-import org.opentripplanner.routing.core.TraverseMode;
+import org.opentripplanner.routing.core.*;
 import org.opentripplanner.routing.edgetype.SimpleTransfer;
 import org.opentripplanner.routing.edgetype.Timetable;
 import org.opentripplanner.routing.edgetype.TimetableSnapshot;
@@ -73,18 +41,7 @@ import org.opentripplanner.util.TranslatedString;
 import org.opentripplanner.util.model.EncodedPolylineBean;
 
 import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.BitSet;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -742,7 +699,14 @@ public class IndexGraphQLSchema {
             .field(GraphQLFieldDefinition.newFieldDefinition()
                 .name("stop")
                 .type(stopType)
-                .dataFetcher(environment -> index.stopForId.get(((AlertPatch) environment.getSource()).getStop()))
+                .dataFetcher(environment -> {
+                    AgencyAndId alertStop = ((AlertPatch) environment.getSource()).getStop();
+                    Stop stop = index.stopForId.get(alertStop);
+                    if (stop == null) {
+                        stop = index.stationForId.get(alertStop);
+                    }
+                    return stop;
+                })
                 .build())
             .field(GraphQLFieldDefinition.newFieldDefinition()
                 .name("patterns")
@@ -2856,6 +2820,12 @@ public class IndexGraphQLSchema {
                 .description("Do we continue from a specified intermediate place")
                 .type(Scalars.GraphQLBoolean)
                 .dataFetcher(environment -> ((Leg) environment.getSource()).intermediatePlace)
+                .build())
+            .field(GraphQLFieldDefinition.newFieldDefinition()
+                .name("alerts")
+                .description("All relevant alerts for this leg")
+                .type(new GraphQLList(alertType))
+                .dataFetcher(environment -> ((Leg)environment.getSource()).alertPatches)
                 .build())
             .build();
 

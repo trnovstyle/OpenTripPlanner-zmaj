@@ -78,16 +78,17 @@ public class AlertsUpdateHandler {
         for (SituationExchangeDeliveryStructure sxDelivery : delivery.getSituationExchangeDeliveries()) {
             SituationExchangeDeliveryStructure.Situations situations = sxDelivery.getSituations();
             if (situations != null) {
-                AtomicInteger alertCounter = new AtomicInteger(0);
+                AtomicInteger addedAlertCounter = new AtomicInteger(0);
+                AtomicInteger expiredAlertCounter = new AtomicInteger(0);
                 for (PtSituationElement sxElement : situations.getPtSituationElements()) {
-                    handleAlert(sxElement, alertCounter);
+                    handleAlert(sxElement, addedAlertCounter, expiredAlertCounter);
                 }
-                log.info("Added {} alerts based on {} situations, current alert-count: {}", alertCounter.intValue(), situations.getPtSituationElements().size(), alertPatchService.getAllAlertPatches().size());
+                log.info("Added {} alerts, expired {} alerts based on {} situations, current alert-count: {}", addedAlertCounter.intValue(), expiredAlertCounter.intValue(), situations.getPtSituationElements().size(), alertPatchService.getAllAlertPatches().size());
             }
         }
     }
 
-    private void handleAlert(PtSituationElement situation, AtomicInteger alertCounter) {
+    private void handleAlert(PtSituationElement situation, AtomicInteger addedAlertCounter, AtomicInteger expiredAlertCounter) {
         Alert alert = new Alert();
 
         if (situation.getDescriptions() != null && !situation.getDescriptions().isEmpty()) {
@@ -202,6 +203,25 @@ public class AlertsUpdateHandler {
             }
 
             AffectsScopeStructure.StopPlaces stopPlaces = affectsStructure.getStopPlaces();
+            AffectsScopeStructure.Networks networks = affectsStructure.getNetworks();
+            Set<Route> stopRoutes = new HashSet<>();
+            if (networks != null) {
+                for (AffectsScopeStructure.Networks.AffectedNetwork affectedNetwork : networks.getAffectedNetworks()) {
+                    List<AffectedLineStructure> affectedLines = affectedNetwork.getAffectedLines();
+                    if (affectedLines != null && !isListNullOrEmpty(affectedLines)) {
+                        for (AffectedLineStructure line : affectedLines) {
+
+                            LineRef lineRef = line.getLineRef();
+
+                            if (lineRef == null || lineRef.getValue() == null) {
+                                continue;
+                            }
+
+                            stopRoutes.addAll(siriFuzzyTripMatcher.getRoutes(lineRef.getValue()));
+                        }
+                    }
+                }
+            }
 
             if (stopPlaces != null && !isListNullOrEmpty(stopPlaces.getAffectedStopPlaces())) {
 
@@ -216,23 +236,26 @@ public class AlertsUpdateHandler {
                     String id = paddedSituationNumber + stopPlace.getValue();
                     if (stopId != null) {
 
-                        AlertPatch alertPatch = new AlertPatch();
-                        alertPatch.setStop(stopId);
-                        alertPatch.setTimePeriods(periods);
-                        alertPatch.setId(id);
-                        patches.add(alertPatch);
+                        AlertPatch stopOnlyAlertPatch = new AlertPatch();
+                        stopOnlyAlertPatch.setStop(stopId);
+                        stopOnlyAlertPatch.setTimePeriods(periods);
+                        stopOnlyAlertPatch.setId(id);
+                        patches.add(stopOnlyAlertPatch);
+
+                        //Adding combination of stop & route
+                        for (Route route : stopRoutes) {
+                            id = paddedSituationNumber + stopPlace.getValue() + "-" + route.getId().getId();
+
+                            AlertPatch alertPatch = new AlertPatch();
+                            alertPatch.setStop(stopId);
+                            alertPatch.setRoute(route.getId());
+                            alertPatch.setTimePeriods(periods);
+                            alertPatch.setId(id);
+                            patches.add(alertPatch);
+                        }
                     }
                 }
-            }
-
-            AffectsScopeStructure.Networks networks = null;
-
-            if (stopPoints == null && stopPlaces == null) {
-                //NRP-2242: When Alert affects both Line and Stop, only Stop should be used
-                networks = affectsStructure.getNetworks();
-            }
-
-            if (networks != null && !isListNullOrEmpty(networks.getAffectedNetworks())) {
+            } else if (networks != null && !isListNullOrEmpty(networks.getAffectedNetworks())) {
 
                 for (AffectsScopeStructure.Networks.AffectedNetwork affectedNetwork : networks.getAffectedNetworks()) {
                     List<AffectedLineStructure> affectedLines = affectedNetwork.getAffectedLines();
@@ -373,11 +396,13 @@ public class AlertsUpdateHandler {
                 }
                 patchIds.add(patch.getId());
                 alertPatchService.apply(patch);
-                alertCounter.incrementAndGet();
             }
         } else {
             log.info("No match found for Alert - ignoring situation with situationNumber {}", situationNumber);
         }
+        //Update counters
+        expiredAlertCounter.addAndGet(idsToExpire.size());
+        addedAlertCounter.addAndGet(patches.size());
 
     }
 

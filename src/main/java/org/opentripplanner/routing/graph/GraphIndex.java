@@ -1,18 +1,6 @@
 package org.opentripplanner.routing.graph;
 
-import com.google.common.collect.ArrayListMultimap;
-import java.util.BitSet;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.Calendar;
-
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Multimap;
-import com.google.common.collect.Sets;
+import com.google.common.collect.*;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Envelope;
@@ -22,15 +10,6 @@ import graphql.GraphQL;
 import graphql.schema.GraphQLSchema;
 import org.apache.lucene.util.PriorityQueue;
 import org.joda.time.LocalDate;
-import org.opentripplanner.model.Agency;
-import org.opentripplanner.model.AgencyAndId;
-import org.opentripplanner.model.FeedInfo;
-import org.opentripplanner.model.Notice;
-import org.opentripplanner.model.Route;
-import org.opentripplanner.model.Stop;
-import org.opentripplanner.model.Trip;
-import org.opentripplanner.model.calendar.ServiceDate;
-import org.opentripplanner.model.CalendarService;
 import org.opentripplanner.common.LuceneIndex;
 import org.opentripplanner.common.geometry.HashGridSpatialIndex;
 import org.opentripplanner.common.geometry.SphericalDistanceLibrary;
@@ -41,6 +20,8 @@ import org.opentripplanner.index.IndexGraphQLSchema;
 import org.opentripplanner.index.ResourceConstrainedExecutorServiceExecutionStrategy;
 import org.opentripplanner.index.model.StopTimesInPattern;
 import org.opentripplanner.index.model.TripTimeShort;
+import org.opentripplanner.model.*;
+import org.opentripplanner.model.calendar.ServiceDate;
 import org.opentripplanner.profile.ProfileTransfer;
 import org.opentripplanner.profile.StopCluster;
 import org.opentripplanner.profile.StopNameNormalizer;
@@ -77,10 +58,6 @@ import java.nio.file.Files;
 import java.nio.file.attribute.FileAttribute;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -1086,6 +1063,7 @@ public class GraphIndex {
 
     public List<AlertPatch> getAlertsForRoute(Route route) {
         return getAlertPatchStream()
+            .filter(alertPatch -> alertPatch.getStop() == null)
             .filter(alertPatch -> alertPatch.getRoute() != null)
             .filter(alertPatch -> route.getId().equals(alertPatch.getRoute()))
             .collect(Collectors.toList());
@@ -1119,14 +1097,38 @@ public class GraphIndex {
     public List<AlertPatch> getAlertsForStop(Stop stop) {
         List<AlertPatch> stopAlerts = getAlertPatchStream()
                 .filter(alertPatch -> alertPatch.getStop() != null)
+                .filter(alertPatch -> alertPatch.getRoute() == null)
                 .filter(alertPatch -> stop.getId().equals(alertPatch.getStop()))
+                .distinct()
                 .collect(Collectors.toList());
 
         if (stopAlerts == null || stopAlerts.isEmpty() && stop.getParentStation() != null) {
             //Searching for alerts on parentstop
             stopAlerts = getAlertPatchStream()
                     .filter(alertPatch -> alertPatch.getStop() != null)
+                    .filter(alertPatch -> alertPatch.getRoute() == null)
                     .filter(alertPatch -> stop.getParentStation().equals(alertPatch.getStop().getId()))
+                    .distinct()
+                    .collect(Collectors.toList());
+        }
+        return stopAlerts;
+    }
+
+    public List<AlertPatch> getAlertsForStopAndRoute(Stop stop, Route route) {
+        List<AlertPatch> stopAlerts = getAlertPatchStream()
+                .filter(alertPatch -> alertPatch.getStop() != null)
+                .filter(alertPatch -> alertPatch.getRoute() != null)
+                .filter(alertPatch -> stop.getId().equals(alertPatch.getStop()) && route.getId().equals(alertPatch.getRoute()))
+                .distinct()
+                .collect(Collectors.toList());
+
+        if (stopAlerts == null || stopAlerts.isEmpty() && stop.getParentStation() != null) {
+            //Searching for alerts on parentstop
+            stopAlerts = getAlertPatchStream()
+                    .filter(alertPatch -> alertPatch.getStop() != null)
+                    .filter(alertPatch -> alertPatch.getRoute() != null)
+                    .filter(alertPatch -> stop.getParentStation().equals(alertPatch.getStop().getId()) && route.getId().equals(alertPatch.getRoute()))
+                    .distinct()
                     .collect(Collectors.toList());
         }
         return stopAlerts;
