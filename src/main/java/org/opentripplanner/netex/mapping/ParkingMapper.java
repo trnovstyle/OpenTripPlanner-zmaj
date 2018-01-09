@@ -11,8 +11,8 @@ public class ParkingMapper {
         otpParking.setId(parking.getId());
         otpParking.setName(parking.getName() != null ? parking.getName().getValue() : null);
         otpParking.setDesc(parking.getDescription() != null ? parking.getDescription().getValue() : null);
-        otpParking.setPrincipalCapacity(parking.getPrincipalCapacity() != null ? parking.getPrincipalCapacity().intValue() : 0);
-        otpParking.setTotalCapacity(parking.getTotalCapacity() != null ? parking.getTotalCapacity().intValue() : 0);
+        otpParking.setPrincipalCapacity(parking.getPrincipalCapacity() != null ? parking.getPrincipalCapacity().intValue() : -1);
+        otpParking.setTotalCapacity(parking.getTotalCapacity() != null ? parking.getTotalCapacity().intValue() : -1);
         otpParking.setOvernightParkingPermitted(
                 Optional.fromNullable(parking.isOvernightParkingPermitted()).or(false));
         otpParking.setRechargingAvailable(

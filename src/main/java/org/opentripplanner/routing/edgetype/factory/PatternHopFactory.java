@@ -1263,6 +1263,8 @@ public class PatternHopFactory {
                 carPark.realTimeData = false;
                 carPark.x = parking.getLon();
                 carPark.y = parking.getLat();
+                carPark.spacesAvailable = parking.getPrincipalCapacity();
+                carPark.maxCapacity = parking.getTotalCapacity();
 
                 ParkAndRideVertex parkAndRideVertex = new ParkAndRideVertex(graph, carPark);
                 new ParkAndRideEdge(parkAndRideVertex);
