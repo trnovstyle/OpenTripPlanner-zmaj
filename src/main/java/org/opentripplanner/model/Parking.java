@@ -215,15 +215,15 @@ public final class Parking extends IdentityBean<String> {
     }
 
     public enum ParkingType {
-        PARK_AND_RIDE
+        PARK_AND_RIDE, UNKNOWN
     }
 
     public enum ParkingVehicleType {
-        CAR, MOTOR_CYCLE, PEDAL_CYCLE
+        CAR, MOTOR_CYCLE, PEDAL_CYCLE, UNKNOWN
     }
 
     public enum ParkingLayout {
-        OPEN_SPACE, MULTI_STOREY, UNDERGROUND, ROADSIDE
+        OPEN_SPACE, MULTI_STOREY, UNDERGROUND, ROADSIDE, UNKNOWN
     }
 
     public enum ParkingReservation {

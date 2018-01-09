@@ -35,7 +35,13 @@ public class ParkingMapper {
                 case PARK_AND_RIDE:
                     otpParking.setParkingType(org.opentripplanner.model.Parking.ParkingType.PARK_AND_RIDE);
                     break;
+                default:
+                    otpParking.setParkingType(org.opentripplanner.model.Parking.ParkingType.UNKNOWN);
+                    break;
             }
+        }
+        else {
+            otpParking.setParkingType(org.opentripplanner.model.Parking.ParkingType.UNKNOWN);
         }
 
         if (parking.getParkingVehicleTypes()!= null && parking.getParkingVehicleTypes().size() > 0) {
@@ -49,7 +55,12 @@ public class ParkingMapper {
                 case PEDAL_CYCLE:
                     otpParking.setParkingVehicleType(org.opentripplanner.model.Parking.ParkingVehicleType.PEDAL_CYCLE);
                     break;
+                default:
+                    otpParking.setParkingVehicleType(org.opentripplanner.model.Parking.ParkingVehicleType.UNKNOWN);
             }
+        }
+        else {
+            otpParking.setParkingVehicleType(org.opentripplanner.model.Parking.ParkingVehicleType.UNKNOWN);
         }
 
         if (parking.getParkingLayout() != null) {
@@ -66,7 +77,11 @@ public class ParkingMapper {
                 case ROADSIDE:
                     otpParking.setParkingLayout(org.opentripplanner.model.Parking.ParkingLayout.ROADSIDE);
                     break;
+                default:
+                    otpParking.setParkingLayout(org.opentripplanner.model.Parking.ParkingLayout.UNKNOWN);
             }
+        } else {
+            otpParking.setParkingLayout(org.opentripplanner.model.Parking.ParkingLayout.UNKNOWN);
         }
 
         return otpParking;
