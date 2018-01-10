@@ -70,6 +70,29 @@ public class StopMapper {
 
         stop.setVehicleType(transportModeMapper.getTransportMode(stopPlaceLatest));
 
+        if (stopPlaceLatest.getAccessibilityAssessment() != null
+                && stopPlaceLatest.getAccessibilityAssessment().getLimitations() != null
+                && stopPlaceLatest.getAccessibilityAssessment().getLimitations().getAccessibilityLimitation() != null &&
+                stopPlaceLatest.getAccessibilityAssessment().getLimitations().getAccessibilityLimitation().getWheelchairAccess() != null){
+            switch (stopPlaceLatest.getAccessibilityAssessment().getLimitations().getAccessibilityLimitation().getWheelchairAccess().value()) {
+                case "true":
+                    stop.setWheelchairBoarding(1);
+                    break;
+                case "false":
+                    stop.setWheelchairBoarding(2);
+                    break;
+                case "unknown":
+                    stop.setWheelchairBoarding(1);
+                    break;
+                default:
+                    stop.setWheelchairBoarding(0);
+                    break;
+            }
+        }
+        else {
+            stop.setWheelchairBoarding(0);
+        }
+
         stops.add(stop);
 
         // Get quays from all versions of stop place
@@ -98,6 +121,28 @@ public class StopMapper {
                         stopQuay.setParentStation(stop.getId().getId());
                         if (multiModalStop != null) {
                             stopQuay.setMultiModalStation(multiModalStop.getId().getId());
+                        }
+
+                        if (quay.getAccessibilityAssessment() != null
+                                && quay.getAccessibilityAssessment().getLimitations() != null
+                                && quay.getAccessibilityAssessment().getLimitations().getAccessibilityLimitation() != null &&
+                                quay.getAccessibilityAssessment().getLimitations().getAccessibilityLimitation().getWheelchairAccess() != null){
+                            switch (quay.getAccessibilityAssessment().getLimitations().getAccessibilityLimitation().getWheelchairAccess().value()) {
+                                case "true":
+                                    stopQuay.setWheelchairBoarding(1);
+                                    break;
+                                case "false":
+                                    stopQuay.setWheelchairBoarding(2);
+                                    break;
+                                case "unknown":
+                                    stopQuay.setWheelchairBoarding(1);
+                                    break;
+                                default:
+                                    stopQuay.setWheelchairBoarding(0);
+                                    break;
+                            }
+                        } else {
+                            stopQuay.setWheelchairBoarding(stop.getWheelchairBoarding());
                         }
 
                         // Continue if this is not newest version of quay

@@ -47,6 +47,8 @@ public class TripMapper {
             trip.setTripShortName("");
         }
 
+        trip.setWheelchairAccessible(1);
+
         return trip;
     }
 }
