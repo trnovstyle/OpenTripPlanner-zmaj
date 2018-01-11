@@ -628,6 +628,11 @@ public class IndexGraphQLSchema {
                 .description("Locale for returned text")
                 .type(Scalars.GraphQLString)
                 .build())
+            .argument(GraphQLArgument.newArgument()
+                .name("heuristicStepsPerMainStep")
+                .description("Tuning parameter for the search algorithm.")
+                .type(Scalars.GraphQLInt)
+                .build())
             .dataFetcher(environment -> new GraphQlPlanner(index).plan(environment))
             .build();
 

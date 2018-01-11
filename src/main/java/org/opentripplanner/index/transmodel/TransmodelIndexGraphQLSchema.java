@@ -596,6 +596,12 @@ public class TransmodelIndexGraphQLSchema {
                                                                          .type(Scalars.GraphQLBoolean)
                                                                          .defaultValue(defaultRoutingRequest.ignoreRealtimeUpdates)
                                                                          .build())
+                                                        .argument(GraphQLArgument.newArgument()
+                                                                        .name("heuristicStepsPerMainStep")
+                                                                        .description("Search algorithm tuning parameter.")
+                                                                        .type(Scalars.GraphQLInt)
+                                                                        .defaultValue(defaultRoutingRequest.heuristicStepsPerMainStep)
+                                                                        .build())
                                                        .dataFetcher(environment -> new TransmodelGraphQLPlanner(mappingUtil).plan(environment)
                                                        )
                                                        .build();

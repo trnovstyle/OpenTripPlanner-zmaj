@@ -196,6 +196,8 @@ public class TransmodelGraphQLPlanner {
         callWith.argument("whiteListed.lines", lines -> request.setWhiteListedRoutes(mappingUtil.prepareListOfAgencyAndId((List<String>) lines, "__")));
         callWith.argument("whiteListed.organisations", organisations -> request.setWhiteListedAgencies(mappingUtil.mapCollectionOfValues((Collection<String>) organisations, in -> in)));
 
+        callWith.argument("heuristicStepsPerMainStep", (Integer v) -> request.heuristicStepsPerMainStep = v);
+
         callWith.argument("transferPenalty", (Integer v) -> request.transferPenalty = v);
         if (optimize == OptimizeType.TRANSFERS) {
             optimize = OptimizeType.QUICK;
