@@ -267,7 +267,7 @@ public class NetexLoader {
                         PassengerStopAssignment passengerStopAssignment = (PassengerStopAssignment) assignment
                                 .getValue();
                         String quayRef = passengerStopAssignment.getQuayRef().getRef();
-                        if (passengerStopAssignment.getQuayRef() != null) {
+                        if (passengerStopAssignment.getQuayRef() != null && currentNetexDao().lookupQuayLastVersionById(quayRef) != null) {
                             Quay quay = currentNetexDao().lookupQuayLastVersionById(quayRef);
                                 currentNetexDao().addQuayIdByStopPointRef(
                                         passengerStopAssignment.getScheduledStopPointRef().getValue().getRef(),
