@@ -93,6 +93,10 @@ public class StopMapper {
             stop.setWheelchairBoarding(0);
         }
 
+        if (stopPlaceLatest.getDescription() != null) {
+            stop.setDesc(stopPlaceLatest.getDescription().getValue());
+        }
+
         stops.add(stop);
 
         // Get quays from all versions of stop place
@@ -119,6 +123,9 @@ public class StopMapper {
                         stopQuay.setPlatformCode(quay.getPublicCode());
                         stopQuay.setVehicleType(stop.getVehicleType());
                         stopQuay.setParentStation(stop.getId().getId());
+                        if (quay.getDescription() != null) {
+                            stopQuay.setDesc(quay.getDescription().getValue());
+                        }
                         if (multiModalStop != null) {
                             stopQuay.setMultiModalStation(multiModalStop.getId().getId());
                         }
