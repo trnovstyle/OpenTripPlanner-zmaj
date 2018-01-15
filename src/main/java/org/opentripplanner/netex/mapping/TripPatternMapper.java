@@ -69,7 +69,7 @@ public class TripPatternMapper {
                     journeyPattern, transitBuilder, netexDao, trip, timetabledPassingTimes
             );
 
-            if (stopTimes != null) {
+            if (stopTimes != null && stopTimes.size() > 0) {
                 transitBuilder.getStopTimesSortedByTrip().put(trip, stopTimes);
 
                 List<StopTime> stopTimesWithHeadsign = stopTimes.stream()
@@ -92,6 +92,9 @@ public class TripPatternMapper {
                 if (stopPattern == null) {
                     stopPattern = new StopPattern(transitBuilder.getStopTimesSortedByTrip().get(trip));
                 }
+            }
+            else {
+                LOG.warn("No stop times found for trip " + serviceJourney.getId());
             }
         }
 
@@ -148,7 +151,6 @@ public class TripPatternMapper {
                 ++stopSequence;
             } else {
                 LOG.warn("Quay not found for timetabledPassingTimes: " + passingTime.getId());
-                return null;
             }
         }
         return stopTimes;
