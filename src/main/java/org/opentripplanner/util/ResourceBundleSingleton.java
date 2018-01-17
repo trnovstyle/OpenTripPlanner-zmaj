@@ -18,6 +18,7 @@ import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import java.io.UnsupportedEncodingException;
 
 /**
  *
@@ -49,14 +50,20 @@ public enum ResourceBundleSingleton {
             ResourceBundle resourceBundle = null;
             if (key.equals("corner") || key.equals("unnamedStreet")) {
                 resourceBundle = ResourceBundle.getBundle("internals", locale);
+            } else if (key.startsWith("directions")) {
+                resourceBundle = ResourceBundle.getBundle("directions", locale);
             } else {
                 resourceBundle = ResourceBundle.getBundle("WayProperties", locale);
             }
-            String retval = resourceBundle.getString(key);
+            String val = resourceBundle.getString(key);
+            String retval = new String(val.getBytes("ISO-8859-1"), "UTF-8");
             //LOG.debug(String.format("Localized '%s' using '%s'", key, retval));
             return retval;
         } catch (MissingResourceException e) {
             //LOG.debug("Missing translation for key: " + key);
+            return key;
+        } catch (UnsupportedEncodingException e) {
+            LOG.debug("Unsupported encoding");
             return key;
         }
     }

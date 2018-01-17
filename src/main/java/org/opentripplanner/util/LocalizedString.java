@@ -111,7 +111,7 @@ public class LocalizedString implements I18NString, Serializable {
             return key_tag_names.get(key);
         }
         List<String> tag_names = new ArrayList<String>(4);
-        String english_trans = ResourceBundleSingleton.INSTANCE.localize(this.key, Locale.ENGLISH);
+        String english_trans = ResourceBundleSingleton.INSTANCE.localize(this.key, Locale.forLanguageTag("no-NO"));
 
         Matcher matcher = patternMatcher.matcher(english_trans);
         while (matcher.find()) {
