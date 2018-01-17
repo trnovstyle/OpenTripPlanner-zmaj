@@ -157,6 +157,12 @@ public class TransmodelIndexGraphQLSchema {
             .value("northwest", AbsoluteDirection.NORTHWEST)
             .build();
 
+    private static GraphQLEnumType localeEnum = GraphQLEnumType.newEnum()
+            .name("Locale")
+            .value("no", "no-NO")
+            .value("us", "en-US")
+            .build();
+
     private static GraphQLEnumType transportSubmode;
 
     static {
@@ -414,7 +420,6 @@ public class TransmodelIndexGraphQLSchema {
 
         createPlanType(index);
 
-
         GraphQLInputObjectType preferredInputType = GraphQLInputObjectType.newInputObject()
                                                             .name("InputPreferred")
                                                             .description("Preferences for trip search.")
@@ -625,6 +630,11 @@ public class TransmodelIndexGraphQLSchema {
                                                                          .type(Scalars.GraphQLBoolean)
                                                                          .defaultValue(defaultRoutingRequest.ignoreRealtimeUpdates)
                                                                          .build())
+                                                       .argument(GraphQLArgument.newArgument()
+                                                                        .name("locale")
+                                                                        .type(localeEnum)
+                                                                        .defaultValue("no-NO")
+                                                                        .build())
                                                        .dataFetcher(environment -> new TransmodelGraphQLPlanner(mappingUtil).plan(environment)
                                                        )
                                                        .build();
@@ -2357,10 +2367,15 @@ public class TransmodelIndexGraphQLSchema {
                         .dataFetcher(environment -> ((WalkStep) environment.getSource()).lon)
                         .build())
                 .field(GraphQLFieldDefinition.newFieldDefinition()
-                        .name("toString")
-                        .description("String representation of the step.")
+                        .name("legStepText")
+                        .description("Direction information as readable text.")
                         .type(Scalars.GraphQLString)
-                        .dataFetcher(environment -> ((WalkStep) environment.getSource()).toString())
+                        .argument(GraphQLArgument.newArgument()
+                                .name("locale")
+                                .type(localeEnum)
+                                .defaultValue("no-NO")
+                                .build())
+                        .dataFetcher(environment -> ((WalkStep) environment.getSource()).getLegStepText(environment))
                         .build())
                 .build();
 

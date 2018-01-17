@@ -30,6 +30,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -145,6 +146,8 @@ public class TransmodelGraphQLPlanner {
 
         TransmodelGraphQLPlanner.CallerWithEnvironment callWith = new TransmodelGraphQLPlanner.CallerWithEnvironment(environment);
 
+        callWith.argument("locale", (String v) -> request.locale = Locale.forLanguageTag(v));
+
         callWith.argument("from", (Map<String, Object> v) -> request.from = toGenericLocation(v));
         callWith.argument("to", (Map<String, Object> v) -> request.to = toGenericLocation(v));
 
@@ -240,8 +243,6 @@ public class TransmodelGraphQLPlanner {
 
 
         callWith.argument("ignoreRealtimeUpdates", (Boolean v) -> request.ignoreRealtimeUpdates = v);
-        callWith.argument("locale", (String v) -> request.locale = ResourceBundleSingleton.INSTANCE.getLocale(v));
-
 
         return request;
     }

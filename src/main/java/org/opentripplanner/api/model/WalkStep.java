@@ -23,6 +23,7 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
+import graphql.schema.DataFetchingEnvironment;
 import org.opentripplanner.api.model.alertpatch.LocalizedAlert;
 import org.opentripplanner.common.model.P2;
 import org.opentripplanner.profile.BikeRentalStationInfo;
@@ -31,6 +32,7 @@ import org.opentripplanner.routing.graph.Edge;
 
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.google.common.collect.Lists;
+import org.opentripplanner.util.LocalizedString;
 
 /**
  * Represents one instruction in walking directions. Three examples from New York City:
@@ -250,26 +252,38 @@ public class WalkStep {
         return elevation;
     }
 
-    public String getLegStepText() {
+    public String getLegStepText(DataFetchingEnvironment environment) {
         String text = "";
+        Locale locale = Locale.forLanguageTag(environment.getArgument("locale"));
         if(this.relativeDirection == RelativeDirection.CIRCLE_COUNTERCLOCKWISE || this.relativeDirection == RelativeDirection.CIRCLE_CLOCKWISE) {
             if (this.relativeDirection == RelativeDirection.CIRCLE_COUNTERCLOCKWISE) {
-                text +=  String.format("Take roundabout counterclockwise to %(ordinal_exit_number)s exit on %(street_name)s", this.exit, this.streetName);
+                text +=  new LocalizedString("directions.clockwiseDirection", new String[]{this.exit,this.streetName}).toString(locale);
             } else {
-                text +=  String.format("Take roundabout clockwise to %(ordinal_exit_number)s exit on %(street_name)s", this.exit, this.streetName);
+                text +=  new LocalizedString("directions.counterClockwiseDirection", new String[]{this.exit,this.streetName}).toString(locale);
             }
         }
         else {
+            String relativeDirectionText = (new LocalizedString("directions." + this.relativeDirection.toString(), new String[]{})).toString(locale);
+            String absoluteDirectionText = (new LocalizedString("directions." + this.absoluteDirection.toString(), new String[]{})).toString(locale);
             if(this.relativeDirection == RelativeDirection.DEPART) {
-                text += "Start on" + " " + this.streetName + "" + " heading " + "" + this .absoluteDirection.toString() + "";
+                text += new LocalizedString("directions.relativeDirectionDepart", new String[]{this.streetName, absoluteDirectionText}).toString(locale);
             }
             else {
-                text += "" + this.relativeDirection.toString() + "" + ' ' +
-                        (this.stayOn ? "to continue on" : "on to")  + " " +
-                        this.streetName + "";
+                if (this.stayOn) {
+                    text += new LocalizedString("directions.relativeDirectionContinue", new String[]{relativeDirectionText, this.streetName}).toString(locale);
+                }
+                else {
+                    text += new LocalizedString("directions.relativeDirectionOnto", new String[]{relativeDirectionText, this.streetName}).toString(locale);
+                }
             }
+        }
+        return makeSentence(text);
+    }
+
+    private String makeSentence(String text) {
+        if (text.length() > 1) {
+            text = text.substring(0, 1).toUpperCase() + text.substring(1) + ".";
         }
         return text;
     }
-
 }
