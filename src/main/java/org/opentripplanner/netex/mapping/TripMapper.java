@@ -39,7 +39,16 @@ public class TripMapper {
         trip.setServiceId(AgencyAndIdFactory.createAgencyAndId(serviceId));
 
         if (serviceJourney.getPrivateCode() != null) {
-            trip.setTripShortName(serviceJourney.getPrivateCode().getValue());
+            trip.setTripPrivateCode(serviceJourney.getPrivateCode().getValue());
+        }
+
+        if (serviceJourney.getPublicCode() != null) {
+            trip.setTripShortName(serviceJourney.getPublicCode());
+        }
+
+        // Temp fix to prevent frontend from breaking
+        if (trip.getTripPrivateCode() == null) {
+            trip.setTripPrivateCode("");
         }
 
         // Temp fix to prevent frontend from breaking
