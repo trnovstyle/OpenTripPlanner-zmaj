@@ -166,8 +166,8 @@ public class TransmodelIndexGraphQLSchema {
 
     private static GraphQLEnumType localeEnum = GraphQLEnumType.newEnum()
             .name("Locale")
-            .value("no", "no-NO")
-            .value("us", "en-US")
+            .value("no", "no")
+            .value("us", "us")
             .build();
 
     private static GraphQLEnumType transportSubmode;
@@ -641,7 +641,7 @@ public class TransmodelIndexGraphQLSchema {
                                                        .argument(GraphQLArgument.newArgument()
                                                                         .name("locale")
                                                                         .type(localeEnum)
-                                                                        .defaultValue("no-NO")
+                                                                        .defaultValue("no")
                                                                         .build())
                                                         .argument(GraphQLArgument.newArgument()
                                                                         .name("heuristicStepsPerMainStep")
@@ -2396,7 +2396,7 @@ public class TransmodelIndexGraphQLSchema {
                         .argument(GraphQLArgument.newArgument()
                                 .name("locale")
                                 .type(localeEnum)
-                                .defaultValue("no-NO")
+                                .defaultValue("no")
                                 .build())
                         .dataFetcher(environment -> ((WalkStep) environment.getSource()).getLegStepText(environment))
                         .build())
