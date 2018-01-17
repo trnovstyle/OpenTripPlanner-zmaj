@@ -256,10 +256,11 @@ public class WalkStep {
         String text = "";
         Locale locale = Locale.forLanguageTag(environment.getArgument("locale"));
         if(this.relativeDirection == RelativeDirection.CIRCLE_COUNTERCLOCKWISE || this.relativeDirection == RelativeDirection.CIRCLE_CLOCKWISE) {
+            String exitText = (new LocalizedString("directions." + this.exit.toString(), new String[]{})).toString(locale);
             if (this.relativeDirection == RelativeDirection.CIRCLE_COUNTERCLOCKWISE) {
-                text +=  new LocalizedString("directions.clockwiseDirection", new String[]{this.exit,this.streetName}).toString(locale);
+                text +=  new LocalizedString("directions.clockwiseDirection", new String[]{exitText,this.streetName}).toString(locale);
             } else {
-                text +=  new LocalizedString("directions.counterClockwiseDirection", new String[]{this.exit,this.streetName}).toString(locale);
+                text +=  new LocalizedString("directions.counterClockwiseDirection", new String[]{exitText,this.streetName}).toString(locale);
             }
         }
         else {
