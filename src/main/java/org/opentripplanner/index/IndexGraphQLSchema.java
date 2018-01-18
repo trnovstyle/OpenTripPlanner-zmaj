@@ -134,6 +134,12 @@ public class IndexGraphQLSchema {
         .value("TRANSFERS", OptimizeType.TRANSFERS, "TRANSFERS")
         .build();
 
+    private static GraphQLEnumType localeEnum = GraphQLEnumType.newEnum()
+            .name("Locale")
+            .value("no", "no")
+            .value("us", "us")
+            .build();
+
     private final GtfsRealtimeFuzzyTripMatcher fuzzyTripMatcher;
 
     public GraphQLOutputType agencyType = new GraphQLTypeReference("Agency");
@@ -633,6 +639,11 @@ public class IndexGraphQLSchema {
                 .description("Tuning parameter for the search algorithm.")
                 .type(Scalars.GraphQLInt)
                 .build())
+            .argument(GraphQLArgument.newArgument()
+                    .name("locale")
+                    .type(localeEnum)
+                    .defaultValue("no")
+                    .build())
             .dataFetcher(environment -> new GraphQlPlanner(index).plan(environment))
             .build();
 
