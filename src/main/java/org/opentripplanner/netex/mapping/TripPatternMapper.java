@@ -98,7 +98,6 @@ public class TripPatternMapper {
             }
         }
 
-        // TODO TGR/GMS - There is something fishy here: stopPattern can be null...
         if (stopPattern == null || stopPattern.size == 0) {
             LOG.warn("ServiceJourneyPattern " + journeyPattern.getId()
                     + " does not contain a valid stop pattern.");
