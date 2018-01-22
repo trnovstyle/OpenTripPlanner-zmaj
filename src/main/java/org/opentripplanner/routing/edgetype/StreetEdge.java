@@ -371,7 +371,7 @@ public class StreetEdge extends Edge implements Cloneable {
             if (traverseMode.equals(TraverseMode.WALK)) {
                 // take slopes into account when walking
                 // FIXME: this causes steep stairs to be avoided. see #1297.
-                double costs = getSlopeWalkSpeedEffectiveLength();
+                double costs = ElevationUtils.getWalkCostsForSlope(getDistance(), getMaxSlope());
                 // as the cost walkspeed is assumed to be for 4.8km/h (= 1.333 m/sec) we need to adjust
                 // for the walkspeed set by the user
                 double elevationUtilsSpeed = 4.0 / 3.0;
@@ -598,10 +598,6 @@ public class StreetEdge extends Edge implements Cloneable {
     }
 
     public double getSlopeWorkCostEffectiveLength() {
-        return getDistance();
-    }
-
-    public double getSlopeWalkSpeedEffectiveLength() {
         return getDistance();
     }
 
