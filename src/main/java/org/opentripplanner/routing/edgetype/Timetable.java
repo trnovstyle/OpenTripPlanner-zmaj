@@ -1085,8 +1085,9 @@ public class Timetable implements Serializable {
 
         VehicleActivityStructure.MonitoredVehicleJourney monitoredVehicleJourney = activity.getMonitoredVehicleJourney();
 
+        Duration delay = null;
         if (monitoredVehicleJourney != null) {
-            Duration delay = monitoredVehicleJourney.getDelay();
+            delay = monitoredVehicleJourney.getDelay();
             int updatedDelay = 0;
             if (delay != null) {
                 updatedDelay = delay.getSign() * (delay.getHours() * 3600 + delay.getMinutes() * 60 + delay.getSeconds());
@@ -1094,33 +1095,34 @@ public class Timetable implements Serializable {
 
             MonitoredCallStructure monitoredCall = monitoredVehicleJourney.getMonitoredCall();
             if (monitoredCall != null && monitoredCall.getStopPointRef() != null) {
-                boolean stopIdMatches;
+                boolean matchFound = false;
 
-                int arrivalDelay;
-                int departureDelay;
+                int arrivalDelay = 0;
+                int departureDelay = 0;
 
                 for (int index = 0; index < newTimes.getNumStops(); ++index) {
+                    if (!matchFound) {
+                        // Delay is set on a single stop at a time. When match is found - propagate delay on all following stops
+                        final Stop stop = stops.get(index);
 
-                    final Stop stop = stops.get(index);
+                        matchFound = stop.getId().getId().equals(monitoredCall.getStopPointRef().getValue());
 
-                    stopIdMatches = stop.getId().getId().equals(monitoredCall.getStopPointRef().getValue());
+                        if (!matchFound && stop.getParentStation() != null) {
+                            AgencyAndId alternativeId = new AgencyAndId(stop.getId().getAgencyId(), monitoredCall.getStopPointRef().getValue());
+                            Stop alternativeStop = graph.index.stopForId.get(alternativeId);
+                            if (alternativeStop != null && alternativeStop.getParentStation() != null) {
+                                matchFound = stop.getParentStation().equals(alternativeStop.getParentStation());
+                            }
+                        }
 
-                    if (!stopIdMatches && stop.getParentStation() != null) {
-                        AgencyAndId alternativeId = new AgencyAndId(stop.getId().getAgencyId(), monitoredCall.getStopPointRef().getValue());
-                        Stop alternativeStop = graph.index.stopForId.get(alternativeId);
-                        if (alternativeStop != null && alternativeStop.getParentStation() != null) {
-                            stopIdMatches = stop.getParentStation().equals(alternativeStop.getParentStation());
+
+                        if (matchFound) {
+                            arrivalDelay = departureDelay = updatedDelay;
+                        } else {
+                            arrivalDelay = existingTripTimes.getArrivalDelay(index);
+                            departureDelay = existingTripTimes.getDepartureDelay(index);
                         }
                     }
-
-
-                    if (stopIdMatches) {
-                        arrivalDelay = departureDelay = updatedDelay;
-                    } else {
-                        arrivalDelay = existingTripTimes.getArrivalDelay(index);
-                        departureDelay = existingTripTimes.getDepartureDelay(index);
-                    }
-
                     newTimes.updateArrivalDelay(index, arrivalDelay);
                     newTimes.updateDepartureDelay(index, departureDelay);
                 }
@@ -1128,7 +1130,7 @@ public class Timetable implements Serializable {
         }
 
         if (!newTimes.timesIncreasing()) {
-            LOG.error("TripTimes are non-increasing after applying SIRI delay propagation.");
+            LOG.error("TripTimes are non-increasing after applying SIRI delay propagation - delay: {}", delay);
             return null;
         }
 
