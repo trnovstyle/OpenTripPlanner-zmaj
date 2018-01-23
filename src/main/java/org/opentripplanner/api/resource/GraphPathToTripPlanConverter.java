@@ -179,6 +179,7 @@ public abstract class GraphPathToTripPlanConverter {
         itinerary.duration = lastState.getElapsedTimeSeconds();
         itinerary.startTime = makeCalendar(states[0]);
         itinerary.endTime = makeCalendar(lastState);
+        itinerary.weight = lastState.weight;
 
         calculateTimes(itinerary, states);
 

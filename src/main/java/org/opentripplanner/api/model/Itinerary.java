@@ -89,6 +89,12 @@ public class Itinerary {
     public Fare fare = new Fare();
 
     /**
+     * Weight of the itinerary, used for debugging
+     */
+
+    public double weight = 0;
+
+    /**
      * A list of Legs. Each Leg is either a walking (cycling, car) portion of the trip, or a transit
      * trip on a particular vehicle. So a trip where the use walks to the Q train, transfers to the
      * 6, then walks to their destination, has four legs.

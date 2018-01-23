@@ -2959,6 +2959,12 @@ public class IndexGraphQLSchema {
                     return results;
                 })
                 .build())
+            .field(GraphQLFieldDefinition.newFieldDefinition()
+                    .name("weight")
+                    .description("Weight of the itinerary. Used for debugging.")
+                    .type(Scalars.GraphQLFloat)
+                    .dataFetcher(environment -> ((Itinerary)environment.getSource()).weight)
+                    .build())
             .build();
 
         planType = GraphQLObjectType.newObject()
