@@ -1276,7 +1276,7 @@ public class TransmodelIndexGraphQLSchema {
                                                     .name("publicCode")
                                                     .type(Scalars.GraphQLString)
                                                     .description("Publicly announced code for service journey, differentiating it from other service journeys for the same line.")
-                                                    .dataFetcher(environment -> (((Trip) environment.getSource()).getTripShortName()))
+                                                    .dataFetcher(environment -> (((Trip) environment.getSource()).getTripPublicCode()))
                                                     .build())
                                     .field(GraphQLFieldDefinition.newFieldDefinition()
                                                     .name("privateCode")
