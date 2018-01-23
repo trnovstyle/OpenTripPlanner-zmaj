@@ -52,6 +52,11 @@ public class TripMapper {
         }
 
         // Temp fix to prevent frontend from breaking
+        if (trip.getTripPublicCode() == null) {
+            trip.setTripPublicCode("");
+        }
+
+        // Temp fix to prevent frontend from breaking
         if (trip.getTripShortName() == null) {
             trip.setTripShortName("");
         }

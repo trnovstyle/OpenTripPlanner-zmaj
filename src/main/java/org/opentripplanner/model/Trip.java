@@ -98,7 +98,7 @@ public final class Trip extends IdentityBean<AgencyAndId> {
     }
 
     public String getTripShortName() {
-        return tripPrivateCode != null ? tripPrivateCode : tripPublicCode;
+        return tripPrivateCode != null && tripPrivateCode != "" ? tripPrivateCode : tripPublicCode;
     }
 
     public void setTripShortName(String tripShortName) {
