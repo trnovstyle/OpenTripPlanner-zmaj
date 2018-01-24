@@ -106,26 +106,28 @@ public class SiriFuzzyTripMatcher {
 
             ZonedDateTime arrivalTime = lastStop.getAimedArrivalTime() != null ? lastStop.getAimedArrivalTime() : lastStop.getAimedDepartureTime();
 
-            trips = start_stop_tripCache.get(createStartStopKey(lastStopPoint, arrivalTime.toLocalTime().toSecondOfDay()));
-            if (trips == null) {
-                //Attempt to fetch trips that started yesterday - i.e. add 24 hours to arrival-time
-                int lastStopArrivalTime = arrivalTime.toLocalTime().toSecondOfDay() + (24 * 60 * 60);
-                trips = start_stop_tripCache.get(createStartStopKey(lastStopPoint, lastStopArrivalTime));
-            }
+            if (arrivalTime != null) {
+                trips = start_stop_tripCache.get(createStartStopKey(lastStopPoint, arrivalTime.toLocalTime().toSecondOfDay()));
+                if (trips == null) {
+                    //Attempt to fetch trips that started yesterday - i.e. add 24 hours to arrival-time
+                    int lastStopArrivalTime = arrivalTime.toLocalTime().toSecondOfDay() + (24 * 60 * 60);
+                    trips = start_stop_tripCache.get(createStartStopKey(lastStopPoint, lastStopArrivalTime));
+                }
 
-            if (trips == null || trips.isEmpty()) {
-                //SIRI-data may report other platform, but still on the same Parent-stop
-                String agencyId = index.agenciesForFeedId.keySet().iterator().next();
-                Stop stop = index.stopForId.get(new AgencyAndId(agencyId, lastStopPoint));
-                if (stop != null && stop.getParentStation() != null) {
-                    Collection<Stop> allQuays = index.stopsForParentStation.get(new AgencyAndId(agencyId, stop.getParentStation()));
-                    for (Stop quay : allQuays) {
-                        Set<Trip> tripSet = start_stop_tripCache.get(createStartStopKey(quay.getId().getId(), arrivalTime.toLocalTime().toSecondOfDay()));
-                        if (tripSet != null) {
-                            if (trips == null) {
-                                trips = tripSet;
-                            } else {
-                                trips.addAll(tripSet);
+                if (trips == null || trips.isEmpty()) {
+                    //SIRI-data may report other platform, but still on the same Parent-stop
+                    String agencyId = index.agenciesForFeedId.keySet().iterator().next();
+                    Stop stop = index.stopForId.get(new AgencyAndId(agencyId, lastStopPoint));
+                    if (stop != null && stop.getParentStation() != null) {
+                        Collection<Stop> allQuays = index.stopsForParentStation.get(new AgencyAndId(agencyId, stop.getParentStation()));
+                        for (Stop quay : allQuays) {
+                            Set<Trip> tripSet = start_stop_tripCache.get(createStartStopKey(quay.getId().getId(), arrivalTime.toLocalTime().toSecondOfDay()));
+                            if (tripSet != null) {
+                                if (trips == null) {
+                                    trips = tripSet;
+                                } else {
+                                    trips.addAll(tripSet);
+                                }
                             }
                         }
                     }
