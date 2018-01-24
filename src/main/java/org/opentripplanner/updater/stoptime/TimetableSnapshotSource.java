@@ -32,7 +32,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.org.siri.siri20.*;
 
-import javax.xml.datatype.Duration;
 import java.text.ParseException;
 import java.time.ZonedDateTime;
 import java.util.*;
@@ -437,12 +436,6 @@ public class TimetableSnapshotSource {
                 activity.getMonitoredVehicleJourney().getLineRef() == null) {
             //No vehicle reference or line reference
             return false;
-        }
-
-        if (activity.getMonitoredVehicleJourney().getOriginAimedDepartureTime().isAfter(ZonedDateTime.now())) {
-            //Realtimedata for vehicle not yet active - forcing 0 delay
-            Duration delay = activity.getMonitoredVehicleJourney().getDelay();
-            activity.getMonitoredVehicleJourney().setDelay(delay.subtract(delay));
         }
 
         Set<Trip> trips = siriFuzzyTripMatcher.match(activity);
