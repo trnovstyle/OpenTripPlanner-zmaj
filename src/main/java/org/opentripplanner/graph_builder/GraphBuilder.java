@@ -252,32 +252,6 @@ public class GraphBuilder implements Runnable {
             pruneFloatingIslands.setPruningThresholdIslandWithStops(builderParams.pruningThresholdIslandWithStops);
             graphBuilder.addModule(pruneFloatingIslands);
         }
-        if ( hasGTFS ) {
-            List<GtfsBundle> gtfsBundles = Lists.newArrayList();
-            for (File gtfsFile : gtfsFiles) {
-                GtfsBundle gtfsBundle = new GtfsBundle(gtfsFile);
-                gtfsBundle.setTransfersTxtDefinesStationPaths(builderParams.useTransfersTxt);
-                if (builderParams.parentStopLinking) {
-                    gtfsBundle.linkStopsToParentStations = true;
-                }
-                gtfsBundle.parentStationTransfers = builderParams.stationTransfers;
-                gtfsBundle.subwayAccessTime = (int)(builderParams.subwayAccessTime * 60);
-                gtfsBundle.maxInterlineDistance = builderParams.maxInterlineDistance;
-                gtfsBundles.add(gtfsBundle);
-            }
-            GtfsModule gtfsModule = new GtfsModule(gtfsBundles);
-            gtfsModule.setFareServiceFactory(builderParams.fareServiceFactory);
-            graphBuilder.addModule(gtfsModule);
-            if ( hasOSM ) {
-                if (builderParams.matchBusRoutesToStreets) {
-                    graphBuilder.addModule(new BusRouteStreetMatcher());
-                }
-                graphBuilder.addModule(new TransitToTaggedStopsModule());
-            }
-        }
-        // This module is outside the hasGTFS conditional block because it also links things like bike rental
-        // which need to be handled even when there's no transit.
-        graphBuilder.addModule(new StreetLinkerModule());
         // Load elevation data and apply it to the streets.
         // We want to do run this module after loading the OSM street network but before finding transfers.
         if (builderParams.elevationBucket != null) {
@@ -305,6 +279,32 @@ public class GraphBuilder implements Runnable {
             GraphBuilderModule elevationBuilder = new ElevationModule(gcf);
             graphBuilder.addModule(elevationBuilder);
         }
+        if ( hasGTFS ) {
+            List<GtfsBundle> gtfsBundles = Lists.newArrayList();
+            for (File gtfsFile : gtfsFiles) {
+                GtfsBundle gtfsBundle = new GtfsBundle(gtfsFile);
+                gtfsBundle.setTransfersTxtDefinesStationPaths(builderParams.useTransfersTxt);
+                if (builderParams.parentStopLinking) {
+                    gtfsBundle.linkStopsToParentStations = true;
+                }
+                gtfsBundle.parentStationTransfers = builderParams.stationTransfers;
+                gtfsBundle.subwayAccessTime = (int)(builderParams.subwayAccessTime * 60);
+                gtfsBundle.maxInterlineDistance = builderParams.maxInterlineDistance;
+                gtfsBundles.add(gtfsBundle);
+            }
+            GtfsModule gtfsModule = new GtfsModule(gtfsBundles);
+            gtfsModule.setFareServiceFactory(builderParams.fareServiceFactory);
+            graphBuilder.addModule(gtfsModule);
+            if ( hasOSM ) {
+                if (builderParams.matchBusRoutesToStreets) {
+                    graphBuilder.addModule(new BusRouteStreetMatcher());
+                }
+                graphBuilder.addModule(new TransitToTaggedStopsModule());
+            }
+        }
+        // This module is outside the hasGTFS conditional block because it also links things like bike rental
+        // which need to be handled even when there's no transit.
+        graphBuilder.addModule(new StreetLinkerModule());
         if ( hasGTFS ) {
             // The stops can be linked to each other once they are already linked to the street network.
             if ( ! builderParams.useTransfersTxt) {
