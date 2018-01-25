@@ -71,6 +71,10 @@ public class RouteMatcher implements Cloneable, Serializable {
         RouteMatcher retval = new RouteMatcher();
         int n = 0;
         for (String element : routeSpecList.split(",")) {
+            // TEMPORARY FIX
+            if (element.contains("__RB:")) {
+                element = element.replaceAll("__RB:", "__");
+            }
             if (element.length() == 0)
                 continue;
             n++;
