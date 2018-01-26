@@ -147,7 +147,7 @@ public class Graph implements Serializable, AddBuilderAnnotation {
 
     public transient TimetableSnapshotSource timetableSnapshotSource = null;
 
-    private transient List<GraphBuilderAnnotation> graphBuilderAnnotations = new LinkedList<GraphBuilderAnnotation>(); // initialize for tests
+    private List<GraphBuilderAnnotation> graphBuilderAnnotations = new LinkedList<GraphBuilderAnnotation>(); // initialize for tests
 
     private Map<String, Collection<Agency>> agenciesForFeedId = new HashMap<>();
 
