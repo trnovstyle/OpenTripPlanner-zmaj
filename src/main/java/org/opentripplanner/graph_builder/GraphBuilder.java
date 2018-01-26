@@ -27,7 +27,6 @@ import org.opentripplanner.graph_builder.module.ned.DegreeGridNEDTileSource;
 import org.opentripplanner.graph_builder.module.ned.ElevationModule;
 import org.opentripplanner.graph_builder.module.ned.GeotiffGridCoverageFactoryImpl;
 import org.opentripplanner.graph_builder.module.ned.NEDGridCoverageFactoryImpl;
-import org.opentripplanner.graph_builder.module.osm.DefaultWayPropertySetSource;
 import org.opentripplanner.graph_builder.module.osm.OpenStreetMapModule;
 import org.opentripplanner.graph_builder.services.DefaultStreetEdgeFactory;
 import org.opentripplanner.graph_builder.services.GraphBuilderModule;
@@ -64,6 +63,10 @@ public class GraphBuilder implements Runnable {
 
     public static final String BUILDER_CONFIG_FILENAME = "build-config.json";
 
+    public static final String GRAPH_FILENAME = "Graph.obj";
+
+    public static final String BASE_GRAPH_FILENAME = "baseGraph.obj";
+
     private List<GraphBuilderModule> _graphBuilderModules = new ArrayList<GraphBuilderModule>();
 
     private File graphFile;
@@ -71,13 +74,15 @@ public class GraphBuilder implements Runnable {
     private boolean _alwaysRebuild = true;
 
     private List<RoutingRequest> _modeList;
-    
+
     private String _baseGraph = null;
     
     private Graph graph = new Graph();
 
     /** Should the graph be serialized to disk after being created or not? */
     public boolean serializeGraph = true;
+
+    public boolean loadPartialGraph = false;
 
     public void addModule(GraphBuilderModule loader) {
         _graphBuilderModules.add(loader);
@@ -91,10 +96,10 @@ public class GraphBuilder implements Runnable {
         _alwaysRebuild = alwaysRebuild;
     }
     
-    public void setBaseGraph(String baseGraph) {
+    public void setBaseGraph(String baseGraph, File dir) {
         this._baseGraph = baseGraph;
         try {
-            graph = Graph.load(new File(baseGraph), LoadLevel.FULL);
+            graph = Graph.load(new File(dir, baseGraph), LoadLevel.FULL);
         } catch (Exception e) {
             throw new RuntimeException("error loading base graph");
         }
@@ -112,8 +117,8 @@ public class GraphBuilder implements Runnable {
         graphFile = new File(path.concat("/Graph.obj"));
     }
     
-    public void setPath (File path) {
-        graphFile = new File(path, "Graph.obj");
+    public void setPath (File path, String filename) {
+        graphFile = new File(path, filename);
     }
 
     public Graph getGraph() {
@@ -171,7 +176,6 @@ public class GraphBuilder implements Runnable {
         LOG.info(String.format("Graph building took %.1f minutes.", (endTime - startTime) / 1000 / 60.0));
     }
 
-
     /**
      * Factory method to create and configure a GraphBuilder with all the appropriate modules to build a graph from
      * the files in the given directory, accounting for any configuration files located there.
@@ -192,7 +196,7 @@ public class GraphBuilder implements Runnable {
             LOG.error("'{}' is not a readable directory.", dir);
             return null;
         }
-        graphBuilder.setPath(dir);
+        graphBuilder.setPath(dir, params.skipTransit ? BASE_GRAPH_FILENAME : GRAPH_FILENAME);
         // Find and parse config files first to reveal syntax errors early without waiting for graph build.
         builderConfig = OTPMain.loadJson(new File(dir, BUILDER_CONFIG_FILENAME));
         GraphBuilderParameters builderParams = new GraphBuilderParameters(builderConfig);
@@ -227,95 +231,103 @@ public class GraphBuilder implements Runnable {
             LOG.error("Found no input files from which to build a graph in {}", dir);
             return null;
         }
-        if ( hasOSM ) {
-            List<OpenStreetMapProvider> osmProviders = Lists.newArrayList();
-            for (File osmFile : osmFiles) {
-                OpenStreetMapProvider osmProvider = new AnyFileBasedOpenStreetMapProviderImpl(osmFile);
-                osmProviders.add(osmProvider);
-            }
-            OpenStreetMapModule osmModule = new OpenStreetMapModule(osmProviders);
-            DefaultStreetEdgeFactory streetEdgeFactory = new DefaultStreetEdgeFactory();
-            streetEdgeFactory.useElevationData = builderParams.fetchElevationUS || (demFile != null);
-            osmModule.edgeFactory = streetEdgeFactory;
-            osmModule.customNamer = builderParams.customNamer;
-            osmModule.setDefaultWayPropertySetSource(builderParams.wayPropertySet);
-            osmModule.skipVisibility = !builderParams.areaVisibility;
-            osmModule.platformEntriesLinking = builderParams.platformEntriesLinking;
-            osmModule.staticBikeRental = builderParams.staticBikeRental;
-            osmModule.staticBikeParkAndRide = builderParams.staticBikeParkAndRide;
-            osmModule.staticParkAndRide = builderParams.staticParkAndRide;
-            osmModule.banDiscouragedWalking = builderParams.banDiscouragedWalking;
-            osmModule.banDiscouragedBiking = builderParams.banDiscouragedBiking;
-            graphBuilder.addModule(osmModule);
-            PruneFloatingIslands pruneFloatingIslands = new PruneFloatingIslands();
-            pruneFloatingIslands.setPruningThresholdIslandWithoutStops(builderParams.pruningThresholdIslandWithoutStops);
-            pruneFloatingIslands.setPruningThresholdIslandWithStops(builderParams.pruningThresholdIslandWithStops);
-            graphBuilder.addModule(pruneFloatingIslands);
-        }
-        // Load elevation data and apply it to the streets.
-        // We want to do run this module after loading the OSM street network but before finding transfers.
-        if (builderParams.elevationBucket != null) {
-            // Download the elevation tiles from an Amazon S3 bucket
-            S3BucketConfig bucketConfig = builderParams.elevationBucket;
-            File cacheDirectory = new File(params.cacheDirectory, "ned");
-            DegreeGridNEDTileSource awsTileSource = new DegreeGridNEDTileSource();
-            awsTileSource = new DegreeGridNEDTileSource();
-            awsTileSource.awsAccessKey = bucketConfig.accessKey;
-            awsTileSource.awsSecretKey = bucketConfig.secretKey;
-            awsTileSource.awsBucketName = bucketConfig.bucketName;
-            NEDGridCoverageFactoryImpl gcf = new NEDGridCoverageFactoryImpl(cacheDirectory);
-            gcf.tileSource = awsTileSource;
-            GraphBuilderModule elevationBuilder = new ElevationModule(gcf);
-            graphBuilder.addModule(elevationBuilder);
-        } else if (builderParams.fetchElevationUS) {
-            // Download the elevation tiles from the official web service
-            File cacheDirectory = new File(params.cacheDirectory, "ned");
-            ElevationGridCoverageFactory gcf = new NEDGridCoverageFactoryImpl(cacheDirectory);
-            GraphBuilderModule elevationBuilder = new ElevationModule(gcf);
-            graphBuilder.addModule(elevationBuilder);
-        } else if (demFile != null) {
-            // Load the elevation from a file in the graph inputs directory
-            ElevationGridCoverageFactory gcf = new GeotiffGridCoverageFactoryImpl(demFile);
-            GraphBuilderModule elevationBuilder = new ElevationModule(gcf);
-            graphBuilder.addModule(elevationBuilder);
-        }
-        if ( hasGTFS ) {
-            List<GtfsBundle> gtfsBundles = Lists.newArrayList();
-            for (File gtfsFile : gtfsFiles) {
-                GtfsBundle gtfsBundle = new GtfsBundle(gtfsFile);
-                gtfsBundle.setTransfersTxtDefinesStationPaths(builderParams.useTransfersTxt);
-                if (builderParams.parentStopLinking) {
-                    gtfsBundle.linkStopsToParentStations = true;
+
+        if (!params.loadBaseGraph) {
+            if (hasOSM) {
+                List<OpenStreetMapProvider> osmProviders = Lists.newArrayList();
+                for (File osmFile : osmFiles) {
+                    OpenStreetMapProvider osmProvider = new AnyFileBasedOpenStreetMapProviderImpl(osmFile);
+                    osmProviders.add(osmProvider);
                 }
-                gtfsBundle.parentStationTransfers = builderParams.stationTransfers;
-                gtfsBundle.subwayAccessTime = (int)(builderParams.subwayAccessTime * 60);
-                gtfsBundle.maxInterlineDistance = builderParams.maxInterlineDistance;
-                gtfsBundles.add(gtfsBundle);
+                OpenStreetMapModule osmModule = new OpenStreetMapModule(osmProviders);
+                DefaultStreetEdgeFactory streetEdgeFactory = new DefaultStreetEdgeFactory();
+                streetEdgeFactory.useElevationData = builderParams.fetchElevationUS || (demFile != null);
+                osmModule.edgeFactory = streetEdgeFactory;
+                osmModule.customNamer = builderParams.customNamer;
+                osmModule.setDefaultWayPropertySetSource(builderParams.wayPropertySet);
+                osmModule.skipVisibility = !builderParams.areaVisibility;
+                osmModule.platformEntriesLinking = builderParams.platformEntriesLinking;
+                osmModule.staticBikeRental = builderParams.staticBikeRental;
+                osmModule.staticBikeParkAndRide = builderParams.staticBikeParkAndRide;
+                osmModule.staticParkAndRide = builderParams.staticParkAndRide;
+                osmModule.banDiscouragedWalking = builderParams.banDiscouragedWalking;
+                osmModule.banDiscouragedBiking = builderParams.banDiscouragedBiking;
+                graphBuilder.addModule(osmModule);
+                PruneFloatingIslands pruneFloatingIslands = new PruneFloatingIslands();
+                pruneFloatingIslands.setPruningThresholdIslandWithoutStops(builderParams.pruningThresholdIslandWithoutStops);
+                pruneFloatingIslands.setPruningThresholdIslandWithStops(builderParams.pruningThresholdIslandWithStops);
+                graphBuilder.addModule(pruneFloatingIslands);
             }
-            GtfsModule gtfsModule = new GtfsModule(gtfsBundles);
-            gtfsModule.setFareServiceFactory(builderParams.fareServiceFactory);
-            graphBuilder.addModule(gtfsModule);
-            if ( hasOSM ) {
-                if (builderParams.matchBusRoutesToStreets) {
-                    graphBuilder.addModule(new BusRouteStreetMatcher());
+            // Load elevation data and apply it to the streets.
+            // We want to do run this module after loading the OSM street network but before finding transfers.
+            if (builderParams.elevationBucket != null) {
+                // Download the elevation tiles from an Amazon S3 bucket
+                S3BucketConfig bucketConfig = builderParams.elevationBucket;
+                File cacheDirectory = new File(params.cacheDirectory, "ned");
+                DegreeGridNEDTileSource awsTileSource = new DegreeGridNEDTileSource();
+                awsTileSource = new DegreeGridNEDTileSource();
+                awsTileSource.awsAccessKey = bucketConfig.accessKey;
+                awsTileSource.awsSecretKey = bucketConfig.secretKey;
+                awsTileSource.awsBucketName = bucketConfig.bucketName;
+                NEDGridCoverageFactoryImpl gcf = new NEDGridCoverageFactoryImpl(cacheDirectory);
+                gcf.tileSource = awsTileSource;
+                GraphBuilderModule elevationBuilder = new ElevationModule(gcf);
+                graphBuilder.addModule(elevationBuilder);
+            } else if (builderParams.fetchElevationUS) {
+                // Download the elevation tiles from the official web service
+                File cacheDirectory = new File(params.cacheDirectory, "ned");
+                ElevationGridCoverageFactory gcf = new NEDGridCoverageFactoryImpl(cacheDirectory);
+                GraphBuilderModule elevationBuilder = new ElevationModule(gcf);
+                graphBuilder.addModule(elevationBuilder);
+            } else if (demFile != null) {
+                // Load the elevation from a file in the graph inputs directory
+                ElevationGridCoverageFactory gcf = new GeotiffGridCoverageFactoryImpl(demFile);
+                GraphBuilderModule elevationBuilder = new ElevationModule(gcf);
+                graphBuilder.addModule(elevationBuilder);
+            }
+        }
+
+        if (!params.skipTransit) {
+            if (hasGTFS) {
+                List<GtfsBundle> gtfsBundles = Lists.newArrayList();
+                for (File gtfsFile : gtfsFiles) {
+                    GtfsBundle gtfsBundle = new GtfsBundle(gtfsFile);
+                    gtfsBundle.setTransfersTxtDefinesStationPaths(builderParams.useTransfersTxt);
+                    if (builderParams.parentStopLinking) {
+                        gtfsBundle.linkStopsToParentStations = true;
+                    }
+                    gtfsBundle.parentStationTransfers = builderParams.stationTransfers;
+                    gtfsBundle.subwayAccessTime = (int) (builderParams.subwayAccessTime * 60);
+                    gtfsBundle.maxInterlineDistance = builderParams.maxInterlineDistance;
+                    gtfsBundles.add(gtfsBundle);
                 }
-                graphBuilder.addModule(new TransitToTaggedStopsModule());
+                GtfsModule gtfsModule = new GtfsModule(gtfsBundles);
+                gtfsModule.setFareServiceFactory(builderParams.fareServiceFactory);
+                graphBuilder.addModule(gtfsModule);
+                if (hasOSM) {
+                    if (builderParams.matchBusRoutesToStreets) {
+                        graphBuilder.addModule(new BusRouteStreetMatcher());
+                    }
+                    graphBuilder.addModule(new TransitToTaggedStopsModule());
+                }
+            }
+            // This module is outside the hasGTFS conditional block because it also links things like bike rental
+            // which need to be handled even when there's no transit.
+            graphBuilder.addModule(new StreetLinkerModule());
+            if (hasGTFS) {
+                // The stops can be linked to each other once they are already linked to the street network.
+                if (!builderParams.useTransfersTxt) {
+                    // This module will use streets or straight line distance depending on whether OSM data is found in the graph.
+                    graphBuilder.addModule(new DirectTransferGenerator(builderParams.maxTransferDistance));
+                }
+            }
+
+            graphBuilder.addModule(new EmbedConfig(builderConfig, routerConfig));
+            if (builderParams.htmlAnnotations) {
+                graphBuilder.addModule(new AnnotationsToHTML(params.build, builderParams.maxHtmlAnnotationsPerFile));
             }
         }
-        // This module is outside the hasGTFS conditional block because it also links things like bike rental
-        // which need to be handled even when there's no transit.
-        graphBuilder.addModule(new StreetLinkerModule());
-        if ( hasGTFS ) {
-            // The stops can be linked to each other once they are already linked to the street network.
-            if ( ! builderParams.useTransfersTxt) {
-                // This module will use streets or straight line distance depending on whether OSM data is found in the graph.
-                graphBuilder.addModule(new DirectTransferGenerator(builderParams.maxTransferDistance));
-            }
-        }
-        graphBuilder.addModule(new EmbedConfig(builderConfig, routerConfig));
-        if (builderParams.htmlAnnotations) {
-            graphBuilder.addModule(new AnnotationsToHTML(params.build, builderParams.maxHtmlAnnotationsPerFile));
-        }
+
         graphBuilder.serializeGraph = ( ! params.inMemory ) || params.preFlight;
         return graphBuilder;
     }
@@ -326,7 +338,7 @@ public class GraphBuilder implements Runnable {
      * types are present. This helps point out when config files have been misnamed (builder-config vs. build-config).
      */
     private static enum InputFileType {
-        GTFS, OSM, DEM, CONFIG, GRAPH, OTHER;
+        GTFS, OSM, DEM, CONFIG, GRAPH, PARTIAL_GRAPH, OTHER;
         public static InputFileType forFile(File file) {
             String name = file.getName();
             if (name.endsWith(".zip")) {
@@ -341,7 +353,8 @@ public class GraphBuilder implements Runnable {
             if (name.endsWith(".osm")) return OSM;
             if (name.endsWith(".osm.xml")) return OSM;
             if (name.endsWith(".tif") || name.endsWith(".tiff")) return DEM; // Digital elevation model (elevation raster)
-            if (name.equals("Graph.obj")) return GRAPH;
+            if (name.equals(GraphBuilder.GRAPH_FILENAME)) return GRAPH;
+            if (name.equals(GraphBuilder.BASE_GRAPH_FILENAME)) return PARTIAL_GRAPH;
             if (name.equals(GraphBuilder.BUILDER_CONFIG_FILENAME) || name.equals(Router.ROUTER_CONFIG_FILENAME)) {
                 return CONFIG;
             }
