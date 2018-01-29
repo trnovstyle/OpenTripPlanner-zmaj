@@ -336,7 +336,9 @@ public class GraphBuilder implements Runnable {
             }
             // This module is outside the hasGTFS conditional block because it also links things like bike rental
             // which need to be handled even when there's no transit.
-            graphBuilder.addModule(new StreetLinkerModule());
+            StreetLinkerModule streetLinkerModule = new StreetLinkerModule();
+            streetLinkerModule.setAddExtraEdgesToAreas(builderParams.extraEdgesStopPlatformLink);
+            graphBuilder.addModule(streetLinkerModule);
             if ( hasGTFS || hasNETEX) {
                 // The stops can be linked to each other once they are already linked to the street network.
                 if (!builderParams.useTransfersTxt) {
@@ -344,11 +346,10 @@ public class GraphBuilder implements Runnable {
                     graphBuilder.addModule(new DirectTransferGenerator(builderParams.maxTransferDistance));
                 }
             }
-
-            graphBuilder.addModule(new EmbedConfig(builderConfig, routerConfig));
-            if (builderParams.htmlAnnotations) {
-                graphBuilder.addModule(new AnnotationsToHTML(params.build, builderParams.maxHtmlAnnotationsPerFile));
-            }
+        }
+        graphBuilder.addModule(new EmbedConfig(builderConfig, routerConfig));
+        if (builderParams.htmlAnnotations) {
+            graphBuilder.addModule(new AnnotationsToHTML(params.build, builderParams.maxHtmlAnnotationsPerFile));
         }
         graphBuilder.serializeGraph = ( ! params.inMemory ) || params.preFlight;
         return graphBuilder;
