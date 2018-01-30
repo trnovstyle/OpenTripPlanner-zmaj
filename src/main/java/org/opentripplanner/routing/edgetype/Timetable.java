@@ -657,7 +657,7 @@ public class Timetable implements Serializable {
                     int departureTime = newTimes.getDepartureTime(callCounter);
                     int realtimeDepartureTime = departureTime;
                     if (recordedCall.getActualDepartureTime() != null) {
-                        realtimeArrivalTime = calculateSecondsSinceMidnight(departureDate, recordedCall.getActualDepartureTime());
+                        realtimeDepartureTime = calculateSecondsSinceMidnight(departureDate, recordedCall.getActualDepartureTime());
                     } else if (recordedCall.getExpectedDepartureTime() != null) {
                         realtimeDepartureTime = calculateSecondsSinceMidnight(departureDate, recordedCall.getExpectedDepartureTime());
                     } else if (recordedCall.getAimedDepartureTime() != null) {
