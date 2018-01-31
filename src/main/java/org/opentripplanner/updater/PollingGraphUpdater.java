@@ -64,7 +64,7 @@ public abstract class PollingGraphUpdater implements GraphUpdater {
     @Override
     final public void run() {
         try {
-            LOG.info("Polling updater started: {}", this);
+            LOG.info("Polling updater [{}] started: {}", getType(), this);
             // Run "forever"
             while (true) {
                 try {
@@ -84,6 +84,7 @@ public abstract class PollingGraphUpdater implements GraphUpdater {
                     // cancel();
                 } finally {
                     //Flag as initialized regardless of result
+                    LOG.info("Flagging PollingGraphUpdater of type {} as initialized.", getType());
                     isInitialized = true;
                 }
                 // Sleep a given number of seconds
