@@ -78,12 +78,13 @@ public class AlertsUpdateHandler {
         for (SituationExchangeDeliveryStructure sxDelivery : delivery.getSituationExchangeDeliveries()) {
             SituationExchangeDeliveryStructure.Situations situations = sxDelivery.getSituations();
             if (situations != null) {
+                long t1 = System.currentTimeMillis();
                 AtomicInteger addedAlertCounter = new AtomicInteger(0);
                 AtomicInteger expiredAlertCounter = new AtomicInteger(0);
                 for (PtSituationElement sxElement : situations.getPtSituationElements()) {
                     handleAlert(sxElement, addedAlertCounter, expiredAlertCounter);
                 }
-                log.info("Added {} alerts, expired {} alerts based on {} situations, current alert-count: {}", addedAlertCounter.intValue(), expiredAlertCounter.intValue(), situations.getPtSituationElements().size(), alertPatchService.getAllAlertPatches().size());
+                log.info("Added {} alerts, expired {} alerts based on {} situations, current alert-count: {}, elapsed time {}ms", addedAlertCounter.intValue(), expiredAlertCounter.intValue(), situations.getPtSituationElements().size(), alertPatchService.getAllAlertPatches().size(), (System.currentTimeMillis()-t1));
             }
         }
     }
@@ -104,7 +105,7 @@ public class AlertsUpdateHandler {
                 ((alert.alertHeaderText == null || alert.alertHeaderText.toString().isEmpty()) &&
                 (alert.alertDescriptionText == null || alert.alertDescriptionText.toString().isEmpty()) &&
                 (alert.alertDetailText == null || alert.alertDetailText.toString().isEmpty()))) {
-            log.info("Empty Alert - ignoring situationNumber: {}", situation.getSituationNumber() != null ? situation.getSituationNumber().getValue():null);
+            log.debug("Empty Alert - ignoring situationNumber: {}", situation.getSituationNumber() != null ? situation.getSituationNumber().getValue():null);
             return;
         }
 
@@ -398,7 +399,7 @@ public class AlertsUpdateHandler {
                 alertPatchService.apply(patch);
             }
         } else if (expireSituation) {
-            log.debug("Expiring non-existing alert - ignoring");
+            log.debug("Expired non-existing alert - ignoring situation with situationNumber {}", situationNumber);
         } else {
             log.info("No match found for Alert - ignoring situation with situationNumber {}", situationNumber);
         }
