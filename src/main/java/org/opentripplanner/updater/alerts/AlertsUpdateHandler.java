@@ -95,10 +95,15 @@ public class AlertsUpdateHandler {
         alert.alertDetailText = getTranslatedString(situation.getDetails());
         alert.alertHeaderText = getTranslatedString(situation.getSummaries());
 
+        Set<String> idsToExpire = new HashSet<>();
+        boolean expireSituation = (situation.getProgress() != null &&
+                situation.getProgress().equals(WorkflowStatusEnumeration.CLOSED));
+
         //ROR-54
-        if ((alert.alertHeaderText == null || alert.alertHeaderText.toString().isEmpty()) &&
+        if (!expireSituation && //If situation is closed, it must be allowed - it will remove already existing alerts
+                ((alert.alertHeaderText == null || alert.alertHeaderText.toString().isEmpty()) &&
                 (alert.alertDescriptionText == null || alert.alertDescriptionText.toString().isEmpty()) &&
-                (alert.alertDetailText == null || alert.alertDetailText.toString().isEmpty())) {
+                (alert.alertDetailText == null || alert.alertDetailText.toString().isEmpty()))) {
             log.info("Empty Alert - ignoring situationNumber: {}", situation.getSituationNumber() != null ? situation.getSituationNumber().getValue():null);
             return;
         }
@@ -141,10 +146,6 @@ public class AlertsUpdateHandler {
         }
 
         String paddedSituationNumber = situationNumber + ":";
-
-        Set<String> idsToExpire = new HashSet<>();
-        boolean expireSituation = (situation.getProgress() != null &&
-                situation.getProgress().equals(WorkflowStatusEnumeration.CLOSED));
 
         Set<AlertPatch> patches = new HashSet<>();
         AffectsScopeStructure affectsStructure = situation.getAffects();
@@ -396,6 +397,8 @@ public class AlertsUpdateHandler {
                 patchIds.add(patch.getId());
                 alertPatchService.apply(patch);
             }
+        } else if (expireSituation) {
+            log.debug("Expiring non-existing alert - ignoring");
         } else {
             log.info("No match found for Alert - ignoring situation with situationNumber {}", situationNumber);
         }
