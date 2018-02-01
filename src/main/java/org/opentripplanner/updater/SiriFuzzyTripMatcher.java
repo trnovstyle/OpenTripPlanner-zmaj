@@ -33,6 +33,8 @@ public class SiriFuzzyTripMatcher {
     private static Map<String, Set<Route>> mappedRoutesCache = new HashMap<>();
     private static Map<String, Set<Trip>> start_stop_tripCache = new HashMap<>();
 
+    private static Map<String, Trip> vehicleJourneyTripCache = new HashMap<>();
+
     public SiriFuzzyTripMatcher(GraphIndex index) {
         this.index = index;
         initCache(this.index);
@@ -205,6 +207,10 @@ public class SiriFuzzyTripMatcher {
             LOG.info("Built trips-cache [{}].", mappedTripsCache.size());
             LOG.info("Built start-stop-cache [{}].", start_stop_tripCache.size());
         }
+
+        if (vehicleJourneyTripCache.isEmpty()) {
+            index.tripForId.values().forEach(trip -> vehicleJourneyTripCache.put(trip.getId().getId(), trip));
+        }
     }
 
     public Trip getTrip (Route route, int direction,
@@ -260,11 +266,9 @@ public class SiriFuzzyTripMatcher {
     }
 
     public AgencyAndId getTripId(String vehicleJourney) {
-        Collection<Trip> trips = index.tripForId.values();
-        for (Trip trip : trips) {
-            if (trip.getId().getId().equals(vehicleJourney)) {
-                return trip.getId();
-            }
+        Trip trip = vehicleJourneyTripCache.get(vehicleJourney);
+        if (trip != null) {
+            return trip.getId();
         }
         return null;
     }
