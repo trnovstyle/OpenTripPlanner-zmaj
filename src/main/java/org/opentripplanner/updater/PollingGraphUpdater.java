@@ -52,9 +52,9 @@ public abstract class PollingGraphUpdater implements GraphUpdater {
      */
     protected Integer frequencySec;
 
-    private boolean blockReadinessUntilInitialized;
+    protected boolean blockReadinessUntilInitialized;
 
-    private boolean isInitialized;
+    protected boolean isInitialized;
 
     /**
      * The type name in the preferences
@@ -65,6 +65,7 @@ public abstract class PollingGraphUpdater implements GraphUpdater {
     final public void run() {
         try {
             LOG.info("Polling updater [{}] started: {}", getType(), this);
+            long t1 = System.currentTimeMillis();
             // Run "forever"
             while (true) {
                 try {
@@ -85,7 +86,7 @@ public abstract class PollingGraphUpdater implements GraphUpdater {
                 } finally {
                     //Flag as initialized regardless of result
                     if (!isInitialized) {
-                        LOG.info("Flagging PollingGraphUpdater of type {} as initialized.", getType());
+                        LOG.info("Polling updater [{}] initialized after {} s", getType(), ((int)(System.currentTimeMillis()-t1)/1000));
                         isInitialized = true;
                     }
                 }
