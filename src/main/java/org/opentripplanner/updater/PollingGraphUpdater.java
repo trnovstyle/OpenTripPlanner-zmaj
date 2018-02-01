@@ -84,8 +84,10 @@ public abstract class PollingGraphUpdater implements GraphUpdater {
                     // cancel();
                 } finally {
                     //Flag as initialized regardless of result
-                    LOG.info("Flagging PollingGraphUpdater of type {} as initialized.", getType());
-                    isInitialized = true;
+                    if (!isInitialized) {
+                        LOG.info("Flagging PollingGraphUpdater of type {} as initialized.", getType());
+                        isInitialized = true;
+                    }
                 }
                 // Sleep a given number of seconds
                 Thread.sleep(frequencySec * 1000);
