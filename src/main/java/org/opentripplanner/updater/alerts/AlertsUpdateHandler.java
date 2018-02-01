@@ -91,16 +91,14 @@ public class AlertsUpdateHandler {
     private void handleAlert(PtSituationElement situation, AtomicInteger addedAlertCounter, AtomicInteger expiredAlertCounter) {
         Alert alert = new Alert();
 
-        if (situation.getDescriptions() != null && !situation.getDescriptions().isEmpty()) {
-            alert.alertDescriptionText = getTranslatedString(situation.getDescriptions());
-        } else {
-            alert.alertDescriptionText = getTranslatedString(situation.getDetails());
-        }
+        alert.alertDescriptionText = getTranslatedString(situation.getDescriptions());
+        alert.alertDetailText = getTranslatedString(situation.getDetails());
         alert.alertHeaderText = getTranslatedString(situation.getSummaries());
 
         //ROR-54
         if ((alert.alertHeaderText == null || alert.alertHeaderText.toString().isEmpty()) &&
-                (alert.alertDescriptionText == null || alert.alertDescriptionText.toString().isEmpty())) {
+                (alert.alertDescriptionText == null || alert.alertDescriptionText.toString().isEmpty()) &&
+                (alert.alertDetailText == null || alert.alertDetailText.toString().isEmpty())) {
             log.info("Empty Alert - ignoring situationNumber: {}", situation.getSituationNumber() != null ? situation.getSituationNumber().getValue():null);
             return;
         }
@@ -348,6 +346,7 @@ public class AlertsUpdateHandler {
                                     Alert vehicleJourneyAlert = new Alert();
                                     vehicleJourneyAlert.alertHeaderText = alert.alertHeaderText;
                                     vehicleJourneyAlert.alertDescriptionText = alert.alertDescriptionText;
+                                    vehicleJourneyAlert.alertDetailText = alert.alertDetailText;
                                     vehicleJourneyAlert.alertUrl = alert.alertUrl;
                                     vehicleJourneyAlert.effectiveStartDate = serviceDate.getAsDate();
                                     vehicleJourneyAlert.effectiveEndDate = serviceDate.next().getAsDate();

@@ -771,6 +771,26 @@ public class IndexGraphQLSchema {
                 })
                 .build())
             .field(GraphQLFieldDefinition.newFieldDefinition()
+                .name("alertDetailText")
+                .type(new GraphQLNonNull(Scalars.GraphQLString))
+                .description("Additional details of alert notnull")
+                .dataFetcher(environment -> ((AlertPatch) environment.getSource()).getAlert().alertDetailText)
+                .build())
+            .field(GraphQLFieldDefinition.newFieldDefinition()
+                .name("alertDetailTextTranslations")
+                .type(new GraphQLNonNull(new GraphQLList(new GraphQLNonNull(translatedStringType))))
+                .description("Additional details of alert in all different translations available notnull")
+                .dataFetcher(environment -> {
+                    AlertPatch alertPatch = environment.getSource();
+                    Alert alert = alertPatch.getAlert();
+                    if (alert.alertDetailText instanceof TranslatedString) {
+                        return ((TranslatedString) alert.alertDetailText).getTranslations();
+                    } else {
+                        return emptyList();
+                    }
+                })
+                .build())
+            .field(GraphQLFieldDefinition.newFieldDefinition()
                 .name("alertUrl")
                 .type(Scalars.GraphQLString)
                 .description("Url with more information")
