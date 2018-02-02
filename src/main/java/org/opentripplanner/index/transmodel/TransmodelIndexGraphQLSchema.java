@@ -509,12 +509,12 @@ public class TransmodelIndexGraphQLSchema {
                 .description("Filter trips by only allowing trip patterns involving certain elements. If both lines and organisations are specificed, only one must be valid for each trip to be used.")
                 .field(GraphQLInputObjectField.newInputObjectField()
                         .name("lines")
-                        .description("Set of ids for lines that should not be used")
+                        .description("Set of ids for lines that should be used")
                         .type(new GraphQLList(Scalars.GraphQLString))
                         .build())
                 .field(GraphQLInputObjectField.newInputObjectField()
                         .name("organisations")
-                        .description("Set of ids for organisations that should not be used")
+                        .description("Set of ids for organisations that should be used")
                         .type(new GraphQLList(Scalars.GraphQLString))
                         .build())
                 .build();
@@ -786,6 +786,22 @@ public class TransmodelIndexGraphQLSchema {
                                                                 return ((TranslatedString) alert.alertDescriptionText).getTranslations();
                                                             } else if (alert.alertDescriptionText != null) {
                                                                 return Arrays.asList(new AbstractMap.SimpleEntry<>(null, alert.alertDescriptionText.toString()));
+                                                            } else {
+                                                                return emptyList();
+                                                            }
+                                                        })
+                                                        .build())
+                                         .field(GraphQLFieldDefinition.newFieldDefinition()
+                                                        .name("detail")
+                                                        .type(new GraphQLNonNull(new GraphQLList(new GraphQLNonNull(multilingualStringType))))
+                                                        .description("Details of situation in all different translations available")
+                                                        .dataFetcher(environment -> {
+                                                            AlertPatch alertPatch = environment.getSource();
+                                                            Alert alert = alertPatch.getAlert();
+                                                            if (alert.alertDetailText instanceof TranslatedString) {
+                                                                return ((TranslatedString) alert.alertDetailText).getTranslations();
+                                                            } else if (alert.alertDetailText != null) {
+                                                                return Arrays.asList(new AbstractMap.SimpleEntry<>(null, alert.alertDetailText.toString()));
                                                             } else {
                                                                 return emptyList();
                                                             }
@@ -2659,7 +2675,7 @@ public class TransmodelIndexGraphQLSchema {
     }
 
     /**
-     * Find trip time shorts for all intermediate stops for a lev.
+     * Find trip time shorts for all intermediate stops for a leg.
      */
     private List<TripTimeShort> getIntermediateTripTimeShortsForLeg(GraphIndex index, Leg leg) {
         Trip trip = index.tripForId.get(leg.tripId);
@@ -2697,10 +2713,31 @@ public class TransmodelIndexGraphQLSchema {
 
         long startTimeSeconds = (leg.startTime.toInstant().toEpochMilli() - serviceDate.getAsDate().getTime()) / 1000;
         long endTimeSeconds = (leg.endTime.toInstant().toEpochMilli() - serviceDate.getAsDate().getTime()) / 1000;
-        return TripTimeShort.fromTripTimes(timetable, trip, serviceDay).stream().filter(tripTime -> intermediateQuayIds.contains(tripTime.stopId))
+        return TripTimeShort.fromTripTimes(timetable, trip, serviceDay).stream().filter(tripTime -> matchesIntermediateQuayOrSiblingQuay(index, intermediateQuayIds, tripTime.stopId))
                        .filter(tripTime -> tripTime.realtimeDeparture >= startTimeSeconds && tripTime.realtimeDeparture <= endTimeSeconds).collect(Collectors.toList());
     }
 
+
+    private boolean matchesIntermediateQuayOrSiblingQuay(GraphIndex index, Set<AgencyAndId> intermediateQuayIds, AgencyAndId stopId) {
+        boolean foundMatch = intermediateQuayIds.contains(stopId);
+        if (!foundMatch) {
+            //Check parentStops
+            Stop stop = index.stopForId.get(stopId);
+            if (stop != null && stop.getParentStation() != null) {
+                AgencyAndId parentStopId = new AgencyAndId(stop.getId().getAgencyId(), stop.getParentStation());
+                Stop parentStation = index.stationForId.get(parentStopId);
+                if (parentStation != null) {
+                    Collection<Stop> childStops = index.stopsForParentStation.get(parentStation.getId());
+                    for (Stop childStop : childStops) {
+                        if (intermediateQuayIds.contains(childStop.getId())) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+        return foundMatch;
+    }
 
     private <T> List<T> wrapInListUnlessNull(T element) {
         if (element == null) {

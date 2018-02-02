@@ -48,6 +48,16 @@ public class LocalizedAlert {
         return alert.alertDescriptionText.toString(locale);
     }
 
+
+    @XmlAttribute
+    @JsonSerialize
+    public String getAlertDetailText() {
+        if (alert.alertDetailText == null) {
+            return null;
+        }
+        return alert.alertDetailText.toString(locale);
+    }
+
     @XmlAttribute
     @JsonSerialize
     public String getAlertUrl() {

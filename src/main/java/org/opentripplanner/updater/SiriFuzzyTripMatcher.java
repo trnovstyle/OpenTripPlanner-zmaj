@@ -33,6 +33,8 @@ public class SiriFuzzyTripMatcher {
     private static Map<String, Set<Route>> mappedRoutesCache = new HashMap<>();
     private static Map<String, Set<Trip>> start_stop_tripCache = new HashMap<>();
 
+    private static Map<String, Trip> vehicleJourneyTripCache = new HashMap<>();
+
     public SiriFuzzyTripMatcher(GraphIndex index) {
         this.index = index;
         initCache(this.index);
@@ -106,26 +108,28 @@ public class SiriFuzzyTripMatcher {
 
             ZonedDateTime arrivalTime = lastStop.getAimedArrivalTime() != null ? lastStop.getAimedArrivalTime() : lastStop.getAimedDepartureTime();
 
-            trips = start_stop_tripCache.get(createStartStopKey(lastStopPoint, arrivalTime.toLocalTime().toSecondOfDay()));
-            if (trips == null) {
-                //Attempt to fetch trips that started yesterday - i.e. add 24 hours to arrival-time
-                int lastStopArrivalTime = arrivalTime.toLocalTime().toSecondOfDay() + (24 * 60 * 60);
-                trips = start_stop_tripCache.get(createStartStopKey(lastStopPoint, lastStopArrivalTime));
-            }
+            if (arrivalTime != null) {
+                trips = start_stop_tripCache.get(createStartStopKey(lastStopPoint, arrivalTime.toLocalTime().toSecondOfDay()));
+                if (trips == null) {
+                    //Attempt to fetch trips that started yesterday - i.e. add 24 hours to arrival-time
+                    int lastStopArrivalTime = arrivalTime.toLocalTime().toSecondOfDay() + (24 * 60 * 60);
+                    trips = start_stop_tripCache.get(createStartStopKey(lastStopPoint, lastStopArrivalTime));
+                }
 
-            if (trips == null || trips.isEmpty()) {
-                //SIRI-data may report other platform, but still on the same Parent-stop
-                String agencyId = index.agenciesForFeedId.keySet().iterator().next();
-                Stop stop = index.stopForId.get(new AgencyAndId(agencyId, lastStopPoint));
-                if (stop != null && stop.getParentStation() != null) {
-                    Collection<Stop> allQuays = index.stopsForParentStation.get(new AgencyAndId(agencyId, stop.getParentStation()));
-                    for (Stop quay : allQuays) {
-                        Set<Trip> tripSet = start_stop_tripCache.get(createStartStopKey(quay.getId().getId(), arrivalTime.toLocalTime().toSecondOfDay()));
-                        if (tripSet != null) {
-                            if (trips == null) {
-                                trips = tripSet;
-                            } else {
-                                trips.addAll(tripSet);
+                if (trips == null || trips.isEmpty()) {
+                    //SIRI-data may report other platform, but still on the same Parent-stop
+                    String agencyId = index.agenciesForFeedId.keySet().iterator().next();
+                    Stop stop = index.stopForId.get(new AgencyAndId(agencyId, lastStopPoint));
+                    if (stop != null && stop.getParentStation() != null) {
+                        Collection<Stop> allQuays = index.stopsForParentStation.get(new AgencyAndId(agencyId, stop.getParentStation()));
+                        for (Stop quay : allQuays) {
+                            Set<Trip> tripSet = start_stop_tripCache.get(createStartStopKey(quay.getId().getId(), arrivalTime.toLocalTime().toSecondOfDay()));
+                            if (tripSet != null) {
+                                if (trips == null) {
+                                    trips = tripSet;
+                                } else {
+                                    trips.addAll(tripSet);
+                                }
                             }
                         }
                     }
@@ -203,6 +207,10 @@ public class SiriFuzzyTripMatcher {
             LOG.info("Built trips-cache [{}].", mappedTripsCache.size());
             LOG.info("Built start-stop-cache [{}].", start_stop_tripCache.size());
         }
+
+        if (vehicleJourneyTripCache.isEmpty()) {
+            index.tripForId.values().forEach(trip -> vehicleJourneyTripCache.put(trip.getId().getId(), trip));
+        }
     }
 
     public Trip getTrip (Route route, int direction,
@@ -258,11 +266,9 @@ public class SiriFuzzyTripMatcher {
     }
 
     public AgencyAndId getTripId(String vehicleJourney) {
-        Collection<Trip> trips = index.tripForId.values();
-        for (Trip trip : trips) {
-            if (trip.getId().getId().equals(vehicleJourney)) {
-                return trip.getId();
-            }
+        Trip trip = vehicleJourneyTripCache.get(vehicleJourney);
+        if (trip != null) {
+            return trip.getId();
         }
         return null;
     }

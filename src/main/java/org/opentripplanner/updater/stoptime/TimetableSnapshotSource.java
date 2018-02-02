@@ -442,7 +442,7 @@ public class TimetableSnapshotSource {
 
         if (trips == null || trips.isEmpty()) {
             if (keepLogging) {
-                boolean isMonitored = activity.getMonitoredVehicleJourney().isMonitored();
+                Boolean isMonitored = activity.getMonitoredVehicleJourney().isMonitored();
                 String lineRef = (activity.getMonitoredVehicleJourney().getLineRef() != null ? activity.getMonitoredVehicleJourney().getLineRef().getValue():null);
                 String vehicleRef = (activity.getMonitoredVehicleJourney().getVehicleRef() != null ? activity.getMonitoredVehicleJourney().getVehicleRef().getValue():null);
                 String tripId =  (activity.getMonitoredVehicleJourney().getCourseOfJourneyRef() != null ? activity.getMonitoredVehicleJourney().getCourseOfJourneyRef().getValue():null);

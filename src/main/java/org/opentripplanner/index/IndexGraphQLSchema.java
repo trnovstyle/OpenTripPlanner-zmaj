@@ -771,6 +771,26 @@ public class IndexGraphQLSchema {
                 })
                 .build())
             .field(GraphQLFieldDefinition.newFieldDefinition()
+                .name("alertDetailText")
+                .type(new GraphQLNonNull(Scalars.GraphQLString))
+                .description("Additional details of alert notnull")
+                .dataFetcher(environment -> ((AlertPatch) environment.getSource()).getAlert().alertDetailText)
+                .build())
+            .field(GraphQLFieldDefinition.newFieldDefinition()
+                .name("alertDetailTextTranslations")
+                .type(new GraphQLNonNull(new GraphQLList(new GraphQLNonNull(translatedStringType))))
+                .description("Additional details of alert in all different translations available notnull")
+                .dataFetcher(environment -> {
+                    AlertPatch alertPatch = environment.getSource();
+                    Alert alert = alertPatch.getAlert();
+                    if (alert.alertDetailText instanceof TranslatedString) {
+                        return ((TranslatedString) alert.alertDetailText).getTranslations();
+                    } else {
+                        return emptyList();
+                    }
+                })
+                .build())
+            .field(GraphQLFieldDefinition.newFieldDefinition()
                 .name("alertUrl")
                 .type(Scalars.GraphQLString)
                 .description("Url with more information")
@@ -3027,7 +3047,7 @@ public class IndexGraphQLSchema {
     }
 
     /**
-     * Find trip time shorts for all intermediate stops for a lev.
+     * Find trip time shorts for all intermediate stops for a leg.
      *
      */
     private List<TripTimeShort> getIntermediateTripTimeShortsForLeg(GraphIndex index, Leg leg) {
@@ -3066,7 +3086,28 @@ public class IndexGraphQLSchema {
 
         long startTimeSeconds = (leg.startTime.toInstant().toEpochMilli() - serviceDate.getAsDate().getTime()) / 1000;
         long endTimeSeconds = (leg.endTime.toInstant().toEpochMilli() - serviceDate.getAsDate().getTime()) / 1000;
-        return TripTimeShort.fromTripTimes(timetable, trip, serviceDay).stream().filter(tripTime -> intermediateQuayIds.contains(tripTime.stopId))
+        return TripTimeShort.fromTripTimes(timetable, trip, serviceDay).stream().filter(tripTime -> matchesIntermediateQuayOrSiblingQuay(index, intermediateQuayIds, tripTime.stopId))
                        .filter(tripTime -> tripTime.realtimeDeparture >= startTimeSeconds && tripTime.realtimeDeparture <= endTimeSeconds).collect(Collectors.toList());
+    }
+
+    private boolean matchesIntermediateQuayOrSiblingQuay(GraphIndex index, Set<AgencyAndId> intermediateQuayIds, AgencyAndId stopId) {
+        boolean foundMatch = intermediateQuayIds.contains(stopId);
+        if (!foundMatch) {
+            //Check parentStops
+            Stop stop = index.stopForId.get(stopId);
+            if (stop != null && stop.getParentStation() != null) {
+                AgencyAndId parentStopId = new AgencyAndId(stop.getId().getAgencyId(), stop.getParentStation());
+                Stop parentStation = index.stationForId.get(parentStopId);
+                if (parentStation != null) {
+                    Collection<Stop> childStops = index.stopsForParentStation.get(parentStation.getId());
+                    for (Stop childStop : childStops) {
+                        if (intermediateQuayIds.contains(childStop.getId())) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+        return foundMatch;
     }
 }
