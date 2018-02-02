@@ -2091,6 +2091,11 @@ public class TransmodelIndexGraphQLSchema {
                                                              .name("transportModes")
                                                              .type(new GraphQLList(transportModeEnum))
                                                              .build())
+                                           .argument(GraphQLArgument.newArgument()
+                                                          .name("authorities")
+                                                          .description("Set of ids of authorities to fetch lines for.")
+                                                          .type(new GraphQLList(Scalars.GraphQLString))
+                                                          .build())
                                            .dataFetcher(environment -> {
                                                if ((environment.getArgument("ids") instanceof List)) {
                                                    if (environment.getArguments().entrySet()
@@ -2121,6 +2126,12 @@ public class TransmodelIndexGraphQLSchema {
                                                    stream = stream
                                                                     .filter(route ->
                                                                                     modes.contains(GtfsLibrary.getTraverseMode(route)));
+                                               }
+                                               if ((environment.getArgument("authorities") instanceof Collection)) {
+                                                   Collection<String> authorityIds= environment.getArgument("authorities");
+                                                   stream = stream
+                                                                    .filter(route ->
+                                                                                    route.getAgency()!=null && authorityIds.contains(route.getAgency().getId()));
                                                }
                                                return stream.collect(Collectors.toList());
                                            })
