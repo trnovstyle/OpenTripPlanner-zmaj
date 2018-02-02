@@ -1845,6 +1845,48 @@ public class TransmodelIndexGraphQLSchema {
                                            .dataFetcher(environment -> new ArrayList<>(index.stationForId.values()))
                                            .build())
                             .field(GraphQLFieldDefinition.newFieldDefinition()
+                                           .name("stopPlacesByBbox")
+                                           .description("Get all stop places within the specified bounding box")
+                                           .type(new GraphQLList(stopPlaceType))
+                                           .argument(GraphQLArgument.newArgument()
+                                                             .name("minimumLatitude")
+                                                             .type(Scalars.GraphQLFloat)
+                                                             .build())
+                                           .argument(GraphQLArgument.newArgument()
+                                                             .name("minimumLongitude")
+                                                             .type(Scalars.GraphQLFloat)
+                                                             .build())
+                                           .argument(GraphQLArgument.newArgument()
+                                                             .name("maximumLatitude")
+                                                             .type(Scalars.GraphQLFloat)
+                                                             .build())
+                                           .argument(GraphQLArgument.newArgument()
+                                                             .name("maximumLongitude")
+                                                             .type(Scalars.GraphQLFloat)
+                                                             .build())
+                                           .argument(GraphQLArgument.newArgument()
+                                                             .name("organisation")
+                                                             .type(Scalars.GraphQLString)
+                                                             .build())
+                                           .dataFetcher(environment -> index.graph.streetIndex
+                                                                               .getTransitStopForEnvelope(new Envelope(new Coordinate(environment.getArgument("minimumLongitude"),
+                                                                                                                                                    environment.getArgument("minimumLatitude")),
+                                                                                                                              new Coordinate(environment.getArgument("maximumLongitude"),
+                                                                                                                                                    environment.getArgument("maximumLatitude"))))
+                                                                               .stream()
+                                                                               .map(TransitVertex::getStop)
+                                                                               .map(quay ->
+                                                                                            index.stationForId.get(new AgencyAndId(
+                                                                                                                                          quay.getId().getAgencyId(),
+                                                                                                                                          quay.getParentStation())))
+                                                                               .filter(Objects::nonNull)
+                                                                               .distinct()
+
+                                                                               .filter(stop -> environment.getArgument("organisation") == null || stop.getId()
+                                                                                                                                                          .getAgencyId().equalsIgnoreCase(environment.getArgument("organisation")))
+                                                                               .collect(Collectors.toList()))
+                                           .build())
+                            .field(GraphQLFieldDefinition.newFieldDefinition()
                                            .name("quay")
                                            .description("Get a single quay based on its id)")
                                            .type(quayType)
