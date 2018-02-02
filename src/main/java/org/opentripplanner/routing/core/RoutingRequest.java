@@ -1189,23 +1189,17 @@ public class RoutingRequest implements Cloneable, Serializable {
     public void banTrip(AgencyAndId trip) {
         bannedTrips.put(trip, BannedStopSet.ALL);
     }
-    
-    /** 
-     * tripIsBanned is a misnomer: this checks whether the agency or route are banned.
-     * banning of individual trips is actually performed inside the trip search, 
-     * in TripTimes.tripAcceptable.
-     */
-    public boolean tripIsBanned(Trip trip) {
+
+    public boolean routeIsBanned(Route route) {
         /* check if agency is banned for this plan */
         if (bannedAgencies != null) {
-            if (bannedAgencies.contains(trip.getRoute().getAgency().getId())) {
+            if (bannedAgencies.contains(route.getAgency().getId())) {
                 return true;
             }
         }
 
         /* check if route banned for this plan */
         if (bannedRoutes != null) {
-            Route route = trip.getRoute();
             if (bannedRoutes.matches(route)) {
                 return true;
             }
@@ -1217,7 +1211,7 @@ public class RoutingRequest implements Cloneable, Serializable {
         /* check if agency is whitelisted for this plan */
         if (whiteListedAgencies != null && whiteListedAgencies.size() > 0) {
             whiteListInUse = true;
-            if (whiteListedAgencies.contains(trip.getRoute().getAgency().getId())) {
+            if (whiteListedAgencies.contains(route.getAgency().getId())) {
                 whiteListed = true;
             }
         }
@@ -1225,7 +1219,6 @@ public class RoutingRequest implements Cloneable, Serializable {
         /* check if route is whitelisted for this plan */
         if (whiteListedRoutes != null && !whiteListedRoutes.isEmpty()) {
             whiteListInUse = true;
-            Route route = trip.getRoute();
             if (whiteListedRoutes.matches(route)) {
                 whiteListed = true;
             }
