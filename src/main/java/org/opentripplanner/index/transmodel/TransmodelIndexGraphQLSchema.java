@@ -119,6 +119,8 @@ public class TransmodelIndexGraphQLSchema {
                                                       .value("tram", TraverseMode.TRAM)
                                                       .value("transit", TraverseMode.TRANSIT, "Any for of public transportation")
                                                       .value("foot", TraverseMode.WALK)
+                                                      .value("car_park", TraverseMode.CAR_PARK, "Combine with foot and transit for park and ride.")
+                                                      .value("car_pickup", TraverseMode.CAR_PICKUP, "Combine with foot and transit for ride and kiss.")
                                                       .build();
 
     private static GraphQLEnumType transportModeEnum = GraphQLEnumType.newEnum()
