@@ -119,6 +119,8 @@ public class TransmodelIndexGraphQLSchema {
                                                       .value("tram", TraverseMode.TRAM)
                                                       .value("transit", TraverseMode.TRANSIT, "Any for of public transportation")
                                                       .value("foot", TraverseMode.WALK)
+                                                      .value("car_park", TraverseMode.CAR_PARK, "Combine with foot and transit for park and ride.")
+                                                      .value("car_pickup", TraverseMode.CAR_PICKUP, "Combine with foot and transit for ride and kiss.")
                                                       .build();
 
     private static GraphQLEnumType transportModeEnum = GraphQLEnumType.newEnum()
@@ -786,6 +788,22 @@ public class TransmodelIndexGraphQLSchema {
                                                                 return ((TranslatedString) alert.alertDescriptionText).getTranslations();
                                                             } else if (alert.alertDescriptionText != null) {
                                                                 return Arrays.asList(new AbstractMap.SimpleEntry<>(null, alert.alertDescriptionText.toString()));
+                                                            } else {
+                                                                return emptyList();
+                                                            }
+                                                        })
+                                                        .build())
+                                         .field(GraphQLFieldDefinition.newFieldDefinition()
+                                                        .name("detail")
+                                                        .type(new GraphQLNonNull(new GraphQLList(new GraphQLNonNull(multilingualStringType))))
+                                                        .description("Details of situation in all different translations available")
+                                                        .dataFetcher(environment -> {
+                                                            AlertPatch alertPatch = environment.getSource();
+                                                            Alert alert = alertPatch.getAlert();
+                                                            if (alert.alertDetailText instanceof TranslatedString) {
+                                                                return ((TranslatedString) alert.alertDetailText).getTranslations();
+                                                            } else if (alert.alertDetailText != null) {
+                                                                return Arrays.asList(new AbstractMap.SimpleEntry<>(null, alert.alertDetailText.toString()));
                                                             } else {
                                                                 return emptyList();
                                                             }
@@ -1829,6 +1847,48 @@ public class TransmodelIndexGraphQLSchema {
                                            .dataFetcher(environment -> new ArrayList<>(index.stationForId.values()))
                                            .build())
                             .field(GraphQLFieldDefinition.newFieldDefinition()
+                                           .name("stopPlacesByBbox")
+                                           .description("Get all stop places within the specified bounding box")
+                                           .type(new GraphQLList(stopPlaceType))
+                                           .argument(GraphQLArgument.newArgument()
+                                                             .name("minimumLatitude")
+                                                             .type(Scalars.GraphQLFloat)
+                                                             .build())
+                                           .argument(GraphQLArgument.newArgument()
+                                                             .name("minimumLongitude")
+                                                             .type(Scalars.GraphQLFloat)
+                                                             .build())
+                                           .argument(GraphQLArgument.newArgument()
+                                                             .name("maximumLatitude")
+                                                             .type(Scalars.GraphQLFloat)
+                                                             .build())
+                                           .argument(GraphQLArgument.newArgument()
+                                                             .name("maximumLongitude")
+                                                             .type(Scalars.GraphQLFloat)
+                                                             .build())
+                                           .argument(GraphQLArgument.newArgument()
+                                                             .name("organisation")
+                                                             .type(Scalars.GraphQLString)
+                                                             .build())
+                                           .dataFetcher(environment -> index.graph.streetIndex
+                                                                               .getTransitStopForEnvelope(new Envelope(new Coordinate(environment.getArgument("minimumLongitude"),
+                                                                                                                                                    environment.getArgument("minimumLatitude")),
+                                                                                                                              new Coordinate(environment.getArgument("maximumLongitude"),
+                                                                                                                                                    environment.getArgument("maximumLatitude"))))
+                                                                               .stream()
+                                                                               .map(TransitVertex::getStop)
+                                                                               .map(quay ->
+                                                                                            index.stationForId.get(new AgencyAndId(
+                                                                                                                                          quay.getId().getAgencyId(),
+                                                                                                                                          quay.getParentStation())))
+                                                                               .filter(Objects::nonNull)
+                                                                               .distinct()
+
+                                                                               .filter(stop -> environment.getArgument("organisation") == null || stop.getId()
+                                                                                                                                                          .getAgencyId().equalsIgnoreCase(environment.getArgument("organisation")))
+                                                                               .collect(Collectors.toList()))
+                                           .build())
+                            .field(GraphQLFieldDefinition.newFieldDefinition()
                                            .name("quay")
                                            .description("Get a single quay based on its id)")
                                            .type(quayType)
@@ -2091,6 +2151,11 @@ public class TransmodelIndexGraphQLSchema {
                                                              .name("transportModes")
                                                              .type(new GraphQLList(transportModeEnum))
                                                              .build())
+                                           .argument(GraphQLArgument.newArgument()
+                                                          .name("authorities")
+                                                          .description("Set of ids of authorities to fetch lines for.")
+                                                          .type(new GraphQLList(Scalars.GraphQLString))
+                                                          .build())
                                            .dataFetcher(environment -> {
                                                if ((environment.getArgument("ids") instanceof List)) {
                                                    if (environment.getArguments().entrySet()
@@ -2121,6 +2186,12 @@ public class TransmodelIndexGraphQLSchema {
                                                    stream = stream
                                                                     .filter(route ->
                                                                                     modes.contains(GtfsLibrary.getTraverseMode(route)));
+                                               }
+                                               if ((environment.getArgument("authorities") instanceof Collection)) {
+                                                   Collection<String> authorityIds= environment.getArgument("authorities");
+                                                   stream = stream
+                                                                    .filter(route ->
+                                                                                    route.getAgency()!=null && authorityIds.contains(route.getAgency().getId()));
                                                }
                                                return stream.collect(Collectors.toList());
                                            })
@@ -2648,7 +2719,7 @@ public class TransmodelIndexGraphQLSchema {
     }
 
     /**
-     * Find trip time shorts for all intermediate stops for a lev.
+     * Find trip time shorts for all intermediate stops for a leg.
      */
     private List<TripTimeShort> getIntermediateTripTimeShortsForLeg(GraphIndex index, Leg leg) {
         Trip trip = index.tripForId.get(leg.tripId);
@@ -2686,10 +2757,31 @@ public class TransmodelIndexGraphQLSchema {
 
         long startTimeSeconds = (leg.startTime.toInstant().toEpochMilli() - serviceDate.getAsDate().getTime()) / 1000;
         long endTimeSeconds = (leg.endTime.toInstant().toEpochMilli() - serviceDate.getAsDate().getTime()) / 1000;
-        return TripTimeShort.fromTripTimes(timetable, trip, serviceDay).stream().filter(tripTime -> intermediateQuayIds.contains(tripTime.stopId))
+        return TripTimeShort.fromTripTimes(timetable, trip, serviceDay).stream().filter(tripTime -> matchesIntermediateQuayOrSiblingQuay(index, intermediateQuayIds, tripTime.stopId))
                        .filter(tripTime -> tripTime.realtimeDeparture >= startTimeSeconds && tripTime.realtimeDeparture <= endTimeSeconds).collect(Collectors.toList());
     }
 
+
+    private boolean matchesIntermediateQuayOrSiblingQuay(GraphIndex index, Set<AgencyAndId> intermediateQuayIds, AgencyAndId stopId) {
+        boolean foundMatch = intermediateQuayIds.contains(stopId);
+        if (!foundMatch) {
+            //Check parentStops
+            Stop stop = index.stopForId.get(stopId);
+            if (stop != null && stop.getParentStation() != null) {
+                AgencyAndId parentStopId = new AgencyAndId(stop.getId().getAgencyId(), stop.getParentStation());
+                Stop parentStation = index.stationForId.get(parentStopId);
+                if (parentStation != null) {
+                    Collection<Stop> childStops = index.stopsForParentStation.get(parentStation.getId());
+                    for (Stop childStop : childStops) {
+                        if (intermediateQuayIds.contains(childStop.getId())) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+        return foundMatch;
+    }
 
     private <T> List<T> wrapInListUnlessNull(T element) {
         if (element == null) {

@@ -97,6 +97,8 @@ public class Routers {
 
     @Context OTPServer otpServer;
 
+    private static boolean flaggedAsReady = false;
+
     /** 
      * Returns a list of routers and their bounds. 
      * @return a representation of the graphs and their geographic bounds, in JSON or XML depending
@@ -141,14 +143,20 @@ public class Routers {
             }
         }
         if (!isRouterReady) {
+            LOG.info("Graph not ready.");
             throw new WebApplicationException(Response.status(Status.NOT_FOUND)
                     .entity("Graph not ready.\n").type("text/plain")
                     .build());
         }
         if (!waitingUpdaters.isEmpty()) {
-            throw new WebApplicationException(Response.status(Status.EXPECTATION_FAILED)
+            LOG.info("Graph ready, waiting for updaters: {}", waitingUpdaters);
+            throw new WebApplicationException(Response.status(Status.NOT_FOUND)
                     .entity("Graph ready, waiting for updaters: " + waitingUpdaters + "\n").type("text/plain")
                     .build());
+        }
+        if (!flaggedAsReady) {
+            flaggedAsReady = true;
+            LOG.info("Graph is now ready.");
         }
         return Response.status(Status.OK)
                 .entity("Ready.\n").type("text/plain")

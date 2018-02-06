@@ -17,12 +17,15 @@ import com.fasterxml.jackson.databind.JsonNode;
 import org.opentripplanner.routing.graph.Graph;
 import org.opentripplanner.routing.impl.AlertPatchServiceImpl;
 import org.opentripplanner.routing.services.AlertPatchService;
-import org.opentripplanner.updater.*;
+import org.opentripplanner.updater.GraphUpdaterManager;
+import org.opentripplanner.updater.PollingGraphUpdater;
+import org.opentripplanner.updater.SiriFuzzyTripMatcher;
+import org.opentripplanner.updater.SiriHelper;
 import org.opentripplanner.util.HttpUtils;
-import org.rutebanken.siri20.util.SiriXml;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.org.siri.siri20.*;
+import uk.org.siri.siri20.ServiceDelivery;
+import uk.org.siri.siri20.Siri;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
@@ -132,12 +135,13 @@ public class SiriSXUpdater extends PollingGraphUpdater {
             }
 
             // Handle update in graph writer runnable
-            updaterManager.execute(new GraphWriterRunnable() {
-                @Override
-                public void run(Graph graph) {
-                    updateHandler.update(serviceDelivery);
-                }
-            });
+            if (blockReadinessUntilInitialized && !isInitialized) {
+                LOG.info("Execute blocking tripupdates");
+                updaterManager.executeBlocking(graph -> updateHandler.update(serviceDelivery));
+            } else {
+                updaterManager.execute(graph -> updateHandler.update(serviceDelivery));
+            }
+
 
             lastTimestamp = responseTimestamp;
         } catch (Exception e) {

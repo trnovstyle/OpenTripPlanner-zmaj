@@ -26,7 +26,7 @@ public enum TraverseMode {
     TRAM, SUBWAY, RAIL, BUS, FERRY,
     CABLE_CAR, GONDOLA, FUNICULAR,
     TRANSIT, LEG_SWITCH,
-    AIRPLANE;
+    AIRPLANE, CAR_PARK, CAR_PICKUP;
 
     private static HashMap <Set<TraverseMode>, Set<TraverseMode>> setMap = 
             new HashMap <Set<TraverseMode>, Set<TraverseMode>>();
