@@ -2080,7 +2080,7 @@ public class TransmodelIndexGraphQLSchema {
                                                    filterByCarParks = filterByIds.get("carParks") != null ? (List<String>) filterByIds.get("carParks") : Collections.emptyList();
                                                }
 
-                                               List<TraverseMode> filterByTransportModes = environment.getArgument("filterByTransportModes");
+                                               List<TraverseMode> filterByTransportModes = environment.getArgument("filterByModes");
                                                List<GraphIndex.PlaceType> filterByPlaceTypes = environment.getArgument("filterByPlaceTypes");
 
                                                List<GraphIndex.PlaceAndDistance> places;
