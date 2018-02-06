@@ -25,6 +25,7 @@ import org.opentripplanner.model.Route;
 import org.opentripplanner.model.Stop;
 import org.opentripplanner.model.Trip;
 import org.opentripplanner.common.model.P2;
+import org.opentripplanner.routing.vertextype.TransitStop;
 
 /**
  * This class represents all transfer information in the graph. Transfers are grouped
@@ -208,6 +209,32 @@ public class TransferTable implements Serializable {
             }
         }
         
+        return transferPenalty;
+    }
+
+    /**
+     * Determine the transfer penalty based on the weight of both stops
+     */
+    public int determineTransferPenaltyBasedOnStops(Stop stop, RoutingRequest options) {
+        int transferPenalty = 0;
+
+        if (stop.getWeight() != null) {
+            switch (stop.getWeight()) {
+                case PREFERRED_INTERCHANGE:
+                    transferPenalty += options.preferredInterchangePenalty;
+                    break;
+                case RECOMMENDED_INTERCHANGE:
+                    transferPenalty += options.recommendedInterchangePenalty;
+                    break;
+                case INTERCHANGE_ALLOWED:
+                    transferPenalty += options.interchangeAllowedPenalty;
+                    break;
+                case NO_INTERCHANGE:
+                    transferPenalty += options.noInterchangePenalty;
+                    break;
+            }
+        }
+
         return transferPenalty;
     }
     

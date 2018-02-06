@@ -411,6 +411,18 @@ public class RoutingRequest implements Cloneable, Serializable {
     public boolean disableRemainingWeightHeuristic = false;
 
     /**
+     * Set the penalty for transferring at unpreffered stops
+     */
+
+    public int preferredInterchangePenalty = 0;
+
+    public int recommendedInterchangePenalty = 0;
+
+    public int interchangeAllowedPenalty = 0;
+
+    public int noInterchangePenalty = 0;
+
+    /**
      * The routing context used to actually carry out this search. It is important to build States from TraverseOptions
      * rather than RoutingContexts,and just keep a reference to the context in the TraverseOptions, rather than using
      * RoutingContexts for everything because in some testing and graph building situations we need to build a bunch of
