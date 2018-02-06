@@ -320,6 +320,9 @@ public class TransitBoardAlight extends TablePatternEdge implements OnboardEdge 
                                    getStop(), s0.getPreviousTrip(), trip, boarding);
                 transferPenalty  = transferTable.determineTransferPenalty(transferTime, 
                                    options.nonpreferredTransferPenalty);
+                // Add transfer penalties based on both stops involved in the transfer
+                transferPenalty += transferTable.determineTransferPenaltyBasedOnStops(s0.getPreviousStop(), options);
+                transferPenalty += transferTable.determineTransferPenaltyBasedOnStops(getStop(), options);
             }            
 
             /* Found a trip to board. Now make the child state. */

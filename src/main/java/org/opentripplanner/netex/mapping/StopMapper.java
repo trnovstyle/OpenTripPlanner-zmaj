@@ -70,6 +70,29 @@ public class StopMapper {
 
         stop.setVehicleType(transportModeMapper.getTransportMode(stopPlaceLatest));
 
+        if  (stopPlaceLatest.getWeighting() != null) {
+            switch (stopPlaceLatest.getWeighting()) {
+                case PREFERRED_INTERCHANGE:
+                    stop.setWeight(Stop.interchangeWeightingEnumeration.PREFERRED_INTERCHANGE);
+                    break;
+                case RECOMMENDED_INTERCHANGE:
+                    stop.setWeight(Stop.interchangeWeightingEnumeration.RECOMMENDED_INTERCHANGE);
+                    break;
+                case INTERCHANGE_ALLOWED:
+                    stop.setWeight(Stop.interchangeWeightingEnumeration.INTERCHANGE_ALLOWED);
+                    break;
+                case NO_INTERCHANGE:
+                    stop.setWeight(Stop.interchangeWeightingEnumeration.NO_INTERCHANGE);
+                    break;
+                default:
+                    stop.setWeight(Stop.interchangeWeightingEnumeration.INTERCHANGE_ALLOWED);
+                    break;
+            }
+        }
+        else {
+            stop.setWeight(Stop.interchangeWeightingEnumeration.INTERCHANGE_ALLOWED);
+        }
+
         if (stopPlaceLatest.getAccessibilityAssessment() != null
                 && stopPlaceLatest.getAccessibilityAssessment().getLimitations() != null
                 && stopPlaceLatest.getAccessibilityAssessment().getLimitations().getAccessibilityLimitation() != null &&
@@ -123,6 +146,7 @@ public class StopMapper {
                         stopQuay.setPlatformCode(quay.getPublicCode());
                         stopQuay.setVehicleType(stop.getVehicleType());
                         stopQuay.setParentStation(stop.getId().getId());
+                        stopQuay.setWeight(stop.getWeight());
                         if (quay.getDescription() != null) {
                             stopQuay.setDesc(quay.getDescription().getValue());
                         }
