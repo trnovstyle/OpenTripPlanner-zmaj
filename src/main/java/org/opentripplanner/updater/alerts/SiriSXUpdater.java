@@ -117,9 +117,12 @@ public class SiriSXUpdater extends PollingGraphUpdater {
 
             InputStream is = HttpUtils.postData(url, SiriHelper.createSXServiceRequestAsXml(requestorRef), timeout);
 
+            LOG.info("Fetching SX-data took {} ms", (System.currentTimeMillis()-t1));
+            t1 = System.currentTimeMillis();
+
             Siri siri = (Siri)jaxbContext.createUnmarshaller().unmarshal(is);
 
-            LOG.info("Fetching SX-data took {} ms", (System.currentTimeMillis()-t1));
+            LOG.info("Unmarshalling SX-data took {} ms", (System.currentTimeMillis()-t1));
             if (siri == null) {
                 throw new RuntimeException("Failed to get data from url " + url);
             }
