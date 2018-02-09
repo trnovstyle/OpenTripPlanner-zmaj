@@ -2752,6 +2752,32 @@ public class IndexGraphQLSchema {
                 .dataFetcher(environment -> ((Leg)environment.getSource()).endTime.getTime().getTime())
                 .build())
             .field(GraphQLFieldDefinition.newFieldDefinition()
+                .name("scheduledStartTime")
+                .type(Scalars.GraphQLLong)
+                .dataFetcher(// startTime is already adjusted for realtime - need to subtract delay to get scheduled time
+                        environment -> ((Leg) environment.getSource()).startTime.getTimeInMillis() -
+                                (1000* ((Leg) environment.getSource()).arrivalDelay))
+                .build())
+            .field(GraphQLFieldDefinition.newFieldDefinition()
+                .name("realtimeStartTime")
+                .type(Scalars.GraphQLLong)
+                .dataFetcher(
+                        environment -> ((Leg) environment.getSource()).startTime.getTimeInMillis())
+                .build())
+            .field(GraphQLFieldDefinition.newFieldDefinition()
+                .name("scheduledEndTime")
+                .type(Scalars.GraphQLLong)
+                .dataFetcher(// endTime is already adjusted for realtime - need to subtract delay to get scheduled time
+                        environment -> ((Leg)environment.getSource()).endTime.getTimeInMillis() -
+                                (1000 * ((Leg)environment.getSource()).arrivalDelay))
+                .build())
+            .field(GraphQLFieldDefinition.newFieldDefinition()
+                .name("realtimeEndTime")
+                .type(Scalars.GraphQLLong)
+                .dataFetcher(
+                        environment -> ((Leg) environment.getSource()).endTime.getTimeInMillis())
+                .build())
+            .field(GraphQLFieldDefinition.newFieldDefinition()
                 .name("mode")
                 .description("The mode (e.g., Walk) used when traversing this leg.")
                 .type(modeEnum)
