@@ -2756,7 +2756,7 @@ public class IndexGraphQLSchema {
                 .type(Scalars.GraphQLLong)
                 .dataFetcher(// startTime is already adjusted for realtime - need to subtract delay to get scheduled time
                         environment -> ((Leg) environment.getSource()).startTime.getTimeInMillis() -
-                                (1000* ((Leg) environment.getSource()).arrivalDelay))
+                                (1000* ((Leg) environment.getSource()).departureDelay))
                 .build())
             .field(GraphQLFieldDefinition.newFieldDefinition()
                 .name("realtimeStartTime")
