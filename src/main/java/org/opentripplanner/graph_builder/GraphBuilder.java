@@ -39,6 +39,7 @@ import org.opentripplanner.reflect.ReflectionLibrary;
 import org.opentripplanner.routing.core.RoutingRequest;
 import org.opentripplanner.routing.graph.Graph;
 import org.opentripplanner.routing.graph.Graph.LoadLevel;
+import org.opentripplanner.routing.impl.DefaultStreetVertexIndexFactory;
 import org.opentripplanner.standalone.CommandLineParameters;
 import org.opentripplanner.standalone.GraphBuilderParameters;
 import org.opentripplanner.standalone.OTPMain;
@@ -199,6 +200,11 @@ public class GraphBuilder implements Runnable {
         if ( ! dir.isDirectory() && dir.canRead()) {
             LOG.error("'{}' is not a readable directory.", dir);
             return null;
+        }
+        if (params.loadBaseGraph) {
+            graphBuilder.setBaseGraph(GraphBuilder.BASE_GRAPH_FILENAME, params.build);
+            Graph graph = graphBuilder.getGraph();
+            graph.index(new DefaultStreetVertexIndexFactory());
         }
         graphBuilder.setPath(dir, params.skipTransit ? BASE_GRAPH_FILENAME : GRAPH_FILENAME);
         // Find and parse config files first to reveal syntax errors early without waiting for graph build.
