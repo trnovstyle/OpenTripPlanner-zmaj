@@ -84,8 +84,6 @@ public class GraphBuilder implements Runnable {
     /** Should the graph be serialized to disk after being created or not? */
     public boolean serializeGraph = true;
 
-    public boolean loadPartialGraph = false;
-
     public void addModule(GraphBuilderModule loader) {
         _graphBuilderModules.add(loader);
     }

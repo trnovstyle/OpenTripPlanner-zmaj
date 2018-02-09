@@ -139,7 +139,7 @@ public class CommandLineParameters implements Cloneable {
     @Parameter(names = { "--skipTransit" }, description = "Only build graph from OSM data and elevation module. All transit data is skipped.")
     public boolean skipTransit = false;
 
-    @Parameter(names = { "--loadBaseGraph" }, description = "Load partialGraph.obj and build transit data on top.")
+    @Parameter(names = { "--loadBaseGraph" }, description = "Load baseGraph.obj and build transit data on top.")
     public boolean loadBaseGraph = false;
 
     /** Set some convenience parameters based on other parameters' values. */
