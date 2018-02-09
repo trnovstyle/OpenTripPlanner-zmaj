@@ -1287,7 +1287,7 @@ public class TransmodelIndexGraphQLSchema {
                                                     .type(new GraphQLList(dateScalar))
                                                     .dataFetcher(environment -> index.graph.getCalendarService()
                                                                                         .getServiceDatesForServiceId((((Trip) environment.getSource()).getServiceId()))
-                                                                                        .stream().map(serviceDate -> mappingUtil.serviceDateToSecondsSinceEpoch(serviceDate)).collect(Collectors.toList())
+                                                                                        .stream().map(serviceDate -> mappingUtil.serviceDateToSecondsSinceEpoch(serviceDate)).sorted().collect(Collectors.toList())
                                                     )
                                                     .build())
                                      .field(GraphQLFieldDefinition.newFieldDefinition()
