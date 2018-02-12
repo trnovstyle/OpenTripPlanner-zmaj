@@ -30,6 +30,8 @@ import org.opentripplanner.common.MavenVersion;
 import org.opentripplanner.common.model.GenericLocation;
 import org.opentripplanner.common.model.NamedPlace;
 import org.opentripplanner.routing.edgetype.StreetEdge;
+import org.opentripplanner.routing.edgetype.TablePatternEdge;
+import org.opentripplanner.routing.edgetype.TripPattern;
 import org.opentripplanner.routing.error.TrivialPathException;
 import org.opentripplanner.routing.graph.Edge;
 import org.opentripplanner.routing.graph.Graph;
@@ -1203,16 +1205,26 @@ public class RoutingRequest implements Cloneable, Serializable {
         bannedTrips.put(trip, BannedStopSet.ALL);
     }
 
+    public boolean edgeIsBanned(Edge e) {
+        if (e instanceof TablePatternEdge) {
+            TripPattern tripPattern = ((TablePatternEdge) e).getPattern();
+            if (tripPattern != null & tripPattern.route != null) {
+                return routeIsBanned(tripPattern.route);
+            }
+        }
+        return false;
+    }
+
     public boolean routeIsBanned(Route route) {
         /* check if agency is banned for this plan */
-        if (bannedAgencies != null) {
+        if (bannedAgencies != null && !bannedAgencies.isEmpty()) {
             if (bannedAgencies.contains(route.getAgency().getId())) {
                 return true;
             }
         }
 
         /* check if route banned for this plan */
-        if (bannedRoutes != null) {
+        if (bannedRoutes != null && !bannedRoutes.isEmpty()) {
             if (bannedRoutes.matches(route)) {
                 return true;
             }

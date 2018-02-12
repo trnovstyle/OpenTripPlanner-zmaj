@@ -227,6 +227,11 @@ public class InterleavedBidirectionalHeuristic implements RemainingWeightHeurist
                 if (e instanceof StreetTransitLink) {
                     continue;
                 }
+
+                if (routingRequest.edgeIsBanned(e)) {
+                    continue;
+                }
+
                 Vertex v = routingRequest.arriveBy ? e.getToVertex() : e.getFromVertex();
                 double edgeWeight = e.weightLowerBound(routingRequest);
                 // INF heuristic value indicates unreachable (e.g. non-running transit service)

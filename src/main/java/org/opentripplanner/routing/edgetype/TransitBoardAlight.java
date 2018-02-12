@@ -143,6 +143,8 @@ public class TransitBoardAlight extends TablePatternEdge implements OnboardEdge 
         if (s0.backEdge instanceof TransitBoardAlight) {
             return null;
         }
+        /* We assume all trips in a pattern are on the same route. Check if that route is banned. */
+        if (options.routeIsBanned(this.getPattern().route)) return null;
 
         /* If the user requested a wheelchair accessible trip, check whether and this stop is not accessible. */
         if (options.wheelchairAccessible && ! getPattern().wheelchairAccessible(stopIndex)) {
@@ -252,9 +254,6 @@ public class TransitBoardAlight extends TablePatternEdge implements OnboardEdge 
             if (!options.modes.get(modeMask)) {
                 return null;
             }
-
-            /* We assume all trips in a pattern are on the same route. Check if that route is banned. */
-            if (options.routeIsBanned(this.getPattern().route)) return null;
             
             /*
              * Find the next boarding/alighting time relative to the current State. Check lists of
@@ -398,6 +397,8 @@ public class TransitBoardAlight extends TablePatternEdge implements OnboardEdge 
             if (!options.modes.get(modeMask)) {
                 return Double.POSITIVE_INFINITY;
             }
+                        /* We assume all trips in a pattern are on the same route. Check if that route is banned. */
+            if (options.routeIsBanned(this.getPattern().route)) return Double.POSITIVE_INFINITY;
             BitSet services = getPattern().services;
             for (ServiceDay sd : options.rctx.serviceDays) {
                 if (sd.anyServiceRunning(services)) return 0;
