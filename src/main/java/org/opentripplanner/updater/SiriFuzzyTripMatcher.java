@@ -246,6 +246,17 @@ public class SiriFuzzyTripMatcher {
     }
 
     public AgencyAndId getStop(String siriStopId) {
+
+        //First, assume same agency
+        Stop firstStop = index.stopForId.values().stream().findFirst().get();
+        AgencyAndId id = new AgencyAndId(firstStop.getId().getAgencyId(), siriStopId);
+        if (index.stopForId.containsKey(id)) {
+            return id;
+        } else if (index.stationForId.containsKey(id)) {
+            return id;
+        }
+
+        //Not same agency - loop through all stops/Stations
         Collection<Stop> stops = index.stopForId.values();
         for (Stop stop : stops) {
             if (stop.getId().getId().equals(siriStopId)) {
