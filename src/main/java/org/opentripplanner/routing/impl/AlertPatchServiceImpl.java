@@ -17,6 +17,7 @@ import com.google.common.collect.LinkedListMultimap;
 import com.google.common.collect.ListMultimap;
 import org.opentripplanner.model.AgencyAndId;
 import org.opentripplanner.routing.alertpatch.AlertPatch;
+import org.opentripplanner.routing.edgetype.TripPattern;
 import org.opentripplanner.routing.graph.Graph;
 import org.opentripplanner.routing.services.AlertPatchService;
 
@@ -31,6 +32,10 @@ public class AlertPatchServiceImpl implements AlertPatchService {
     private Map<String, AlertPatch> alertPatches = new ConcurrentHashMap<>();
     private ListMultimap<AgencyAndId, AlertPatch> patchesByRoute = LinkedListMultimap.create();
     private ListMultimap<AgencyAndId, AlertPatch> patchesByStop = LinkedListMultimap.create();
+    private ListMultimap<StopAndRouteKey, AlertPatch> patchesByStopAndRoute = LinkedListMultimap.create();
+    private ListMultimap<AgencyAndId, AlertPatch> patchesByTrip = LinkedListMultimap.create();
+    private ListMultimap<String, AlertPatch> patchesByAgency = LinkedListMultimap.create();
+    private ListMultimap<String, AlertPatch> patchesByTripPattern = LinkedListMultimap.create();
 
     public AlertPatchServiceImpl(Graph graph) {
         this.graph = graph;
@@ -39,6 +44,11 @@ public class AlertPatchServiceImpl implements AlertPatchService {
     @Override
     public Collection<AlertPatch> getAllAlertPatches() {
         return alertPatches.values();
+    }
+
+    @Override
+    public AlertPatch getPatchById(String id) {
+        return alertPatches.get(id);
     }
 
     @Override
@@ -61,6 +71,43 @@ public class AlertPatchServiceImpl implements AlertPatchService {
     }
 
     @Override
+    public Collection<AlertPatch> getTripPatches(AgencyAndId trip) {
+        List<AlertPatch> result = patchesByTrip.get(trip);
+        if (result == null) {
+            result = Collections.emptyList();
+        }
+        return result;
+    }
+
+
+    @Override
+    public Collection<AlertPatch> getAgencyPatches(String agency) {
+        List<AlertPatch> result = patchesByAgency.get(agency);
+        if (result == null) {
+            result = Collections.emptyList();
+        }
+        return result;
+    }
+
+    @Override
+    public Collection<AlertPatch> getStopAndRoutePatches(AgencyAndId stop, AgencyAndId route) {
+        List<AlertPatch> result = patchesByStopAndRoute.get(new StopAndRouteKey(stop, route));
+        if (result == null) {
+            result = Collections.emptyList();
+        }
+        return result;
+    }
+
+    @Override
+    public Collection<AlertPatch> getTripPatternPatches(TripPattern pattern) {
+        List<AlertPatch> result = patchesByTripPattern.get(pattern.code);
+        if (result == null) {
+            result = Collections.emptyList();
+        }
+        return result;
+    }
+
+    @Override
     public synchronized void apply(AlertPatch alertPatch) {
         if (alertPatches.containsKey(alertPatch.getId())) {
             expire(alertPatches.get(alertPatch.getId()));
@@ -77,6 +124,27 @@ public class AlertPatchServiceImpl implements AlertPatchService {
         if (route != null) {
             patchesByRoute.put(route, alertPatch);
         }
+
+        if (stop != null && route != null) {
+            patchesByStopAndRoute.put(new StopAndRouteKey(stop, route), alertPatch);
+        }
+
+        AgencyAndId trip = alertPatch.getTrip();
+        if (trip != null) {
+            patchesByTrip.put(trip, alertPatch);
+        }
+        String agency = alertPatch.getAgency();
+        if (agency != null && !agency.isEmpty()) {
+            patchesByAgency.put(agency, alertPatch);
+        }
+
+        List<TripPattern> tripPatterns = alertPatch.getTripPatterns();
+        if (tripPatterns != null) {
+            for (TripPattern pattern : tripPatterns) {
+                patchesByTripPattern.put(pattern.code, alertPatch);
+            }
+        }
+
     }
 
     @Override
@@ -121,7 +189,33 @@ public class AlertPatchServiceImpl implements AlertPatchService {
         if (route != null) {
             patchesByRoute.remove(route, alertPatch);
         }
-
+        if (stop != null && route != null) {
+            patchesByStopAndRoute.remove(new StopAndRouteKey(stop, route), alertPatch);
+        }
+        AgencyAndId trip = alertPatch.getTrip();
+        if (trip != null) {
+            patchesByTrip.remove(trip, alertPatch);
+        }
+        String agency = alertPatch.getAgency();
+        if (agency != null) {
+            patchesByAgency.remove(agency, alertPatch);
+        }
+        List<TripPattern> tripPatterns = alertPatch.getTripPatterns();
+        if (tripPatterns != null) {
+            for (TripPattern pattern : tripPatterns) {
+                patchesByTripPattern.remove(pattern.code, alertPatch);
+            }
+        }
         alertPatch.remove(graph);
+    }
+
+    private class StopAndRouteKey {
+        private final AgencyAndId route;
+        private final AgencyAndId stop;
+
+        public StopAndRouteKey(AgencyAndId stop, AgencyAndId route) {
+            this.stop = stop;
+            this.route = route;
+        }
     }
 }
