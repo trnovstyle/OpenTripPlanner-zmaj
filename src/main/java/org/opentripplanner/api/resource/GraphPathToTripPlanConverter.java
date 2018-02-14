@@ -598,7 +598,7 @@ public abstract class GraphPathToTripPlanConverter {
         }
     }
 
-    private static void addAlertPatchesToLeg(Leg leg, List<AlertPatch> alertsPatches, Locale requestedLocale) {
+    private static void addAlertPatchesToLeg(Leg leg, Collection<AlertPatch> alertsPatches, Locale requestedLocale) {
         if (alertsPatches != null) {
             for (AlertPatch alert : alertsPatches) {
                 leg.addAlertPatch(alert);
