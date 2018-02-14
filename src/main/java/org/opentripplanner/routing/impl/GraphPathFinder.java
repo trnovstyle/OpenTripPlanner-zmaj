@@ -505,6 +505,9 @@ public class GraphPathFinder {
             // add the next subpath
             for (Edge e : path.edges) {
                 lastState = e.traverse(lastState);
+                if (lastState==null){
+                    LOG.warn("About to add null lastState to newPath. This may cause nullPointer in next iteration? Caused by traversing edge: " + e);
+                }
                 newPath.edges.add(e);
                 newPath.states.add(lastState);
             }
