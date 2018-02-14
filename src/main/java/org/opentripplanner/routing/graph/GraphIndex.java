@@ -1057,36 +1057,36 @@ public class GraphIndex {
         return alertPatchService;
     }
 
-    public List<AlertPatch> getAlerts() {
-        return (List<AlertPatch>) getSiriAlertPatchService().getAllAlertPatches();
+    public Collection<AlertPatch> getAlerts() {
+        return getSiriAlertPatchService().getAllAlertPatches();
     }
 
-    public List<AlertPatch> getAlertsForRoute(Route route) {
-        return (List<AlertPatch>) getSiriAlertPatchService().getRoutePatches(route.getId());
+    public Collection<AlertPatch> getAlertsForRoute(Route route) {
+        return getSiriAlertPatchService().getRoutePatches(route.getId());
     }
 
-    public List<AlertPatch> getAlertsForTrip(Trip trip) {
-        return (List<AlertPatch>) getSiriAlertPatchService().getTripPatches(trip.getId());
+    public Collection<AlertPatch> getAlertsForTrip(Trip trip) {
+        return getSiriAlertPatchService().getTripPatches(trip.getId());
     }
 
-    public List<AlertPatch> getAlertsForPattern(TripPattern pattern) {
-        return (List<AlertPatch>) getSiriAlertPatchService().getTripPatternPatches(pattern);
+    public Collection<AlertPatch> getAlertsForPattern(TripPattern pattern) {
+        return getSiriAlertPatchService().getTripPatternPatches(pattern);
     }
 
-    public List<AlertPatch> getAlertsForAgency(Agency agency) {
-        return (List<AlertPatch>) getSiriAlertPatchService().getAgencyPatches(agency.getId());
+    public Collection<AlertPatch> getAlertsForAgency(Agency agency) {
+        return getSiriAlertPatchService().getAgencyPatches(agency.getId());
     }
 
     public AlertPatch getAlertForId(String id) {
         return getSiriAlertPatchService().getPatchById(id);
     }
 
-    public List<AlertPatch> getAlertsForStop(Stop stop) {
-        return (List<AlertPatch>) getSiriAlertPatchService().getStopPatches(stop.getId());
+    public Collection<AlertPatch> getAlertsForStop(Stop stop) {
+        return getSiriAlertPatchService().getStopPatches(stop.getId());
     }
 
-    public List<AlertPatch> getAlertsForStopAndRoute(Stop stop, Route route) {
-        return (List<AlertPatch>) getSiriAlertPatchService().getStopAndRoutePatches(stop.getId(), route.getId());
+    public Collection<AlertPatch> getAlertsForStopAndRoute(Stop stop, Route route) {
+        return getSiriAlertPatchService().getStopAndRoutePatches(stop.getId(), route.getId());
     }
 
     /**
