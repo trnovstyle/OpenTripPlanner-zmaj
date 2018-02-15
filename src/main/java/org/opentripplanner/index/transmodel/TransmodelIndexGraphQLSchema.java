@@ -67,16 +67,9 @@ public class TransmodelIndexGraphQLSchema {
 
     private static GraphQLEnumType wheelchairBoardingEnum = GraphQLEnumType.newEnum()
                                                                     .name("WheelchairBoarding")
-                                                                    .value("noInformation", 0, "There is no accessibility information for the stopPlace/quay.")
-                                                                    .value("possible", 1, "Boarding wheelchair-accessible serviceJourneys is possible at this stopPlace/quay.")
-                                                                    .value("notPossible", 2, "Wheelchair boarding/alighting is not possible at this stop.")
-                                                                    .build();
-
-    private static GraphQLEnumType wheelchairTripEnum = GraphQLEnumType.newEnum()
-                                                                    .name("WheelchairTrip")
-                                                                    .value("noInformation", 0, "There is no accessibility information for this trip.")
-                                                                    .value("possible", 1, "Wheelchair boarding/alighting is possible at wheelchair-accessible quays.")
-                                                                    .value("notPossible", 2, "Wheelchair boarding/alighting is not possible for this trip.")
+                                                                    .value("noInformation", 0, "There is no accessibility information for this element.")
+                                                                    .value("possible", 1, "Boarding wheelchair-accessible serviceJourneys is possible for this element.")
+                                                                    .value("notPossible", 2, "Wheelchair boarding/alighting is not possible for this elment.")
                                                                     .build();
 
     private static GraphQLEnumType bikesAllowedEnum = GraphQLEnumType.newEnum()
@@ -1027,7 +1020,7 @@ public class TransmodelIndexGraphQLSchema {
                                                                                                                             ((Stop) environment.getSource()).getParentStation())) : null)
                                           .build())
                            .field(GraphQLFieldDefinition.newFieldDefinition()
-                                          .name("wheelchairBoarding")
+                                          .name("wheelchairAccessible")
                                           .type(wheelchairBoardingEnum)
                                           .description("Whether this quay is suitable for wheelchair boarding.")
                                           .build())
@@ -1315,7 +1308,7 @@ public class TransmodelIndexGraphQLSchema {
                                                     .build())
                                      .field(GraphQLFieldDefinition.newFieldDefinition()
                                                     .name("wheelchairAccessible")
-                                                    .type(wheelchairTripEnum)
+                                                    .type(wheelchairBoardingEnum)
                                                     .description("Whether service journey is accessible with wheelchair.")
                                                     .build())
                                      .field(GraphQLFieldDefinition.newFieldDefinition()
