@@ -1,5 +1,6 @@
 package org.opentripplanner.index.transmodel;
 
+import com.google.common.collect.Sets;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Envelope;
 import com.vividsolutions.jts.geom.LineString;
@@ -7,6 +8,7 @@ import graphql.Scalars;
 import graphql.relay.Relay;
 import graphql.relay.SimpleListConnection;
 import graphql.schema.*;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.opentripplanner.api.common.Message;
@@ -2594,6 +2596,24 @@ public class TransmodelIndexGraphQLSchema {
                                                                  .dataFetcher(environment -> ((Leg) environment.getSource()).to)
                                                                  .build())
                                                   .field(GraphQLFieldDefinition.newFieldDefinition()
+                                                                 .name("fromEstimatedCall")
+                                                                 .description("EstimatedCall for the quay where the leg originates.")
+                                                                 .type(estimatedCallType)
+                                                                 .dataFetcher(environment -> {
+                                                                     Leg leg = environment.getSource();
+                                                                     return getTripTimeShortForLegPlace(index, leg, leg.from);
+                                                                 })
+                                                                 .build())
+                                                  .field(GraphQLFieldDefinition.newFieldDefinition()
+                                                                 .name("toEstimatedCall")
+                                                                 .description("EstimatedCall for the quay where the leg ends.")
+                                                                 .type(estimatedCallType)
+                                                                 .dataFetcher(environment -> {
+                                                                     Leg leg=environment.getSource();
+                                                                     return getTripTimeShortForLegPlace(index,leg, leg.to);
+                                                                 })
+                                                                 .build())
+                                                  .field(GraphQLFieldDefinition.newFieldDefinition()
                                                                  .name("line")
                                                                  .description("For ride legs, the line. For non-ride legs, null.")
                                                                  .type(lineType)
@@ -2754,7 +2774,32 @@ public class TransmodelIndexGraphQLSchema {
     /**
      * Find trip time shorts for all intermediate stops for a leg.
      */
+    private TripTimeShort getTripTimeShortForLegPlace(GraphIndex index, Leg leg, Place place) {
+        if (place == null || !VertexType.TRANSIT.equals(place.vertexType)) {
+            return null;
+        }
+        Stop stop = index.stopForId.get(place.stopId);
+        if (stop == null) {
+            return null;
+        }
+
+        List<TripTimeShort> tripTimeShorts = getTripTimeShortForQuays(index, leg, Sets.newHashSet(stop.getId()));
+        if (CollectionUtils.isEmpty(tripTimeShorts)) {
+            return null;
+        }
+        return tripTimeShorts.get(0);
+    }
+
+    /**
+     * Find trip time shorts for all intermediate stops for a leg.
+     */
     private List<TripTimeShort> getIntermediateTripTimeShortsForLeg(GraphIndex index, Leg leg) {
+        Set<AgencyAndId> intermediateQuayIds = leg.stop.stream().map(place -> place.stopId).filter(Objects::nonNull).collect(Collectors.toSet());
+
+        return getTripTimeShortForQuays(index, leg, intermediateQuayIds);
+    }
+
+    private List<TripTimeShort> getTripTimeShortForQuays(GraphIndex index, Leg leg, Set<AgencyAndId> intermediateQuayIds) {
         Trip trip = index.tripForId.get(leg.tripId);
 
         if (trip == null) {
@@ -2786,7 +2831,6 @@ public class TransmodelIndexGraphQLSchema {
         if (timetable == null) {
             timetable = index.patternForTrip.get(trip).scheduledTimetable;
         }
-        Set<AgencyAndId> intermediateQuayIds = leg.stop.stream().map(place -> place.stopId).filter(Objects::nonNull).collect(Collectors.toSet());
 
         long startTimeSeconds = (leg.startTime.toInstant().toEpochMilli() - serviceDate.getAsDate().getTime()) / 1000;
         long endTimeSeconds = (leg.endTime.toInstant().toEpochMilli() - serviceDate.getAsDate().getTime()) / 1000;
