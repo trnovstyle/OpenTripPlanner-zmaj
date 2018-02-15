@@ -917,6 +917,10 @@ public class TransmodelIndexGraphQLSchema {
                                                .type(transportModeEnum)
                                                .dataFetcher(environment -> mappingUtil.mapVehicleTypeToTraverseMode(((Stop) environment.getSource()).getVehicleType()))
                                                .build())
+                                .field(GraphQLFieldDefinition.newFieldDefinition()
+                                        .name("timezone")
+                                        .type(new GraphQLNonNull(Scalars.GraphQLString))
+                                        .build())
                                 // TODO stopPlaceType?
 
                                 .field(GraphQLFieldDefinition.newFieldDefinition()
@@ -1024,6 +1028,10 @@ public class TransmodelIndexGraphQLSchema {
                                           .type(wheelchairBoardingEnum)
                                           .description("Whether this quay is suitable for wheelchair boarding.")
                                           .build())
+                            .field(GraphQLFieldDefinition.newFieldDefinition()
+                                    .name("timezone")
+                                    .type(new GraphQLNonNull(Scalars.GraphQLString))
+                                    .build())
                            .field(GraphQLFieldDefinition.newFieldDefinition()
                                           .name("publicCode")
                                           .type(Scalars.GraphQLString)

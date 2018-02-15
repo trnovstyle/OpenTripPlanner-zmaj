@@ -23,6 +23,8 @@ public class StopMapper {
 
     private StopPlaceTypeMapper transportModeMapper  = new StopPlaceTypeMapper();
 
+    private String DEFAULT_TIMEZONE = "Europe/Oslo";
+
     public Collection<Stop> mapParentAndChildStops(Collection<StopPlace> stopPlaceAllVersions, OtpTransitBuilder transitBuilder, NetexDao netexDao){
         ArrayList<Stop> stops = new ArrayList<>();
 
@@ -69,6 +71,8 @@ public class StopMapper {
         stop.setId(AgencyAndIdFactory.createAgencyAndId(stopPlaceLatest.getId()));
 
         stop.setVehicleType(transportModeMapper.getTransportMode(stopPlaceLatest));
+
+        stop.setTimezone(DEFAULT_TIMEZONE);
 
         if  (stopPlaceLatest.getWeighting() != null) {
             switch (stopPlaceLatest.getWeighting()) {
@@ -175,6 +179,8 @@ public class StopMapper {
                         } else {
                             stopQuay.setWheelchairBoarding(stop.getWheelchairBoarding());
                         }
+
+                        stopQuay.setTimezone(DEFAULT_TIMEZONE);
 
                         // Continue if this is not newest version of quay
                         if (netexDao.lookupQuayById(stopQuay.getId().getId()).stream()
