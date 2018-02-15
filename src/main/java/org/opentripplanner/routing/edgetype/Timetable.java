@@ -557,16 +557,13 @@ public class Timetable implements Serializable {
      */
     public TripTimes createUpdatedTripTimes(final Graph graph, EstimatedVehicleJourney journey, TimeZone timeZone, AgencyAndId tripId) {
         if (journey == null) {
-            LOG.error("A null EstimatedVehicleJourney pointer was passed to the Timetable class update method.");
             return null;
         }
 
         int tripIndex = getTripIndex(tripId);
         if (tripIndex == -1) {
-            LOG.info("tripId {} not found in pattern.", tripId);
+            LOG.debug("tripId {} not found in pattern.", tripId);
             return null;
-        } else {
-            LOG.trace("tripId {} found at index {} in timetable.", tripId, tripIndex);
         }
 
         final TripTimes existingTripTimes = getTripTimes(tripIndex);
@@ -581,7 +578,6 @@ public class Timetable implements Serializable {
         EstimatedVehicleJourney.RecordedCalls journeyRecordedCalls = journey.getRecordedCalls();
 
         if (journeyEstimatedCalls == null) {
-            LOG.error("Part of a TripUpdate object could not be applied successfully.");
             return null;
         }
 
@@ -775,12 +771,12 @@ public class Timetable implements Serializable {
         }
 
         if (journey.isCancellation() != null && journey.isCancellation()) {
-            LOG.info("Trip is cancelled");
+            LOG.debug("Trip is cancelled");
             newTimes.cancel();
         }
 
         if (!newTimes.timesIncreasing()) {
-            LOG.error("TripTimes are non-increasing after applying SIRI delay propagation - LineRef {}.", journey.getLineRef().getValue());
+            LOG.info("TripTimes are non-increasing after applying SIRI delay propagation - LineRef {}.", journey.getLineRef().getValue());
             return null;
         }
 
@@ -805,7 +801,6 @@ public class Timetable implements Serializable {
      */
     public List<Stop> createModifiedStops(EstimatedVehicleJourney journey, GraphIndex graphIndex) {
         if (journey == null) {
-            LOG.error("A null EstimatedVehicleJourney pointer was passed to the Timetable class update method.");
             return null;
         }
 
@@ -813,7 +808,6 @@ public class Timetable implements Serializable {
         EstimatedVehicleJourney.RecordedCalls journeyRecordedCalls = journey.getRecordedCalls();
 
         if (journeyEstimatedCalls == null) {
-            LOG.error("Part of a TripUpdate object could not be applied successfully.");
             return null;
         }
 
@@ -900,14 +894,12 @@ public class Timetable implements Serializable {
      */
     public List<StopTime> createModifiedStopTimes(TripTimes oldTimes, EstimatedVehicleJourney journey, Trip trip, GraphIndex graphIndex) {
         if (journey == null) {
-            LOG.error("A null EstimatedVehicleJourney pointer was passed to the Timetable class update method.");
             return null;
         }
 
         EstimatedVehicleJourney.EstimatedCalls journeyCalls = journey.getEstimatedCalls();
 
         if (journeyCalls == null) {
-            LOG.error("Part of a TripUpdate object could not be applied successfully.");
             return null;
         }
 
@@ -1058,7 +1050,6 @@ public class Timetable implements Serializable {
      */
     public TripTimes createUpdatedTripTimes(Graph graph, VehicleActivityStructure activity, TimeZone timeZone, AgencyAndId tripId) {
         if (activity == null) {
-            LOG.error("A null VehicleActivityStructure pointer was passed to the Timetable class update method.");
             return null;
         }
 
@@ -1069,8 +1060,6 @@ public class Timetable implements Serializable {
         if (tripIndex == -1) {
             LOG.trace("tripId {} not found in pattern.", tripId);
             return null;
-        } else {
-            LOG.trace("tripId {} found at index {} in timetable.", tripId, tripIndex);
         }
 
         final TripTimes existingTripTimes = getTripTimes(tripIndex);
@@ -1130,7 +1119,7 @@ public class Timetable implements Serializable {
         }
 
         if (!newTimes.timesIncreasing()) {
-            LOG.error("TripTimes are non-increasing after applying SIRI delay propagation - delay: {}", delay);
+            LOG.info("TripTimes are non-increasing after applying SIRI delay propagation - delay: {}", delay);
             return null;
         }
 
@@ -1140,7 +1129,6 @@ public class Timetable implements Serializable {
             newTimes.setRealTimeState(RealTimeState.UPDATED);
         }
 
-        LOG.debug("A valid TripUpdate object was applied using the Timetable class update method.");
         return newTimes;
     }
 

@@ -514,7 +514,7 @@ public class TimetableSnapshotSource {
         String vehicleRef = (estimatedVehicleJourney.getVehicleRef() != null ? estimatedVehicleJourney.getVehicleRef().getValue():null);
 
         if (trips == null || trips.isEmpty()) {
-            LOG.info("No trips found for EstimatedVehicleJourney. [operator={}, vehicleModes={}, lineRef={}, vehicleRef={}]", operatorRef, vehicleModes, lineRef, vehicleRef);
+            LOG.debug("No trips found for EstimatedVehicleJourney. [operator={}, vehicleModes={}, lineRef={}, vehicleRef={}]", operatorRef, vehicleModes, lineRef, vehicleRef);
             return false;
         }
 
@@ -522,7 +522,7 @@ public class TimetableSnapshotSource {
         Set<Trip> matchingTrips = getTripForJourney(trips, estimatedVehicleJourney);
 
         if (matchingTrips == null || matchingTrips.isEmpty()) {
-            LOG.info("Found no matching trip for SIRI ET (serviceDate, departureTime). [operator={}, vehicleModes={}, lineRef={}, vehicleJourneyRef={}]", operatorRef, vehicleModes, lineRef, vehicleRef);
+            LOG.debug("Found no matching trip for SIRI ET (serviceDate, departureTime). [operator={}, vehicleModes={}, lineRef={}, vehicleJourneyRef={}]", operatorRef, vehicleModes, lineRef, vehicleRef);
             return false;
         }
 
@@ -541,7 +541,7 @@ public class TimetableSnapshotSource {
         }
 
         if (patterns.isEmpty()) {
-            LOG.info("Found no matching pattern for SIRI ET (firstStopId, lastStopId, numberOfStops). [operator={}, vehicleModes={}, lineRef={}, vehicleRef={}]", operatorRef, vehicleModes, lineRef, vehicleRef);
+            LOG.debug("Found no matching pattern for SIRI ET (firstStopId, lastStopId, numberOfStops). [operator={}, vehicleModes={}, lineRef={}, vehicleRef={}]", operatorRef, vehicleModes, lineRef, vehicleRef);
             return false;
         }
 
@@ -592,7 +592,7 @@ public class TimetableSnapshotSource {
 
                     LOG.debug("Applied realtime data for trip {}", trip.getId().getId());
                 } else {
-                    LOG.info("Ignoring update since number of stops do not match");
+                    LOG.debug("Ignoring update since number of stops do not match");
                 }
             }
         }
