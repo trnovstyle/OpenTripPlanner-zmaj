@@ -4,7 +4,10 @@ import graphql.ExecutionResult;
 import graphql.GraphQL;
 import graphql.execution.ExecutorServiceExecutionStrategy;
 import org.opentripplanner.GtfsTest;
+import org.opentripplanner.routing.core.RoutingRequest;
 
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class TransmodelGraphQLTest extends GtfsTest {
@@ -16,9 +19,13 @@ public class TransmodelGraphQLTest extends GtfsTest {
 
     private TransmodelIndexGraphQLSchema transmodelIndexGraphQLSchema;
 
+    private TransmodelGraphIndex graphIndex;
+
     @Override
     protected void setUp() {
         super.setUp();
+        router.defaultRoutingRequest = new RoutingRequest();
+        graphIndex = TransmodelGraphIndexFactory.getTransmodelGraphIndexForRouter(router);
         transmodelIndexGraphQLSchema = new TransmodelIndexGraphQLSchema(router);
     }
 
@@ -37,82 +44,121 @@ public class TransmodelGraphQLTest extends GtfsTest {
         assertEquals("Fake Agency", ((Map) data.get("organisation")).get("name"));
     }
 
+    public void testTravelsearchSimple() {
+        String query =
+                "{" +
+                        "  trip(" +
+                        "    from: {place:\"FEED:A\"}" +
+                        "    to: {place:\"FEED:D\"}" +
+                        "    numTripPatterns: 3" +
+                        "    dateTime: \"2018-01-04T12:51:14.000+0100\"" +
+                        "  )" +
+                        "  {" +
+                        "    tripPatterns {" +
+                        "      startTime" +
+                        "      duration" +
+                        "      walkDistance" +
+                        "" +
+                        "          legs {" +
+                        "          " +
+                        "            mode" +
+                        "            distance" +
+                        "            line {" +
+                        "              id" +
+                        "              publicCode" +
+                        "            }" +
+                        "            pointsOnLink {" +
+                        "              points" +
+                        "              length" +
+                        "            }" +
+                        "          }" +
+                        "    }" +
+                        "  }" +
+                        "}";
+
+        HashMap<String, Object> result = graphIndex.getGraphQLExecutionResult(query, router, new HashMap<>(), null, 10000, 10000);
+        Object tripPatternObj = ((Map) ((Map) result.get("data")).get("trip")).get("tripPatterns");
+        assertTrue(tripPatternObj instanceof List);
+        List tripPatterns = (List) tripPatternObj;
+        assertEquals(3, tripPatterns.size());
+    }
+
     public void testGraphQLIntrospectionQuery() {
-        String query = "  query IntrospectionQuery {\n"
-                               + "    __schema {\n"
-                               + "      queryType { name }\n"
-                               + "      mutationType { name }\n"
-                               + "      types {\n"
-                               + "        ...FullType\n"
-                               + "      }\n"
-                               + "      directives {\n"
-                               + "        name\n"
-                               + "        description\n"
-                               + "        args {\n"
-                               + "          ...InputValue\n"
-                               + "        }\n"
-                               + "        onOperation\n"
-                               + "        onFragment\n"
-                               + "        onField\n"
-                               + "      }\n"
-                               + "    }\n"
-                               + "  }\n"
-                               + "\n"
-                               + "  fragment FullType on __Type {\n"
-                               + "    kind\n"
-                               + "    name\n"
-                               + "    description\n"
-                               + "    fields {\n"
-                               + "      name\n"
-                               + "      description\n"
-                               + "      args {\n"
-                               + "        ...InputValue\n"
-                               + "      }\n"
-                               + "      type {\n"
-                               + "        ...TypeRef\n"
-                               + "      }\n"
-                               + "      isDeprecated\n"
-                               + "      deprecationReason\n"
-                               + "    }\n"
-                               + "    inputFields {\n"
-                               + "      ...InputValue\n"
-                               + "    }\n"
-                               + "    interfaces {\n"
-                               + "      ...TypeRef\n"
-                               + "    }\n"
-                               + "    enumValues {\n"
-                               + "      name\n"
-                               + "      description\n"
-                               + "      isDeprecated\n"
-                               + "      deprecationReason\n"
-                               + "    }\n"
-                               + "    possibleTypes {\n"
-                               + "      ...TypeRef\n"
-                               + "    }\n"
-                               + "  }\n"
-                               + "\n"
-                               + "  fragment InputValue on __InputValue {\n"
-                               + "    name\n"
-                               + "    description\n"
-                               + "    type { ...TypeRef }\n"
-                               + "    defaultValue\n"
-                               + "  }\n"
-                               + "\n"
-                               + "  fragment TypeRef on __Type {\n"
-                               + "    kind\n"
-                               + "    name\n"
-                               + "    ofType {\n"
-                               + "      kind\n"
-                               + "      name\n"
-                               + "      ofType {\n"
-                               + "        kind\n"
-                               + "        name\n"
-                               + "        ofType {\n"
-                               + "          kind\n"
-                               + "          name\n"
-                               + "        }\n"
-                               + "      }\n"
-                               + "    }\n"
+        String query = "  query IntrospectionQuery {"
+                               + "    __schema {"
+                               + "      queryType { name }"
+                               + "      mutationType { name }"
+                               + "      types {"
+                               + "        ...FullType"
+                               + "      }"
+                               + "      directives {"
+                               + "        name"
+                               + "        description"
+                               + "        args {"
+                               + "          ...InputValue"
+                               + "        }"
+                               + "        onOperation"
+                               + "        onFragment"
+                               + "        onField"
+                               + "      }"
+                               + "    }"
+                               + "  }"
+                               + ""
+                               + "  fragment FullType on __Type {"
+                               + "    kind"
+                               + "    name"
+                               + "    description"
+                               + "    fields {"
+                               + "      name"
+                               + "      description"
+                               + "      args {"
+                               + "        ...InputValue"
+                               + "      }"
+                               + "      type {"
+                               + "        ...TypeRef"
+                               + "      }"
+                               + "      isDeprecated"
+                               + "      deprecationReason"
+                               + "    }"
+                               + "    inputFields {"
+                               + "      ...InputValue"
+                               + "    }"
+                               + "    interfaces {"
+                               + "      ...TypeRef"
+                               + "    }"
+                               + "    enumValues {"
+                               + "      name"
+                               + "      description"
+                               + "      isDeprecated"
+                               + "      deprecationReason"
+                               + "    }"
+                               + "    possibleTypes {"
+                               + "      ...TypeRef"
+                               + "    }"
+                               + "  }"
+                               + ""
+                               + "  fragment InputValue on __InputValue {"
+                               + "    name"
+                               + "    description"
+                               + "    type { ...TypeRef }"
+                               + "    defaultValue"
+                               + "  }"
+                               + ""
+                               + "  fragment TypeRef on __Type {"
+                               + "    kind"
+                               + "    name"
+                               + "    ofType {"
+                               + "      kind"
+                               + "      name"
+                               + "      ofType {"
+                               + "        kind"
+                               + "        name"
+                               + "        ofType {"
+                               + "          kind"
+                               + "          name"
+                               + "        }"
+                               + "      }"
+                               + "    }"
                                + "  }";
 
         ExecutionResult result = new GraphQL(
