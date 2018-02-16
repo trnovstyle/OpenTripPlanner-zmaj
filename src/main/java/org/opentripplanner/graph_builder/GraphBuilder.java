@@ -102,7 +102,7 @@ public class GraphBuilder implements Runnable {
         try {
             graph = Graph.load(new File(dir, baseGraph), LoadLevel.FULL);
         } catch (Exception e) {
-            throw new RuntimeException("error loading base graph");
+            throw new RuntimeException("error loading base graph: ", e);
         }
     }
 
