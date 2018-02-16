@@ -104,6 +104,7 @@ public class Graph implements Serializable, AddBuilderAnnotation {
     }
 
     private Map<AgencyAndId, Notice> noticeMap = new HashMap<>();
+
     private Map<AgencyAndId, List<Notice>> noticeAssignmentMap = new HashMap<>();
 
     // transit feed validity information in seconds since epoch
@@ -983,6 +984,13 @@ public class Graph implements Serializable, AddBuilderAnnotation {
     }
 
     public Collection<Operator> getOperators() {
+        // To be compatible when the graph is deserialization the
+        // 'operators' must be initialized here. This check can be removed
+        // when OTP version is upgraded.
+        if(operators == null) {
+            operators = new ArrayList<>();
+        }
+
         return operators;
     }
 
