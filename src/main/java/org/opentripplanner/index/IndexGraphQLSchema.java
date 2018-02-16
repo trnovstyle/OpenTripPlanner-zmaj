@@ -760,6 +760,26 @@ public class IndexGraphQLSchema {
                 })
                 .build())
             .field(GraphQLFieldDefinition.newFieldDefinition()
+                .name("alertDetailText")
+                .type(new GraphQLNonNull(Scalars.GraphQLString))
+                .description("Additional details of alert notnull")
+                .dataFetcher(environment -> ((AlertPatch) environment.getSource()).getAlert().alertDetailText)
+                .build())
+            .field(GraphQLFieldDefinition.newFieldDefinition()
+                .name("alertDetailTextTranslations")
+                .type(new GraphQLNonNull(new GraphQLList(new GraphQLNonNull(translatedStringType))))
+                .description("Additional details of alert in all different translations available notnull")
+                .dataFetcher(environment -> {
+                    AlertPatch alertPatch = environment.getSource();
+                    Alert alert = alertPatch.getAlert();
+                    if (alert.alertDetailText instanceof TranslatedString) {
+                        return ((TranslatedString) alert.alertDetailText).getTranslations();
+                    } else {
+                        return emptyList();
+                    }
+                })
+                .build())
+            .field(GraphQLFieldDefinition.newFieldDefinition()
                 .name("alertUrl")
                 .type(Scalars.GraphQLString)
                 .description("Url with more information")
@@ -2802,6 +2822,32 @@ public class IndexGraphQLSchema {
                 .dataFetcher(environment -> ((Leg)environment.getSource()).endTime.getTime().getTime())
                 .build())
             .field(GraphQLFieldDefinition.newFieldDefinition()
+                .name("scheduledStartTime")
+                .type(Scalars.GraphQLLong)
+                .dataFetcher(// startTime is already adjusted for realtime - need to subtract delay to get scheduled time
+                        environment -> ((Leg) environment.getSource()).startTime.getTimeInMillis() -
+                                (1000* ((Leg) environment.getSource()).departureDelay))
+                .build())
+            .field(GraphQLFieldDefinition.newFieldDefinition()
+                .name("realtimeStartTime")
+                .type(Scalars.GraphQLLong)
+                .dataFetcher(
+                        environment -> ((Leg) environment.getSource()).startTime.getTimeInMillis())
+                .build())
+            .field(GraphQLFieldDefinition.newFieldDefinition()
+                .name("scheduledEndTime")
+                .type(Scalars.GraphQLLong)
+                .dataFetcher(// endTime is already adjusted for realtime - need to subtract delay to get scheduled time
+                        environment -> ((Leg)environment.getSource()).endTime.getTimeInMillis() -
+                                (1000 * ((Leg)environment.getSource()).arrivalDelay))
+                .build())
+            .field(GraphQLFieldDefinition.newFieldDefinition()
+                .name("realtimeEndTime")
+                .type(Scalars.GraphQLLong)
+                .dataFetcher(
+                        environment -> ((Leg) environment.getSource()).endTime.getTimeInMillis())
+                .build())
+            .field(GraphQLFieldDefinition.newFieldDefinition()
                 .name("mode")
                 .description("The mode (e.g., Walk) used when traversing this leg.")
                 .type(modeEnum)
@@ -3029,6 +3075,12 @@ public class IndexGraphQLSchema {
                     return results;
                 })
                 .build())
+            .field(GraphQLFieldDefinition.newFieldDefinition()
+                    .name("weight")
+                    .description("Weight of the itinerary. Used for debugging.")
+                    .type(Scalars.GraphQLFloat)
+                    .dataFetcher(environment -> ((Itinerary)environment.getSource()).weight)
+                    .build())
             .build();
 
         planType = GraphQLObjectType.newObject()
@@ -3091,7 +3143,7 @@ public class IndexGraphQLSchema {
     }
 
     /**
-     * Find trip time shorts for all intermediate stops for a lev.
+     * Find trip time shorts for all intermediate stops for a leg.
      *
      */
     private List<TripTimeShort> getIntermediateTripTimeShortsForLeg(GraphIndex index, Leg leg) {
@@ -3130,7 +3182,28 @@ public class IndexGraphQLSchema {
 
         long startTimeSeconds = (leg.startTime.toInstant().toEpochMilli() - serviceDate.getAsDate().getTime()) / 1000;
         long endTimeSeconds = (leg.endTime.toInstant().toEpochMilli() - serviceDate.getAsDate().getTime()) / 1000;
-        return TripTimeShort.fromTripTimes(timetable, trip, serviceDay).stream().filter(tripTime -> intermediateQuayIds.contains(tripTime.stopId))
+        return TripTimeShort.fromTripTimes(timetable, trip, serviceDay).stream().filter(tripTime -> matchesIntermediateQuayOrSiblingQuay(index, intermediateQuayIds, tripTime.stopId))
                        .filter(tripTime -> tripTime.realtimeDeparture >= startTimeSeconds && tripTime.realtimeDeparture <= endTimeSeconds).collect(Collectors.toList());
+    }
+
+    private boolean matchesIntermediateQuayOrSiblingQuay(GraphIndex index, Set<AgencyAndId> intermediateQuayIds, AgencyAndId stopId) {
+        boolean foundMatch = intermediateQuayIds.contains(stopId);
+        if (!foundMatch) {
+            //Check parentStops
+            Stop stop = index.stopForId.get(stopId);
+            if (stop != null && stop.getParentStation() != null) {
+                AgencyAndId parentStopId = new AgencyAndId(stop.getId().getAgencyId(), stop.getParentStation());
+                Stop parentStation = index.stationForId.get(parentStopId);
+                if (parentStation != null) {
+                    Collection<Stop> childStops = index.stopsForParentStation.get(parentStation.getId());
+                    for (Stop childStop : childStops) {
+                        if (intermediateQuayIds.contains(childStop.getId())) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+        return foundMatch;
     }
 }

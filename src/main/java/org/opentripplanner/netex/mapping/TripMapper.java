@@ -43,12 +43,17 @@ public class TripMapper {
         }
 
         if (serviceJourney.getPublicCode() != null) {
-            trip.setTripShortName(serviceJourney.getPublicCode());
+            trip.setTripPublicCode(serviceJourney.getPublicCode());
         }
 
         // Temp fix to prevent frontend from breaking
         if (trip.getTripPrivateCode() == null) {
             trip.setTripPrivateCode("");
+        }
+
+        // Temp fix to prevent frontend from breaking
+        if (trip.getTripPublicCode() == null) {
+            trip.setTripPublicCode("");
         }
 
         // Temp fix to prevent frontend from breaking

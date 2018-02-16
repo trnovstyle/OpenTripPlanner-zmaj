@@ -29,6 +29,8 @@ public final class Trip extends IdentityBean<AgencyAndId> {
 
     private String tripShortName;
 
+    private String tripPublicCode;
+
     private String tripPrivateCode;
 
     private String tripHeadsign;
@@ -115,11 +117,19 @@ public final class Trip extends IdentityBean<AgencyAndId> {
     }
 
     public String getTripShortName() {
-        return tripShortName;
+        return tripPrivateCode != null && !tripPrivateCode.equals("") ? tripPrivateCode : tripPublicCode;
     }
 
     public void setTripShortName(String tripShortName) {
         this.tripShortName = tripShortName;
+    }
+
+    public String getTripPublicCode() {
+        return tripPublicCode;
+    }
+
+    public void setTripPublicCode(String tripPublicCode) {
+        this.tripPublicCode = tripPublicCode;
     }
 
     public String getTripPrivateCode() {

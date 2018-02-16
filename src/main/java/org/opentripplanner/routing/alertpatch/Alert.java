@@ -16,12 +16,11 @@ package org.opentripplanner.routing.alertpatch;
 import org.opentripplanner.util.I18NString;
 import org.opentripplanner.util.NonLocalizedString;
 
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlType;
 import java.io.Serializable;
 import java.util.Date;
 import java.util.HashSet;
-
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlType;
 
 @XmlType
 public class Alert implements Serializable {
@@ -32,6 +31,9 @@ public class Alert implements Serializable {
 
     @XmlElement
     public I18NString alertDescriptionText;
+
+    @XmlElement
+    public I18NString alertDetailText;
 
     @XmlElement
     public I18NString alertUrl;
@@ -71,6 +73,15 @@ public class Alert implements Serializable {
                 return false;
             }
         }
+        if (alertDetailText == null) {
+            if (ao.alertDetailText != null) {
+                return false;
+            }
+        } else {
+            if (!alertDetailText.equals(ao.alertDetailText)) {
+                return false;
+            }
+        }
         if (alertHeaderText == null) {
             if (ao.alertHeaderText != null) {
                 return false;
@@ -89,6 +100,7 @@ public class Alert implements Serializable {
 
     public int hashCode() {
         return (alertDescriptionText == null ? 0 : alertDescriptionText.hashCode())
+                + (alertDetailText == null ? 0 : alertDetailText.hashCode())
                 + (alertHeaderText == null ? 0 : alertHeaderText.hashCode())
                 + (alertUrl == null ? 0 : alertUrl.hashCode());
     }
@@ -98,6 +110,7 @@ public class Alert implements Serializable {
         return "Alert('"
                 + (alertHeaderText != null ? alertHeaderText.toString()
                         : alertDescriptionText != null ? alertDescriptionText.toString()
+                        : alertDetailText != null ? alertDetailText.toString()
                                 : "?") + "')";
     }
 }

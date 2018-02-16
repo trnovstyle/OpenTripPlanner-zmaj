@@ -499,10 +499,10 @@ public abstract class RoutingResource {
             request.setWhiteListedRoutes(whiteListedRoutes);
 
         if (bannedAgencies != null)
-            request.setWhiteListedAgencies(bannedAgencies);
+            request.setBannedAgencies(bannedAgencies);
 
         if (whiteListedAgencies != null)
-            request.setBannedAgencies(whiteListedAgencies);
+            request.setWhiteListedAgencies(whiteListedAgencies);
 
         HashMap<AgencyAndId, BannedStopSet> bannedTripMap = makeBannedTripMap(bannedTrips);
         if (bannedTripMap != null)

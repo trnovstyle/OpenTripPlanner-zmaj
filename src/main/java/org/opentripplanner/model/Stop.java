@@ -54,6 +54,8 @@ public final class Stop extends IdentityBean<AgencyAndId> {
 
     private String platformCode;
 
+    private interchangeWeightingEnumeration weight;
+
     public Stop() {
 
     }
@@ -216,4 +218,11 @@ public final class Stop extends IdentityBean<AgencyAndId> {
     public void setPlatformCode(String platformCode) {
         this.platformCode = platformCode;
     }
+
+    public interchangeWeightingEnumeration getWeight() { return weight; }
+
+    public void setWeight(interchangeWeightingEnumeration weight) { this.weight = weight; }
+
+    public enum interchangeWeightingEnumeration { PREFERRED_INTERCHANGE, RECOMMENDED_INTERCHANGE, INTERCHANGE_ALLOWED,
+        NO_INTERCHANGE }
 }

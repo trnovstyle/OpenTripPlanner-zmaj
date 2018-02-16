@@ -260,8 +260,8 @@ public class StreetEdge extends Edge implements Cloneable {
         StateEditor editor = doTraverse(s0, options, s0.getNonTransitMode());
         State state = (editor == null) ? null : editor.makeState();
         /* Kiss and ride support. Mode transitions occur without the explicit loop edges used in park-and-ride. */
-        if (options.kissAndRide) {
-            if (options.arriveBy) {
+        if (options.kissAndRide || options.rideAndKiss) {
+            if (options.arriveBy ^ options.rideAndKiss) {
                 // Branch search to "unparked" CAR mode ASAP after transit has been used.
                 // Final WALK check prevents infinite recursion.
                 if (s0.isCarParked() && s0.isEverBoarded() && currMode == TraverseMode.WALK) {
@@ -371,11 +371,8 @@ public class StreetEdge extends Edge implements Cloneable {
             if (traverseMode.equals(TraverseMode.WALK)) {
                 // take slopes into account when walking
                 // FIXME: this causes steep stairs to be avoided. see #1297.
-                double costs = ElevationUtils.getWalkCostsForSlope(getDistance(), getMaxSlope());
-                // as the cost walkspeed is assumed to be for 4.8km/h (= 1.333 m/sec) we need to adjust
-                // for the walkspeed set by the user
-                double elevationUtilsSpeed = 4.0 / 3.0;
-                weight = costs * (elevationUtilsSpeed / speed);
+                double costs = getSlopeWalkSpeedEffectiveLength();
+                weight = costs / speed;
                 time = weight; //treat cost as time, as in the current model it actually is the same (this can be checked for maxSlope == 0)
 
                 if (getStreetClass() == CLASS_STREET || getPermission().allows(TraverseMode.CAR)) {
@@ -492,7 +489,7 @@ public class StreetEdge extends Edge implements Cloneable {
         }
 
         /* On the pre-kiss/pre-park leg, limit both walking and driving, either soft or hard. */
-        if (options.kissAndRide || options.parkAndRide) {
+        if (options.kissAndRide || options.parkAndRide || options.rideAndKiss) {
             if (options.arriveBy) {
                 if (!s0.isCarParked()) s1.incrementPreTransitTime(roundedTime);
             } else {
@@ -598,6 +595,10 @@ public class StreetEdge extends Edge implements Cloneable {
     }
 
     public double getSlopeWorkCostEffectiveLength() {
+        return getDistance();
+    }
+
+    public double getSlopeWalkSpeedEffectiveLength() {
         return getDistance();
     }
 

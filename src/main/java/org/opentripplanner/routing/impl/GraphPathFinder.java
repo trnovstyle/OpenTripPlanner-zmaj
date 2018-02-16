@@ -300,9 +300,10 @@ public class GraphPathFinder {
 
         RoutingRequest request = createReversedRequest(originalReq, options, fromVertex, toVertex,
                 arrDepTime, new EuclideanRemainingWeightHeuristic());
-        if((originalReq.parkAndRide || originalReq.kissAndRide) && !originalReq.arriveBy){
+        if((originalReq.parkAndRide || originalReq.kissAndRide || originalReq.rideAndKiss) && !originalReq.arriveBy){
             request.parkAndRide = false;
             request.kissAndRide = false;
+            request.rideAndKiss = false;
             request.modes.setCar(false);
         }
         request.maxWalkDistance = CLAMP_MAX_WALK;
@@ -317,9 +318,11 @@ public class GraphPathFinder {
             request.parkAndRide = false;
             request.kissAndRide = false;
             request.modes.setCar(false);
+        } else if(originalReq.rideAndKiss && !originalReq.arriveBy) {
+            request.rideAndKiss = false;
+            request.modes.setCar(true);
         }
         return request;
-
     }
 
     private RoutingRequest createReversedRequest(RoutingRequest originalReq, RoutingRequest options, Vertex fromVertex,
@@ -502,6 +505,9 @@ public class GraphPathFinder {
             // add the next subpath
             for (Edge e : path.edges) {
                 lastState = e.traverse(lastState);
+                if (lastState==null){
+                    LOG.warn("About to add null lastState to newPath. This may cause nullPointer in next iteration? Caused by traversing edge: " + e);
+                }
                 newPath.edges.add(e);
                 newPath.states.add(lastState);
             }

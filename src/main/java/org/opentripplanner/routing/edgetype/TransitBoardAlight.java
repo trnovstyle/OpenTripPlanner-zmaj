@@ -143,6 +143,8 @@ public class TransitBoardAlight extends TablePatternEdge implements OnboardEdge 
         if (s0.backEdge instanceof TransitBoardAlight) {
             return null;
         }
+        /* We assume all trips in a pattern are on the same route. Check if that route is banned. */
+        if (options.routeIsBanned(this.getPattern().route)) return null;
 
         /* If the user requested a wheelchair accessible trip, check whether and this stop is not accessible. */
         if (options.wheelchairAccessible && ! getPattern().wheelchairAccessible(stopIndex)) {
@@ -252,12 +254,6 @@ public class TransitBoardAlight extends TablePatternEdge implements OnboardEdge 
             if (!options.modes.get(modeMask)) {
                 return null;
             }
-
-            /* We assume all trips in a pattern are on the same route. Check if that route is banned. */
-            if (options.bannedRoutes != null && options.bannedRoutes.matches(getPattern().route)) {
-                // TODO: remove route checks in/after the trip search
-                return null;
-            }
             
             /*
              * Find the next boarding/alighting time relative to the current State. Check lists of
@@ -309,7 +305,7 @@ public class TransitBoardAlight extends TablePatternEdge implements OnboardEdge 
             
             /* check if route and/or Agency are banned for this plan */
             // FIXME this should be done WHILE searching for a trip.
-            if (options.tripIsBanned(trip)) return null;
+            //if (options.tripIsBanned(trip)) return null;
 
             /* Check if route is preferred by the user. */
             long preferences_penalty = options.preferencesPenaltyForRoute(getPattern().route);
@@ -323,6 +319,9 @@ public class TransitBoardAlight extends TablePatternEdge implements OnboardEdge 
                                    getStop(), s0.getPreviousTrip(), trip, boarding);
                 transferPenalty  = transferTable.determineTransferPenalty(transferTime, 
                                    options.nonpreferredTransferPenalty);
+                // Add transfer penalties based on both stops involved in the transfer
+                transferPenalty += transferTable.determineTransferPenaltyBasedOnStops(s0.getPreviousStop(), options);
+                transferPenalty += transferTable.determineTransferPenaltyBasedOnStops(getStop(), options);
             }            
 
             /* Found a trip to board. Now make the child state. */
@@ -398,6 +397,8 @@ public class TransitBoardAlight extends TablePatternEdge implements OnboardEdge 
             if (!options.modes.get(modeMask)) {
                 return Double.POSITIVE_INFINITY;
             }
+                        /* We assume all trips in a pattern are on the same route. Check if that route is banned. */
+            if (options.routeIsBanned(this.getPattern().route)) return Double.POSITIVE_INFINITY;
             BitSet services = getPattern().services;
             for (ServiceDay sd : options.rctx.serviceDays) {
                 if (sd.anyServiceRunning(services)) return 0;

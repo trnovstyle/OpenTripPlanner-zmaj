@@ -17,23 +17,8 @@ import com.google.common.base.Preconditions;
 import com.google.transit.realtime.GtfsRealtime.TripDescriptor;
 import com.google.transit.realtime.GtfsRealtime.TripUpdate;
 import com.google.transit.realtime.GtfsRealtime.TripUpdate.StopTimeUpdate;
+import org.opentripplanner.model.*;
 import org.opentripplanner.model.calendar.ServiceDate;
-import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.BitSet;
-import java.util.Calendar;
-import java.util.List;
-import java.util.Set;
-import java.util.TimeZone;
-import java.util.concurrent.locks.ReentrantLock;
-
-import org.opentripplanner.model.Agency;
-import org.opentripplanner.model.AgencyAndId;
-import org.opentripplanner.model.Route;
-import org.opentripplanner.model.Stop;
-import org.opentripplanner.model.StopTime;
-import org.opentripplanner.model.Trip;
-import org.opentripplanner.model.StopPattern;
 import org.opentripplanner.routing.edgetype.Timetable;
 import org.opentripplanner.routing.edgetype.TimetableSnapshot;
 import org.opentripplanner.routing.edgetype.TripPattern;
@@ -47,8 +32,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.org.siri.siri20.*;
 
+import java.text.ParseException;
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * This class should be used to create snapshots of lookup tables of realtime data. This is
@@ -456,7 +443,7 @@ public class TimetableSnapshotSource {
 
         if (trips == null || trips.isEmpty()) {
             if (keepLogging) {
-                boolean isMonitored = activity.getMonitoredVehicleJourney().isMonitored();
+                Boolean isMonitored = activity.getMonitoredVehicleJourney().isMonitored();
                 String lineRef = (activity.getMonitoredVehicleJourney().getLineRef() != null ? activity.getMonitoredVehicleJourney().getLineRef().getValue():null);
                 String vehicleRef = (activity.getMonitoredVehicleJourney().getVehicleRef() != null ? activity.getMonitoredVehicleJourney().getVehicleRef().getValue():null);
                 String tripId =  (activity.getMonitoredVehicleJourney().getCourseOfJourneyRef() != null ? activity.getMonitoredVehicleJourney().getCourseOfJourneyRef().getValue():null);
@@ -528,7 +515,7 @@ public class TimetableSnapshotSource {
         String vehicleRef = (estimatedVehicleJourney.getVehicleRef() != null ? estimatedVehicleJourney.getVehicleRef().getValue():null);
 
         if (trips == null || trips.isEmpty()) {
-            LOG.info("No trips found for EstimatedVehicleJourney. [operator={}, vehicleModes={}, lineRef={}, vehicleRef={}]", operatorRef, vehicleModes, lineRef, vehicleRef);
+            LOG.debug("No trips found for EstimatedVehicleJourney. [operator={}, vehicleModes={}, lineRef={}, vehicleRef={}]", operatorRef, vehicleModes, lineRef, vehicleRef);
             return false;
         }
 
@@ -536,7 +523,7 @@ public class TimetableSnapshotSource {
         Set<Trip> matchingTrips = getTripForJourney(trips, estimatedVehicleJourney);
 
         if (matchingTrips == null || matchingTrips.isEmpty()) {
-            LOG.info("Found no matching trip for SIRI ET (serviceDate, departureTime). [operator={}, vehicleModes={}, lineRef={}, vehicleJourneyRef={}]", operatorRef, vehicleModes, lineRef, vehicleRef);
+            LOG.debug("Found no matching trip for SIRI ET (serviceDate, departureTime). [operator={}, vehicleModes={}, lineRef={}, vehicleJourneyRef={}]", operatorRef, vehicleModes, lineRef, vehicleRef);
             return false;
         }
 
@@ -555,7 +542,7 @@ public class TimetableSnapshotSource {
         }
 
         if (patterns.isEmpty()) {
-            LOG.info("Found no matching pattern for SIRI ET (firstStopId, lastStopId, numberOfStops). [operator={}, vehicleModes={}, lineRef={}, vehicleRef={}]", operatorRef, vehicleModes, lineRef, vehicleRef);
+            LOG.debug("Found no matching pattern for SIRI ET (firstStopId, lastStopId, numberOfStops). [operator={}, vehicleModes={}, lineRef={}, vehicleRef={}]", operatorRef, vehicleModes, lineRef, vehicleRef);
             return false;
         }
 
@@ -606,7 +593,7 @@ public class TimetableSnapshotSource {
 
                     LOG.debug("Applied realtime data for trip {}", trip.getId().getId());
                 } else {
-                    LOG.info("Ignoring update since number of stops do not match");
+                    LOG.debug("Ignoring update since number of stops do not match");
                 }
             }
         }

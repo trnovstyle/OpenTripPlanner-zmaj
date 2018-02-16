@@ -30,6 +30,8 @@ import org.opentripplanner.common.MavenVersion;
 import org.opentripplanner.common.model.GenericLocation;
 import org.opentripplanner.common.model.NamedPlace;
 import org.opentripplanner.routing.edgetype.StreetEdge;
+import org.opentripplanner.routing.edgetype.TablePatternEdge;
+import org.opentripplanner.routing.edgetype.TripPattern;
 import org.opentripplanner.routing.error.TrivialPathException;
 import org.opentripplanner.routing.graph.Edge;
 import org.opentripplanner.routing.graph.Graph;
@@ -411,6 +413,18 @@ public class RoutingRequest implements Cloneable, Serializable {
     public boolean disableRemainingWeightHeuristic = false;
 
     /**
+     * Set the penalty for transferring at unpreffered stops
+     */
+
+    public int preferredInterchangePenalty = 0;
+
+    public int recommendedInterchangePenalty = 0;
+
+    public int interchangeAllowedPenalty = 0;
+
+    public int noInterchangePenalty = 0;
+
+    /**
      * The routing context used to actually carry out this search. It is important to build States from TraverseOptions
      * rather than RoutingContexts,and just keep a reference to the context in the TraverseOptions, rather than using
      * RoutingContexts for everything because in some testing and graph building situations we need to build a bunch of
@@ -450,6 +464,7 @@ public class RoutingRequest implements Cloneable, Serializable {
     public boolean bikeParkAndRide = false;
     public boolean parkAndRide  = false;
     public boolean kissAndRide  = false;
+    public boolean rideAndKiss  = false;
 
     /* Whether we are in "long-distance mode". This is currently a server-wide setting, but it could be made per-request. */
     // TODO remove
@@ -1189,23 +1204,27 @@ public class RoutingRequest implements Cloneable, Serializable {
     public void banTrip(AgencyAndId trip) {
         bannedTrips.put(trip, BannedStopSet.ALL);
     }
-    
-    /** 
-     * tripIsBanned is a misnomer: this checks whether the agency or route are banned.
-     * banning of individual trips is actually performed inside the trip search, 
-     * in TripTimes.tripAcceptable.
-     */
-    public boolean tripIsBanned(Trip trip) {
+
+    public boolean edgeIsBanned(Edge e) {
+        if (e instanceof TablePatternEdge) {
+            TripPattern tripPattern = ((TablePatternEdge) e).getPattern();
+            if (tripPattern != null & tripPattern.route != null) {
+                return routeIsBanned(tripPattern.route);
+            }
+        }
+        return false;
+    }
+
+    public boolean routeIsBanned(Route route) {
         /* check if agency is banned for this plan */
-        if (bannedAgencies != null) {
-            if (bannedAgencies.contains(trip.getRoute().getAgency().getId())) {
+        if (bannedAgencies != null && !bannedAgencies.isEmpty()) {
+            if (bannedAgencies.contains(route.getAgency().getId())) {
                 return true;
             }
         }
 
         /* check if route banned for this plan */
-        if (bannedRoutes != null) {
-            Route route = trip.getRoute();
+        if (bannedRoutes != null && !bannedRoutes.isEmpty()) {
             if (bannedRoutes.matches(route)) {
                 return true;
             }
@@ -1217,7 +1236,7 @@ public class RoutingRequest implements Cloneable, Serializable {
         /* check if agency is whitelisted for this plan */
         if (whiteListedAgencies != null && whiteListedAgencies.size() > 0) {
             whiteListInUse = true;
-            if (whiteListedAgencies.contains(trip.getRoute().getAgency().getId())) {
+            if (whiteListedAgencies.contains(route.getAgency().getId())) {
                 whiteListed = true;
             }
         }
@@ -1225,7 +1244,6 @@ public class RoutingRequest implements Cloneable, Serializable {
         /* check if route is whitelisted for this plan */
         if (whiteListedRoutes != null && !whiteListedRoutes.isEmpty()) {
             whiteListInUse = true;
-            Route route = trip.getRoute();
             if (whiteListedRoutes.matches(route)) {
                 whiteListed = true;
             }

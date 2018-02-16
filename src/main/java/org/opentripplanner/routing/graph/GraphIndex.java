@@ -39,6 +39,7 @@ import org.opentripplanner.routing.core.ServiceDay;
 import org.opentripplanner.routing.core.State;
 import org.opentripplanner.routing.core.TraverseMode;
 import org.opentripplanner.routing.edgetype.*;
+import org.opentripplanner.routing.impl.AlertPatchServiceImpl;
 import org.opentripplanner.routing.services.AlertPatchService;
 import org.opentripplanner.routing.spt.DominanceFunction;
 import org.opentripplanner.routing.spt.ShortestPathTree;
@@ -106,6 +107,8 @@ public class GraphIndex {
     /* Should eventually be replaced with new serviceId indexes. */
     private final CalendarService calendarService;
     private final Map<AgencyAndId,Integer> serviceCodes;
+
+    private AlertPatchService alertPatchService;
 
     /* Full-text search extensions */
     public LuceneIndex luceneIndex;
@@ -1040,104 +1043,56 @@ public class GraphIndex {
         return content;
     }
 
-    private Stream<AlertPatch> getAlertPatchStream() {
+    private AlertPatchService getSiriAlertPatchService() {
         if (graph.updaterManager == null) {
-            return Stream.empty();
+            return new AlertPatchServiceImpl(graph);
         }
+        if (alertPatchService == null) {
+            alertPatchService = graph.updaterManager.getUpdaterList().stream()
+                    .filter(SiriSXUpdater.class::isInstance)
+                    .map(SiriSXUpdater.class::cast)
+                    .map(SiriSXUpdater::getAlertPatchService).findFirst().get();
 
-        Stream<AlertPatch> gtfsAlertPatchStream = graph.updaterManager.getUpdaterList().stream()
-                .filter(GtfsRealtimeAlertsUpdater.class::isInstance)
-                .map(GtfsRealtimeAlertsUpdater.class::cast)
-                .map(GtfsRealtimeAlertsUpdater::getAlertPatchService)
-                .map(AlertPatchService::getAllAlertPatches)
-                .flatMap(Collection::stream);
-
-        Stream<AlertPatch> siriAlertPatchSteam = graph.updaterManager.getUpdaterList().stream()
-                .filter(SiriSXUpdater.class::isInstance)
-                .map(SiriSXUpdater.class::cast)
-                .map(SiriSXUpdater::getAlertPatchService)
-                .map(AlertPatchService::getAllAlertPatches)
-                .flatMap(Collection::stream);
-
-        return Stream.concat(gtfsAlertPatchStream, siriAlertPatchSteam);
+            if (alertPatchService == null) {
+                alertPatchService = graph.updaterManager.getUpdaterList().stream()
+                        .filter(GtfsRealtimeAlertsUpdater.class::isInstance)
+                        .map(GtfsRealtimeAlertsUpdater.class::cast)
+                        .map(GtfsRealtimeAlertsUpdater::getAlertPatchService).findFirst().get();
+            }
+        }
+        return alertPatchService;
     }
 
-    public List<AlertPatch> getAlerts() {
-        return getAlertPatchStream()
-            .collect(Collectors.toList());
+    public Collection<AlertPatch> getAlerts() {
+        return getSiriAlertPatchService().getAllAlertPatches();
     }
 
-    public List<AlertPatch> getAlertsForRoute(Route route) {
-        return getAlertPatchStream()
-            .filter(alertPatch -> alertPatch.getStop() == null)
-            .filter(alertPatch -> alertPatch.getRoute() != null)
-            .filter(alertPatch -> route.getId().equals(alertPatch.getRoute()))
-            .collect(Collectors.toList());
+    public Collection<AlertPatch> getAlertsForRoute(Route route) {
+        return getSiriAlertPatchService().getRoutePatches(route.getId());
     }
 
-    public List<AlertPatch> getAlertsForTrip(Trip trip) {
-        return getAlertPatchStream()
-            .filter(alertPatch -> alertPatch.getTrip() != null)
-            .filter(alertPatch -> trip.getId().equals(alertPatch.getTrip()))
-            .collect(Collectors.toList());
+    public Collection<AlertPatch> getAlertsForTrip(Trip trip) {
+        return getSiriAlertPatchService().getTripPatches(trip.getId());
     }
 
-    public List<AlertPatch> getAlertsForPattern(TripPattern pattern) {
-        return getAlertPatchStream()
-            .filter(alertPatch -> alertPatch.getTripPatterns() != null)
-            .filter(alertPatch -> alertPatch.getTripPatterns().stream().anyMatch(tripPattern -> pattern.code.equals(tripPattern.code)))
-            .collect(Collectors.toList());
+    public Collection<AlertPatch> getAlertsForPattern(TripPattern pattern) {
+        return getSiriAlertPatchService().getTripPatternPatches(pattern);
     }
 
-    public List<AlertPatch> getAlertsForAgency(Agency agency) {
-        return getAlertPatchStream()
-            .filter(alertPatch -> alertPatch.getAgency() != null)
-            .filter(alertPatch -> agency.getId().equals(alertPatch.getAgency()))
-            .collect(Collectors.toList());
+    public Collection<AlertPatch> getAlertsForAgency(Agency agency) {
+        return getSiriAlertPatchService().getAgencyPatches(agency.getId());
     }
 
     public AlertPatch getAlertForId(String id) {
-        return getAlertPatchStream().filter(alertPatch -> id.equals(alertPatch.getId())).findFirst().get();
+        return getSiriAlertPatchService().getPatchById(id);
     }
 
-    public List<AlertPatch> getAlertsForStop(Stop stop) {
-        List<AlertPatch> stopAlerts = getAlertPatchStream()
-                .filter(alertPatch -> alertPatch.getStop() != null)
-                .filter(alertPatch -> alertPatch.getRoute() == null)
-                .filter(alertPatch -> stop.getId().equals(alertPatch.getStop()))
-                .distinct()
-                .collect(Collectors.toList());
-
-        if (stopAlerts == null || stopAlerts.isEmpty() && stop.getParentStation() != null) {
-            //Searching for alerts on parentstop
-            stopAlerts = getAlertPatchStream()
-                    .filter(alertPatch -> alertPatch.getStop() != null)
-                    .filter(alertPatch -> alertPatch.getRoute() == null)
-                    .filter(alertPatch -> stop.getParentStation().equals(alertPatch.getStop().getId()))
-                    .distinct()
-                    .collect(Collectors.toList());
-        }
-        return stopAlerts;
+    public Collection<AlertPatch> getAlertsForStop(Stop stop) {
+        return getSiriAlertPatchService().getStopPatches(stop.getId());
     }
 
-    public List<AlertPatch> getAlertsForStopAndRoute(Stop stop, Route route) {
-        List<AlertPatch> stopAlerts = getAlertPatchStream()
-                .filter(alertPatch -> alertPatch.getStop() != null)
-                .filter(alertPatch -> alertPatch.getRoute() != null)
-                .filter(alertPatch -> stop.getId().equals(alertPatch.getStop()) && route.getId().equals(alertPatch.getRoute()))
-                .distinct()
-                .collect(Collectors.toList());
-
-        if (stopAlerts == null || stopAlerts.isEmpty() && stop.getParentStation() != null) {
-            //Searching for alerts on parentstop
-            stopAlerts = getAlertPatchStream()
-                    .filter(alertPatch -> alertPatch.getStop() != null)
-                    .filter(alertPatch -> alertPatch.getRoute() != null)
-                    .filter(alertPatch -> stop.getParentStation().equals(alertPatch.getStop().getId()) && route.getId().equals(alertPatch.getRoute()))
-                    .distinct()
-                    .collect(Collectors.toList());
-        }
-        return stopAlerts;
+    public Collection<AlertPatch> getAlertsForStopAndRoute(Stop stop, Route route) {
+        return getSiriAlertPatchService().getStopAndRoutePatches(stop.getId(), route.getId());
     }
 
     /**

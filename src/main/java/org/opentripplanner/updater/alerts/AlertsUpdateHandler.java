@@ -78,12 +78,13 @@ public class AlertsUpdateHandler {
         for (SituationExchangeDeliveryStructure sxDelivery : delivery.getSituationExchangeDeliveries()) {
             SituationExchangeDeliveryStructure.Situations situations = sxDelivery.getSituations();
             if (situations != null) {
+                long t1 = System.currentTimeMillis();
                 AtomicInteger addedAlertCounter = new AtomicInteger(0);
                 AtomicInteger expiredAlertCounter = new AtomicInteger(0);
                 for (PtSituationElement sxElement : situations.getPtSituationElements()) {
                     handleAlert(sxElement, addedAlertCounter, expiredAlertCounter);
                 }
-                log.info("Added {} alerts, expired {} alerts based on {} situations, current alert-count: {}", addedAlertCounter.intValue(), expiredAlertCounter.intValue(), situations.getPtSituationElements().size(), alertPatchService.getAllAlertPatches().size());
+                log.info("Added {} alerts, expired {} alerts based on {} situations, current alert-count: {}, elapsed time {}ms", addedAlertCounter.intValue(), expiredAlertCounter.intValue(), situations.getPtSituationElements().size(), alertPatchService.getAllAlertPatches().size(), (System.currentTimeMillis()-t1));
             }
         }
     }
@@ -91,17 +92,20 @@ public class AlertsUpdateHandler {
     private void handleAlert(PtSituationElement situation, AtomicInteger addedAlertCounter, AtomicInteger expiredAlertCounter) {
         Alert alert = new Alert();
 
-        if (situation.getDescriptions() != null && !situation.getDescriptions().isEmpty()) {
-            alert.alertDescriptionText = getTranslatedString(situation.getDescriptions());
-        } else {
-            alert.alertDescriptionText = getTranslatedString(situation.getDetails());
-        }
+        alert.alertDescriptionText = getTranslatedString(situation.getDescriptions());
+        alert.alertDetailText = getTranslatedString(situation.getDetails());
         alert.alertHeaderText = getTranslatedString(situation.getSummaries());
 
+        Set<String> idsToExpire = new HashSet<>();
+        boolean expireSituation = (situation.getProgress() != null &&
+                situation.getProgress().equals(WorkflowStatusEnumeration.CLOSED));
+
         //ROR-54
-        if ((alert.alertHeaderText == null || alert.alertHeaderText.toString().isEmpty()) &&
-                (alert.alertDescriptionText == null || alert.alertDescriptionText.toString().isEmpty())) {
-            log.info("Empty Alert - ignoring situationNumber: {}", situation.getSituationNumber() != null ? situation.getSituationNumber().getValue():null);
+        if (!expireSituation && //If situation is closed, it must be allowed - it will remove already existing alerts
+                ((alert.alertHeaderText == null || alert.alertHeaderText.toString().isEmpty()) &&
+                (alert.alertDescriptionText == null || alert.alertDescriptionText.toString().isEmpty()) &&
+                (alert.alertDetailText == null || alert.alertDetailText.toString().isEmpty()))) {
+            log.debug("Empty Alert - ignoring situationNumber: {}", situation.getSituationNumber() != null ? situation.getSituationNumber().getValue():null);
             return;
         }
 
@@ -143,10 +147,6 @@ public class AlertsUpdateHandler {
         }
 
         String paddedSituationNumber = situationNumber + ":";
-
-        Set<String> idsToExpire = new HashSet<>();
-        boolean expireSituation = (situation.getProgress() != null &&
-                situation.getProgress().equals(WorkflowStatusEnumeration.CLOSED));
 
         Set<AlertPatch> patches = new HashSet<>();
         AffectsScopeStructure affectsStructure = situation.getAffects();
@@ -350,6 +350,7 @@ public class AlertsUpdateHandler {
                                     Alert vehicleJourneyAlert = new Alert();
                                     vehicleJourneyAlert.alertHeaderText = alert.alertHeaderText;
                                     vehicleJourneyAlert.alertDescriptionText = alert.alertDescriptionText;
+                                    vehicleJourneyAlert.alertDetailText = alert.alertDetailText;
                                     vehicleJourneyAlert.alertUrl = alert.alertUrl;
                                     vehicleJourneyAlert.effectiveStartDate = serviceDate.getAsDate();
                                     vehicleJourneyAlert.effectiveEndDate = serviceDate.next().getAsDate();
@@ -399,6 +400,8 @@ public class AlertsUpdateHandler {
                 patchIds.add(patch.getId());
                 alertPatchService.apply(patch);
             }
+        } else if (expireSituation) {
+            log.debug("Expired non-existing alert - ignoring situation with situationNumber {}", situationNumber);
         } else {
             log.info("No match found for Alert - ignoring situation with situationNumber {}", situationNumber);
         }

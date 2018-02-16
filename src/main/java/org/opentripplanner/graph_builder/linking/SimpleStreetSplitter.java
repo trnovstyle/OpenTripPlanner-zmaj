@@ -143,8 +143,8 @@ public class SimpleStreetSplitter {
     }
 
     /** Link all relevant vertices to the street network */
-    public void link () {	
-        for (Vertex v : graph.getVertices()) {
+    public void link () {
+        for (Vertex v :new ArrayList<>(graph.getVertices())) {
             if (v instanceof TransitStop || v instanceof BikeRentalStationVertex || v instanceof BikeParkVertex || v instanceof ParkAndRideVertex) {
                 boolean alreadyLinked = v.getOutgoing().stream().anyMatch(e -> e instanceof StreetTransitLink);
                 if (alreadyLinked) continue;

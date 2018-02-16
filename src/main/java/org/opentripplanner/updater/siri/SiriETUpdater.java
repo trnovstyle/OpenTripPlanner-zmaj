@@ -147,7 +147,7 @@ public class SiriETUpdater extends PollingGraphUpdater {
      * applies those updates to the graph.
      */
     @Override
-    public void runPolling() {
+    public void runPolling() throws Exception {
         // Get update lists from update source
         Siri updates = updateSource.getUpdates();
         boolean fullDataset = updateSource.getFullDatasetValueOfLastUpdates();
@@ -156,7 +156,12 @@ public class SiriETUpdater extends PollingGraphUpdater {
             // Handle trip updates via graph writer runnable
             EstimatedTimetableGraphWriterRunnable runnable =
                     new EstimatedTimetableGraphWriterRunnable(fullDataset, updates.getServiceDelivery().getEstimatedTimetableDeliveries());
-            updaterManager.execute(runnable);
+            if (blockReadinessUntilInitialized && !isInitialized) {
+                LOG.info("Execute blocking tripupdates");
+                updaterManager.executeBlocking(runnable);
+            } else {
+                updaterManager.execute(runnable);
+            }
         }
         if (updates != null &&
                 updates.getServiceDelivery() != null &&

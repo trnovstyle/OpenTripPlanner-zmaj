@@ -31,7 +31,7 @@ public class NoticeAssignmentMapper {
 
                     org.opentripplanner.model.NoticeAssignment otpNoticeAssignment = new org.opentripplanner.model.NoticeAssignment();
 
-                    otpNoticeAssignment.setId(AgencyAndIdFactory.createAgencyAndId(netexNoticeAssignment.getId()));
+                    otpNoticeAssignment.setId(AgencyAndIdFactory.createAgencyAndId(netexNoticeAssignment.getId() + "-" + passingTime.getId()));
                     otpNoticeAssignment.setNoticeId(AgencyAndIdFactory.createAgencyAndId(netexNoticeAssignment.getNoticeRef().getRef()));
                     otpNoticeAssignment.setElementId(AgencyAndIdFactory.createAgencyAndId(passingTime.getId()));
 
