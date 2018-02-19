@@ -1180,7 +1180,41 @@ public class TransmodelIndexGraphQLSchema {
                                 .get(((TripTimeShort) environment.getSource()).stopId))
                         .build())
                 .field(GraphQLFieldDefinition.newFieldDefinition()
+                               .name("aimedArrivalTime")
+                               .description("Scheduled time of arrival at quay. Not affected by read time updated")
+                               .type(dateTimeScalar)
+                               .dataFetcher(
+                                       environment -> 1000 * (((TripTimeShort) environment.getSource()).serviceDay +
+                                                                      ((TripTimeShort) environment.getSource()).scheduledArrival))
+                               .build())
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                               .name("expectedArrivalTime")
+                               .type(dateTimeScalar)
+                               .description("Expected time of arrival at quay. Updated with real time information if available")
+                               .dataFetcher(
+                                       environment -> 1000 * (((TripTimeShort) environment.getSource()).serviceDay +
+                                                                      ((TripTimeShort) environment.getSource()).realtimeArrival))
+                               .build())
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                               .name("aimedDepartureTime")
+                               .description("Scheduled time of departure from quay. Not affected by read time updated")
+                               .type(dateTimeScalar)
+                               .dataFetcher(
+                                       environment -> 1000 * (((TripTimeShort) environment.getSource()).serviceDay +
+                                                                      ((TripTimeShort) environment.getSource()).scheduledDeparture))
+                               .build())
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                               .name("expectedDepartureTime")
+                               .type(dateTimeScalar)
+                               .description("Expected time of departure from quay. Updated with real time information if available")
+                               .dataFetcher(
+                                       environment -> 1000 * (((TripTimeShort) environment.getSource()).serviceDay +
+                                                                      ((TripTimeShort) environment.getSource()).realtimeDeparture))
+                               .build())
+
+                .field(GraphQLFieldDefinition.newFieldDefinition()
                         .name("aimedArrival")
+                        .deprecate("Use aimedArrivalTime")
                         .description("Scheduled time of arrival at quay. Not affected by read time updated")
                         .type(timeType)
                         .dataFetcher(
@@ -1188,6 +1222,7 @@ public class TransmodelIndexGraphQLSchema {
                         .build())
                 .field(GraphQLFieldDefinition.newFieldDefinition()
                         .name("expectedArrival")
+                        .deprecate("Use expectedArrivalTime")
                         .type(timeType)
                         .description("Expected time of arrival at quay. Updated with real time information if available")
                         .dataFetcher(
@@ -1195,6 +1230,7 @@ public class TransmodelIndexGraphQLSchema {
                         .build())
                 .field(GraphQLFieldDefinition.newFieldDefinition()
                         .name("aimedDeparture")
+                        .deprecate("Use aimedDepartureTime")
                         .description("Scheduled time of departure from quay. Not affected by read time updated")
                         .type(timeType)
                         .dataFetcher(
@@ -1202,6 +1238,7 @@ public class TransmodelIndexGraphQLSchema {
                         .build())
                 .field(GraphQLFieldDefinition.newFieldDefinition()
                         .name("expectedDeparture")
+                        .deprecate("Use expectedDepartureTime")
                         .type(timeType)
                         .description("Expected time of departure from quay. Updated with real time information if available")
                         .dataFetcher(
