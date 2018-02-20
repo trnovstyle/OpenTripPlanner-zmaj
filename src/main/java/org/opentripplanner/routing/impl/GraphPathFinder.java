@@ -174,7 +174,7 @@ public class GraphPathFinder {
                 try {
                     newPaths = compactLegsByReversedSearch(aStar, originalReq, options, newPaths, timeout, reversedSearchHeuristic);
                 } catch (Exception e) {
-                    LOG.warn("CompactLegsByReversedSearch failed.", e, originalReq);
+                    LOG.warn("CompactLegsByReversedSearch failed on request: " + originalReq.toString());
                 }
             }
 
