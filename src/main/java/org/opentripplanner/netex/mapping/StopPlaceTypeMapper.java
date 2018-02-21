@@ -58,7 +58,7 @@ public class StopPlaceTypeMapper {
                             case TELECABIN:
                                 return 1301;
                             default:
-                                return 1300;
+                                return 1700;
                         }
                     } else {
                         return 1700;
@@ -100,7 +100,7 @@ public class StopPlaceTypeMapper {
                                 return 401;
                         }
                     } else {
-                        return 400;
+                        return 401;
                     }
                 case RAIL:
                     if (stopPlace.getRailSubmode() != null) {
@@ -116,9 +116,9 @@ public class StopPlaceTypeMapper {
                             case LONG_DISTANCE:
                                 return 102;
                             case NIGHT_RAIL:
-                                return 0;
+                                return 105;
                             case REGIONAL_RAIL:
-                                return 103;
+                                return 106;
                             case TOURIST_RAILWAY:
                                 return 107;
                             default:
