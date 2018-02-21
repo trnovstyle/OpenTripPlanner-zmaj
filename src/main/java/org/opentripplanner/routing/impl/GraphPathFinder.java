@@ -24,7 +24,6 @@ import org.opentripplanner.routing.algorithm.strategies.RemainingWeightHeuristic
 import org.opentripplanner.routing.algorithm.strategies.TrivialRemainingWeightHeuristic;
 import org.opentripplanner.routing.core.RoutingRequest;
 import org.opentripplanner.routing.core.State;
-import org.opentripplanner.routing.core.TraverseMode;
 import org.opentripplanner.routing.edgetype.LegSwitchingEdge;
 import org.opentripplanner.routing.edgetype.TransitBoardAlight;
 import org.opentripplanner.routing.error.PathNotFoundException;
@@ -251,9 +250,7 @@ public class GraphPathFinder {
             // find the path from transitStop to origin/destination
             Vertex fromVertex = options.arriveBy ? options.rctx.fromVertex : transitStop;
             Vertex toVertex = options.arriveBy ? transitStop : options.rctx.toVertex;
-            RoutingRequest optionsWalk = options.clone();
-            optionsWalk.setMode(TraverseMode.WALK);
-            RoutingRequest reversedTransitRequest = createReversedTransitRequest(originalReq, optionsWalk, fromVertex, toVertex,
+            RoutingRequest reversedTransitRequest = createReversedTransitRequest(originalReq, options, fromVertex, toVertex,
                     arrDepTime, new EuclideanRemainingWeightHeuristic());
             aStar.getShortestPathTree(reversedTransitRequest, timeout);
             List<GraphPath> pathsToTarget = aStar.getPathsToTarget();
@@ -343,7 +340,6 @@ public class GraphPathFinder {
         reversedOptions.maxTransfers = 4;
         reversedOptions.longDistance = true;
         reversedOptions.bannedTrips = options.bannedTrips;
-        reversedOptions.modes = options.modes;
         return reversedOptions;
     }
 
