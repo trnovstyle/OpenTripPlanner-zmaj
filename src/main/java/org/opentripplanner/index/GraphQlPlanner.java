@@ -57,6 +57,10 @@ public class GraphQlPlanner {
         try {
             List<GraphPath> paths = gpFinder.graphPathFinderEntryPoint(request);
             plan = GraphPathToTripPlanConverter.generatePlan(paths, request);
+            // Add timeout message even if paths are found and no exception thrown
+            if (request.rctx.debugOutput.timedOut) {
+                messages.add(Message.REQUEST_TIMEOUT);
+            }
         } catch (Exception e) {
             PlannerError error = new PlannerError(e);
             if(!PlannerError.isPlanningError(e.getClass()))
