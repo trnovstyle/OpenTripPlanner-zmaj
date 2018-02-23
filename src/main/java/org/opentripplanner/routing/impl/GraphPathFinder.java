@@ -131,7 +131,7 @@ public class GraphPathFinder {
          * search times on the LongDistancePathService, so we set it to the maximum we ever expect
          * to see. Because people may use either the traditional path services or the 
          * LongDistancePathService, we do not change the global default but override it here. */
-        options.maxTransfers = 4;
+        options.maxTransfers = 6;
         // Now we always use what used to be called longDistance mode. Non-longDistance mode is no longer supported.
         options.longDistance = true;
 
