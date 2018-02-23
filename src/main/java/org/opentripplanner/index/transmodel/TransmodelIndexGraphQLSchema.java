@@ -1436,6 +1436,14 @@ public class TransmodelIndexGraphQLSchema {
                                 }
                         )
                         .build())
+                 .field(GraphQLFieldDefinition.newFieldDefinition()
+                         .name("notices")
+                          .type(new GraphQLList(noticeType))
+                           .dataFetcher(environment -> {
+                                 Trip trip = environment.getSource();
+                                  return index.getNoticesForElement(trip.getId());
+                                    })
+                          .build())
                 .field(GraphQLFieldDefinition.newFieldDefinition()
                         .name("situations")
                         .description("Get all situations active for the service journey")
