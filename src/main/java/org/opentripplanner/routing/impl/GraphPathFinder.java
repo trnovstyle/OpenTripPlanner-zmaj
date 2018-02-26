@@ -125,6 +125,13 @@ public class GraphPathFinder {
         }
         options.rctx.remainingWeightHeuristic = heuristic;
 
+
+        /* In RoutingRequest, maxTransfers defaults to 2. Over long distances, we may see
+         * itineraries with far more transfers. We do not expect transfer limiting to improve
+         * search times on the LongDistancePathService, so we set it to the maximum we ever expect
+         * to see. Because people may use either the traditional path services or the 
+         * LongDistancePathService, we do not change the global default but override it here. */
+        options.maxTransfers = 6;
         // Now we always use what used to be called longDistance mode. Non-longDistance mode is no longer supported.
         options.longDistance = true;
 
@@ -331,6 +338,7 @@ public class GraphPathFinder {
         reversedOptions.setRoutingContext(router.graph, fromVertex, toVertex);
         reversedOptions.dominanceFunction = new DominanceFunction.MinimumWeight();
         reversedOptions.rctx.remainingWeightHeuristic = remainingWeightHeuristic;
+        reversedOptions.maxTransfers = 6;
         reversedOptions.longDistance = true;
         reversedOptions.bannedTrips = options.bannedTrips;
         return reversedOptions;
