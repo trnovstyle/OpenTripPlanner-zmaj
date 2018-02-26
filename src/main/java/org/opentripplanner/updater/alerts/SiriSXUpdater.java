@@ -111,11 +111,37 @@ public class SiriSXUpdater extends PollingGraphUpdater {
     JAXBContext jaxbContext;
 
     @Override
-    protected void runPolling() {
+    protected void runPolling() throws Exception {
+        Siri updates = getUpdates();
+
+        if (updates != null && updates.getServiceDelivery().getSituationExchangeDeliveries() != null) {
+            // Handle trip updates via graph writer runnable
+            // Handle update in graph writer runnable
+            if (blockReadinessUntilInitialized && !isInitialized) {
+                LOG.info("Execute blocking tripupdates");
+                updaterManager.executeBlocking(graph -> updateHandler.update(updates.getServiceDelivery()));
+            } else {
+                updaterManager.execute(graph -> updateHandler.update(updates.getServiceDelivery()));
+            }
+        }
+        if (updates != null &&
+                updates.getServiceDelivery() != null &&
+                updates.getServiceDelivery().isMoreData() != null &&
+                updates.getServiceDelivery().isMoreData()) {
+            LOG.info("More data is available - fetching immediately");
+            runPolling();
+        }
+    }
+
+    private Siri getUpdates() {
+
         long t1 = System.currentTimeMillis();
         try {
+            String sxServiceRequest = SiriHelper.createSXServiceRequestAsXml(requestorRef);
+            LOG.info("Creating SX-request took {} ms", (System.currentTimeMillis()-t1));
+            t1 = System.currentTimeMillis();
 
-            InputStream is = HttpUtils.postData(url, SiriHelper.createSXServiceRequestAsXml(requestorRef), timeout);
+            InputStream is = HttpUtils.postData(url, sxServiceRequest, timeout);
 
             LOG.info("Fetching SX-data took {} ms", (System.currentTimeMillis()-t1));
             t1 = System.currentTimeMillis();
@@ -134,23 +160,16 @@ public class SiriSXUpdater extends PollingGraphUpdater {
             ZonedDateTime responseTimestamp = serviceDelivery.getResponseTimestamp();
             if (responseTimestamp.isBefore(lastTimestamp)) {
                 LOG.info("Ignoring feed with an old timestamp.");
-                return;
+                return null;
             }
-
-            // Handle update in graph writer runnable
-            if (blockReadinessUntilInitialized && !isInitialized) {
-                LOG.info("Execute blocking tripupdates");
-                updaterManager.executeBlocking(graph -> updateHandler.update(serviceDelivery));
-            } else {
-                updaterManager.execute(graph -> updateHandler.update(serviceDelivery));
-            }
-
 
             lastTimestamp = responseTimestamp;
+            return siri;
         } catch (Exception e) {
             LOG.info("Failed after {} ms", (System.currentTimeMillis()-t1));
             LOG.error("Error reading SIRI feed from " + url, e);
         }
+        return null;
     }
 
     @Override
