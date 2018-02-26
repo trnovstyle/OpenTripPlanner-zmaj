@@ -21,13 +21,7 @@ import org.opentripplanner.index.transmodel.model.TransmodelTransportSubmode;
 import org.opentripplanner.index.transmodel.model.scalars.DateScalarFactory;
 import org.opentripplanner.index.transmodel.model.scalars.DateTimeScalarFactory;
 import org.opentripplanner.index.transmodel.model.scalars.TimeScalarFactory;
-import org.opentripplanner.model.Agency;
-import org.opentripplanner.model.AgencyAndId;
-import org.opentripplanner.model.Notice;
-import org.opentripplanner.model.Operator;
-import org.opentripplanner.model.Route;
-import org.opentripplanner.model.Stop;
-import org.opentripplanner.model.Trip;
+import org.opentripplanner.model.*;
 import org.opentripplanner.model.calendar.ServiceDate;
 import org.opentripplanner.routing.alertpatch.Alert;
 import org.opentripplanner.routing.alertpatch.AlertPatch;
@@ -86,6 +80,12 @@ public class TransmodelIndexGraphQLSchema {
             .value("noInformation", 0, "There is no bike information for the trip.")
             .value("allowed", 1, "The vehicle being used on this particular trip can accommodate at least one bicycle.")
             .value("notAllowed", 2, "No bicycles are allowed on this trip.")
+            .build();
+
+    private static GraphQLEnumType reportTypeEnum = GraphQLEnumType.newEnum()
+            .name("ReportType") //SIRI - ReportTypeEnumeration
+            .value("general", "general", "Indicates a general info-message that should not affect trip.")
+            .value("incident", "incident", "Indicates an incident that may affect trip.")
             .build();
 
     private static GraphQLEnumType realtimeStateEnum = GraphQLEnumType.newEnum()
@@ -822,6 +822,12 @@ public class TransmodelIndexGraphQLSchema {
                             Long endTime = alert.effectiveEndDate != null ? alert.effectiveEndDate.getTime() : null;
                             return Pair.of(startTime, endTime);
                         })
+                        .build())
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("reportType")
+                        .type(reportTypeEnum)
+                        .description("ReportType of this situation")
+                        .dataFetcher(environment -> ((AlertPatch) environment.getSource()).getAlert().alertType)
                         .build())
                 .build();
 

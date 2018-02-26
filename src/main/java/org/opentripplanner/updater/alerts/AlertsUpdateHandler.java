@@ -397,6 +397,8 @@ public class AlertsUpdateHandler {
                 if (patch.getAlert() == null) {
                     patch.setAlert(alert);
                 }
+                patch.getAlert().alertType = situation.getReportType();
+
                 patchIds.add(patch.getId());
                 alertPatchService.apply(patch);
             }
