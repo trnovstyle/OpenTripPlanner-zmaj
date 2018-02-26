@@ -65,13 +65,6 @@ public class GenericLocation implements Cloneable, Serializable {
     private final static Pattern EDGE_ID_PATTERN = Pattern.compile("edgeId=(\\d+)");
 
     /**
-     * Pattern for matching the optional vertexId as part of the 'name' part. The OTP debuger GUI
-     * formats request like this: "PLACE_NAME (VERTEX_ID)::LOCATION". So, if we encounter something
-     * in parenthesises we treat it as an VertexId.
-     */
-    private final static Pattern VERTEX_ID_PATTERN = Pattern.compile("\\(([\\w-:]+)\\)$");
-
-    /**
      * The name of the place, if provided.
      */
     public final String name;
@@ -166,34 +159,33 @@ public class GenericLocation implements Cloneable, Serializable {
 
         String text = place;
 
+        int cutoffIndex = text.length();
+
         Matcher m = HEADING_PATTERN.matcher(text);
         if (m.find()) {
             heading = Double.parseDouble(m.group(1));
-            text = removeMatchFromString(m, text);
+            cutoffIndex = m.start();
         }
 
         m = EDGE_ID_PATTERN.matcher(text);
         if (m.find()) {
             edgeId = Integer.parseInt(m.group(1));
-            text = removeMatchFromString(m, text);
+            cutoffIndex = Math.min(cutoffIndex, m.start());
+        }
+
+        if (cutoffIndex < text.length()) {
+            text = text.substring(0, cutoffIndex);
         }
 
         m = COORDINATES_PATTERN.matcher(text);
         if (m.find()) {
             this.lat = Double.parseDouble(m.group(1));
             this.lng = Double.parseDouble(m.group(2));
-            text = removeMatchFromString(m, text);
+            cutoffIndex = m.start();
         }
-
-        if(name != null) {
-            m = VERTEX_ID_PATTERN.matcher(name);
-
-            if(m.find()) {
-                vertexId = m.group(1);
-            }
-        }
-        if(vertexId == null && !text.isEmpty()) {
-            vertexId = text;
+        String tempVertexId = text.substring(0, cutoffIndex).trim();
+        if(!tempVertexId.isEmpty()) {
+            vertexId = tempVertexId;
         }
     }
 
@@ -319,21 +311,6 @@ public class GenericLocation implements Cloneable, Serializable {
         } catch (CloneNotSupportedException e) {
             /* this will never happen since our super is the cloneable object */
             throw new RuntimeException(e);
-        }
-    }
-
-    static String removeMatchFromString(Matcher m, String text) {
-        int index0  = m.start();
-        int index1 = m.end();
-
-        if(index0 == 0) {
-            return text.substring(index1).trim();
-        }
-        else if(index1 == text.length()) {
-            return text.substring(0, index0).trim();
-        }
-        else {
-            return (text.substring(0, index0) + text.substring(index1)).trim();
         }
     }
 }
