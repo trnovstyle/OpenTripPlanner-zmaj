@@ -338,7 +338,7 @@ public class GraphPathFinder {
         reversedOptions.setRoutingContext(router.graph, fromVertex, toVertex);
         reversedOptions.dominanceFunction = new DominanceFunction.MinimumWeight();
         reversedOptions.rctx.remainingWeightHeuristic = remainingWeightHeuristic;
-        reversedOptions.maxTransfers = 4;
+        reversedOptions.maxTransfers = 6;
         reversedOptions.longDistance = true;
         reversedOptions.bannedTrips = options.bannedTrips;
         return reversedOptions;
