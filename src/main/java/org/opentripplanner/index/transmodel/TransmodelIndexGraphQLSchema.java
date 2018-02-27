@@ -267,6 +267,8 @@ public class TransmodelIndexGraphQLSchema {
 
     public GraphQLSchema indexSchema;
 
+    private GraphIndex index;
+
     private Relay relay = new Relay();
 
 
@@ -302,7 +304,7 @@ public class TransmodelIndexGraphQLSchema {
             }
             ).build();
 
-    private Agency getAgency(GraphIndex index, String agencyId) {
+    private Agency getAgency(String agencyId) {
         //xxx what if there are duplicate agency ids?
         //now we return the first
         for (Map<String, Agency> feedAgencies : index.agenciesForFeedId.values()) {
@@ -315,7 +317,7 @@ public class TransmodelIndexGraphQLSchema {
 
     @SuppressWarnings("unchecked")
     public TransmodelIndexGraphQLSchema(Router router) {
-        GraphIndex index = router.graph.index;
+        index = router.graph.index;
         RoutingRequest defaultRoutingRequest = getDefaultRoutingRequest(router);
         String fixedAgencyIdPropValue = System.getProperty("transmodel.graphql.api.agency.id");
         if (!StringUtils.isEmpty(fixedAgencyIdPropValue)) {
@@ -396,7 +398,7 @@ public class TransmodelIndexGraphQLSchema {
                 .build();
 
 
-        createPlanType(index);
+        createPlanType();
 
 
         GraphQLInputObjectType preferredInputType = GraphQLInputObjectType.newInputObject()
@@ -720,13 +722,13 @@ public class TransmodelIndexGraphQLSchema {
                 .field(GraphQLFieldDefinition.newFieldDefinition()
                         .name("authority")
                         .type(authorityType)
-                        .dataFetcher(environment -> getAgency(index, ((AlertPatch) environment.getSource()).getAgency()))
+                        .dataFetcher(environment -> getAgency(((AlertPatch) environment.getSource()).getAgency()))
                         .build())
                 .field(GraphQLFieldDefinition.newFieldDefinition()
                         .name("organisation")
                         .deprecate("Use 'authority' instead.")
                         .type(organisationType)
-                        .dataFetcher(environment -> getAgency(index, ((AlertPatch) environment.getSource()).getAgency()))
+                        .dataFetcher(environment -> getAgency(((AlertPatch) environment.getSource()).getAgency()))
                         .build())
                 .field(GraphQLFieldDefinition.newFieldDefinition()
                         .name("lines")
@@ -1400,25 +1402,7 @@ public class TransmodelIndexGraphQLSchema {
                             final Trip trip = environment.getSource();
 
                             final ServiceDate serviceDate = mappingUtil.secondsSinceEpochToServiceDate(environment.getArgument("date"));
-                            final ServiceDay serviceDay = new ServiceDay(index.graph, serviceDate,
-                                    index.graph.getCalendarService(), trip.getRoute().getAgency().getId());
-                            TimetableSnapshotSource timetableSnapshotSource = index.graph.timetableSnapshotSource;
-                            Timetable timetable = null;
-                            if (timetableSnapshotSource != null) {
-                                TimetableSnapshot timetableSnapshot = timetableSnapshotSource.getTimetableSnapshot();
-                                if (timetableSnapshot != null) {
-                                    // Check if realtime-data is available for trip
-                                    TripPattern pattern = timetableSnapshot.getLastAddedTripPattern(timetableSnapshotSource.getFeedId(), trip.getId().getId(), serviceDate);
-                                    if (pattern == null) {
-                                        pattern = index.patternForTrip.get(trip);
-                                    }
-                                    timetable = timetableSnapshot.resolve(pattern, serviceDate);
-                                }
-                            }
-                            if (timetable == null) {
-                                timetable = index.patternForTrip.get(trip).scheduledTimetable;
-                            }
-                            return TripTimeShort.fromTripTimes(timetable, trip, serviceDay);
+                            return getTripTimesShort(trip, serviceDate);
                         })
                         .build())
                 .field(GraphQLFieldDefinition.newFieldDefinition()
@@ -2494,6 +2478,28 @@ public class TransmodelIndexGraphQLSchema {
                 .build(dictionary);
     }
 
+    private List<TripTimeShort> getTripTimesShort(Trip trip, ServiceDate serviceDate) {
+        final ServiceDay serviceDay = new ServiceDay(index.graph, serviceDate,
+                index.graph.getCalendarService(), trip.getRoute().getAgency().getId());
+        TimetableSnapshotSource timetableSnapshotSource = index.graph.timetableSnapshotSource;
+        Timetable timetable = null;
+        if (timetableSnapshotSource != null) {
+            TimetableSnapshot timetableSnapshot = timetableSnapshotSource.getTimetableSnapshot();
+            if (timetableSnapshot != null) {
+                // Check if realtime-data is available for trip
+                TripPattern pattern = timetableSnapshot.getLastAddedTripPattern(timetableSnapshotSource.getFeedId(), trip.getId().getId(), serviceDate);
+                if (pattern == null) {
+                    pattern = index.patternForTrip.get(trip);
+                }
+                timetable = timetableSnapshot.resolve(pattern, serviceDate);
+            }
+        }
+        if (timetable == null) {
+            timetable = index.patternForTrip.get(trip).scheduledTimetable;
+        }
+        return TripTimeShort.fromTripTimes(timetable, trip, serviceDay);
+    }
+
     private RoutingRequest getDefaultRoutingRequest(Router router) {
         RoutingRequest defaultRoutingRequest = router.defaultRoutingRequest;
         if (defaultRoutingRequest == null) {
@@ -2507,7 +2513,7 @@ public class TransmodelIndexGraphQLSchema {
         return ids.stream().map(id -> mappingUtil.fromIdString(id)).collect(Collectors.toList());
     }
 
-    private void createPlanType(GraphIndex index) {
+    private void createPlanType() {
         final GraphQLObjectType placeType = GraphQLObjectType.newObject()
                 .name("Place")
                 .description("Common super class for all places (stop places, quays, car parks, bike parks and bike rental stations )")
@@ -2734,7 +2740,7 @@ public class TransmodelIndexGraphQLSchema {
                         .name("authority")
                         .description("For ride legs, the service authority used for this legs. For non-ride legs, null.")
                         .type(authorityType)
-                        .dataFetcher(environment -> getAgency(index, ((Leg) environment.getSource()).agencyId))
+                        .dataFetcher(environment -> getAgency(((Leg) environment.getSource()).agencyId))
                         .build())
                 .field(GraphQLFieldDefinition.newFieldDefinition()
                         .name("operator")
@@ -2752,7 +2758,7 @@ public class TransmodelIndexGraphQLSchema {
                         .description("For ride legs, the transit organisation that operates the service used for this legs. For non-ride legs, null.")
                         .deprecate("Use 'authority' instead.")
                         .type(organisationType)
-                        .dataFetcher(environment -> getAgency(index, ((Leg) environment.getSource()).agencyId))
+                        .dataFetcher(environment -> getAgency(((Leg) environment.getSource()).agencyId))
                         .build())
                 .field(GraphQLFieldDefinition.newFieldDefinition()
                         .name("realTime")
@@ -2796,7 +2802,7 @@ public class TransmodelIndexGraphQLSchema {
                         .type(estimatedCallType)
                         .dataFetcher(environment -> {
                             Leg leg = environment.getSource();
-                            return getTripTimeShortForLegPlace(index, leg, leg.from);
+                            return getTripTimeShortForLegPlace(leg, leg.from);
                         })
                         .build())
                 .field(GraphQLFieldDefinition.newFieldDefinition()
@@ -2805,7 +2811,7 @@ public class TransmodelIndexGraphQLSchema {
                         .type(estimatedCallType)
                         .dataFetcher(environment -> {
                             Leg leg = environment.getSource();
-                            return getTripTimeShortForLegPlace(index, leg, leg.to);
+                            return getTripTimeShortForLegPlace(leg, leg.to);
                         })
                         .build())
                 .field(GraphQLFieldDefinition.newFieldDefinition()
@@ -2834,9 +2840,14 @@ public class TransmodelIndexGraphQLSchema {
                         .name("intermediateEstimatedCalls")
                         .description("For ride legs, estimated calls for quays between the Place where the leg originates and the Place where the leg ends. For non-ride legs, null.")
                         .type(new GraphQLList(estimatedCallType))
-                        .dataFetcher(environment -> getIntermediateTripTimeShortsForLeg(index, environment.getSource()))
+                        .dataFetcher(environment -> getIntermediateTripTimeShortsForLeg(environment.getSource()))
                         .build())
-
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("serviceJourneyEstimatedCalls")
+                        .description("For ride legs, all estimated calls for the service journey. For non-ride legs, null.")
+                        .type(new GraphQLList(estimatedCallType))
+                        .dataFetcher(environment -> getAllTripTimeShortsForLegsTrip(environment.getSource()))
+                        .build())
                 .field(GraphQLFieldDefinition.newFieldDefinition()
                         .name("via")
                         .description("Do we continue from a specified via place")
@@ -2968,7 +2979,7 @@ public class TransmodelIndexGraphQLSchema {
     /**
      * Find trip time shorts for all intermediate stops for a leg.
      */
-    private TripTimeShort getTripTimeShortForLegPlace(GraphIndex index, Leg leg, Place place) {
+    private TripTimeShort getTripTimeShortForLegPlace(Leg leg, Place place) {
         if (place == null || !VertexType.TRANSIT.equals(place.vertexType)) {
             return null;
         }
@@ -2977,7 +2988,7 @@ public class TransmodelIndexGraphQLSchema {
             return null;
         }
 
-        List<TripTimeShort> tripTimeShorts = getTripTimeShortForQuays(index, leg, Sets.newHashSet(stop.getId()));
+        List<TripTimeShort> tripTimeShorts = getTripTimeShortForQuays(leg, Sets.newHashSet(stop.getId()));
         if (CollectionUtils.isEmpty(tripTimeShorts)) {
             return null;
         }
@@ -2987,25 +2998,32 @@ public class TransmodelIndexGraphQLSchema {
     /**
      * Find trip time shorts for all intermediate stops for a leg.
      */
-    private List<TripTimeShort> getIntermediateTripTimeShortsForLeg(GraphIndex index, Leg leg) {
+    private List<TripTimeShort> getIntermediateTripTimeShortsForLeg(Leg leg) {
         Set<AgencyAndId> intermediateQuayIds = leg.stop.stream().map(place -> place.stopId).filter(Objects::nonNull).collect(Collectors.toSet());
 
-        return getTripTimeShortForQuays(index, leg, intermediateQuayIds);
+        return getTripTimeShortForQuays(leg, intermediateQuayIds);
     }
 
-    private List<TripTimeShort> getTripTimeShortForQuays(GraphIndex index, Leg leg, Set<AgencyAndId> intermediateQuayIds) {
+    /**
+     * Find trip time shorts for all stops for the full trip of a leg.
+     */
+    private List<TripTimeShort> getAllTripTimeShortsForLegsTrip(Leg leg) {
+        if (leg.tripId == null || leg.serviceDate == null) {
+            return new ArrayList<>();
+        }
+        Trip trip= index.tripForId.get(leg.tripId);
+        ServiceDate serviceDate=parseServiceDate(leg.serviceDate);
+        return getTripTimesShort(trip,serviceDate);
+    }
+
+    private List<TripTimeShort> getTripTimeShortForQuays(Leg leg, Set<AgencyAndId> intermediateQuayIds) {
         Trip trip = index.tripForId.get(leg.tripId);
 
         if (trip == null) {
 
             return null;
         }
-        ServiceDate serviceDate;
-        try {
-            serviceDate = ServiceDate.parseString(leg.serviceDate);
-        } catch (ParseException pe) {
-            throw new RuntimeException("Unparsable service date: " + leg.serviceDate, pe);
-        }
+        ServiceDate serviceDate = parseServiceDate(leg.serviceDate);
 
         final ServiceDay serviceDay = new ServiceDay(index.graph, serviceDate,
                 index.graph.getCalendarService(), trip.getRoute().getAgency().getId());
@@ -3028,12 +3046,22 @@ public class TransmodelIndexGraphQLSchema {
 
         long startTimeSeconds = (leg.startTime.toInstant().toEpochMilli() - serviceDate.getAsDate().getTime()) / 1000;
         long endTimeSeconds = (leg.endTime.toInstant().toEpochMilli() - serviceDate.getAsDate().getTime()) / 1000;
-        return TripTimeShort.fromTripTimes(timetable, trip, serviceDay).stream().filter(tripTime -> matchesIntermediateQuayOrSiblingQuay(index, intermediateQuayIds, tripTime.stopId))
+        return TripTimeShort.fromTripTimes(timetable, trip, serviceDay).stream().filter(tripTime -> matchesIntermediateQuayOrSiblingQuay(intermediateQuayIds, tripTime.stopId))
                        .filter(tripTime -> tripTime.scheduledDeparture >= startTimeSeconds && tripTime.scheduledArrival <= endTimeSeconds).collect(Collectors.toList());
     }
 
+    private ServiceDate parseServiceDate(String serviceDateString) {
+        ServiceDate serviceDate;
+        try {
+            serviceDate = ServiceDate.parseString(serviceDateString);
+        } catch (ParseException pe) {
+            throw new RuntimeException("Unparsable service date: " + serviceDateString, pe);
+        }
+        return serviceDate;
+    }
 
-    private boolean matchesIntermediateQuayOrSiblingQuay(GraphIndex index, Set<AgencyAndId> intermediateQuayIds, AgencyAndId stopId) {
+
+    private boolean matchesIntermediateQuayOrSiblingQuay(Set<AgencyAndId> intermediateQuayIds, AgencyAndId stopId) {
         boolean foundMatch = intermediateQuayIds.contains(stopId);
         if (!foundMatch) {
             //Check parentStops
