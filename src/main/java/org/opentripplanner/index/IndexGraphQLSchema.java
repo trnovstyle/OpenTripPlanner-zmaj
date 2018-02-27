@@ -71,6 +71,13 @@ public class IndexGraphQLSchema {
         .value("NOT_ALLOWED", 2, "No bicycles are allowed on this trip.")
         .build();
 
+
+    private static GraphQLEnumType alertTypeEnum = GraphQLEnumType.newEnum()
+            .name("AlertType") //SIRI - ReportTypeEnumeration
+            .value("general", "general", "Indicates a general info-message that should not affect trip.")
+            .value("incident", "incident", "Indicates an incident that may affect trip.")
+            .build();
+
     public static GraphQLEnumType realtimeStateEnum = GraphQLEnumType.newEnum()
         .name("RealtimeState")
         .value("SCHEDULED", RealTimeState.SCHEDULED, "The trip information comes from the GTFS feed, i.e. no real-time update has been applied.")
@@ -803,6 +810,12 @@ public class IndexGraphQLSchema {
                     return alert.effectiveEndDate != null ? alert.effectiveEndDate.getTime() / 1000 : null;
                 })
                 .build())
+            .field(GraphQLFieldDefinition.newFieldDefinition()
+                    .name("alertType")
+                    .type(alertTypeEnum)
+                    .description("Type of alert")
+                    .dataFetcher(environment -> ((AlertPatch) environment.getSource()).getAlert().alertType)
+                    .build())
             .build();
 
 
