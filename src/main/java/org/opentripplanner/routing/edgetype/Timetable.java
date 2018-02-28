@@ -976,23 +976,23 @@ public class Timetable implements Serializable {
                         if (estimatedCall.isCancellation() != null && estimatedCall.isCancellation()) {
                             stopTime.setDropOffType(PICKDROP_NONE);
                             stopTime.setPickupType(PICKDROP_NONE);
-                        } else {
+                        }
 
-                            if (estimatedCall.getArrivalBoardingActivity() != null) {
-                                if (estimatedCall.getArrivalBoardingActivity() == ArrivalBoardingActivityEnumeration.ALIGHTING) {
-                                    stopTime.setDropOffType(PICKDROP_SCHEDULED);
-                                } else if (estimatedCall.getArrivalBoardingActivity() == ArrivalBoardingActivityEnumeration.NO_ALIGHTING) {
-                                    stopTime.setDropOffType(PICKDROP_NONE);
-                                }
-                            }
-                            if (estimatedCall.getDepartureBoardingActivity() != null) {
-                                if (estimatedCall.getDepartureBoardingActivity() == DepartureBoardingActivityEnumeration.BOARDING) {
-                                    stopTime.setPickupType(PICKDROP_SCHEDULED);
-                                } else if (estimatedCall.getDepartureBoardingActivity() == DepartureBoardingActivityEnumeration.NO_BOARDING) {
-                                    stopTime.setPickupType(PICKDROP_NONE);
-                                }
+                        if (estimatedCall.getArrivalBoardingActivity() != null) {
+                            if (estimatedCall.getArrivalBoardingActivity() == ArrivalBoardingActivityEnumeration.ALIGHTING) {
+                                stopTime.setDropOffType(PICKDROP_SCHEDULED);
+                            } else if (estimatedCall.getArrivalBoardingActivity() == ArrivalBoardingActivityEnumeration.NO_ALIGHTING) {
+                                stopTime.setDropOffType(PICKDROP_NONE);
                             }
                         }
+                        if (estimatedCall.getDepartureBoardingActivity() != null) {
+                            if (estimatedCall.getDepartureBoardingActivity() == DepartureBoardingActivityEnumeration.BOARDING) {
+                                stopTime.setPickupType(PICKDROP_SCHEDULED);
+                            } else if (estimatedCall.getDepartureBoardingActivity() == DepartureBoardingActivityEnumeration.NO_BOARDING) {
+                                stopTime.setPickupType(PICKDROP_NONE);
+                            }
+                        }
+
                         if (stopTime.getArrivalTime() < 0 && stopTime.getDepartureTime() > 0) {
                             stopTime.setArrivalTime(stopTime.getDepartureTime());
                         }
