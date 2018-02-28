@@ -74,6 +74,13 @@ public class TransmodelIndexGraphQLSchema {
             .value("notPossible", 2, "Wheelchair boarding/alighting is not possible at this stop.")
             .build();
 
+    private static GraphQLEnumType interchangeWeightingEnum = GraphQLEnumType.newEnum()
+            .name("InterchangeWeighting")
+            .value("preferredInterchange", Stop.interchangeWeightingEnumeration.PREFERRED_INTERCHANGE)
+            .value("recommendedInterchange", Stop.interchangeWeightingEnumeration.RECOMMENDED_INTERCHANGE)
+            .value("interchangeAllowed", Stop.interchangeWeightingEnumeration.INTERCHANGE_ALLOWED)
+            .value("noInterchange", Stop.interchangeWeightingEnumeration.NO_INTERCHANGE)
+            .build();
 
     private static GraphQLEnumType bikesAllowedEnum = GraphQLEnumType.newEnum()
             .name("BikesAllowed")
@@ -920,6 +927,12 @@ public class TransmodelIndexGraphQLSchema {
                         .name("wheelchairBoarding")
                         .description("Whether this stop place is suitable for wheelchair boarding.")
                         .type(wheelchairBoardingEnum)
+                        .build())
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("weighting")
+                        .description("Relative weighting of this stop with regards to interchanges.")
+                        .type(interchangeWeightingEnum)
+                        .dataFetcher(environment -> (((Stop) environment.getSource()).getWeight()))
                         .build())
                 .field(GraphQLFieldDefinition.newFieldDefinition()
                         .name("transportMode")
