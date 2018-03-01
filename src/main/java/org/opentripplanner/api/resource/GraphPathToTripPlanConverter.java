@@ -572,12 +572,24 @@ public abstract class GraphPathToTripPlanConverter {
                 }
             }
 
-            if (graph.index != null && leg.routeId != null) {
-                if (leg.from != null && leg.from.stopId != null) {
-                    addAlertPatchesToLeg(leg, graph.index.getAlertsForStopAndRoute(graph.index.stopForId.get(leg.from.stopId), graph.index.routeForId.get(leg.routeId)), requestedLocale);
+
+            if (graph.index != null) {
+                if (leg.routeId != null) {
+                    if (leg.from != null && leg.from.stopId != null) {
+                        addAlertPatchesToLeg(leg, graph.index.getAlertsForStopAndRoute(graph.index.stopForId.get(leg.from.stopId), graph.index.routeForId.get(leg.routeId)), requestedLocale, leg.startTime.getTime(), leg.endTime.getTime());
+                    }
+                    if (leg.to != null && leg.to.stopId != null) {
+                        addAlertPatchesToLeg(leg, graph.index.getAlertsForStopAndRoute(graph.index.stopForId.get(leg.to.stopId), graph.index.routeForId.get(leg.routeId)), requestedLocale, leg.startTime.getTime(), leg.endTime.getTime());
+                    }
                 }
-                if (leg.to != null && leg.to.stopId != null) {
-                    addAlertPatchesToLeg(leg, graph.index.getAlertsForStopAndRoute(graph.index.stopForId.get(leg.to.stopId), graph.index.routeForId.get(leg.routeId)), requestedLocale);
+                if (leg.stop != null) {
+                    for (Place place : leg.stop) {
+                        if (place.stopId != null) {
+
+                            addAlertPatchesToLeg(leg, graph.index.getAlertsForStop(graph.index.stopForId.get(place.stopId)),
+                                    requestedLocale, place.arrival.getTime(), place.departure.getTime());
+                        }
+                    }
                 }
             }
 
@@ -598,10 +610,14 @@ public abstract class GraphPathToTripPlanConverter {
         }
     }
 
-    private static void addAlertPatchesToLeg(Leg leg, Collection<AlertPatch> alertsPatches, Locale requestedLocale) {
+    private static void addAlertPatchesToLeg(Leg leg, Collection<AlertPatch> alertsPatches, Locale requestedLocale, Date fromTime, Date toTime) {
         if (alertsPatches != null) {
             for (AlertPatch alert : alertsPatches) {
-                leg.addAlertPatch(alert);
+                if (alert.getAlert().effectiveStartDate.before(toTime) &&
+                        (alert.getAlert().effectiveEndDate == null || alert.getAlert().effectiveEndDate.after(fromTime))) {
+
+                    leg.addAlertPatch(alert);
+                }
             }
         }
     }
