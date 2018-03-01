@@ -76,10 +76,10 @@ public class TransmodelIndexGraphQLSchema {
 
     private static GraphQLEnumType interchangeWeightingEnum = GraphQLEnumType.newEnum()
             .name("InterchangeWeighting")
-            .value("preferredInterchange", Stop.interchangeWeightingEnumeration.PREFERRED_INTERCHANGE)
-            .value("recommendedInterchange", Stop.interchangeWeightingEnumeration.RECOMMENDED_INTERCHANGE)
-            .value("interchangeAllowed", Stop.interchangeWeightingEnumeration.INTERCHANGE_ALLOWED)
-            .value("noInterchange", Stop.interchangeWeightingEnumeration.NO_INTERCHANGE)
+            .value("preferredInterchange", Stop.interchangeWeightingEnumeration.PREFERRED_INTERCHANGE, "Highest priority interchange.")
+            .value("recommendedInterchange", Stop.interchangeWeightingEnumeration.RECOMMENDED_INTERCHANGE, "Second highest priority interchange.")
+            .value("interchangeAllowed", Stop.interchangeWeightingEnumeration.INTERCHANGE_ALLOWED, "Third highest priority interchange.")
+            .value("noInterchange", Stop.interchangeWeightingEnumeration.NO_INTERCHANGE, "Interchange not allowed.")
             .build();
 
     private static GraphQLEnumType bikesAllowedEnum = GraphQLEnumType.newEnum()
