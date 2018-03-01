@@ -57,9 +57,11 @@ public class AlertPatchServiceImpl implements AlertPatchService {
         List<AlertPatch> result = patchesByStop.get(stop);
         if (result == null || result.isEmpty()) {
             // Search for alerts on parent-stop
-            Stop quay = graph.index.stopForId.get(stop);
-            if (quay != null && quay.getParentStation() != null) {
-                result = patchesByStop.get(new AgencyAndId(stop.getAgencyId(), quay.getParentStation()));
+            if (graph != null && graph.index != null) {
+                Stop quay = graph.index.stopForId.get(stop);
+                if (quay != null && quay.getParentStation() != null) {
+                    result = patchesByStop.get(new AgencyAndId(stop.getAgencyId(), quay.getParentStation()));
+                }
             }
         }
         if (result == null) {
