@@ -16,6 +16,7 @@ package org.opentripplanner.routing.impl;
 import com.google.common.collect.LinkedListMultimap;
 import com.google.common.collect.ListMultimap;
 import org.opentripplanner.model.AgencyAndId;
+import org.opentripplanner.model.Stop;
 import org.opentripplanner.routing.alertpatch.AlertPatch;
 import org.opentripplanner.routing.edgetype.TripPattern;
 import org.opentripplanner.routing.graph.Graph;
@@ -54,6 +55,13 @@ public class AlertPatchServiceImpl implements AlertPatchService {
     @Override
     public Collection<AlertPatch> getStopPatches(AgencyAndId stop) {
         List<AlertPatch> result = patchesByStop.get(stop);
+        if (result == null || result.isEmpty()) {
+            // Search for alerts on parent-stop
+            Stop quay = graph.index.stopForId.get(stop);
+            if (quay != null && quay.getParentStation() != null) {
+                result = patchesByStop.get(new AgencyAndId(stop.getAgencyId(), quay.getParentStation()));
+            }
+        }
         if (result == null) {
             result = Collections.emptyList();
         }
