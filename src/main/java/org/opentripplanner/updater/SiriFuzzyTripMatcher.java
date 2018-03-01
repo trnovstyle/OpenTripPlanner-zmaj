@@ -35,6 +35,8 @@ public class SiriFuzzyTripMatcher {
 
     private static Map<String, Trip> vehicleJourneyTripCache = new HashMap<>();
 
+    private static Set<String> nonExistingStops = new HashSet<>();
+
     public SiriFuzzyTripMatcher(GraphIndex index) {
         this.index = index;
         initCache(this.index);
@@ -247,6 +249,10 @@ public class SiriFuzzyTripMatcher {
 
     public AgencyAndId getStop(String siriStopId) {
 
+        if (nonExistingStops.contains(siriStopId)) {
+            return null;
+        }
+
         //First, assume same agency
         Stop firstStop = index.stopForId.values().stream().findFirst().get();
         AgencyAndId id = new AgencyAndId(firstStop.getId().getAgencyId(), siriStopId);
@@ -269,6 +275,8 @@ public class SiriFuzzyTripMatcher {
                 return new AgencyAndId(stop.getId().getAgencyId(), stop.getParentStation());
             }
         }
+
+        nonExistingStops.add(siriStopId);
         return null;
     }
 
