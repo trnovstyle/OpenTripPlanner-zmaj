@@ -1212,10 +1212,30 @@ public class TransmodelIndexGraphQLSchema {
                 .field(GraphQLFieldDefinition.newFieldDefinition()
                                .name("expectedArrivalTime")
                                .type(dateTimeScalar)
-                               .description("Expected time of arrival at quay. Updated with real time information if available")
+                               .description("Expected time of arrival at quay. Updated with real time information if available. Will be null if an actualArrivalTime exists")
                                .dataFetcher(
-                                       environment -> 1000 * (((TripTimeShort) environment.getSource()).serviceDay +
-                                                                      ((TripTimeShort) environment.getSource()).realtimeArrival))
+                                       environment -> {
+                                           TripTimeShort tripTimeShort = environment.getSource();
+                                           if (! tripTimeShort.isRecordedStop) {
+                                               return 1000 * (tripTimeShort.serviceDay +
+                                                       tripTimeShort.realtimeArrival);
+                                           }
+                                           return null;
+                                       })
+                               .build())
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                               .name("actualArrivalTime")
+                               .type(dateTimeScalar)
+                               .description("Actual time of arrival at quay. Updated from real time information if available")
+                               .dataFetcher(
+                                       environment -> {
+                                           TripTimeShort tripTimeShort = environment.getSource();
+                                           if (tripTimeShort.isRecordedStop) {
+                                               return 1000 * (tripTimeShort.serviceDay +
+                                                       tripTimeShort.realtimeArrival);
+                                           }
+                                           return null;
+                                       })
                                .build())
                 .field(GraphQLFieldDefinition.newFieldDefinition()
                                .name("aimedDepartureTime")
@@ -1228,10 +1248,30 @@ public class TransmodelIndexGraphQLSchema {
                 .field(GraphQLFieldDefinition.newFieldDefinition()
                                .name("expectedDepartureTime")
                                .type(dateTimeScalar)
-                               .description("Expected time of departure from quay. Updated with real time information if available")
+                               .description("Expected time of departure from quay. Updated with real time information if available. Will be null if an actualDepartureTime exists")
                                .dataFetcher(
-                                       environment -> 1000 * (((TripTimeShort) environment.getSource()).serviceDay +
-                                                                      ((TripTimeShort) environment.getSource()).realtimeDeparture))
+                                       environment -> {
+                                           TripTimeShort tripTimeShort = (TripTimeShort) environment.getSource();
+                                           if (!tripTimeShort.isRecordedStop) {
+                                               return 1000 * (tripTimeShort.serviceDay +
+                                                       tripTimeShort.realtimeDeparture);
+                                           }
+                                           return null;
+                                       })
+                               .build())
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                               .name("actualDepartureTime")
+                               .type(dateTimeScalar)
+                               .description("Actual time of departure from quay. Updated with real time information if available")
+                               .dataFetcher(
+                                       environment -> {
+                                           TripTimeShort tripTimeShort = (TripTimeShort) environment.getSource();
+                                           if (tripTimeShort.isRecordedStop) {
+                                               return 1000 * (tripTimeShort.serviceDay +
+                                                       tripTimeShort.realtimeDeparture);
+                                           }
+                                           return null;
+                                       })
                                .build())
 
                 .field(GraphQLFieldDefinition.newFieldDefinition()
@@ -1287,17 +1327,36 @@ public class TransmodelIndexGraphQLSchema {
                         .name("forBoarding")
                         .type(Scalars.GraphQLBoolean)
                         .description("Whether vehicle may be borded at quay.")
-                        .dataFetcher(environment -> index.patternForTrip
-                                .get(index.tripForId.get(((TripTimeShort) environment.getSource()).tripId))
-                                .getBoardType(((TripTimeShort) environment.getSource()).stopIndex) != PICKDROP_NONE)
+                        .dataFetcher(environment -> {
+                            if (((TripTimeShort) environment.getSource()).pickupType >= 0) {
+                                //Realtime-updated
+                                return ((TripTimeShort) environment.getSource()).pickupType != PICKDROP_NONE;
+                            }
+                            return index.patternForTrip
+                                    .get(index.tripForId.get(((TripTimeShort) environment.getSource()).tripId))
+                                    .getBoardType(((TripTimeShort) environment.getSource()).stopIndex) != PICKDROP_NONE;
+                        })
                         .build())
                 .field(GraphQLFieldDefinition.newFieldDefinition()
                         .name("forAlighting")
                         .type(Scalars.GraphQLBoolean)
                         .description("Whether vehicle may be alighted at quay.")
-                        .dataFetcher(environment -> index.patternForTrip
-                                .get(index.tripForId.get(((TripTimeShort) environment.getSource()).tripId))
-                                .getAlightType(((TripTimeShort) environment.getSource()).stopIndex) != PICKDROP_NONE)
+                        .dataFetcher(environment -> {
+                            if (((TripTimeShort) environment.getSource()).dropoffType >= 0) {
+                                //Realtime-updated
+                                return ((TripTimeShort) environment.getSource()).dropoffType != PICKDROP_NONE;
+                            }
+                            return index.patternForTrip
+                                    .get(index.tripForId.get(((TripTimeShort) environment.getSource()).tripId))
+                                    .getAlightType(((TripTimeShort) environment.getSource()).stopIndex) != PICKDROP_NONE;
+
+                        })
+                        .build())
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("cancellation")
+                        .type(Scalars.GraphQLBoolean)
+                        .description("Whether stop is cancelled.")
+                        .dataFetcher(environment -> ((TripTimeShort) environment.getSource()).isCancelledStop)
                         .build())
                 .field(GraphQLFieldDefinition.newFieldDefinition()
                         .name("date")

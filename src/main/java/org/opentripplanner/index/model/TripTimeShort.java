@@ -1,17 +1,15 @@
 package org.opentripplanner.index.model;
 
-import java.util.List;
-
+import com.beust.jcommander.internal.Lists;
 import org.opentripplanner.model.AgencyAndId;
 import org.opentripplanner.model.Stop;
 import org.opentripplanner.model.Trip;
-import com.beust.jcommander.internal.Lists;
 import org.opentripplanner.routing.core.ServiceDay;
 import org.opentripplanner.routing.edgetype.Timetable;
 import org.opentripplanner.routing.trippattern.RealTimeState;
 import org.opentripplanner.routing.trippattern.TripTimes;
 
-import static org.opentripplanner.model.StopPattern.PICKDROP_NONE;
+import java.util.List;
 
 public class TripTimeShort {
 
@@ -33,6 +31,11 @@ public class TripTimeShort {
     public AgencyAndId tripId;
     public String blockId;
     public String headsign;
+    public boolean isRecordedStop;
+    public boolean isCancelledStop;
+
+    public int pickupType;
+    public int dropoffType;
 
     /**
      * This is stop-specific, so the index i is a stop index, not a hop index.
@@ -48,6 +51,12 @@ public class TripTimeShort {
         scheduledDeparture = tt.getScheduledDepartureTime(i);
         realtimeDeparture  = tt.getDepartureTime(i);
         departureDelay     = tt.getDepartureDelay(i);
+        isRecordedStop     = tt.isRecordedStop(i);
+        isCancelledStop    = tt.isCancelledStop(i);
+
+        pickupType         = tt.getPickupType(i);
+        dropoffType        = tt.getDropoffType(i);
+
         timepoint          = tt.isTimepoint(i);
         realtime           = !tt.isScheduled();
         tripId             = tt.trip.getId();
@@ -80,12 +89,7 @@ public class TripTimeShort {
         List<TripTimeShort> out = Lists.newArrayList();
         // one per stop, not one per hop, thus the <= operator
         for (int i = 0; i < times.getNumStops(); ++i) {
-            Stop stop = table.pattern.getStop(i);
-            if (table.pattern.stopPattern.pickups[i] != PICKDROP_NONE |
-                    table.pattern.stopPattern.dropoffs[i] != PICKDROP_NONE) {
-                // If stop is neither pickup nor dropoff - do not include it in result
-                out.add(new TripTimeShort(times, i, stop, serviceDay));
-            }
+            out.add(new TripTimeShort(times, i, table.pattern.getStop(i), serviceDay));
         }
         return out;
     }
@@ -147,6 +151,12 @@ public class TripTimeShort {
             return false;
         }
         if (serviceDay != that.serviceDay) {
+            return false;
+        }
+        if (isRecordedStop != that.isRecordedStop) {
+            return false;
+        }
+        if (isCancelledStop != that.isCancelledStop) {
             return false;
         }
         return true;

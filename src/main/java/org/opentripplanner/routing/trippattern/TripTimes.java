@@ -13,16 +13,14 @@
 
 package org.opentripplanner.routing.trippattern;
 
-import java.io.Serializable;
-import java.util.Arrays;
-import java.util.BitSet;
-import java.util.Collection;
-
+import com.google.common.hash.HashCode;
+import com.google.common.hash.HashFunction;
+import com.google.common.hash.Hasher;
+import org.opentripplanner.common.MavenVersion;
+import org.opentripplanner.gtfs.BikeAccess;
 import org.opentripplanner.model.AgencyAndId;
 import org.opentripplanner.model.StopTime;
 import org.opentripplanner.model.Trip;
-import org.opentripplanner.common.MavenVersion;
-import org.opentripplanner.gtfs.BikeAccess;
 import org.opentripplanner.routing.core.RoutingRequest;
 import org.opentripplanner.routing.core.State;
 import org.opentripplanner.routing.core.TraverseMode;
@@ -30,9 +28,10 @@ import org.opentripplanner.routing.request.BannedStopSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.hash.HashCode;
-import com.google.common.hash.HashFunction;
-import com.google.common.hash.Hasher;
+import java.io.Serializable;
+import java.util.Arrays;
+import java.util.BitSet;
+import java.util.Collection;
 
 /**
  * A TripTimes represents the arrival and departure times for a single trip in an Timetable. It is carried
@@ -99,6 +98,29 @@ public class TripTimes implements Serializable, Comparable<TripTimes>, Cloneable
     int[] departureTimes;
 
     /**
+     * Flag to indicate that the stop has been passed without removing arrival/departure-times - i.e. "estimates" are
+     * actual times, no longer estimates.
+     *
+     * Non-final to allow updates.
+     */
+    boolean[] isRecordedStop;
+
+    /**
+     * Flag tho indicate cancellations on each stop. Non-final to allow updates.
+     */
+    boolean[] isCancelledStop;
+
+    /**
+     * Flag tho indicate cancellations on each stop. Non-final to allow updates.
+     */
+    int[] pickups;
+
+    /**
+     * Flag tho indicate cancellations on each stop. Non-final to allow updates.
+     */
+    int[] dropoffs;
+
+    /**
      * Keep track of stop time ids to enable notices to point to a specific stop time.
      */
 
@@ -137,6 +159,8 @@ public class TripTimes implements Serializable, Comparable<TripTimes>, Cloneable
         final BitSet timepoints = new BitSet(nStops);
         // Times are always shifted to zero. This is essential for frequencies and deduplication.
         timeShift = stopTimes.iterator().next().getArrivalTime();
+        final int[] pickups   = new int[nStops];
+        final int[] dropoffs   = new int[nStops];
         int s = 0;
         for (final StopTime st : stopTimes) {
             departures[s] = st.getDepartureTime() - timeShift;
@@ -144,16 +168,21 @@ public class TripTimes implements Serializable, Comparable<TripTimes>, Cloneable
             stopTimeIds[s] = st.getId();
             sequences[s] = st.getStopSequence();
             timepoints.set(s, st.getTimepoint() == 1);
+            pickups[s] = st.getPickupType();
+            dropoffs[s] = st.getDropOffType();
             s++;
         }
         this.scheduledDepartureTimes = deduplicator.deduplicateIntArray(departures);
         this.scheduledArrivalTimes = deduplicator.deduplicateIntArray(arrivals);
         this.stopSequences = deduplicator.deduplicateIntArray(sequences);
         this.headsigns = deduplicator.deduplicateStringArray(makeHeadsignsArray(stopTimes));
+        this.pickups = deduplicator.deduplicateIntArray(pickups);
+        this.dropoffs = deduplicator.deduplicateIntArray(dropoffs);
         // We set these to null to indicate that this is a non-updated/scheduled TripTimes.
         // We cannot point to the scheduled times because they are shifted, and updated times are not.
         this.arrivalTimes = null;
         this.departureTimes = null;
+        this.isRecordedStop = null;
         this.timepoints = deduplicator.deduplicateBitSet(timepoints);
         LOG.trace("trip {} has timepoint at indexes {}", trip, timepoints);
     }
@@ -171,6 +200,8 @@ public class TripTimes implements Serializable, Comparable<TripTimes>, Cloneable
         this.stopTimeIds = object.stopTimeIds;
         this.stopSequences = object.stopSequences;
         this.timepoints = object.timepoints;
+        this.pickups = object.pickups;
+        this.dropoffs = object.dropoffs;
     }
 
     /**
@@ -268,6 +299,55 @@ public class TripTimes implements Serializable, Comparable<TripTimes>, Cloneable
     /** @return the difference between the scheduled and actual departure times at this stop. */
     public int getDepartureDelay(final int stop) {
         return getDepartureTime(stop) - (scheduledDepartureTimes[stop] + timeShift);
+    }
+
+    public void setRecorded(int stop, boolean recorded) {
+        checkCreateTimesArrays();
+        isRecordedStop[stop] = recorded;
+    }
+
+    public boolean isRecordedStop(int stop) {
+        if (isRecordedStop == null) {
+            return false;
+        }
+        return isRecordedStop[stop];
+    }
+
+    //Is single stop cancelled
+    public void setCancelledStop(int stop, boolean isCancelled) {
+        checkCreateTimesArrays();
+        isCancelledStop[stop] = isCancelled;
+    }
+
+    public boolean isCancelledStop(int stop) {
+        if (isCancelledStop == null) {
+            return false;
+        }
+        return isCancelledStop[stop];
+    }
+
+    public void setPickupType(int stop, int pickupType) {
+        checkCreateTimesArrays();
+        pickups[stop] = pickupType;
+    }
+
+    public int getPickupType(int stop) {
+        if (pickups == null) {
+            return -999;
+        }
+        return pickups[stop];
+    }
+
+    public void setDropoffType(int stop, int dropoffType) {
+        checkCreateTimesArrays();
+        dropoffs[stop] = dropoffType;
+    }
+
+    public int getDropoffType(int stop) {
+        if (dropoffs == null) {
+            return -999;
+        }
+        return dropoffs[stop];
     }
 
     /**
@@ -394,9 +474,15 @@ public class TripTimes implements Serializable, Comparable<TripTimes>, Cloneable
         if (arrivalTimes == null) {
             arrivalTimes = Arrays.copyOf(scheduledArrivalTimes, scheduledArrivalTimes.length);
             departureTimes = Arrays.copyOf(scheduledDepartureTimes, scheduledDepartureTimes.length);
+            isRecordedStop = new boolean[arrivalTimes.length];
+            isCancelledStop = new boolean[arrivalTimes.length];
+            pickups = new int[arrivalTimes.length];
+            dropoffs = new int[arrivalTimes.length];
             for (int i = 0; i < arrivalTimes.length; i++) {
                 arrivalTimes[i] += timeShift;
                 departureTimes[i] += timeShift;
+                isRecordedStop[i] = false;
+                isCancelledStop[i] = false;
             }
 
             // Update the real-time state
