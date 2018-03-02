@@ -84,6 +84,8 @@ class OtpTransitServiceImpl implements OtpTransitService {
 
     private final Map<Stop, Collection<Stop>> stationsByMultiModalStop;
 
+    private final Map<Stop, Collection<Stop>> stopsByGroupOfStopPlace;
+
     private final Map<AgencyAndId, Stop> stopsById;
 
     private final Map<Trip, List<StopTime>> stopTimesByTrip;
@@ -118,6 +120,7 @@ class OtpTransitServiceImpl implements OtpTransitService {
         this.serviceIds = nullSafeUnmodifiableList(builder.findAllServiceIds());
         this.shapePointsByShapeId = mapShapePoints(builder.getShapePoints());
         this.stationsByMultiModalStop = new HashMap<>(builder.getStationsByMultiModalStop().asMap());
+        this.stopsByGroupOfStopPlace = new HashMap<>(builder.getStopByGroupOfStopPlaces().asMap());
         this.stopsById = unmodifiableMap(builder.getStops().asMap());
         this.stopTimesByTrip = builder.getStopTimesSortedByTrip().asMap();
         this.transfers = nullSafeUnmodifiableList(builder.getTransfers());
@@ -188,8 +191,13 @@ class OtpTransitServiceImpl implements OtpTransitService {
     }
 
     @Override
-    public Iterable<Map.Entry<Stop, Collection<Stop>>> getStationsByMultiModalStop() {
-        return stationsByMultiModalStop.entrySet();
+    public Map<Stop, Collection<Stop>> getStationsByMultiModalStop() {
+        return stationsByMultiModalStop;
+    }
+
+    @Override
+    public Iterable<Map.Entry<Stop, Collection<Stop>>> getStopsByGroupOfStopPlace() {
+        return stopsByGroupOfStopPlace.entrySet();
     }
 
     @Override
