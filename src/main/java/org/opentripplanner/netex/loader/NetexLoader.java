@@ -29,10 +29,7 @@ import org.rutebanken.netex.model.DayTypeRefs_RelStructure;
 import org.rutebanken.netex.model.DayTypes_RelStructure;
 import org.rutebanken.netex.model.DestinationDisplay;
 import org.rutebanken.netex.model.GroupOfLines;
-import org.rutebanken.netex.model.GroupOfStopPlaces;
-import org.rutebanken.netex.model.GroupOfStopPlacesRefStructure;
 import org.rutebanken.netex.model.GroupsOfLinesInFrame_RelStructure;
-import org.rutebanken.netex.model.GroupsOfStopPlacesInFrame_RelStructure;
 import org.rutebanken.netex.model.Interchange_VersionStructure;
 import org.rutebanken.netex.model.JourneyPattern;
 import org.rutebanken.netex.model.JourneyPatternsInFrame_RelStructure;
@@ -253,14 +250,6 @@ public class NetexLoader {
                 List<Parking> parkingList = parkings.getParking();
                 for (Parking parking : parkingList) {
                     currentNetexDao().parkingById.add(parking);
-                }
-            }
-
-            GroupsOfStopPlacesInFrame_RelStructure groupsOfStopPlaces = sf.getGroupsOfStopPlaces();
-            if (groupsOfStopPlaces != null) {
-                List<GroupOfStopPlaces> groupOfStopPlacesList = groupsOfStopPlaces.getGroupOfStopPlaces();
-                for (GroupOfStopPlaces groupOfStopPlaces : groupOfStopPlacesList) {
-                    currentNetexDao().groupsOfStopPlacesById.add(groupOfStopPlaces);
                 }
             }
         }

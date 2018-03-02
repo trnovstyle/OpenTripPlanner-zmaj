@@ -63,10 +63,6 @@ public class OtpTransitBuilder {
 
     private final List<Frequency> frequencies = new ArrayList<>();
 
-    private final EntityMap<AgencyAndId, Stop> groupsOfStopPlaces = new EntityMap<>();
-
-    private final ListMultimap<Stop, Stop> stopByGroupOfStopPlaces = ArrayListMultimap.create();
-
     private final List<Parking> parkings = new ArrayList<>();
 
     private final EntityMap<AgencyAndId, Stop> multiModalStops = new EntityMap<>();
@@ -128,14 +124,6 @@ public class OtpTransitBuilder {
 
     public List<Frequency> getFrequencies() {
         return frequencies;
-    }
-
-    public EntityMap<AgencyAndId, Stop> getGroupsOfStopPlaces() {
-        return groupsOfStopPlaces;
-    }
-
-    public ListMultimap<Stop, Stop> getStopByGroupOfStopPlaces() {
-        return stopByGroupOfStopPlaces;
     }
 
     public EntityMap<AgencyAndId, Stop> getMultiModalStops() {
