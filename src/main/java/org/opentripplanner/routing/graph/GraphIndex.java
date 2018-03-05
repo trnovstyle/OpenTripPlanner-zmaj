@@ -1095,6 +1095,10 @@ public class GraphIndex {
         return getSiriAlertPatchService().getStopAndRoutePatches(stop.getId(), route.getId());
     }
 
+    public Collection<AlertPatch> getAlertsForStopAndTrip(Stop stop, Trip trip) {
+        return getSiriAlertPatchService().getStopAndTripPatches(stop.getId(), trip.getId());
+    }
+
     /**
      * Fetch an agency by its string ID, ignoring the fact that this ID should be scoped by a feedId.
      * This is a stopgap (i.e. hack) method for fetching agencies where no feed scope is available.

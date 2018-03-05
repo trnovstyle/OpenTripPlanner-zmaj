@@ -35,6 +35,8 @@ public interface AlertPatchService {
 
     Collection<AlertPatch> getStopAndRoutePatches(AgencyAndId stop, AgencyAndId route);
 
+    Collection<AlertPatch> getStopAndTripPatches(AgencyAndId stop, AgencyAndId trip);
+
     Collection<AlertPatch> getTripPatternPatches(TripPattern tripPattern);
 
     void apply(AlertPatch alertPatch);

@@ -13,20 +13,18 @@
 
 package org.opentripplanner.routing.impl;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.opentripplanner.model.AgencyAndId;
 import org.opentripplanner.routing.alertpatch.Alert;
 import org.opentripplanner.routing.alertpatch.AlertPatch;
 import org.opentripplanner.routing.graph.Graph;
+
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+
+import static org.junit.Assert.*;
 
 public class AlertPatchServiceImplTest {
     private class TestAlertPatch extends AlertPatch {
@@ -52,7 +50,10 @@ public class AlertPatchServiceImplTest {
         alerts = new TestAlertPatch[] {new TestAlertPatch(), new TestAlertPatch(),
                 new TestAlertPatch(), new TestAlertPatch()};
         alerts[0].setRoute(testRoute);
-        alerts[0].setStop(testStop);
+        alerts[1].setStop(testStop);
+
+        alerts[2].setRoute(testRoute);
+        alerts[2].setStop(testStop);
 
         alerts[0].setAlert(new Alert());
         alerts[1].setAlert(new Alert());
@@ -74,14 +75,20 @@ public class AlertPatchServiceImplTest {
     public void testApplyAndExpire() {
         AlertPatchServiceImpl instance = getAlertPatchServiceImpl();
         instance.apply(alerts[0]);
+        instance.apply(alerts[1]);
+        instance.apply(alerts[2]);
 
-        assertTrue(instance.getStopPatches(testStop).contains(alerts[0]));
         assertTrue(instance.getRoutePatches(testRoute).contains(alerts[0]));
+        assertTrue(instance.getStopPatches(testStop).contains(alerts[1]));
+        assertTrue(instance.getStopAndRoutePatches(testStop, testRoute).contains(alerts[2]));
 
         instance.expire(Collections.singleton(alerts[0].getId()));
+        instance.expire(Collections.singleton(alerts[1].getId()));
+        instance.expire(Collections.singleton(alerts[2].getId()));
 
-        assertTrue(instance.getStopPatches(testStop).isEmpty());
         assertTrue(instance.getRoutePatches(testRoute).isEmpty());
+        assertTrue(instance.getStopPatches(testStop).isEmpty());
+        assertTrue(instance.getStopAndRoutePatches(testStop, testRoute).isEmpty());
     }
 
     @Test
