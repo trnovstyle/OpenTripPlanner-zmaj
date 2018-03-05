@@ -74,28 +74,7 @@ public class StopMapper {
 
         stop.setTimezone(DEFAULT_TIMEZONE);
 
-        if  (stopPlaceLatest.getWeighting() != null) {
-            switch (stopPlaceLatest.getWeighting()) {
-                case PREFERRED_INTERCHANGE:
-                    stop.setWeight(Stop.interchangeWeightingEnumeration.PREFERRED_INTERCHANGE);
-                    break;
-                case RECOMMENDED_INTERCHANGE:
-                    stop.setWeight(Stop.interchangeWeightingEnumeration.RECOMMENDED_INTERCHANGE);
-                    break;
-                case INTERCHANGE_ALLOWED:
-                    stop.setWeight(Stop.interchangeWeightingEnumeration.INTERCHANGE_ALLOWED);
-                    break;
-                case NO_INTERCHANGE:
-                    stop.setWeight(Stop.interchangeWeightingEnumeration.NO_INTERCHANGE);
-                    break;
-                default:
-                    stop.setWeight(Stop.interchangeWeightingEnumeration.INTERCHANGE_ALLOWED);
-                    break;
-            }
-        }
-        else {
-            stop.setWeight(Stop.interchangeWeightingEnumeration.INTERCHANGE_ALLOWED);
-        }
+        stop.setWeight(mapInterchange(stopPlaceLatest));
 
         if (stopPlaceLatest.getAccessibilityAssessment() != null
                 && stopPlaceLatest.getAccessibilityAssessment().getLimitations() != null
@@ -218,6 +197,28 @@ public class StopMapper {
             LOG.warn(stopPlace.getId() + " does not contain any coordinates.");
         }
 
+        stop.setWeight(mapInterchange(stopPlace));
+
         return stop;
+    }
+
+    Stop.interchangeWeightingEnumeration mapInterchange(StopPlace stopPlace) {
+        if  (stopPlace.getWeighting() != null) {
+            switch (stopPlace.getWeighting()) {
+                case PREFERRED_INTERCHANGE:
+                    return Stop.interchangeWeightingEnumeration.PREFERRED_INTERCHANGE;
+                case RECOMMENDED_INTERCHANGE:
+                    return Stop.interchangeWeightingEnumeration.RECOMMENDED_INTERCHANGE;
+                case INTERCHANGE_ALLOWED:
+                    return Stop.interchangeWeightingEnumeration.INTERCHANGE_ALLOWED;
+                case NO_INTERCHANGE:
+                    return Stop.interchangeWeightingEnumeration.NO_INTERCHANGE;
+                default:
+                    return Stop.interchangeWeightingEnumeration.INTERCHANGE_ALLOWED;
+            }
+        }
+        else {
+            return Stop.interchangeWeightingEnumeration.INTERCHANGE_ALLOWED;
+        }
     }
 }
