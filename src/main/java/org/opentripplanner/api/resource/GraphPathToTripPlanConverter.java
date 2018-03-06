@@ -21,10 +21,7 @@ import org.opentripplanner.common.geometry.DirectionUtils;
 import org.opentripplanner.common.geometry.GeometryUtils;
 import org.opentripplanner.common.geometry.PackedCoordinateSequence;
 import org.opentripplanner.common.model.P2;
-import org.opentripplanner.model.Agency;
-import org.opentripplanner.model.Route;
-import org.opentripplanner.model.Stop;
-import org.opentripplanner.model.Trip;
+import org.opentripplanner.model.*;
 import org.opentripplanner.profile.BikeRentalStationInfo;
 import org.opentripplanner.routing.alertpatch.Alert;
 import org.opentripplanner.routing.alertpatch.AlertPatch;
@@ -575,32 +572,57 @@ public abstract class GraphPathToTripPlanConverter {
 
             if (graph.index != null) {
                 if (leg.routeId != null) {
+
+                    //TODO: Check if alerts are applicable for departing stop
                     if (leg.from != null && leg.from.stopId != null) {
-                        addAlertPatchesToLeg(leg, graph.index.getAlertsForStopAndRoute(graph.index.stopForId.get(leg.from.stopId), graph.index.routeForId.get(leg.routeId)), requestedLocale, leg.startTime.getTime(), leg.endTime.getTime());
+                        addAlertPatchesToLeg(leg, getAlertsForStopAndRoute(graph, leg.from.stopId, leg.routeId), requestedLocale, leg.startTime.getTime(), leg.endTime.getTime());
                     }
+
+                    //TODO: Check if alerts are applicable for arrival stop
                     if (leg.to != null && leg.to.stopId != null) {
-                        addAlertPatchesToLeg(leg, graph.index.getAlertsForStopAndRoute(graph.index.stopForId.get(leg.to.stopId), graph.index.routeForId.get(leg.routeId)), requestedLocale, leg.startTime.getTime(), leg.endTime.getTime());
+                        addAlertPatchesToLeg(leg, getAlertsForStopAndRoute(graph, leg.to.stopId, leg.routeId), requestedLocale, leg.startTime.getTime(), leg.endTime.getTime());
                     }
                 }
 
                 if (leg.tripId != null) {
+
+                    //TODO: Check if alerts are applicable for departing stop
                     if (leg.from != null && leg.from.stopId != null) {
-                        addAlertPatchesToLeg(leg, graph.index.getAlertsForStopAndTrip(graph.index.stopForId.get(leg.from.stopId), graph.index.tripForId.get(leg.tripId)), requestedLocale, leg.startTime.getTime(), leg.endTime.getTime());
+                        addAlertPatchesToLeg(leg, getAlertsForStopAndTrip(graph, leg.from.stopId, leg.tripId), requestedLocale, leg.startTime.getTime(), leg.endTime.getTime());
                     }
+
+                    //TODO: Check if alerts are applicable for arrival stop
                     if (leg.to != null && leg.to.stopId != null) {
-                        addAlertPatchesToLeg(leg, graph.index.getAlertsForStopAndTrip(graph.index.stopForId.get(leg.to.stopId), graph.index.tripForId.get(leg.tripId)), requestedLocale, leg.startTime.getTime(), leg.endTime.getTime());
+                        addAlertPatchesToLeg(leg, getAlertsForStopAndTrip(graph, leg.to.stopId, leg.tripId), requestedLocale, leg.startTime.getTime(), leg.endTime.getTime());
+                    }
+
+
+                    //TODO: Check if alerts are applicable for passing stops (i.e. not arriving or departing)
+                    if (leg.stop != null) {
+                        for (Place place : leg.stop) {
+                            if (place.stopId != null) {
+                                 addAlertPatchesToLeg(leg, getAlertsForStopAndTrip(graph, place.stopId, leg.tripId),
+                                        requestedLocale, place.arrival.getTime(), place.departure.getTime());
+                            }
+                        }
                     }
                 }
 
                 if (leg.stop != null) {
                     for (Place place : leg.stop) {
                         if (place.stopId != null) {
-
-                            addAlertPatchesToLeg(leg, graph.index.getAlertsForStop(graph.index.stopForId.get(place.stopId)),
+                            addAlertPatchesToLeg(leg, getAlertsForStop(graph, place.stopId),
                                     requestedLocale, place.arrival.getTime(), place.departure.getTime());
                         }
                     }
                 }
+
+
+                if (leg.from != null && leg.from.stopId != null) {
+                    addAlertPatchesToLeg(leg, getAlertsForStop(graph, leg.from.stopId),
+                                    requestedLocale, leg.startTime.getTime(), leg.endTime.getTime());
+                }
+
                 if (leg.tripId != null) {
                     addAlertPatchesToLeg(leg, graph.index.getAlertsForTrip(graph.index.tripForId.get(leg.tripId)),
                                     requestedLocale, leg.startTime.getTime(), leg.endTime.getTime());
@@ -627,6 +649,66 @@ public abstract class GraphPathToTripPlanConverter {
                 }
             }
         }
+    }
+
+    private static Collection<AlertPatch> getAlertsForStopAndRoute(Graph graph, AgencyAndId stopId, AgencyAndId routeId) {
+        return getAlertsForStopAndRoute(graph, stopId, routeId, true);
+    }
+
+    private static Collection<AlertPatch> getAlertsForStopAndRoute(Graph graph, AgencyAndId stopId, AgencyAndId routeId, boolean checkParentStop) {
+
+        Stop stop = graph.index.stopForId.get(stopId);
+        Collection<AlertPatch> alertsForStopAndRoute = graph.index.getAlertsForStopAndRoute(stop, graph.index.routeForId.get(routeId));
+        if (checkParentStop && stop.getParentStation() != null) {
+
+            //No alerts found for quay - check parent
+            Stop parentStop = graph.index.stationForId.get(new AgencyAndId(stop.getId().getAgencyId(), stop.getParentStation()));
+            if (parentStop != null) {
+                alertsForStopAndRoute.addAll(graph.index.getAlertsForStopAndRoute(graph.index.stationForId.get(parentStop.getId()), graph.index.routeForId.get(routeId)));
+            }
+
+        }
+        return alertsForStopAndRoute;
+    }
+
+    private static Collection<AlertPatch> getAlertsForStopAndTrip(Graph graph, AgencyAndId stopId, AgencyAndId tripId) {
+        return getAlertsForStopAndTrip(graph, stopId, tripId, true);
+    }
+
+    private static Collection<AlertPatch> getAlertsForStopAndTrip(Graph graph, AgencyAndId stopId, AgencyAndId tripId, boolean checkParentStop) {
+
+        Stop stop = graph.index.stopForId.get(stopId);
+        Collection<AlertPatch> alertsForStopAndTrip = graph.index.getAlertsForStopAndTrip(stop, graph.index.tripForId.get(tripId));
+        if (checkParentStop && stop.getParentStation() != null) {
+
+            //No alerts found for quay - check parent
+            Stop parentStop = graph.index.stationForId.get(new AgencyAndId(stop.getId().getAgencyId(), stop.getParentStation()));
+            if (parentStop != null) {
+                alertsForStopAndTrip.addAll(graph.index.getAlertsForStopAndTrip(graph.index.stationForId.get(parentStop.getId()), graph.index.tripForId.get(tripId)));
+            }
+
+        }
+        return alertsForStopAndTrip;
+    }
+
+    private static Collection<AlertPatch> getAlertsForStop(Graph graph, AgencyAndId stopId) {
+        return getAlertsForStop(graph, stopId, true);
+    }
+
+    private static Collection<AlertPatch> getAlertsForStop(Graph graph, AgencyAndId stopId, boolean checkParentStop) {
+
+        Stop stop = graph.index.stopForId.get(stopId);
+        Collection<AlertPatch> alertsForStop = graph.index.getAlertsForStop(stop);
+        if (checkParentStop && stop.getParentStation() != null) {
+
+            //No alerts found for quay - check parent
+            Stop parentStop = graph.index.stationForId.get(new AgencyAndId(stop.getId().getAgencyId(), stop.getParentStation()));
+            if (parentStop != null) {
+                alertsForStop.addAll(graph.index.getAlertsForStop(graph.index.stationForId.get(parentStop.getId())));
+            }
+
+        }
+        return alertsForStop;
     }
 
     private static void addAlertPatchesToLeg(Leg leg, Collection<AlertPatch> alertsPatches, Locale requestedLocale, Date fromTime, Date toTime) {
