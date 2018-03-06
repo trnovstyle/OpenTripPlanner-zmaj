@@ -281,7 +281,6 @@ public class AlertsUpdateHandler {
                                     AlertPatch alertPatch = new AlertPatch();
                                     alertPatch.setRoute(route.getId());
                                     alertPatch.setTimePeriods(periods);
-                                    alertPatch.setAgencyId(route.getAgency().getId());
                                     alertPatch.setId(id);
                                     patches.add(alertPatch);
                                 }
@@ -363,7 +362,6 @@ public class AlertsUpdateHandler {
                                             AlertPatch alertPatch = new AlertPatch();
                                             alertPatch.setTrip(tripId);
                                             alertPatch.setStop(affectedStop);
-                                            alertPatch.setAgencyId(tripId.getAgencyId());
                                             alertPatch.setId(id);
 
                                             //  A tripId for a given date may be reused for other dates not affected by this alert.
@@ -389,7 +387,6 @@ public class AlertsUpdateHandler {
 
                                         AlertPatch alertPatch = new AlertPatch();
                                         alertPatch.setTrip(tripId);
-                                        alertPatch.setAgencyId(tripId.getAgencyId());
                                         alertPatch.setId(id);
 
                                         //  A tripId for a given date may be reused for other dates not affected by this alert.
@@ -424,7 +421,6 @@ public class AlertsUpdateHandler {
                             } else {
                                 AlertPatch alertPatch = new AlertPatch();
                                 alertPatch.setRoute(route.getId());
-                                alertPatch.setAgencyId(route.getAgency().getId());
                                 alertPatch.setTimePeriods(periods);
                                 alertPatch.setId(id);
                                 patches.add(alertPatch);
