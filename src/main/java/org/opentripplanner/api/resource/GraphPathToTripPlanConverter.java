@@ -609,10 +609,6 @@ public abstract class GraphPathToTripPlanConverter {
                     addAlertPatchesToLeg(leg, graph.index.getAlertsForRoute(graph.index.routeForId.get(leg.routeId)),
                                     requestedLocale, leg.startTime.getTime(), leg.endTime.getTime());
                 }
-                if (leg.agencyId != null) {
-                    addAlertPatchesToLeg(leg, graph.index.getAlertsForAgency(graph.index.getAgencyWithoutFeedId(leg.agencyId)),
-                                    requestedLocale, leg.startTime.getTime(), leg.endTime.getTime());
-                }
 
             }
 
