@@ -9,7 +9,6 @@ import org.rutebanken.netex.model.DayType;
 import org.rutebanken.netex.model.DayTypeAssignment;
 import org.rutebanken.netex.model.DestinationDisplay;
 import org.rutebanken.netex.model.GroupOfLines;
-import org.rutebanken.netex.model.GroupOfStopPlaces;
 import org.rutebanken.netex.model.JourneyPattern;
 import org.rutebanken.netex.model.Line;
 import org.rutebanken.netex.model.Network;
@@ -50,7 +49,6 @@ public class NetexDao {
     public final HierarchicalMapById<DestinationDisplay> destinationDisplayById;
     public final HierarchicalMapById<GroupOfLines> groupOfLinesById;
     public final HierarchicalMap<String, GroupOfLines> groupOfLinesByLineId;
-    public final HierarchicalMapById<GroupOfStopPlaces> groupsOfStopPlacesById;
     public final HierarchicalMap<String, ServiceJourneyInterchange> interchanges;
     public final HierarchicalMapById<JourneyPattern> journeyPatternsById;
     public final HierarchicalMap<String, JourneyPattern> journeyPatternsByStopPointId;
@@ -91,7 +89,6 @@ public class NetexDao {
         this.destinationDisplayById = new HierarchicalMapById<>();
         this.groupOfLinesById = new HierarchicalMapById<>();
         this.groupOfLinesByLineId = new HierarchicalMap<>();
-        this.groupsOfStopPlacesById = new HierarchicalMapById<>();
         this.interchanges = new HierarchicalMap<>();
         this.journeyPatternsById = new HierarchicalMapById<>();
         this.journeyPatternsByStopPointId = new HierarchicalMap<>();
@@ -128,7 +125,6 @@ public class NetexDao {
         this.destinationDisplayById = new HierarchicalMapById<>(parent.destinationDisplayById);
         this.groupOfLinesById = new HierarchicalMapById<>(parent.groupOfLinesById);
         this.groupOfLinesByLineId = new HierarchicalMap<>(parent.groupOfLinesByLineId);
-        this.groupsOfStopPlacesById = new HierarchicalMapById<>(parent.groupsOfStopPlacesById);
         this.interchanges = new HierarchicalMap<>(parent.interchanges);
         this.journeyPatternsById = new HierarchicalMapById<>(parent.journeyPatternsById);
         this.journeyPatternsByStopPointId = new HierarchicalMap<>(parent.journeyPatternsByStopPointId);
