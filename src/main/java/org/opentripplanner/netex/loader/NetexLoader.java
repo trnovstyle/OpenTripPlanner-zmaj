@@ -67,6 +67,8 @@ import org.rutebanken.netex.model.StopAssignmentsInFrame_RelStructure;
 import org.rutebanken.netex.model.StopPlace;
 import org.rutebanken.netex.model.StopPlacesInFrame_RelStructure;
 import org.rutebanken.netex.model.StopPointInJourneyPattern;
+import org.rutebanken.netex.model.TariffZone;
+import org.rutebanken.netex.model.TariffZonesInFrame_RelStructure;
 import org.rutebanken.netex.model.TimetableFrame;
 import org.rutebanken.netex.model.VersionFrameDefaultsStructure;
 import org.slf4j.Logger;
@@ -261,6 +263,14 @@ public class NetexLoader {
                 List<GroupOfStopPlaces> groupOfStopPlacesList = groupsOfStopPlaces.getGroupOfStopPlaces();
                 for (GroupOfStopPlaces groupOfStopPlaces : groupOfStopPlacesList) {
                     currentNetexDao().groupsOfStopPlacesById.add(groupOfStopPlaces);
+                }
+            }
+
+            TariffZonesInFrame_RelStructure tariffZones = sf.getTariffZones();
+            if (tariffZones != null) {
+                List<TariffZone> tariffZoneList = tariffZones.getTariffZone();
+                for (TariffZone tariffZone : tariffZoneList) {
+                    currentNetexDao().tariffZoneById.add(tariffZone);
                 }
             }
         }

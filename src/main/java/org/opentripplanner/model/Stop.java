@@ -16,6 +16,9 @@
  */
 package org.opentripplanner.model;
 
+import java.util.ArrayList;
+import java.util.Collection;
+
 public final class Stop extends IdentityBean<AgencyAndId> {
 
     private static final long serialVersionUID = 1L;
@@ -56,6 +59,8 @@ public final class Stop extends IdentityBean<AgencyAndId> {
 
     private interchangeWeightingEnumeration weight;
 
+    private Collection<TariffZone> tariffZones = new ArrayList<>();
+
     public Stop() {
 
     }
@@ -76,6 +81,8 @@ public final class Stop extends IdentityBean<AgencyAndId> {
         this.timezone = obj.timezone;
         this.vehicleType = obj.vehicleType;
         this.platformCode = obj.platformCode;
+        this.weight = obj.weight;
+        this.tariffZones = new ArrayList<>(obj.tariffZones);
     }
 
     public AgencyAndId getId() {
@@ -210,6 +217,8 @@ public final class Stop extends IdentityBean<AgencyAndId> {
     public void clearVehicleType() {
         vehicleType = MISSING_VALUE;
     }
+
+    public Collection<TariffZone> getTariffZones() { return this.tariffZones; }
 
     public String getPlatformCode() {
         return platformCode;

@@ -24,6 +24,7 @@ import org.rutebanken.netex.model.ServiceJourney;
 import org.rutebanken.netex.model.ServiceJourneyInterchange;
 import org.rutebanken.netex.model.StopPlace;
 import org.rutebanken.netex.model.StopPointInJourneyPattern;
+import org.rutebanken.netex.model.TariffZone;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -69,6 +70,7 @@ public class NetexDao {
     public final HierarchicalMultimap<String, ServiceJourney> serviceJourneyByPatternId;
     public final HierarchicalMultimapById<StopPlace> stopPlaceById;
     public final HierarchicalMapById<StopPointInJourneyPattern> stopPointInJourneyPatternById;
+    public final HierarchicalMapById<TariffZone> tariffZoneById;
 
     private final Set<String> calendarServiceIds = new HashSet<>();
 
@@ -110,6 +112,7 @@ public class NetexDao {
         this.serviceJourneyByPatternId = new HierarchicalMultimap<>();
         this.stopPlaceById = new HierarchicalMultimapById<>();
         this.stopPointInJourneyPatternById = new HierarchicalMapById<>();
+        this.tariffZoneById = new HierarchicalMapById<>();
     }
 
     /**
@@ -147,6 +150,7 @@ public class NetexDao {
         this.serviceJourneyByPatternId = new HierarchicalMultimap<>(parent.serviceJourneyByPatternId);
         this.stopPlaceById = new HierarchicalMultimapById<>(parent.stopPlaceById);
         this.stopPointInJourneyPatternById = new HierarchicalMapById<>(parent.stopPointInJourneyPatternById);
+        this.tariffZoneById = new HierarchicalMapById<>(parent.tariffZoneById);
     }
 
     public void addCalendarServiceId(String serviceId) {

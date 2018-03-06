@@ -12,6 +12,7 @@ import org.rutebanken.netex.model.JourneyPattern;
 import org.rutebanken.netex.model.Line;
 import org.rutebanken.netex.model.Notice;
 import org.rutebanken.netex.model.StopPlace;
+import org.rutebanken.netex.model.TariffZone;
 
 import java.util.Collection;
 
@@ -37,6 +38,8 @@ public class NetexMapper {
 
     private final OperatorMapper operatorMapper = new OperatorMapper();
 
+    private final TariffZoneMapper tariffZoneMapper = new TariffZoneMapper();
+
     private final TransferMapper transferMapper = new TransferMapper();
 
     private final String agencyId;
@@ -61,6 +64,13 @@ public class NetexMapper {
         for (Line line : netexDao.lineById.values()) {
             Route route = routeMapper.mapRoute(line, transitBuilder, netexDao, netexDao.getTimeZone());
             transitBuilder.getRoutes().add(route);
+        }
+
+        for (TariffZone tariffZone : netexDao.tariffZoneById.values()) {
+            if (tariffZone != null) {
+                org.opentripplanner.model.TariffZone otpTariffZone = tariffZoneMapper.mapTariffZone(tariffZone);
+                transitBuilder.getTariffZones().add(otpTariffZone);
+            }
         }
 
         for (StopPlace stopPlace : netexDao.multimodalStopPlaceById.values()) {

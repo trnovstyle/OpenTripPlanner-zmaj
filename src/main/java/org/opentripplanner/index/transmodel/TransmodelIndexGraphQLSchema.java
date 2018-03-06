@@ -237,6 +237,8 @@ public class TransmodelIndexGraphQLSchema {
 
     private GraphQLOutputType lineType = new GraphQLTypeReference("Line");
 
+    private GraphQLOutputType tariffZoneType = new GraphQLTypeReference("TariffZone");
+
     private GraphQLOutputType timetabledPassingTimeType = new GraphQLTypeReference("TimetabledPassingTime");
 
     private GraphQLOutputType estimatedCallType = new GraphQLTypeReference("EstimatedCall");
@@ -680,6 +682,22 @@ public class TransmodelIndexGraphQLSchema {
                         .build())
                 .build();
 
+        tariffZoneType = GraphQLObjectType.newObject()
+                .name("TariffZone")
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("id")
+                        .type(Scalars.GraphQLString)
+                        .dataFetcher(
+                                environment -> ((TariffZone) environment.getSource()).getId().getId())
+                        .build())
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("name")
+                        .type(Scalars.GraphQLString)
+                        .dataFetcher(
+                                environment -> ((TariffZone) environment.getSource()).getName())
+                        .build())
+                .build();
+
         multilingualStringType = GraphQLObjectType.newObject()
                 .name("MultilingualString")
                 .description("Text with language")
@@ -933,6 +951,11 @@ public class TransmodelIndexGraphQLSchema {
                         .description("Relative weighting of this stop with regards to interchanges.")
                         .type(interchangeWeightingEnum)
                         .dataFetcher(environment -> (((Stop) environment.getSource()).getWeight()))
+                        .build())
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("tariffZones")
+                        .type(new GraphQLList(tariffZoneType))
+                        .dataFetcher(environment -> (((Stop) environment.getSource()).getTariffZones()))
                         .build())
                 .field(GraphQLFieldDefinition.newFieldDefinition()
                         .name("transportMode")
