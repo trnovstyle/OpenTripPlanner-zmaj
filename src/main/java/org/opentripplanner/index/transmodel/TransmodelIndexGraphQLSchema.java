@@ -2047,12 +2047,11 @@ public class TransmodelIndexGraphQLSchema {
                             if ((environment.getArgument("ids") instanceof List)) {
                                 return ((List<String>) environment.getArgument("ids"))
                                         .stream()
-                                        .map(id -> index.stationForId.get(GtfsLibrary.convertIdFromString(id)))
+                                        .map(id -> index.stationForId.get(mappingUtil.fromIdString(id)))
                                         .collect(Collectors.toList());
                             }
                             return new ArrayList<>(index.stationForId.values());
                         })
-                        .dataFetcher(environment -> new ArrayList<>(index.stationForId.values()))
                         .build())
                 .field(GraphQLFieldDefinition.newFieldDefinition()
                         .name("stopPlacesByBbox")
