@@ -1,12 +1,17 @@
 package org.opentripplanner.netex.mapping;
 
 import com.google.common.collect.Iterables;
+import com.google.common.collect.ListMultimap;
 import org.opentripplanner.model.AgencyAndId;
 import org.opentripplanner.model.Stop;
+import org.opentripplanner.model.impl.EntityMap;
 import org.opentripplanner.model.impl.OtpTransitBuilder;
 import org.opentripplanner.netex.loader.NetexDao;
+import org.rutebanken.netex.model.GroupOfStopPlaces;
 import org.rutebanken.netex.model.Quay;
 import org.rutebanken.netex.model.StopPlace;
+import org.rutebanken.netex.model.StopPlaceRefStructure;
+import org.rutebanken.netex.model.StopPlaceRefs_RelStructure;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -207,7 +212,6 @@ public class StopMapper {
         if (stopPlace.getName() != null) {
             stop.setName(stopPlace.getName().getValue());
         } else {
-
             LOG.warn("No name found for stop " + stopPlace.getId());
             stop.setName("Not found");
         }
@@ -219,5 +223,38 @@ public class StopMapper {
         }
 
         return stop;
+    }
+
+    // Mapped same way as parent stops for now
+    Stop mapGroupsOfStopPlaces(GroupOfStopPlaces groupOfStopPlaces, ListMultimap<Stop, Stop> stopsByGroupOfStopPlaces, EntityMap<AgencyAndId, Stop> stops) {
+        Stop group = new Stop();
+        group.setId(AgencyAndIdFactory.createAgencyAndId(groupOfStopPlaces.getId()));
+        group.setLocationType(1); // Set same as parent stop for now
+        if (groupOfStopPlaces.getName() != null) {
+            group.setName(groupOfStopPlaces.getName().getValue());
+        } else {
+            LOG.warn("No name found for group of stop places " + groupOfStopPlaces.getId());
+            group.setName("Not found");
+        }
+        if(groupOfStopPlaces.getCentroid() != null){
+            group.setLat(groupOfStopPlaces.getCentroid().getLocation().getLatitude().doubleValue());
+            group.setLon(groupOfStopPlaces.getCentroid().getLocation().getLongitude().doubleValue());
+        } else{
+            LOG.warn(groupOfStopPlaces.getId() + " does not contain any coordinates.");
+        }
+
+        StopPlaceRefs_RelStructure members = groupOfStopPlaces.getMembers();
+        if (members != null) {
+            List<StopPlaceRefStructure> memberList = members.getStopPlaceRef();
+            for (StopPlaceRefStructure stopPlaceRefStructure : memberList) {
+                AgencyAndId stopId = AgencyAndIdFactory.createAgencyAndId(stopPlaceRefStructure.getRef());
+                if (stops.containsKey(stopId)) {
+                    Stop stop = stops.get(stopId);
+                    stopsByGroupOfStopPlaces.put(group, stop);
+                }
+            }
+        }
+
+        return group;
     }
 }

@@ -1146,7 +1146,7 @@ public class PatternHopFactory {
      */
 
     public void linkMultiModalStops(Graph graph) {
-        for (Map.Entry<Stop, Collection<Stop>> entry : _transitService.getStationsByMultiModalStop()) {
+        for (Map.Entry<Stop, Collection<Stop>> entry : _transitService.getStationsByMultiModalStop().entrySet()) {
             Stop multiModalStop = entry.getKey();
             TransitStation multiModalStopVertex = (TransitStation) context.stationStopNodes.get(multiModalStop);
             if(!entry.getValue().isEmpty()) {
@@ -1160,6 +1160,45 @@ public class PatternHopFactory {
             }
             else {
                 LOG.warn("Multimodal stop " + multiModalStop.getId() + " does not contain any stations.");
+            }
+        }
+    }
+
+    /**
+     * Links groupsOfStopPlaces to regular stops and multimodal stops
+     * @param graph
+     */
+
+    public void linkGroupsOfStopPlaces(Graph graph) {
+        for (Map.Entry<Stop, Collection<Stop>> entry : _transitService.getStopsByGroupOfStopPlace()) {
+            Stop group = entry.getKey();
+            TransitStation groupOfStopPlacesVertex = (TransitStation) context.stationStopNodes.get(group);
+            if(!entry.getValue().isEmpty()) {
+                for (Stop stopOrStation : entry.getValue()) {
+                    // Entry is multimodal StopPlace
+                    if ((_transitService.getStationsByMultiModalStop()).containsKey(stopOrStation)) {
+                        for (Stop station : (_transitService.getStationsByMultiModalStop()).get(stopOrStation)) {
+                            if (_transitService.getStopsForStation(station) != null) {
+                                for (Stop stop : _transitService.getStopsForStation(station)) {
+                                    TransitStop stopVertex = (TransitStop) context.stationStopNodes.get(stop);
+                                    new StationStopEdge(groupOfStopPlacesVertex, stopVertex);
+                                    new StationStopEdge(stopVertex, groupOfStopPlacesVertex);
+                                }
+                            }
+                        }
+                    }
+                    // Entry is regular StopPlace
+                    else if (_transitService.getStopsForStation(stopOrStation) != null) {
+                        for (Stop stop : _transitService.getStopsForStation(stopOrStation)) {
+                            TransitStop stopVertex = (TransitStop) context.stationStopNodes.get(stop);
+                            new StationStopEdge(groupOfStopPlacesVertex, stopVertex);
+                            new StationStopEdge(stopVertex, groupOfStopPlacesVertex);
+                        }
+                    }
+                }
+            }
+            else {
+                LOG.warn("Multimodal stop " + group.getId() + " does not contain any stations.");
             }
         }
     }
