@@ -42,7 +42,9 @@ public interface OtpTransitService {
 
     Stop getStopForId(AgencyAndId id);
 
-    Iterable<Map.Entry<Stop, Collection<Stop>>> getStationsByMultiModalStop();
+    Map<Stop, Collection<Stop>> getStationsByMultiModalStop();
+
+    Iterable<Map.Entry<Stop, Collection<Stop>>> getStopsByGroupOfStopPlace();
 
     List<Stop> getStopsForStation(Stop station);
 

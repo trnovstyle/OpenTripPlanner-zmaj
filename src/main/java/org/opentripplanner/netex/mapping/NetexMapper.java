@@ -7,6 +7,7 @@ import org.opentripplanner.model.Stop;
 import org.opentripplanner.model.impl.OtpTransitBuilder;
 import org.opentripplanner.model.Transfer;
 import org.rutebanken.netex.model.Authority;
+import org.rutebanken.netex.model.GroupOfStopPlaces;
 import org.rutebanken.netex.model.JourneyPattern;
 import org.rutebanken.netex.model.Line;
 import org.rutebanken.netex.model.Notice;
@@ -77,6 +78,14 @@ public class NetexMapper {
                 for (Stop stop : stops) {
                     transitBuilder.getStops().add(stop);
                 }
+            }
+        }
+
+        for (GroupOfStopPlaces group : netexDao.groupsOfStopPlacesById.values()) {
+            if (group != null) {
+                Stop stop = stopMapper.mapGroupsOfStopPlaces(group, transitBuilder.getStopByGroupOfStopPlaces(), transitBuilder.getStops());
+                transitBuilder.getGroupsOfStopPlaces().add(stop);
+                transitBuilder.getStops().add(stop);
             }
         }
 
