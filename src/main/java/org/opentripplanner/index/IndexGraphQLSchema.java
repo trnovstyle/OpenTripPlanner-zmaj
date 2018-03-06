@@ -3195,8 +3195,10 @@ public class IndexGraphQLSchema {
 
         long startTimeSeconds = (leg.startTime.toInstant().toEpochMilli() - serviceDate.getAsDate().getTime()) / 1000;
         long endTimeSeconds = (leg.endTime.toInstant().toEpochMilli() - serviceDate.getAsDate().getTime()) / 1000;
-        return TripTimeShort.fromTripTimes(timetable, trip, serviceDay).stream().filter(tripTime -> matchesIntermediateQuayOrSiblingQuay(index, intermediateQuayIds, tripTime.stopId))
-                       .filter(tripTime -> tripTime.scheduledDeparture >= startTimeSeconds && tripTime.scheduledArrival <= endTimeSeconds).collect(Collectors.toList());
+        return TripTimeShort.fromTripTimes(timetable, trip, serviceDay).stream()
+                .filter(tripTime -> matchesIntermediateQuayOrSiblingQuay(index, intermediateQuayIds, tripTime.stopId))
+                .filter(tripTime -> tripTime.realtimeDeparture >= startTimeSeconds && tripTime.realtimeArrival <= endTimeSeconds)
+                .collect(Collectors.toList());
     }
 
     private boolean matchesIntermediateQuayOrSiblingQuay(GraphIndex index, Set<AgencyAndId> intermediateQuayIds, AgencyAndId stopId) {
