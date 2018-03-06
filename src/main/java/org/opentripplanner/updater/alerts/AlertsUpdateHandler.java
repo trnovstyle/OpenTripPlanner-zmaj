@@ -239,22 +239,24 @@ public class AlertsUpdateHandler {
                     String id = paddedSituationNumber + stopPlace.getValue();
                     if (stopId != null) {
 
-                        AlertPatch stopOnlyAlertPatch = new AlertPatch();
-                        stopOnlyAlertPatch.setStop(stopId);
-                        stopOnlyAlertPatch.setTimePeriods(periods);
-                        stopOnlyAlertPatch.setId(id);
-                        patches.add(stopOnlyAlertPatch);
+                        if (stopRoutes.isEmpty()) {
+                            AlertPatch stopOnlyAlertPatch = new AlertPatch();
+                            stopOnlyAlertPatch.setStop(stopId);
+                            stopOnlyAlertPatch.setTimePeriods(periods);
+                            stopOnlyAlertPatch.setId(id);
+                            patches.add(stopOnlyAlertPatch);
+                        } else {
+                            //Adding combination of stop & route
+                            for (Route route : stopRoutes) {
+                                id = paddedSituationNumber + stopPlace.getValue() + "-" + route.getId().getId();
 
-                        //Adding combination of stop & route
-                        for (Route route : stopRoutes) {
-                            id = paddedSituationNumber + stopPlace.getValue() + "-" + route.getId().getId();
-
-                            AlertPatch alertPatch = new AlertPatch();
-                            alertPatch.setStop(stopId);
-                            alertPatch.setRoute(route.getId());
-                            alertPatch.setTimePeriods(periods);
-                            alertPatch.setId(id);
-                            patches.add(alertPatch);
+                                AlertPatch alertPatch = new AlertPatch();
+                                alertPatch.setStop(stopId);
+                                alertPatch.setRoute(route.getId());
+                                alertPatch.setTimePeriods(periods);
+                                alertPatch.setId(id);
+                                patches.add(alertPatch);
+                            }
                         }
                     }
                 }
