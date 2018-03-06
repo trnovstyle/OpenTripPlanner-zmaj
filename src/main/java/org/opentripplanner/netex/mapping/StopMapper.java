@@ -12,6 +12,8 @@ import org.rutebanken.netex.model.Quay;
 import org.rutebanken.netex.model.StopPlace;
 import org.rutebanken.netex.model.StopPlaceRefStructure;
 import org.rutebanken.netex.model.StopPlaceRefs_RelStructure;
+import org.rutebanken.netex.model.TariffZone;
+import org.rutebanken.netex.model.TariffZoneRef;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -106,6 +108,15 @@ public class StopMapper {
 
         if (stopPlaceLatest.getDescription() != null) {
             stop.setDesc(stopPlaceLatest.getDescription().getValue());
+        }
+
+        if (stopPlaceLatest.getTariffZones() != null) {
+            for (TariffZoneRef tariffZoneRef : stopPlaceLatest.getTariffZones().getTariffZoneRef()) {
+                AgencyAndId ref = AgencyAndIdFactory.createAgencyAndId(tariffZoneRef.getRef());
+                if (transitBuilder.getTariffZones().containsKey(ref)) {
+                    stop.getTariffZones().add(transitBuilder.getTariffZones().get(ref));
+                }
+            }
         }
 
         stops.add(stop);

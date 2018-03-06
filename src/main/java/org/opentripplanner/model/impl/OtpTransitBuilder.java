@@ -35,6 +35,7 @@ import org.opentripplanner.model.ShapePoint;
 import org.opentripplanner.model.Stop;
 import org.opentripplanner.model.StopPattern;
 import org.opentripplanner.model.StopTime;
+import org.opentripplanner.model.TariffZone;
 import org.opentripplanner.model.Transfer;
 import org.opentripplanner.model.Trip;
 import org.opentripplanner.model.OtpTransitService;
@@ -88,6 +89,8 @@ public class OtpTransitBuilder {
     private final EntityMap<AgencyAndId, Stop> stopsById = new EntityMap<>();
 
     private final SortedMultimap<Trip, StopTime> stopTimesByTrip = new SortedMultimap<>();
+
+    private final EntityMap<AgencyAndId, TariffZone> tariffZonesById = new EntityMap<>();
 
     private final List<Transfer> transfers = new ArrayList<>();
 
@@ -178,6 +181,10 @@ public class OtpTransitBuilder {
 
     public SortedMultimap<Trip, StopTime> getStopTimesSortedByTrip() {
         return stopTimesByTrip;
+    }
+
+    public EntityMap<AgencyAndId, TariffZone> getTariffZones() {
+        return tariffZonesById;
     }
 
     public List<Transfer> getTransfers() {
