@@ -644,6 +644,9 @@ public class Timetable implements Serializable {
                         newTimes.setCancelledStop(callCounter, recordedCall.isCancellation());
                     }
 
+                    newTimes.setDropoffType(callCounter, pattern.stopPattern.dropoffs[callCounter]);
+                    newTimes.setPickupType(callCounter, pattern.stopPattern.pickups[callCounter]);
+
                     int arrivalTime = newTimes.getArrivalTime(callCounter);
                     int realtimeArrivalTime = arrivalTime;
                     if (recordedCall.getActualArrivalTime() != null) {
@@ -710,14 +713,15 @@ public class Timetable implements Serializable {
                         CallStatusEnumeration arrivalStatus = estimatedCall.getArrivalStatus();
                         if (arrivalStatus == CallStatusEnumeration.CANCELLED) {
                             pattern.stopPattern.dropoffs[callCounter] = PICKDROP_NONE;
-                            newTimes.setDropoffType(callCounter, PICKDROP_NONE);
                         }
 
                         CallStatusEnumeration departureStatus = estimatedCall.getDepartureStatus();
                         if (departureStatus == CallStatusEnumeration.CANCELLED) {
                             pattern.stopPattern.pickups[callCounter] = PICKDROP_NONE;
-                            newTimes.setPickupType(callCounter, PICKDROP_NONE);
                         }
+
+                        newTimes.setDropoffType(callCounter, pattern.stopPattern.dropoffs[callCounter]);
+                        newTimes.setPickupType(callCounter, pattern.stopPattern.pickups[callCounter]);
 
                         int arrivalTime = newTimes.getArrivalTime(callCounter);
                         int realtimeArrivalTime = arrivalTime;

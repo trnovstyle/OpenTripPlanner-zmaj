@@ -476,8 +476,6 @@ public class TripTimes implements Serializable, Comparable<TripTimes>, Cloneable
             departureTimes = Arrays.copyOf(scheduledDepartureTimes, scheduledDepartureTimes.length);
             isRecordedStop = new boolean[arrivalTimes.length];
             isCancelledStop = new boolean[arrivalTimes.length];
-            pickups = new int[arrivalTimes.length];
-            dropoffs = new int[arrivalTimes.length];
             for (int i = 0; i < arrivalTimes.length; i++) {
                 arrivalTimes[i] += timeShift;
                 departureTimes[i] += timeShift;
