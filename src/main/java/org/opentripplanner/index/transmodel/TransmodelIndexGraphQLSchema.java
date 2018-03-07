@@ -3510,10 +3510,14 @@ public class TransmodelIndexGraphQLSchema {
 
         long startTimeSeconds = (leg.startTime.toInstant().toEpochMilli() - serviceDate.getAsDate().getTime()) / 1000;
         long endTimeSeconds = (leg.endTime.toInstant().toEpochMilli() - serviceDate.getAsDate().getTime()) / 1000;
-        return TripTimeShort.fromTripTimes(timetable, trip, serviceDay).stream()
-                .filter(tripTime -> matchesIntermediateQuayOrSiblingQuay(intermediateQuayIds, tripTime.stopId))
-                .filter(tripTime -> tripTime.realtimeDeparture >= startTimeSeconds && tripTime.realtimeArrival <= endTimeSeconds)
-                .collect(Collectors.toList());
+        Stream<TripTimeShort> matchingByQuayOrSiblingQuayStream = TripTimeShort.fromTripTimes(timetable, trip, serviceDay).stream()
+                                                                          .filter(tripTime -> matchesIntermediateQuayOrSiblingQuay(intermediateQuayIds, tripTime.stopId));
+        if (Boolean.TRUE.equals(leg.realTime)) {
+            return matchingByQuayOrSiblingQuayStream.filter(tripTime -> tripTime.realtimeDeparture >= startTimeSeconds && tripTime.realtimeArrival <= endTimeSeconds)
+                           .collect(Collectors.toList());
+        }
+        return matchingByQuayOrSiblingQuayStream.filter(tripTime -> tripTime.scheduledDeparture >= startTimeSeconds && tripTime.scheduledArrival <= endTimeSeconds)
+                       .collect(Collectors.toList());
     }
 
     private ServiceDate parseServiceDate(String serviceDateString) {
