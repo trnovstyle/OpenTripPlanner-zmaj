@@ -83,16 +83,23 @@ public class SiriETHttpTripUpdateSource implements EstimatedTimetableSource, Jso
     @Override
     public Siri getUpdates() {
         long t1 = System.currentTimeMillis();
+        long creating = 0;
+        long fetching = 0;
+        long unmarshalling = 0;
         try {
 
-            InputStream is = HttpUtils.postData(url, SiriHelper.createETServiceRequestAsXml(requestorRef), timeout);
+            String etServiceRequest = SiriHelper.createETServiceRequestAsXml(requestorRef);
+            creating =  System.currentTimeMillis()-t1;
+            t1 = System.currentTimeMillis();
+
+            InputStream is = HttpUtils.postData(url, etServiceRequest, timeout);
             if (is != null) {
                 // Decode message
-                LOG.info("Fetching ET-data took {} ms", (System.currentTimeMillis()-t1));
+                fetching = System.currentTimeMillis()-t1;
                 t1 = System.currentTimeMillis();
 
                 Siri siri = (Siri) jaxbContext.createUnmarshaller().unmarshal(is);
-                LOG.info("Unmarshalling ET-data took {} ms", (System.currentTimeMillis()-t1));
+                unmarshalling = System.currentTimeMillis()-t1;
 
                 if (siri.getServiceDelivery().getResponseTimestamp().isBefore(lastTimestamp)) {
                     LOG.info("Newer data has already been processed");
@@ -111,6 +118,8 @@ public class SiriETHttpTripUpdateSource implements EstimatedTimetableSource, Jso
         } catch (Exception e) {
             LOG.info("Failed after {} ms", (System.currentTimeMillis()-t1));
             LOG.warn("Failed to parse SIRI-ET feed from " + url + ":", e);
+        } finally {
+            LOG.info("Updating ET: Create req: {}, Fetching data: {}, Unmarshalling: {}", creating, fetching, unmarshalling);
         }
         return null;
     }

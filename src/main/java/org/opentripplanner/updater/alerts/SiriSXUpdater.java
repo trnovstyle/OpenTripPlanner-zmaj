@@ -136,19 +136,22 @@ public class SiriSXUpdater extends PollingGraphUpdater {
     private Siri getUpdates() {
 
         long t1 = System.currentTimeMillis();
+        long creating = 0;
+        long fetching = 0;
+        long unmarshalling = 0;
         try {
             String sxServiceRequest = SiriHelper.createSXServiceRequestAsXml(requestorRef);
-            LOG.info("Creating SX-request took {} ms", (System.currentTimeMillis()-t1));
+            creating = System.currentTimeMillis()-t1;
             t1 = System.currentTimeMillis();
 
             InputStream is = HttpUtils.postData(url, sxServiceRequest, timeout);
 
-            LOG.info("Fetching SX-data took {} ms", (System.currentTimeMillis()-t1));
+            fetching = System.currentTimeMillis()-t1;
             t1 = System.currentTimeMillis();
 
             Siri siri = (Siri)jaxbContext.createUnmarshaller().unmarshal(is);
 
-            LOG.info("Unmarshalling SX-data took {} ms", (System.currentTimeMillis()-t1));
+            unmarshalling = System.currentTimeMillis()-t1;
             if (siri == null) {
                 throw new RuntimeException("Failed to get data from url " + url);
             }
@@ -168,6 +171,8 @@ public class SiriSXUpdater extends PollingGraphUpdater {
         } catch (Exception e) {
             LOG.info("Failed after {} ms", (System.currentTimeMillis()-t1));
             LOG.error("Error reading SIRI feed from " + url, e);
+        } finally {
+            LOG.info("Updating SX: Create req: {}, Fetching data: {}, Unmarshalling: {}", creating, fetching, unmarshalling);
         }
         return null;
     }

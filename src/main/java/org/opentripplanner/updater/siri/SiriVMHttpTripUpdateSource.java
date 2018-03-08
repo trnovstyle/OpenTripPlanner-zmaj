@@ -81,15 +81,23 @@ public class SiriVMHttpTripUpdateSource implements VehicleMonitoringSource, Json
     @Override
     public Siri getUpdates() {
         long t1 = System.currentTimeMillis();
+        long creating = 0;
+        long fetching = 0;
+        long unmarshalling = 0;
+
         fullDataset = false;
         try {
-            InputStream is = HttpUtils.postData(url, SiriHelper.createVMServiceRequestAsXml(requestorRef), timeout);
+            String vmServiceRequest = SiriHelper.createVMServiceRequestAsXml(requestorRef);
+            creating = System.currentTimeMillis()-t1;
+            t1 = System.currentTimeMillis();
+
+            InputStream is = HttpUtils.postData(url, vmServiceRequest, timeout);
             if (is != null) {
                 // Decode message
-                LOG.info("Fetching VM-data took {} ms", (System.currentTimeMillis()-t1));
+                fetching = System.currentTimeMillis()-t1;
                 t1 = System.currentTimeMillis();
                 Siri siri = (Siri) jaxbContext.createUnmarshaller().unmarshal(is);
-                LOG.info("Unmarshalling VM-data took {} ms", (System.currentTimeMillis()-t1));
+                unmarshalling = System.currentTimeMillis()-t1;
 
                 if (siri.getServiceDelivery().getResponseTimestamp().isBefore(lastTimestamp)) {
                     LOG.info("Newer data has already been processed");
@@ -103,6 +111,8 @@ public class SiriVMHttpTripUpdateSource implements VehicleMonitoringSource, Json
         } catch (Exception e) {
             LOG.info("Failed after {} ms", (System.currentTimeMillis()-t1));
             LOG.warn("Failed to parse SIRI-VM feed from " + url + ":", e);
+        } finally {
+            LOG.info("Updating VM: Create req: {}, Fetching data: {}, Unmarshalling: {}", creating, fetching, unmarshalling);
         }
         return null;
     }
