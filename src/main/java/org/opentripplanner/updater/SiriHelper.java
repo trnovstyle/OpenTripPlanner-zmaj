@@ -3,12 +3,11 @@ package org.opentripplanner.updater;
 import org.rutebanken.siri20.util.SiriXml;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
 import uk.org.siri.siri20.*;
 
 import javax.xml.bind.JAXBException;
-import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.stream.XMLStreamException;
+import java.io.InputStream;
 import java.time.ZonedDateTime;
 import java.util.UUID;
 
@@ -24,6 +23,9 @@ public class SiriHelper {
     }
 
 
+    public static Siri unmarshal(InputStream is) throws JAXBException, XMLStreamException {
+        return SiriXml.parseXml(is);
+    }
 
     public static String createSXServiceRequestAsXml(String requestorRef) throws JAXBException {
         Siri request = createSXServiceRequest(requestorRef);
