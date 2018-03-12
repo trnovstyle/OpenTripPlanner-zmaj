@@ -953,6 +953,8 @@ public class Timetable implements Serializable {
             stopTime.setStopSequence(i);
             stopTime.setDropOffType(pattern.stopPattern.dropoffs[i]);
             stopTime.setPickupType(pattern.stopPattern.pickups[i]);
+            stopTime.setArrivalTime(oldTimes.getArrivalTime(i));
+            stopTime.setDepartureTime(oldTimes.getDepartureTime(i));
 
             boolean foundMatch = false;
             if (i >= numberOfRecordedCalls) {
@@ -977,30 +979,6 @@ public class Timetable implements Serializable {
                     if (stopsMatchById) {
                         foundMatch = true;
 
-                        if (oldTimes.getRealTimeState() == RealTimeState.SCHEDULED) {
-                            // Used when CREATING a new pattern to prepare for realtime-updated data
-                            if (estimatedCall.getAimedArrivalTime() != null) {
-                                stopTime.setArrivalTime(calculateSecondsSinceMidnight(departureDate, estimatedCall.getAimedArrivalTime()));
-                            }
-                            if (estimatedCall.getAimedDepartureTime() != null) {
-                                stopTime.setDepartureTime(calculateSecondsSinceMidnight(departureDate, estimatedCall.getAimedDepartureTime()));
-                            }
-                        } else {
-                            // Used when UPDATING an existing pattern with realtime-updated data
-                            if (estimatedCall.getExpectedArrivalTime() != null) {
-                                stopTime.setArrivalTime(calculateSecondsSinceMidnight(departureDate, estimatedCall.getExpectedArrivalTime()));
-                            } else if (estimatedCall.getAimedArrivalTime() != null) {
-                                stopTime.setArrivalTime(calculateSecondsSinceMidnight(departureDate, estimatedCall.getAimedArrivalTime()));
-                            }
-
-                            if (estimatedCall.getExpectedDepartureTime() != null) {
-                                stopTime.setDepartureTime(calculateSecondsSinceMidnight(departureDate, estimatedCall.getExpectedDepartureTime()));
-                            } else if (estimatedCall.getAimedDepartureTime() != null) {
-                                stopTime.setDepartureTime(calculateSecondsSinceMidnight(departureDate, estimatedCall.getAimedDepartureTime()));
-                            }
-                        }
-
-
                         CallStatusEnumeration arrivalStatus = estimatedCall.getArrivalStatus();
                         if (arrivalStatus == CallStatusEnumeration.CANCELLED) {
                             stopTime.setDropOffType(PICKDROP_NONE);
@@ -1019,16 +997,6 @@ public class Timetable implements Serializable {
                             stopTime.setPickupType(PICKDROP_NONE);
                         }
 
-
-                        if (stopTime.getArrivalTime() < 0 && stopTime.getDepartureTime() > 0) {
-                            stopTime.setArrivalTime(stopTime.getDepartureTime());
-                        }
-                        if (stopTime.getDepartureTime() < 0 && stopTime.getArrivalTime() > 0) {
-                            stopTime.setDepartureTime(stopTime.getArrivalTime());
-                        }
-
-                        stopTime.setTimepoint(1); //Exact time
-
                         modifiedStops.add(stopTime);
                         break;
                     }
@@ -1036,8 +1004,6 @@ public class Timetable implements Serializable {
             }
 
             if (!foundMatch) {
-                stopTime.setArrivalTime(oldTimes.getArrivalTime(i));
-                stopTime.setDepartureTime(oldTimes.getDepartureTime(i));
                 modifiedStops.add(stopTime);
             }
         }
