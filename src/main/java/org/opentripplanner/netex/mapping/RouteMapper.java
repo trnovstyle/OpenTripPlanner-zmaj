@@ -7,13 +7,17 @@ import org.rutebanken.netex.model.Authority;
 import org.rutebanken.netex.model.GroupOfLines;
 import org.rutebanken.netex.model.Line;
 import org.rutebanken.netex.model.Network;
+import org.rutebanken.netex.model.PresentationStructure;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.xml.bind.annotation.adapters.HexBinaryAdapter;
 
 public class RouteMapper {
 
     private static final Logger LOG = LoggerFactory.getLogger(RouteMapper.class);
 
+    private HexBinaryAdapter hexBinaryAdapter = new HexBinaryAdapter();
     TransportModeMapper transportModeMapper = new TransportModeMapper();
     AgencyMapper agencyMapper = new AgencyMapper();
 
@@ -50,6 +54,16 @@ public class RouteMapper {
         otpRoute.setLongName(line.getName().getValue());
         otpRoute.setShortName(line.getPublicCode());
         otpRoute.setType(transportModeMapper.getTransportMode(line.getTransportMode(), line.getTransportSubmode()));
+
+        if (line.getPresentation() != null) {
+            PresentationStructure presentation = line.getPresentation();
+            if (presentation.getColour() != null) {
+                otpRoute.setColor(hexBinaryAdapter.marshal(presentation.getColour()));
+            }
+            if (presentation.getTextColour() != null) {
+                otpRoute.setTextColor(hexBinaryAdapter.marshal(presentation.getTextColour()));
+            }
+        }
 
         return otpRoute;
     }
