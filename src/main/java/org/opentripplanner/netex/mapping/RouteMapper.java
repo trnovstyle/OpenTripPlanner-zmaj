@@ -9,6 +9,7 @@ import org.rutebanken.netex.model.GroupOfLines;
 import org.rutebanken.netex.model.Line;
 import org.rutebanken.netex.model.Network;
 import org.rutebanken.netex.model.OperatorRefStructure;
+import org.rutebanken.netex.model.PresentationStructure;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,8 +22,6 @@ public class RouteMapper {
     private TransportModeMapper transportModeMapper = new TransportModeMapper();
     private AuthorityToAgencyMapper authorityToAgencyMapper = new AuthorityToAgencyMapper();
     private HexBinaryAdapter hexBinaryAdapter = new HexBinaryAdapter();
-    TransportModeMapper transportModeMapper = new TransportModeMapper();
-    AgencyMapper agencyMapper = new AgencyMapper();
 
     public org.opentripplanner.model.Route mapRoute(Line line, OtpTransitBuilder transitBuilder, NetexDao netexDao, String timeZone) {
 
