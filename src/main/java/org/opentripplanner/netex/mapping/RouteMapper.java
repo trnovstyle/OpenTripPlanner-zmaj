@@ -12,12 +12,17 @@ import org.rutebanken.netex.model.OperatorRefStructure;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.xml.bind.annotation.adapters.HexBinaryAdapter;
+
 public class RouteMapper {
 
     private static final Logger LOG = LoggerFactory.getLogger(RouteMapper.class);
 
     private TransportModeMapper transportModeMapper = new TransportModeMapper();
     private AuthorityToAgencyMapper authorityToAgencyMapper = new AuthorityToAgencyMapper();
+    private HexBinaryAdapter hexBinaryAdapter = new HexBinaryAdapter();
+    TransportModeMapper transportModeMapper = new TransportModeMapper();
+    AgencyMapper agencyMapper = new AgencyMapper();
 
     public org.opentripplanner.model.Route mapRoute(Line line, OtpTransitBuilder transitBuilder, NetexDao netexDao, String timeZone) {
 
@@ -34,6 +39,16 @@ public class RouteMapper {
         // Temp fix
         if (otpRoute.getShortName() == null)
             otpRoute.setShortName("");
+
+        if (line.getPresentation() != null) {
+            PresentationStructure presentation = line.getPresentation();
+            if (presentation.getColour() != null) {
+                otpRoute.setColor(hexBinaryAdapter.marshal(presentation.getColour()));
+            }
+            if (presentation.getTextColour() != null) {
+                otpRoute.setTextColor(hexBinaryAdapter.marshal(presentation.getTextColour()));
+            }
+        }
 
         return otpRoute;
     }
