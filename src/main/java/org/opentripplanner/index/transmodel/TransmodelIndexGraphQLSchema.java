@@ -51,6 +51,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.text.ParseException;
+import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -2494,7 +2495,38 @@ public class TransmodelIndexGraphQLSchema {
                         .name("serviceJourneys")
                         .description("Get all service journeys")
                         .type(new GraphQLList(serviceJourneyType))
-                        .dataFetcher(environment -> new ArrayList<>(index.tripForId.values()))
+                        .argument(GraphQLArgument.newArgument()
+                                .name("lines")
+                                .description("Set of ids of lines to fetch serviceJourneys for.")
+                                .type(new GraphQLList(Scalars.GraphQLString))
+                                .build())
+                        .argument(GraphQLArgument.newArgument()
+                                .name("privateCodes")
+                                .description("Set of ids of private codes to fetch serviceJourneys for.")
+                                .type(new GraphQLList(Scalars.GraphQLString))
+                                .build())
+                        .argument(GraphQLArgument.newArgument()
+                                .name("activeDates")
+                                .description("Set of ids of active dates to fetch serviceJourneys for.")
+                                .type(new GraphQLList(dateScalar))
+                                .build())
+                        .argument(GraphQLArgument.newArgument()
+                                .name("authorities")
+                                .description("Set of ids of authorities to fetch serviceJourneys for.")
+                                .type(new GraphQLList(Scalars.GraphQLString))
+                                .build())
+                               .dataFetcher(environment -> {
+                                   List<String> lineIds=environment.getArgument("lines");
+                                   List<String> privateCodes=environment.getArgument("privateCodes");
+                                   List<Long> activeDates=environment.getArgument("activeDates");
+                                   List<String> authorities=environment.getArgument("authorities");
+                                   return index.tripForId.values().stream()
+                                                  .filter(t -> CollectionUtils.isEmpty(lineIds) || lineIds.contains(t.getRoute().getId().getId()))
+                                                  .filter(t -> CollectionUtils.isEmpty(privateCodes) || privateCodes.contains(t.getTripPrivateCode()))
+                                                  .filter(t -> CollectionUtils.isEmpty(authorities) || authorities.contains(t.getRoute().getAgency().getId()))
+                                                  .filter(t -> CollectionUtils.isEmpty(activeDates) || index.graph.getCalendarService().getServiceDatesForServiceId(t.getServiceId()).stream().anyMatch(sd -> activeDates.contains(sd.getAsDate().getTime() / 1000)))
+                                                  .collect(Collectors.toList());
+                               })
                         .build())
                 .field(GraphQLFieldDefinition.newFieldDefinition()
                         .name("bikeRentalStations")
