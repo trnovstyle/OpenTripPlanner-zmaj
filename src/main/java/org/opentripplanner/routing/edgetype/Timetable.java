@@ -953,8 +953,8 @@ public class Timetable implements Serializable {
             stopTime.setStopSequence(i);
             stopTime.setDropOffType(pattern.stopPattern.dropoffs[i]);
             stopTime.setPickupType(pattern.stopPattern.pickups[i]);
-            stopTime.setArrivalTime(oldTimes.getArrivalTime(i));
-            stopTime.setDepartureTime(oldTimes.getDepartureTime(i));
+            stopTime.setArrivalTime(oldTimes.getScheduledArrivalTime(i));
+            stopTime.setDepartureTime(oldTimes.getScheduledDepartureTime(i));
 
             boolean foundMatch = false;
             if (i >= numberOfRecordedCalls) {
