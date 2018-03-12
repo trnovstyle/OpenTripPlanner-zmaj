@@ -27,8 +27,6 @@ import org.slf4j.LoggerFactory;
 import uk.org.siri.siri20.ServiceDelivery;
 import uk.org.siri.siri20.Siri;
 
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
 import java.io.InputStream;
 import java.time.ZonedDateTime;
 import java.util.UUID;
@@ -100,15 +98,7 @@ public class SiriSXUpdater extends PollingGraphUpdater {
         updateHandler.setFeedId(feedId);
         updateHandler.setAlertPatchService(alertPatchService);
         updateHandler.setSiriFuzzyTripMatcher(fuzzyTripMatcher);
-
-        try {
-            jaxbContext = JAXBContext.newInstance(Siri.class);
-        } catch (JAXBException e) {
-
-        }
     }
-
-    JAXBContext jaxbContext;
 
     @Override
     protected void runPolling() throws Exception {
@@ -149,7 +139,7 @@ public class SiriSXUpdater extends PollingGraphUpdater {
             fetching = System.currentTimeMillis()-t1;
             t1 = System.currentTimeMillis();
 
-            Siri siri = (Siri)jaxbContext.createUnmarshaller().unmarshal(is);
+            Siri siri = SiriHelper.unmarshal(is);
 
             unmarshalling = System.currentTimeMillis()-t1;
             if (siri == null) {

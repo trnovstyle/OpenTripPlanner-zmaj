@@ -22,8 +22,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.org.siri.siri20.Siri;
 
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
 import java.io.InputStream;
 import java.time.ZonedDateTime;
 import java.util.UUID;
@@ -69,14 +67,7 @@ public class SiriVMHttpTripUpdateSource implements VehicleMonitoringSource, Json
             this.timeout = 1000*timeoutSec;
         }
 
-        try {
-            jaxbContext = JAXBContext.newInstance(Siri.class);
-        } catch (JAXBException e) {
-            throw new InstantiationException("Unable to instantiate JAXBContext");
-        }
     }
-
-    JAXBContext jaxbContext;
 
     @Override
     public Siri getUpdates() {
@@ -96,7 +87,7 @@ public class SiriVMHttpTripUpdateSource implements VehicleMonitoringSource, Json
                 // Decode message
                 fetching = System.currentTimeMillis()-t1;
                 t1 = System.currentTimeMillis();
-                Siri siri = (Siri) jaxbContext.createUnmarshaller().unmarshal(is);
+                Siri siri = SiriHelper.unmarshal(is);
                 unmarshalling = System.currentTimeMillis()-t1;
 
                 if (siri.getServiceDelivery().getResponseTimestamp().isBefore(lastTimestamp)) {
