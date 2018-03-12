@@ -56,6 +56,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.util.Collections.emptyList;
+import static org.opentripplanner.model.StopPattern.PICKDROP_COORDINATE_WITH_DRIVER;
 import static org.opentripplanner.model.StopPattern.PICKDROP_NONE;
 
 /**
@@ -1195,6 +1196,14 @@ public class TransmodelIndexGraphQLSchema {
                                 .getAlightType(((TripTimeShort) environment.getSource()).stopIndex) != PICKDROP_NONE)
                         .build())
                 .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("requestStop")
+                        .type(Scalars.GraphQLBoolean)
+                        .description("Whether vehicle will only stop on request.")
+                        .dataFetcher(environment -> index.patternForTrip
+                                .get(index.tripForId.get(((TripTimeShort) environment.getSource()).tripId))
+                                .getAlightType(((TripTimeShort) environment.getSource()).stopIndex) == PICKDROP_COORDINATE_WITH_DRIVER)
+                        .build())
+                .field(GraphQLFieldDefinition.newFieldDefinition()
                         .name("serviceJourney")
                         .type(serviceJourneyType)
                         .dataFetcher(environment -> index.tripForId
@@ -1374,6 +1383,14 @@ public class TransmodelIndexGraphQLSchema {
                                     .getAlightType(((TripTimeShort) environment.getSource()).stopIndex) != PICKDROP_NONE;
 
                         })
+                        .build())
+              .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("requestStop")
+                        .type(Scalars.GraphQLBoolean)
+                        .description("Whether vehicle will only stop on request.")
+                        .dataFetcher(environment -> index.patternForTrip
+                                .get(index.tripForId.get(((TripTimeShort) environment.getSource()).tripId))
+                                .getAlightType(((TripTimeShort) environment.getSource()).stopIndex) == PICKDROP_COORDINATE_WITH_DRIVER)
                         .build())
                 .field(GraphQLFieldDefinition.newFieldDefinition()
                         .name("cancellation")
