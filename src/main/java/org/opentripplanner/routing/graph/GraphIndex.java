@@ -1048,16 +1048,21 @@ public class GraphIndex {
             return new AlertPatchServiceImpl(graph);
         }
         if (alertPatchService == null) {
-            alertPatchService = graph.updaterManager.getUpdaterList().stream()
+            Optional<AlertPatchService> patchServiceOptional = graph.updaterManager.getUpdaterList().stream()
                     .filter(SiriSXUpdater.class::isInstance)
                     .map(SiriSXUpdater.class::cast)
-                    .map(SiriSXUpdater::getAlertPatchService).findFirst().get();
+                    .map(SiriSXUpdater::getAlertPatchService).findFirst();
 
-            if (alertPatchService == null) {
-                alertPatchService = graph.updaterManager.getUpdaterList().stream()
+            if (!patchServiceOptional.isPresent()) {
+                patchServiceOptional = graph.updaterManager.getUpdaterList().stream()
                         .filter(GtfsRealtimeAlertsUpdater.class::isInstance)
                         .map(GtfsRealtimeAlertsUpdater.class::cast)
-                        .map(GtfsRealtimeAlertsUpdater::getAlertPatchService).findFirst().get();
+                        .map(GtfsRealtimeAlertsUpdater::getAlertPatchService).findFirst();
+            }
+            if (patchServiceOptional.isPresent()) {
+                alertPatchService = patchServiceOptional.get();
+            } else {
+                alertPatchService = new AlertPatchServiceImpl(graph);
             }
         }
         return alertPatchService;
