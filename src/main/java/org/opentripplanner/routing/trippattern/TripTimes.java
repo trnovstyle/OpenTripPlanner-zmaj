@@ -404,11 +404,11 @@ public class TripTimes implements Serializable, Comparable<TripTimes>, Cloneable
             final int dep = getDepartureTime(s);
 
             if (dep < arr) {
-                LOG.error("Negative dwell time in TripTimes at stop index {}.", s);
+                LOG.info("Negative dwell time in TripTimes at stop index {}.", s);
                 return false;
             }
             if (prevDep > arr) {
-                LOG.error("Negative running time in TripTimes after stop index {}.", s);
+                LOG.info("Negative running time in TripTimes after stop index {}.", s);
                 return false;
             }
             prevDep = dep;
