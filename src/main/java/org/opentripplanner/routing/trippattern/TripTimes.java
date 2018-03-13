@@ -33,6 +33,8 @@ import java.util.Arrays;
 import java.util.BitSet;
 import java.util.Collection;
 
+import static org.opentripplanner.model.StopPattern.PICKDROP_NONE;
+
 /**
  * A TripTimes represents the arrival and departure times for a single trip in an Timetable. It is carried
  * along by States when routing to ensure that they have a consistent, fast view of the trip when
@@ -441,6 +443,14 @@ public class TripTimes implements Serializable, Comparable<TripTimes>, Cloneable
         arrivalTimes = new int[getNumStops()];
         Arrays.fill(arrivalTimes, UNAVAILABLE);
         departureTimes = arrivalTimes;
+
+        // Flag all stops as cancelled
+        isCancelledStop = new boolean[getNumStops()];
+        Arrays.fill(isCancelledStop, true);
+
+        pickups = new int[getNumStops()];
+        Arrays.fill(pickups, PICKDROP_NONE);
+        dropoffs = pickups;
 
         // Update the real-time state
         realTimeState = RealTimeState.CANCELED;
