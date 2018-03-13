@@ -1303,8 +1303,8 @@ public class IndexGraphQLSchema {
                     .name("alerts")
                     .description("Get all alerts active for the stop")
                     .type(new GraphQLList(alertType))
-                    .dataFetcher(dataFetchingEnvironment -> index.getAlertsForStop(
-                            dataFetchingEnvironment.getSource()))
+                    .dataFetcher(dataFetchingEnvironment -> removeGeneralAlerts(index.getAlertsForStop(
+                            dataFetchingEnvironment.getSource())))
                     .build())
             .build();
 
@@ -1580,8 +1580,8 @@ public class IndexGraphQLSchema {
                 .name("alerts")
                 .description("Get all alerts active for the trip")
                 .type(new GraphQLList(alertType))
-                .dataFetcher(dataFetchingEnvironment -> index.getAlertsForTrip(
-                    dataFetchingEnvironment.getSource()))
+                .dataFetcher(dataFetchingEnvironment -> removeGeneralAlerts(index.getAlertsForTrip(
+                    dataFetchingEnvironment.getSource())))
                 .build())
             .build();
 
@@ -1688,8 +1688,8 @@ public class IndexGraphQLSchema {
                 .name("alerts")
                 .description("Get all alerts active for the pattern")
                 .type(new GraphQLList(alertType))
-                .dataFetcher(dataFetchingEnvironment -> index.getAlertsForPattern(
-                    dataFetchingEnvironment.getSource()))
+                .dataFetcher(dataFetchingEnvironment -> removeGeneralAlerts(index.getAlertsForPattern(
+                    dataFetchingEnvironment.getSource())))
                 .build())
             .field(GraphQLFieldDefinition.newFieldDefinition()
                     .name("notices")
@@ -1806,8 +1806,8 @@ public class IndexGraphQLSchema {
                 .name("alerts")
                 .description("Get all alerts active for the route")
                 .type(new GraphQLList(alertType))
-                .dataFetcher(dataFetchingEnvironment -> index.getAlertsForRoute(
-                    dataFetchingEnvironment.getSource()))
+                .dataFetcher(dataFetchingEnvironment -> removeGeneralAlerts(index.getAlertsForRoute(
+                    dataFetchingEnvironment.getSource())))
                 .build())
             .build();
 
@@ -1863,8 +1863,8 @@ public class IndexGraphQLSchema {
                 .name("alerts")
                 .description("Get all alerts active for the agency")
                 .type(new GraphQLList(alertType))
-                .dataFetcher(dataFetchingEnvironment -> index.getAlertsForAgency(
-                    dataFetchingEnvironment.getSource()))
+                .dataFetcher(dataFetchingEnvironment -> removeGeneralAlerts(index.getAlertsForAgency(
+                    dataFetchingEnvironment.getSource())))
                 .build())
             .build();
 
@@ -2621,7 +2621,7 @@ public class IndexGraphQLSchema {
                 .name("alerts")
                 .description("Get all alerts active in the graph")
                 .type(new GraphQLList(alertType))
-                .dataFetcher(dataFetchingEnvironment -> index.getAlerts())
+                .dataFetcher(dataFetchingEnvironment -> removeGeneralAlerts(index.getAlerts()))
                 .build())
             .field(GraphQLFieldDefinition.newFieldDefinition()
                 .name("serviceTimeRange")
@@ -2715,6 +2715,15 @@ public class IndexGraphQLSchema {
         indexSchema = GraphQLSchema.newSchema()
             .query(queryType)
             .build(dictionary);
+    }
+
+    private Collection<AlertPatch> removeGeneralAlerts(Collection<AlertPatch> alertPatches) {
+        if (alertPatches != null) {
+            return alertPatches.stream()
+                    .filter(alertPatch -> !"general".equals(alertPatch.getAlert().alertType))
+                    .collect(Collectors.toList());
+        }
+        return alertPatches;
     }
 
     //Supporting serviceDay format to be the same as date-format - for consistency
