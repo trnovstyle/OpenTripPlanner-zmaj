@@ -13,8 +13,6 @@
 
 package org.opentripplanner.routing.impl;
 
-import com.google.common.collect.LinkedListMultimap;
-import com.google.common.collect.ListMultimap;
 import org.opentripplanner.model.AgencyAndId;
 import org.opentripplanner.model.Stop;
 import org.opentripplanner.routing.alertpatch.AlertPatch;
@@ -24,20 +22,19 @@ import org.opentripplanner.routing.services.AlertPatchService;
 
 import java.util.*;
 import java.util.Map.Entry;
-import java.util.concurrent.ConcurrentHashMap;
 
 public class AlertPatchServiceImpl implements AlertPatchService {
 
     private Graph graph;
 
-    private Map<String, AlertPatch> alertPatches = new ConcurrentHashMap<>();
-    private ListMultimap<AgencyAndId, AlertPatch> patchesByRoute = LinkedListMultimap.create();
-    private ListMultimap<AgencyAndId, AlertPatch> patchesByStop = LinkedListMultimap.create();
-    private ListMultimap<StopAndRouteOrTripKey, AlertPatch> patchesByStopAndRoute = LinkedListMultimap.create();
-    private ListMultimap<StopAndRouteOrTripKey, AlertPatch> patchesByStopAndTrip = LinkedListMultimap.create();
-    private ListMultimap<AgencyAndId, AlertPatch> patchesByTrip = LinkedListMultimap.create();
-    private ListMultimap<String, AlertPatch> patchesByAgency = LinkedListMultimap.create();
-    private ListMultimap<String, AlertPatch> patchesByTripPattern = LinkedListMultimap.create();
+    private Map<String, AlertPatch> alertPatches = new HashMap<>();
+    private Map<AgencyAndId, Set<AlertPatch>> patchesByRoute = new HashMap<>();
+    private Map<AgencyAndId, Set<AlertPatch>> patchesByStop = new HashMap<>();
+    private Map<StopAndRouteOrTripKey, Set<AlertPatch>> patchesByStopAndRoute = new HashMap<>();
+    private Map<StopAndRouteOrTripKey, Set<AlertPatch>> patchesByStopAndTrip = new HashMap<>();
+    private Map<AgencyAndId, Set<AlertPatch>> patchesByTrip = new HashMap<>();
+    private Map<String, Set<AlertPatch>> patchesByAgency = new HashMap<>();
+    private Map<String, Set<AlertPatch>> patchesByTripPattern = new HashMap<>();
 
     public AlertPatchServiceImpl(Graph graph) {
         this.graph = graph;
@@ -55,7 +52,7 @@ public class AlertPatchServiceImpl implements AlertPatchService {
 
     @Override
     public Collection<AlertPatch> getStopPatches(AgencyAndId stop) {
-        List<AlertPatch> result = patchesByStop.get(stop);
+        Set<AlertPatch> result = patchesByStop.get(stop);
         if (result == null || result.isEmpty()) {
             // Search for alerts on parent-stop
             if (graph != null && graph.index != null) {
@@ -66,16 +63,16 @@ public class AlertPatchServiceImpl implements AlertPatchService {
             }
         }
         if (result == null) {
-            result = Collections.emptyList();
+            result = Collections.emptySet();
         }
         return result;
     }
 
     @Override
     public Collection<AlertPatch> getRoutePatches(AgencyAndId route) {
-        List<AlertPatch> result = patchesByRoute.get(route);
+        Set<AlertPatch> result = patchesByRoute.get(route);
         if (result == null) {
-            result = Collections.emptyList();
+            result = Collections.emptySet();
         }
         return result;
 
@@ -83,9 +80,9 @@ public class AlertPatchServiceImpl implements AlertPatchService {
 
     @Override
     public Collection<AlertPatch> getTripPatches(AgencyAndId trip) {
-        List<AlertPatch> result = patchesByTrip.get(trip);
+        Set<AlertPatch> result = patchesByTrip.get(trip);
         if (result == null) {
-            result = Collections.emptyList();
+            result = Collections.emptySet();
         }
         return result;
     }
@@ -93,36 +90,36 @@ public class AlertPatchServiceImpl implements AlertPatchService {
 
     @Override
     public Collection<AlertPatch> getAgencyPatches(String agency) {
-        List<AlertPatch> result = patchesByAgency.get(agency);
+        Set<AlertPatch> result = patchesByAgency.get(agency);
         if (result == null) {
-            result = Collections.emptyList();
+            result = Collections.emptySet();
         }
         return result;
     }
 
     @Override
     public Collection<AlertPatch> getStopAndRoutePatches(AgencyAndId stop, AgencyAndId route) {
-        List<AlertPatch> result = patchesByStopAndRoute.get(new StopAndRouteOrTripKey(stop, route));
+        Set<AlertPatch> result = patchesByStopAndRoute.get(new StopAndRouteOrTripKey(stop, route));
         if (result == null) {
-            result = Collections.emptyList();
+            result = Collections.emptySet();
         }
         return result;
     }
 
     @Override
     public Collection<AlertPatch> getStopAndTripPatches(AgencyAndId stop, AgencyAndId trip) {
-        List<AlertPatch> result = patchesByStopAndTrip.get(new StopAndRouteOrTripKey(stop, trip));
+        Set<AlertPatch> result = patchesByStopAndTrip.get(new StopAndRouteOrTripKey(stop, trip));
         if (result == null) {
-            result = Collections.emptyList();
+            result = Collections.emptySet();
         }
         return result;
     }
 
     @Override
     public Collection<AlertPatch> getTripPatternPatches(TripPattern pattern) {
-        List<AlertPatch> result = patchesByTripPattern.get(pattern.code);
+        Set<AlertPatch> result = patchesByTripPattern.get(pattern.code);
         if (result == null) {
-            result = Collections.emptyList();
+            result = Collections.emptySet();
         }
         return result;
     }
@@ -141,35 +138,54 @@ public class AlertPatchServiceImpl implements AlertPatchService {
         AgencyAndId trip = alertPatch.getTrip();
 
         if (stop != null && trip != null) {
-            patchesByStopAndTrip.put(new StopAndRouteOrTripKey(stop, trip), alertPatch);
+            addToMap(patchesByStopAndTrip, new StopAndRouteOrTripKey(stop, trip), alertPatch);
         } else if (stop != null && route != null) {
-            patchesByStopAndRoute.put(new StopAndRouteOrTripKey(stop, route), alertPatch);
+            addToMap(patchesByStopAndRoute, new StopAndRouteOrTripKey(stop, route), alertPatch);
         } else {
             if (stop != null) {
-                patchesByStop.put(stop, alertPatch);
+                addToMap(patchesByStop, stop, alertPatch);
             }
 
             if (route != null) {
-                patchesByRoute.put(route, alertPatch);
+                addToMap(patchesByRoute, route, alertPatch);
             }
 
             if (trip != null) {
-                patchesByTrip.put(trip, alertPatch);
+                addToMap(patchesByTrip, trip, alertPatch);
             }
         }
 
         String agency = alertPatch.getAgency();
         if (agency != null && !agency.isEmpty()) {
-            patchesByAgency.put(agency, alertPatch);
+            addToMap(patchesByAgency, agency, alertPatch);
         }
 
         List<TripPattern> tripPatterns = alertPatch.getTripPatterns();
         if (tripPatterns != null) {
             for (TripPattern pattern : tripPatterns) {
-                patchesByTripPattern.put(pattern.code, alertPatch);
+                addToMap(patchesByTripPattern, pattern.code, alertPatch);
             }
         }
 
+    }
+
+    private static void addToMap(Map map, AgencyAndId key, Object alertPatch) {
+        Set set = (Set) map.getOrDefault(key, new HashSet());
+        set.add(alertPatch);
+        map.put(key, set);
+    }
+
+    private static void addToMap(Map map, String key, Object alertPatch) {
+        Set set = (Set) map.getOrDefault(key, new HashSet());
+        set.add(alertPatch);
+        map.put(key, set);
+    }
+
+
+    private static void addToMap(Map map, StopAndRouteOrTripKey key, Object alertPatch) {
+        Set set = (Set) map.getOrDefault(key, new HashSet());
+        set.add(alertPatch);
+        map.put(key, set);
     }
 
     @Override
