@@ -102,7 +102,7 @@ public class TripPatternMapper {
             }
         }
 
-        if (stopPattern == null || stopPattern.size == 0) {
+        if (stopPattern == null || stopPattern.size < 2) {
             LOG.warn("ServiceJourneyPattern " + journeyPattern.getId()
                     + " does not contain a valid stop pattern.");
             return;
