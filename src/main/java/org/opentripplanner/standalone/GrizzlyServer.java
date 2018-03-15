@@ -59,7 +59,7 @@ public class GrizzlyServer {
 
         /* OTP is CPU-bound, so we want only as many worker threads as we have cores. */
         ThreadPoolConfig threadPoolConfig = ThreadPoolConfig.defaultConfig()
-            .setCorePoolSize(1)
+            .setCorePoolSize(Runtime.getRuntime().availableProcessors())
             .setMaxPoolSize(Runtime.getRuntime().availableProcessors());
 
         /* HTTP (non-encrypted) listener */
@@ -83,7 +83,7 @@ public class GrizzlyServer {
             cc.setCompressionMode(CompressionConfig.CompressionMode.ON);
             cc.setCompressionMinSize(50000); // the min number of bytes to compress
             cc.setCompressableMimeTypes("application/json", "text/json"); // the mime types to compress
-            listener.getTransport().setWorkerThreadPoolConfig(threadPoolConfig);
+            listener.getTransport().setWorkerThreadPoolConfig(threadPoolConfig.copy().setPoolName(listener.getName()+"-pool"));
             httpServer.addListener(listener);
         }
 
