@@ -578,78 +578,6 @@ public abstract class GraphPathToTripPlanConverter {
                 }
             }
 
-            if (graph.index != null) {
-                if (leg.routeId != null) {
-
-                    //TODO: Check if alerts are applicable for departing stop
-                    if (leg.from != null && leg.from.stopId != null) {
-                        addAlertPatchesToLeg(leg, getAlertsForStopAndRoute(graph, leg.from.stopId, leg.routeId), requestedLocale, leg.startTime.getTime(), leg.endTime.getTime());
-                    }
-
-                    //TODO: Check if alerts are applicable for arrival stop
-                    if (leg.to != null && leg.to.stopId != null) {
-                        addAlertPatchesToLeg(leg, getAlertsForStopAndRoute(graph, leg.to.stopId, leg.routeId), requestedLocale, leg.startTime.getTime(), leg.endTime.getTime());
-                    }
-                }
-
-                if (leg.tripId != null) {
-                    if (leg.from != null && leg.from.stopId != null) {
-                        addAlertPatchesToLeg(leg, getAlertsForStopAndTrip(graph, leg.from.stopId, leg.tripId), requestedLocale, leg.startTime.getTime(), leg.endTime.getTime());
-                    }
-
-                    //TODO: Check if alerts are applicable for arrival stop
-                    if (leg.to != null && leg.to.stopId != null) {
-                        addAlertPatchesToLeg(leg, getAlertsForStopAndTrip(graph, leg.to.stopId, leg.tripId), requestedLocale, leg.startTime.getTime(), leg.endTime.getTime());
-                    }
-
-
-                    //TODO: Check if alerts are applicable for passing stops (i.e. not arriving or departing)
-                    if (leg.stop != null) {
-                        for (Place place : leg.stop) {
-                            if (place.stopId != null) {
-                                 addAlertPatchesToLeg(leg, getAlertsForStopAndTrip(graph, place.stopId, leg.tripId),
-                                        requestedLocale, place.arrival.getTime(), place.departure.getTime());
-                            }
-                        }
-                    }
-                }
-
-                if (leg.stop != null) {
-                    for (Place place : leg.stop) {
-                        if (place.stopId != null) {
-                            addAlertPatchesToLeg(leg, getAlertsForStop(graph, place.stopId),
-                                    requestedLocale, place.arrival.getTime(), place.departure.getTime());
-                        }
-                    }
-                }
-
-
-                if (leg.from != null && leg.from.stopId != null) {
-                    addAlertPatchesToLeg(leg, getAlertsForStop(graph, leg.from.stopId),
-                                    requestedLocale, leg.startTime.getTime(), leg.endTime.getTime());
-                }
-
-                if (leg.to != null && leg.to.stopId != null) {
-                    addAlertPatchesToLeg(leg, getAlertsForStop(graph, leg.to.stopId),
-                                    requestedLocale, leg.startTime.getTime(), leg.endTime.getTime());
-                }
-
-                if (leg.tripId != null) {
-                    addAlertPatchesToLeg(leg, graph.index.getAlertsForTripId(leg.tripId),
-                                    requestedLocale, leg.startTime.getTime(), leg.endTime.getTime());
-                }
-                if (leg.routeId != null) {
-                    addAlertPatchesToLeg(leg, graph.index.getAlertsForRouteId(leg.routeId),
-                                    requestedLocale, leg.startTime.getTime(), leg.endTime.getTime());
-                }
-
-                if (leg.agencyId != null) {
-                    addAlertPatchesToLeg(leg, graph.index.getAlertsForAgency(graph.index.getAgencyWithoutFeedId(leg.agencyId)),
-                                    requestedLocale, leg.startTime.getTime(), leg.endTime.getTime());
-                }
-
-            }
-
             for (AlertPatch alertPatch : graph.getAlertPatches(edge)) {
                 if (disableAlertFiltering || alertPatch.displayDuring(state)) {
                     if (alertPatch.hasTrip()) {
@@ -664,6 +592,77 @@ public abstract class GraphPathToTripPlanConverter {
                     }
                 }
             }
+        }
+        if (graph.index != null) {
+            if (leg.routeId != null) {
+
+                //TODO: Check if alerts are applicable for departing stop
+                if (leg.from != null && leg.from.stopId != null) {
+                    addAlertPatchesToLeg(leg, getAlertsForStopAndRoute(graph, leg.from.stopId, leg.routeId), requestedLocale, leg.startTime.getTime(), leg.endTime.getTime());
+                }
+
+                //TODO: Check if alerts are applicable for arrival stop
+                if (leg.to != null && leg.to.stopId != null) {
+                    addAlertPatchesToLeg(leg, getAlertsForStopAndRoute(graph, leg.to.stopId, leg.routeId), requestedLocale, leg.startTime.getTime(), leg.endTime.getTime());
+                }
+            }
+
+            if (leg.tripId != null) {
+                if (leg.from != null && leg.from.stopId != null) {
+                    addAlertPatchesToLeg(leg, getAlertsForStopAndTrip(graph, leg.from.stopId, leg.tripId), requestedLocale, leg.startTime.getTime(), leg.endTime.getTime());
+                }
+
+                //TODO: Check if alerts are applicable for arrival stop
+                if (leg.to != null && leg.to.stopId != null) {
+                    addAlertPatchesToLeg(leg, getAlertsForStopAndTrip(graph, leg.to.stopId, leg.tripId), requestedLocale, leg.startTime.getTime(), leg.endTime.getTime());
+                }
+
+
+                //TODO: Check if alerts are applicable for passing stops (i.e. not arriving or departing)
+                if (leg.stop != null) {
+                    for (Place place : leg.stop) {
+                        if (place.stopId != null) {
+                            addAlertPatchesToLeg(leg, getAlertsForStopAndTrip(graph, place.stopId, leg.tripId),
+                                    requestedLocale, place.arrival.getTime(), place.departure.getTime());
+                        }
+                    }
+                }
+            }
+
+            if (leg.stop != null) {
+                for (Place place : leg.stop) {
+                    if (place.stopId != null) {
+                        addAlertPatchesToLeg(leg, getAlertsForStop(graph, place.stopId),
+                                requestedLocale, place.arrival.getTime(), place.departure.getTime());
+                    }
+                }
+            }
+
+
+            if (leg.from != null && leg.from.stopId != null) {
+                addAlertPatchesToLeg(leg, getAlertsForStop(graph, leg.from.stopId),
+                        requestedLocale, leg.startTime.getTime(), leg.endTime.getTime());
+            }
+
+            if (leg.to != null && leg.to.stopId != null) {
+                addAlertPatchesToLeg(leg, getAlertsForStop(graph, leg.to.stopId),
+                        requestedLocale, leg.startTime.getTime(), leg.endTime.getTime());
+            }
+
+            if (leg.tripId != null) {
+                addAlertPatchesToLeg(leg, graph.index.getAlertsForTripId(leg.tripId),
+                        requestedLocale, leg.startTime.getTime(), leg.endTime.getTime());
+            }
+            if (leg.routeId != null) {
+                addAlertPatchesToLeg(leg, graph.index.getAlertsForRouteId(leg.routeId),
+                        requestedLocale, leg.startTime.getTime(), leg.endTime.getTime());
+            }
+
+            if (leg.agencyId != null) {
+                addAlertPatchesToLeg(leg, graph.index.getAlertsForAgency(graph.index.getAgencyWithoutFeedId(leg.agencyId)),
+                        requestedLocale, leg.startTime.getTime(), leg.endTime.getTime());
+            }
+
         }
     }
 
