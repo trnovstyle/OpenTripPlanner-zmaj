@@ -92,12 +92,12 @@ public class TransferTable implements Serializable {
             if (fromStop.getParentStation() != null 
                     && !fromStop.getParentStation().isEmpty()) {
                 // From stop has a parent
-                fromStopParentId = new AgencyAndId(fromStop.getId().getAgencyId(), fromStop.getParentStation());
+                fromStopParentId = fromStop.getParentStationAgencyAndId();
             }
             if (toStop.getParentStation() != null 
                     && !toStop.getParentStation().isEmpty()) {
                 // To stop has a parent
-                toStopParentId = new AgencyAndId(toStop.getId().getAgencyId(), toStop.getParentStation());
+                toStopParentId = toStop.getParentStationAgencyAndId();
             }
             
             // Check parent of from stop if no transfer was found

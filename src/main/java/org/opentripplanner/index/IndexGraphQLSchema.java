@@ -1099,9 +1099,8 @@ public class IndexGraphQLSchema {
                 .name("parentStation")
                 .type(stopType)
                 .dataFetcher(environment -> ((Stop) environment.getSource()).getParentStation() != null ?
-                    index.stationForId.get(new AgencyAndId(
-                        ((Stop) environment.getSource()).getId().getAgencyId(),
-                        ((Stop) environment.getSource()).getParentStation())) : null)
+                    index.stationForId.get(
+                        ((Stop) environment.getSource()).getParentStationAgencyAndId()) : null)
                 .build())
             .field(GraphQLFieldDefinition.newFieldDefinition()
                 .name("wheelchairBoarding")
@@ -3220,8 +3219,7 @@ public class IndexGraphQLSchema {
             //Check parentStops
             Stop stop = index.stopForId.get(stopId);
             if (stop != null && stop.getParentStation() != null) {
-                AgencyAndId parentStopId = new AgencyAndId(stop.getId().getAgencyId(), stop.getParentStation());
-                Stop parentStation = index.stationForId.get(parentStopId);
+                Stop parentStation = index.stationForId.get(stop.getParentStationAgencyAndId());
                 if (parentStation != null) {
                     Collection<Stop> childStops = index.stopsForParentStation.get(parentStation.getId());
                     for (Stop childStop : childStops) {

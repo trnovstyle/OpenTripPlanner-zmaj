@@ -233,8 +233,7 @@ class OtpTransitServiceImpl implements OtpTransitService {
             stopsByStation = new HashMap<>();
             for (Stop stop : getAllStops()) {
                 if (stop.getLocationType() == 0 && stop.getParentStation() != null) {
-                    Stop parentStation = getStopForId(
-                            new AgencyAndId(stop.getId().getAgencyId(), stop.getParentStation()));
+                    Stop parentStation = getStopForId(stop.getParentStationAgencyAndId());
                     Collection<Stop> subStops = stopsByStation
                             .computeIfAbsent(parentStation, k -> new ArrayList<>(2));
                     subStops.add(stop);

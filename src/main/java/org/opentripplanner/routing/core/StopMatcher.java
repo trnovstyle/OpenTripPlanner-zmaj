@@ -103,7 +103,7 @@ public class StopMatcher implements Cloneable, Serializable {
             else if (stop.getParentStation() != null 
                     && !stop.getParentStation().isEmpty()) {
                 // This stop has a parent
-                AgencyAndId parentId = new AgencyAndId(stop.getId().getAgencyId(), stop.getParentStation());
+                AgencyAndId parentId = stop.getParentStationAgencyAndId();
                 if (matches(parentId)) {
                     return true;    
                 }

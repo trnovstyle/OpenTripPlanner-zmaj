@@ -659,7 +659,7 @@ public abstract class GraphPathToTripPlanConverter {
         if (checkParentStop && stop.getParentStation() != null) {
 
             //No alerts found for quay - check parent
-            Stop parentStop = graph.index.stationForId.get(new AgencyAndId(stop.getId().getAgencyId(), stop.getParentStation()));
+            Stop parentStop = graph.index.stationForId.get(stop.getParentStationAgencyAndId());
             if (parentStop != null) {
                 Collection<AlertPatch> parentStopAlerts = graph.index.getAlertsForStopAndRoute(graph.index.stationForId.get(parentStop.getId()), graph.index.routeForId.get(routeId));
                 if (parentStopAlerts != null) {
@@ -686,7 +686,7 @@ public abstract class GraphPathToTripPlanConverter {
         if (checkParentStop && stop.getParentStation() != null) {
 
             //No alerts found for quay - check parent
-            Stop parentStop = graph.index.stationForId.get(new AgencyAndId(stop.getId().getAgencyId(), stop.getParentStation()));
+            Stop parentStop = graph.index.stationForId.get(stop.getParentStationAgencyAndId());
             if (parentStop != null) {
                 Collection<AlertPatch> parentStopAlerts = graph.index.getAlertsForStopAndTrip(graph.index.stationForId.get(parentStop.getId()), graph.index.tripForId.get(tripId));
                 if (parentStopAlerts != null) {
@@ -713,7 +713,7 @@ public abstract class GraphPathToTripPlanConverter {
         if (checkParentStop && stop.getParentStation() != null) {
 
             //No alerts found for quay - check parent
-            Stop parentStop = graph.index.stationForId.get(new AgencyAndId(stop.getId().getAgencyId(), stop.getParentStation()));
+            Stop parentStop = graph.index.stationForId.get(stop.getParentStationAgencyAndId());
             if (parentStop != null) {
                 Collection<AlertPatch> parentStopAlerts = graph.index.getAlertsForStop(graph.index.stationForId.get(parentStop.getId()));
                 if (parentStopAlerts != null) {

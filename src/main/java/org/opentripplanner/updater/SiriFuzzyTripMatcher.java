@@ -123,7 +123,7 @@ public class SiriFuzzyTripMatcher {
                     String agencyId = index.agenciesForFeedId.keySet().iterator().next();
                     Stop stop = index.stopForId.get(new AgencyAndId(agencyId, lastStopPoint));
                     if (stop != null && stop.getParentStation() != null) {
-                        Collection<Stop> allQuays = index.stopsForParentStation.get(new AgencyAndId(agencyId, stop.getParentStation()));
+                        Collection<Stop> allQuays = index.stopsForParentStation.get(stop.getParentStationAgencyAndId());
                         for (Stop quay : allQuays) {
                             Set<Trip> tripSet = start_stop_tripCache.get(createStartStopKey(quay.getId().getId(), arrivalTime.toLocalTime().toSecondOfDay()));
                             if (tripSet != null) {
@@ -272,7 +272,7 @@ public class SiriFuzzyTripMatcher {
         //No match found in quays - check parent-stops (stopplace)
         for (Stop stop : stops) {
             if (siriStopId.equals(stop.getParentStation())) {
-                return new AgencyAndId(stop.getId().getAgencyId(), stop.getParentStation());
+                return stop.getParentStationAgencyAndId();
             }
         }
 

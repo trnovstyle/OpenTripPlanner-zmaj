@@ -1080,8 +1080,7 @@ public class PatternHopFactory {
             if (parentStation != null) {
                 Vertex stopVertex = context.stationStopNodes.get(stop);
 
-                String agencyId = stop.getId().getAgencyId();
-                AgencyAndId parentStationId = new AgencyAndId(agencyId, parentStation);
+                AgencyAndId parentStationId = stop.getParentStationAgencyAndId();
 
                 Stop parentStop = _transitService.getStopForId(parentStationId);
                 Vertex parentStopVertex = context.stationStopNodes.get(parentStop);
@@ -1125,9 +1124,8 @@ public class PatternHopFactory {
             String parentStation = stop.getParentStation();
             if (parentStation != null) {
                 TransitStop stopVertex = (TransitStop) context.stationStopNodes.get(stop);
-                String agencyId = stop.getId().getAgencyId();
-                AgencyAndId parentStationId = new AgencyAndId(agencyId, parentStation);
-                Stop parentStop = _transitService.getStopForId(parentStationId);
+
+                Stop parentStop = _transitService.getStopForId(stop.getParentStationAgencyAndId());
                 if(context.stationStopNodes.get(parentStop) instanceof TransitStation) {
                     TransitStation parentStopVertex = (TransitStation)
                             context.stationStopNodes.get(parentStop);

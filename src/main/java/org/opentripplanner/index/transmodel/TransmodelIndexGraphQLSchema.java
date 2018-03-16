@@ -3586,7 +3586,7 @@ public class TransmodelIndexGraphQLSchema {
             //Check parentStops
             Stop stop = index.stopForId.get(stopId);
             if (stop != null && stop.getParentStation() != null) {
-                AgencyAndId parentStopId = new AgencyAndId(stop.getId().getAgencyId(), stop.getParentStation());
+                AgencyAndId parentStopId = stop.getParentStationAgencyAndId();
                 Stop parentStation = index.stationForId.get(parentStopId);
                 if (parentStation != null) {
                     Collection<Stop> childStops = index.stopsForParentStation.get(parentStation.getId());

@@ -45,6 +45,8 @@ public final class Stop extends IdentityBean<AgencyAndId> {
 
     private String parentStation;
 
+    private transient AgencyAndId parentStationAgencyId;
+
     private String multiModalStation;
 
     private int wheelchairBoarding = 0;
@@ -171,6 +173,13 @@ public final class Stop extends IdentityBean<AgencyAndId> {
 
     public void setParentStation(String parentStation) {
         this.parentStation = parentStation;
+    }
+
+    public AgencyAndId getParentStationAgencyAndId(){
+        if (parentStationAgencyId==null) {
+            parentStationAgencyId = new AgencyAndId(id.getAgencyId(),parentStation);
+        }
+        return parentStationAgencyId;
     }
 
     @Override

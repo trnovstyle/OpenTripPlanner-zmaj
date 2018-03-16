@@ -169,7 +169,7 @@ public class GraphIndex {
                 stopVertexForStop.put(stop, transitStop);
                 if (stop.getParentStation() != null) {
                     stopsForParentStation.put(
-                        new AgencyAndId(stop.getId().getAgencyId(), stop.getParentStation()), stop);
+                        stop.getParentStationAgencyAndId(), stop);
                 }
 
                 // Temporary solution until multimodal stations are fully part of the stop hierarchy

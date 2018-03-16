@@ -59,7 +59,7 @@ public class AlertPatchServiceImpl implements AlertPatchService {
             if (graph != null && graph.index != null) {
                 Stop quay = graph.index.stopForId.get(stop);
                 if (quay != null && quay.getParentStation() != null) {
-                    result = patchesByStop.get(new AgencyAndId(stop.getAgencyId(), quay.getParentStation()));
+                    result = patchesByStop.get(quay.getParentStationAgencyAndId());
                 }
             }
         }
