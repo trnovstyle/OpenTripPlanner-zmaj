@@ -227,32 +227,44 @@ public class AlertPatchServiceImpl implements AlertPatchService {
         AgencyAndId trip = alertPatch.getTrip();
 
         if (stop != null) {
-            patchesByStop.remove(stop, alertPatch);
+            removeAlertPatch(patchesByStop, stop, alertPatch);
         }
+
         if (route != null) {
-            patchesByRoute.remove(route, alertPatch);
+            removeAlertPatch(patchesByRoute, route, alertPatch);
         }
+
         if (trip != null) {
-            patchesByTrip.remove(trip, alertPatch);
+            removeAlertPatch(patchesByTrip, trip, alertPatch);
         }
 
         if (stop != null && route != null) {
-            patchesByStopAndRoute.remove(new StopAndRouteOrTripKey(stop, route), alertPatch);
+            removeAlertPatch(patchesByStopAndRoute, new StopAndRouteOrTripKey(stop, route), alertPatch);
         }
+
         if (stop != null && trip != null) {
-            patchesByStopAndTrip.remove(new StopAndRouteOrTripKey(stop, trip), alertPatch);
+            removeAlertPatch(patchesByStopAndTrip, new StopAndRouteOrTripKey(stop, trip), alertPatch);
         }
+
         String agency = alertPatch.getAgency();
         if (agency != null) {
-            patchesByAgency.remove(agency, alertPatch);
+            removeAlertPatch(patchesByAgency, agency, alertPatch);
         }
+
         List<TripPattern> tripPatterns = alertPatch.getTripPatterns();
         if (tripPatterns != null) {
             for (TripPattern pattern : tripPatterns) {
-                patchesByTripPattern.remove(pattern.code, alertPatch);
+                removeAlertPatch(patchesByTripPattern, pattern, alertPatch);
             }
         }
         alertPatch.remove(graph);
+    }
+
+    private void removeAlertPatch(Map map, Object key, AlertPatch alertPatch) {
+        Set alertPatches = (Set) map.get(key);
+        if (alertPatches != null) {
+            alertPatches.remove(alertPatch);
+        }
     }
 
     private class StopAndRouteOrTripKey {
