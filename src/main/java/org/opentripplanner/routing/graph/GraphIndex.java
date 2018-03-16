@@ -1076,8 +1076,16 @@ public class GraphIndex {
         return getSiriAlertPatchService().getRoutePatches(route.getId());
     }
 
+    public Collection<AlertPatch> getAlertsForRouteId(AgencyAndId routeId) {
+        return getSiriAlertPatchService().getRoutePatches(routeId);
+    }
+
     public Collection<AlertPatch> getAlertsForTrip(Trip trip) {
         return getSiriAlertPatchService().getTripPatches(trip.getId());
+    }
+
+    public Collection<AlertPatch> getAlertsForTripId(AgencyAndId tripId) {
+        return getSiriAlertPatchService().getTripPatches(tripId);
     }
 
     public Collection<AlertPatch> getAlertsForPattern(TripPattern pattern) {
@@ -1096,12 +1104,23 @@ public class GraphIndex {
         return getSiriAlertPatchService().getStopPatches(stop.getId());
     }
 
+    public Collection<AlertPatch> getAlertsForStopId(AgencyAndId stopId) {
+        return getSiriAlertPatchService().getStopPatches(stopId);
+    }
+
     public Collection<AlertPatch> getAlertsForStopAndRoute(Stop stop, Route route) {
         return getSiriAlertPatchService().getStopAndRoutePatches(stop.getId(), route.getId());
     }
 
+    public Collection<AlertPatch> getAlertsForStopAndRoute(AgencyAndId stopId, AgencyAndId routeId) {
+        return getSiriAlertPatchService().getStopAndRoutePatches(stopId, routeId);
+    }
+
     public Collection<AlertPatch> getAlertsForStopAndTrip(Stop stop, Trip trip) {
         return getSiriAlertPatchService().getStopAndTripPatches(stop.getId(), trip.getId());
+    }
+    public Collection<AlertPatch> getAlertsForStopAndTrip(AgencyAndId stopId, AgencyAndId tripId) {
+        return getSiriAlertPatchService().getStopAndTripPatches(stopId, tripId);
     }
 
     /**

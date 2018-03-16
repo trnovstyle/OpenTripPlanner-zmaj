@@ -635,11 +635,11 @@ public abstract class GraphPathToTripPlanConverter {
                 }
 
                 if (leg.tripId != null) {
-                    addAlertPatchesToLeg(leg, graph.index.getAlertsForTrip(graph.index.tripForId.get(leg.tripId)),
+                    addAlertPatchesToLeg(leg, graph.index.getAlertsForTripId(leg.tripId),
                                     requestedLocale, leg.startTime.getTime(), leg.endTime.getTime());
                 }
                 if (leg.routeId != null) {
-                    addAlertPatchesToLeg(leg, graph.index.getAlertsForRoute(graph.index.routeForId.get(leg.routeId)),
+                    addAlertPatchesToLeg(leg, graph.index.getAlertsForRouteId(leg.routeId),
                                     requestedLocale, leg.startTime.getTime(), leg.endTime.getTime());
                 }
 
@@ -674,18 +674,15 @@ public abstract class GraphPathToTripPlanConverter {
     private static Collection<AlertPatch> getAlertsForStopAndRoute(Graph graph, AgencyAndId stopId, AgencyAndId routeId, boolean checkParentStop) {
 
         Stop stop = graph.index.stopForId.get(stopId);
-        Collection<AlertPatch> alertsForStopAndRoute = graph.index.getAlertsForStopAndRoute(stop, graph.index.routeForId.get(routeId));
+        Collection<AlertPatch> alertsForStopAndRoute = graph.index.getAlertsForStopAndRoute(stopId,routeId);
         if (checkParentStop && stop.getParentStation() != null) {
 
             //No alerts found for quay - check parent
-            Stop parentStop = graph.index.stationForId.get(stop.getParentStationAgencyAndId());
-            if (parentStop != null) {
-                Collection<AlertPatch> parentStopAlerts = graph.index.getAlertsForStopAndRoute(graph.index.stationForId.get(parentStop.getId()), graph.index.routeForId.get(routeId));
-                if (parentStopAlerts != null) {
-                    for (AlertPatch parentStopAlert : parentStopAlerts) {
-                        if (parentStopAlert != null) {
-                            alertsForStopAndRoute.add(parentStopAlert);
-                        }
+            Collection<AlertPatch> parentStopAlerts = graph.index.getAlertsForStopAndRoute(stop.getParentStationAgencyAndId(), routeId);
+            if (parentStopAlerts != null) {
+                for (AlertPatch parentStopAlert : parentStopAlerts) {
+                    if (parentStopAlert != null) {
+                        alertsForStopAndRoute.add(parentStopAlert);
                     }
                 }
             }
@@ -701,22 +698,18 @@ public abstract class GraphPathToTripPlanConverter {
     private static Collection<AlertPatch> getAlertsForStopAndTrip(Graph graph, AgencyAndId stopId, AgencyAndId tripId, boolean checkParentStop) {
 
         Stop stop = graph.index.stopForId.get(stopId);
-        Collection<AlertPatch> alertsForStopAndTrip = graph.index.getAlertsForStopAndTrip(stop, graph.index.tripForId.get(tripId));
+        Collection<AlertPatch> alertsForStopAndTrip = graph.index.getAlertsForStopAndTrip(stopId, tripId);
         if (checkParentStop && stop.getParentStation() != null) {
 
             //No alerts found for quay - check parent
-            Stop parentStop = graph.index.stationForId.get(stop.getParentStationAgencyAndId());
-            if (parentStop != null) {
-                Collection<AlertPatch> parentStopAlerts = graph.index.getAlertsForStopAndTrip(graph.index.stationForId.get(parentStop.getId()), graph.index.tripForId.get(tripId));
-                if (parentStopAlerts != null) {
-                    for (AlertPatch parentStopAlert : parentStopAlerts) {
-                        if (parentStopAlert != null) {
-                            alertsForStopAndTrip.add(parentStopAlert);
-                        }
+            Collection<AlertPatch> parentStopAlerts = graph.index.getAlertsForStopAndTrip(stop.getParentStationAgencyAndId(), tripId);
+            if (parentStopAlerts != null) {
+                for (AlertPatch parentStopAlert : parentStopAlerts) {
+                    if (parentStopAlert != null) {
+                        alertsForStopAndTrip.add(parentStopAlert);
                     }
                 }
             }
-
         }
         return alertsForStopAndTrip;
     }
@@ -728,18 +721,15 @@ public abstract class GraphPathToTripPlanConverter {
     private static Collection<AlertPatch> getAlertsForStop(Graph graph, AgencyAndId stopId, boolean checkParentStop) {
 
         Stop stop = graph.index.stopForId.get(stopId);
-        Collection<AlertPatch> alertsForStop = graph.index.getAlertsForStop(stop);
+        Collection<AlertPatch> alertsForStop = graph.index.getAlertsForStopId(stopId);
         if (checkParentStop && stop.getParentStation() != null) {
 
             //No alerts found for quay - check parent
-            Stop parentStop = graph.index.stationForId.get(stop.getParentStationAgencyAndId());
-            if (parentStop != null) {
-                Collection<AlertPatch> parentStopAlerts = graph.index.getAlertsForStop(graph.index.stationForId.get(parentStop.getId()));
-                if (parentStopAlerts != null) {
-                    for (AlertPatch parentStopAlert : parentStopAlerts) {
-                        if (parentStopAlert != null) {
-                            alertsForStop.add(parentStopAlert);
-                        }
+            Collection<AlertPatch> parentStopAlerts = graph.index.getAlertsForStopId(stop.getParentStationAgencyAndId());
+            if (parentStopAlerts != null) {
+                for (AlertPatch parentStopAlert : parentStopAlerts) {
+                    if (parentStopAlert != null) {
+                        alertsForStop.add(parentStopAlert);
                     }
                 }
             }

@@ -102,8 +102,9 @@ public class AlertPatchServiceImpl implements AlertPatchService {
     @Override
     public Collection<AlertPatch> getStopAndRoutePatches(AgencyAndId stop, AgencyAndId route) {
         Set<AlertPatch> result = new HashSet<>();
-        if (patchesByStopAndRoute.containsKey(new StopAndRouteOrTripKey(stop, route))) {
-            result.addAll(patchesByStopAndRoute.get(new StopAndRouteOrTripKey(stop, route)));
+        StopAndRouteOrTripKey key = new StopAndRouteOrTripKey(stop, route);
+        if (patchesByStopAndRoute.containsKey(key)) {
+            result.addAll(patchesByStopAndRoute.get(key));
         }
         return result;
     }
@@ -111,8 +112,9 @@ public class AlertPatchServiceImpl implements AlertPatchService {
     @Override
     public Collection<AlertPatch> getStopAndTripPatches(AgencyAndId stop, AgencyAndId trip) {
         Set<AlertPatch> result = new HashSet<>();
-        if (patchesByStopAndTrip.containsKey(new StopAndRouteOrTripKey(stop, trip))) {
-            result.addAll(patchesByStopAndTrip.get(new StopAndRouteOrTripKey(stop, trip)));
+        StopAndRouteOrTripKey key = new StopAndRouteOrTripKey(stop, trip);
+        if (patchesByStopAndTrip.containsKey(key)) {
+            result.addAll(patchesByStopAndTrip.get(key));
         }
         return result;
     }
