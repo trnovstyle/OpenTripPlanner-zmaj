@@ -28,10 +28,6 @@ public class AgencyAndId implements Serializable, Comparable<AgencyAndId> {
 
     private String id;
 
-    public AgencyAndId() {
-
-    }
-
     public AgencyAndId(String agencyId, String id) {
         this.agencyId = agencyId;
         this.id = id;
@@ -41,16 +37,8 @@ public class AgencyAndId implements Serializable, Comparable<AgencyAndId> {
         return agencyId;
     }
 
-    public void setAgencyId(String agencyId) {
-        this.agencyId = agencyId;
-    }
-
     public String getId() {
         return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
     }
 
     public boolean hasValues() {

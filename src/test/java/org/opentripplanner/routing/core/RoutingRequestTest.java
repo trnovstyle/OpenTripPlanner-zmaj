@@ -67,7 +67,7 @@ public class RoutingRequestTest {
 
     @Test
     public void testPreferencesPenaltyForRoute() {
-        AgencyAndId agencyAndId = new AgencyAndId();
+        AgencyAndId agencyAndId = new AgencyAndId("a1","id1");
         Agency agency = new Agency();
         Route route = new Route();
         Trip trip = new Trip();

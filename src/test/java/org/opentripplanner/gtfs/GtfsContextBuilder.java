@@ -14,6 +14,7 @@
 */
 package org.opentripplanner.gtfs;
 
+import org.opentripplanner.model.AgencyAndId;
 import org.opentripplanner.model.CalendarService;
 import org.opentripplanner.graph_builder.annotation.GraphBuilderAnnotation;
 import org.opentripplanner.graph_builder.module.GtfsFeedId;
@@ -164,32 +165,32 @@ public class GtfsContextBuilder {
     private void setAgencyToFeedIdForAllElements() {
 
         for (ShapePoint shapePoint : transitBuilder.getShapePoints()) {
-            shapePoint.getShapeId().setAgencyId(this.feedId.getId());
+            shapePoint.setShapeId(new AgencyAndId(this.feedId.getId(), shapePoint.getShapeId().getId()));
         }
         for (Route route : transitBuilder.getRoutes().values()) {
-            route.getId().setAgencyId(this.feedId.getId());
+            route.setId(new AgencyAndId(this.feedId.getId(), route.getId().getId()));
         }
         for (Stop stop : transitBuilder.getStops().values()) {
-            stop.getId().setAgencyId(this.feedId.getId());
+            stop.setId(new AgencyAndId(this.feedId.getId(), stop.getId().getId()));
         }
 
         for (Trip trip : transitBuilder.getTrips().values()) {
-            trip.getId().setAgencyId(this.feedId.getId());
+            trip.setId(new AgencyAndId(this.feedId.getId(), trip.getId().getId()));
         }
 
         for (ServiceCalendar serviceCalendar : transitBuilder.getCalendars()) {
-            serviceCalendar.getServiceId().setAgencyId(this.feedId.getId());
+            serviceCalendar.setServiceId(new AgencyAndId(this.feedId.getId(), serviceCalendar.getServiceId().getId()));
         }
         for (ServiceCalendarDate serviceCalendarDate : transitBuilder.getCalendarDates()) {
-            serviceCalendarDate.getServiceId().setAgencyId(this.feedId.getId());
+            serviceCalendarDate.setServiceId(new AgencyAndId(this.feedId.getId(), serviceCalendarDate.getServiceId().getId()));
         }
 
         for (FareAttribute fareAttribute : transitBuilder.getFareAttributes()) {
-            fareAttribute.getId().setAgencyId(this.feedId.getId());
+            fareAttribute.setId(new AgencyAndId(this.feedId.getId(), fareAttribute.getId().getId()));
         }
 
         for (Pathway pathway : transitBuilder.getPathways()) {
-            pathway.getId().setAgencyId(this.feedId.getId());
+            pathway.setId(new AgencyAndId(this.feedId.getId(), pathway.getId().getId()));
         }
 
         transitBuilder.regenerateIndexes();

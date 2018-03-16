@@ -8,6 +8,7 @@ import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.opentripplanner.model.Agency;
+import org.opentripplanner.model.AgencyAndId;
 import org.opentripplanner.netex.loader.NetexLoader;
 import org.opentripplanner.gtfs.GtfsContextBuilder;
 import org.opentripplanner.model.Route;
@@ -103,7 +104,7 @@ public class MappingTest {
 
         for (ServiceCalendarDate serviceCalendarDate : otpBuilderFromNetex.getCalendarDates()) {
             String newId = convertServiceIdFormat(serviceCalendarDate.getServiceId().getId());
-            serviceCalendarDate.getServiceId().setId(newId);
+            serviceCalendarDate.setServiceId(new AgencyAndId(serviceCalendarDate.getServiceId().getAgencyId(),newId));
         }
 
         Collection<ServiceCalendarDate> datesGtfs = otpBuilderFromGtfs.getCalendarDates().stream()
