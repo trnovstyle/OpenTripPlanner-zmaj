@@ -267,6 +267,8 @@ public class TransmodelIndexGraphQLSchema {
 
     private GraphQLOutputType tripType = new GraphQLTypeReference("Trip");
 
+    private GraphQLOutputType interchangeType = new GraphQLTypeReference("interchange");
+
     private TransportSubmodeMapper transportSubmodeMapper = new TransportSubmodeMapper();
 
     private TransmodelMappingUtil mappingUtil;
@@ -360,6 +362,53 @@ public class TransmodelIndexGraphQLSchema {
                         .build())
                 .build();
 
+        interchangeType = GraphQLObjectType.newObject()
+                .name("Interchange")
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("staySeated")
+                        .description("Time that the trip departs.")
+                        .type(Scalars.GraphQLBoolean)
+                        .dataFetcher(environment -> ((Transfer) environment.getSource()).isStaySeated())
+                        .build())
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("planned")
+                        .description("Time that the trip departs.")
+                        .type(Scalars.GraphQLBoolean)
+                        .dataFetcher(environment -> ((Transfer) environment.getSource()).isPlanned())
+                        .build())
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("guaranteed")
+                        .description("Time that the trip departs.")
+                        .type(Scalars.GraphQLBoolean)
+                        .dataFetcher(environment -> ((Transfer) environment.getSource()).isGuaranteed())
+                        .build())
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("advertised")
+                        .description("Time that the trip departs.")
+                        .type(Scalars.GraphQLBoolean)
+                        .dataFetcher(environment -> ((Transfer) environment.getSource()).isAdvertised())
+                        .build())
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("FromLine")
+                        .type(lineType)
+                        .dataFetcher(environment -> ((Transfer) environment.getSource()).getFromRoute())
+                        .build())
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("ToLine")
+                        .type(lineType)
+                        .dataFetcher(environment -> ((Transfer) environment.getSource()).getToRoute())
+                        .build())
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("FromServiceJourney")
+                        .type(serviceJourneyType)
+                        .dataFetcher(environment -> ((Transfer) environment.getSource()).getFromTrip())
+                        .build())
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("ToServiceJourney")
+                        .type(serviceJourneyType)
+                        .dataFetcher(environment -> ((Transfer) environment.getSource()).getToTrip())
+                        .build())
+                .build();
 
         destinationDisplayType = GraphQLObjectType.newObject()
                 .name("DestinationDisplay")
@@ -528,6 +577,8 @@ public class TransmodelIndexGraphQLSchema {
                         .build())
                 .build();
 
+
+
         GraphQLFieldDefinition tripFieldType = GraphQLFieldDefinition.newFieldDefinition()
                 .name("trip")
                 .description("Input type for executing a travel search for a trip between two locations. Returns trip patterns describing suggested alternatives for the trip.")
@@ -660,7 +711,6 @@ public class TransmodelIndexGraphQLSchema {
                 .dataFetcher(environment -> new TransmodelGraphQLPlanner(mappingUtil).plan(environment)
                 )
                 .build();
-
 
         noticeType = GraphQLObjectType.newObject()
                 .name("Notice")
@@ -3019,6 +3069,13 @@ public class TransmodelIndexGraphQLSchema {
                         .description("Do we continue from a specified via place")
                         .type(new GraphQLList(pathGuidanceType))
                         .dataFetcher(environment -> ((Leg) environment.getSource()).walkSteps)
+                        .build())
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("interchange")
+                        .type(interchangeType)
+                        .dataFetcher(environment -> ((Leg) environment.getSource()).timedTransferEdge != null
+                                ? ((Leg) environment.getSource()).timedTransferEdge.getTransferDetails()
+                                : null)
                         .build())
                 .build();
 
