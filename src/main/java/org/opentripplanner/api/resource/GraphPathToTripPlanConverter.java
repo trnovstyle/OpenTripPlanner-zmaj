@@ -661,7 +661,10 @@ public abstract class GraphPathToTripPlanConverter {
             //No alerts found for quay - check parent
             Stop parentStop = graph.index.stationForId.get(new AgencyAndId(stop.getId().getAgencyId(), stop.getParentStation()));
             if (parentStop != null) {
-                alertsForStopAndRoute.addAll(graph.index.getAlertsForStopAndRoute(graph.index.stationForId.get(parentStop.getId()), graph.index.routeForId.get(routeId)));
+                Collection<AlertPatch> parentStopAlerts = graph.index.getAlertsForStopAndRoute(graph.index.stationForId.get(parentStop.getId()), graph.index.routeForId.get(routeId));
+                if (parentStopAlerts != null) {
+                    alertsForStopAndRoute.addAll(parentStopAlerts);
+                }
             }
 
         }
@@ -681,7 +684,10 @@ public abstract class GraphPathToTripPlanConverter {
             //No alerts found for quay - check parent
             Stop parentStop = graph.index.stationForId.get(new AgencyAndId(stop.getId().getAgencyId(), stop.getParentStation()));
             if (parentStop != null) {
-                alertsForStopAndTrip.addAll(graph.index.getAlertsForStopAndTrip(graph.index.stationForId.get(parentStop.getId()), graph.index.tripForId.get(tripId)));
+                Collection<AlertPatch> parentStopAlerts = graph.index.getAlertsForStopAndTrip(graph.index.stationForId.get(parentStop.getId()), graph.index.tripForId.get(tripId));
+                if (parentStopAlerts != null) {
+                    alertsForStopAndTrip.addAll(parentStopAlerts);
+                }
             }
 
         }
@@ -701,7 +707,10 @@ public abstract class GraphPathToTripPlanConverter {
             //No alerts found for quay - check parent
             Stop parentStop = graph.index.stationForId.get(new AgencyAndId(stop.getId().getAgencyId(), stop.getParentStation()));
             if (parentStop != null) {
-                alertsForStop.addAll(graph.index.getAlertsForStop(graph.index.stationForId.get(parentStop.getId())));
+                Collection<AlertPatch> parentStopAlerts = graph.index.getAlertsForStop(graph.index.stationForId.get(parentStop.getId()));
+                if (parentStopAlerts != null) {
+                    alertsForStop.addAll(parentStopAlerts);
+                }
             }
 
         }
