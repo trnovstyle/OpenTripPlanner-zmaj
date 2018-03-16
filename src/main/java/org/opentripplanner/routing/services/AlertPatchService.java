@@ -46,4 +46,6 @@ public interface AlertPatchService {
     void expireAll();
 
     void expireAllExcept(Set<String> ids);
+
+    void applyAll(Set<AlertPatch> alertPatches);
 }
