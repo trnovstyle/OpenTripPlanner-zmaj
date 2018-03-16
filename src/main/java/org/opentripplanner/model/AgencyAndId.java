@@ -87,9 +87,9 @@ public class AgencyAndId implements Serializable, Comparable<AgencyAndId> {
         if (!(obj instanceof AgencyAndId))
             return false;
         AgencyAndId other = (AgencyAndId) obj;
-        if (!agencyId.equals(other.agencyId))
-            return false;
         if (!id.equals(other.id))
+            return false;
+        if (!agencyId.equals(other.agencyId))
             return false;
         return true;
     }
