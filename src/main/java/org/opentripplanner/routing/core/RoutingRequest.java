@@ -29,6 +29,7 @@ import org.opentripplanner.api.parameter.QualifiedModeSet;
 import org.opentripplanner.common.MavenVersion;
 import org.opentripplanner.common.model.GenericLocation;
 import org.opentripplanner.common.model.NamedPlace;
+import org.opentripplanner.model.calendar.ServiceDate;
 import org.opentripplanner.routing.edgetype.StreetEdge;
 import org.opentripplanner.routing.edgetype.TablePatternEdge;
 import org.opentripplanner.routing.edgetype.TripPattern;
@@ -139,6 +140,8 @@ public class RoutingRequest implements Cloneable, Serializable {
 
     /** The epoch date/time that the trip should depart (or arrive, for requests where arriveBy is true) */
     public long dateTime = new Date().getTime() / 1000;
+
+    private ServiceDate serviceDate;
 
     /** Whether the trip should depart at dateTime (false, the default), or arrive at dateTime. */
     public boolean arriveBy = false;
@@ -766,6 +769,13 @@ public class RoutingRequest implements Cloneable, Serializable {
 
     public Date getDateTime() {
         return new Date(dateTime * 1000);
+    }
+
+    public ServiceDate getServiceDate() {
+        if (serviceDate == null) {
+            serviceDate = new ServiceDate(getDateTime());
+        }
+        return serviceDate;
     }
 
     public void setDateTime(Date dateTime) {

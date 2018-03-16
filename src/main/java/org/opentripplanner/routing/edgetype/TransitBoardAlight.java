@@ -152,10 +152,9 @@ public class TransitBoardAlight extends TablePatternEdge implements OnboardEdge 
         };
 
         Timetable scheduledTimetable = getPattern().scheduledTimetable;
-        ServiceDate serviceDate = new ServiceDate(options.getDateTime());
 
         if (scheduledTimetable != null && scheduledTimetable.serviceDate != null) {
-           if (!serviceDate.equals(scheduledTimetable.serviceDate)) {
+           if (!options.getServiceDate().equals(scheduledTimetable.serviceDate)) {
                // if a specific ServiceDate is defined, and it does not match the requested travel-date. This is not a viable option
                return null;
            }
