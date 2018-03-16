@@ -15,6 +15,7 @@ package org.opentripplanner.updater.alerts;
 
 import com.google.transit.realtime.GtfsRealtime;
 import com.google.transit.realtime.GtfsRealtime.*;
+import org.apache.commons.lang3.tuple.Pair;
 import org.opentripplanner.model.AgencyAndId;
 import org.opentripplanner.model.Route;
 import org.opentripplanner.model.calendar.ServiceDate;
@@ -35,7 +36,6 @@ import uk.org.siri.siri20.*;
 import java.io.Serializable;
 import java.time.ZonedDateTime;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 /**
@@ -80,17 +80,25 @@ public class AlertsUpdateHandler {
             SituationExchangeDeliveryStructure.Situations situations = sxDelivery.getSituations();
             if (situations != null) {
                 long t1 = System.currentTimeMillis();
-                AtomicInteger addedAlertCounter = new AtomicInteger(0);
-                AtomicInteger expiredAlertCounter = new AtomicInteger(0);
+                Set<String> idsToExpire = new HashSet<>();
+                Set<AlertPatch> alertPatches = new HashSet<>();
+
                 for (PtSituationElement sxElement : situations.getPtSituationElements()) {
-                    handleAlert(sxElement, addedAlertCounter, expiredAlertCounter);
+                    Pair<Set<String>, Set<AlertPatch>> alertPatchChangePair = handleAlert(sxElement);
+                    if (alertPatchChangePair != null) {
+                        idsToExpire.addAll(alertPatchChangePair.getLeft());
+                        alertPatches.addAll(alertPatchChangePair.getRight());
+                    }
                 }
-                log.info("Added {} alerts, expired {} alerts based on {} situations, current alert-count: {}, elapsed time {}ms", addedAlertCounter.intValue(), expiredAlertCounter.intValue(), situations.getPtSituationElements().size(), alertPatchService.getAllAlertPatches().size(), (System.currentTimeMillis()-t1));
+
+                alertPatchService.expire(idsToExpire);
+                alertPatchService.applyAll(alertPatches);
+                log.info("Added {} alerts, expired {} alerts based on {} situations, current alert-count: {}, elapsed time {}ms", alertPatches.size(), idsToExpire.size(), situations.getPtSituationElements().size(), alertPatchService.getAllAlertPatches().size(), (System.currentTimeMillis()-t1));
             }
         }
     }
 
-    private void handleAlert(PtSituationElement situation, AtomicInteger addedAlertCounter, AtomicInteger expiredAlertCounter) {
+    private Pair<Set<String>, Set<AlertPatch>> handleAlert(PtSituationElement situation) {
         Alert alert = new Alert();
 
         alert.alertDescriptionText = getTranslatedString(situation.getDescriptions());
@@ -107,7 +115,7 @@ public class AlertsUpdateHandler {
                 (alert.alertDescriptionText == null || alert.alertDescriptionText.toString().isEmpty()) &&
                 (alert.alertDetailText == null || alert.alertDetailText.toString().isEmpty()))) {
             log.debug("Empty Alert - ignoring situationNumber: {}", situation.getSituationNumber() != null ? situation.getSituationNumber().getValue():null);
-            return;
+            return null;
         }
 
         ArrayList<TimePeriod> periods = new ArrayList<>();
@@ -441,26 +449,20 @@ public class AlertsUpdateHandler {
             .collect(Collectors.toList()));
 
         if (!patches.isEmpty() | !idsToExpire.isEmpty()) {
-            alertPatchService.expire(idsToExpire);
 
             for (AlertPatch patch : patches) {
                 if (patch.getAlert() == null) {
                     patch.setAlert(alert);
                 }
                 patch.getAlert().alertType = situation.getReportType();
-
-                patchIds.add(patch.getId());
-                alertPatchService.apply(patch);
             }
         } else if (expireSituation) {
             log.debug("Expired non-existing alert - ignoring situation with situationNumber {}", situationNumber);
         } else {
             log.info("No match found for Alert - ignoring situation with situationNumber {}", situationNumber);
         }
-        //Update counters
-        expiredAlertCounter.addAndGet(idsToExpire.size());
-        addedAlertCounter.addAndGet(patches.size());
 
+        return Pair.of(idsToExpire, patches);
     }
 
     private boolean isListNullOrEmpty(List list) {

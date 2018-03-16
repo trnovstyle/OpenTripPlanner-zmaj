@@ -22,19 +22,20 @@ import org.opentripplanner.routing.services.AlertPatchService;
 
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class AlertPatchServiceImpl implements AlertPatchService {
 
     private Graph graph;
 
-    private Map<String, AlertPatch> alertPatches = new HashMap<>();
-    private Map<AgencyAndId, Set<AlertPatch>> patchesByRoute = new HashMap<>();
-    private Map<AgencyAndId, Set<AlertPatch>> patchesByStop = new HashMap<>();
-    private Map<StopAndRouteOrTripKey, Set<AlertPatch>> patchesByStopAndRoute = new HashMap<>();
-    private Map<StopAndRouteOrTripKey, Set<AlertPatch>> patchesByStopAndTrip = new HashMap<>();
-    private Map<AgencyAndId, Set<AlertPatch>> patchesByTrip = new HashMap<>();
-    private Map<String, Set<AlertPatch>> patchesByAgency = new HashMap<>();
-    private Map<String, Set<AlertPatch>> patchesByTripPattern = new HashMap<>();
+    private Map<String, AlertPatch> alertPatches = new ConcurrentHashMap<>();
+    private Map<AgencyAndId, Set<AlertPatch>> patchesByRoute = new ConcurrentHashMap<>();
+    private Map<AgencyAndId, Set<AlertPatch>> patchesByStop = new ConcurrentHashMap<>();
+    private Map<StopAndRouteOrTripKey, Set<AlertPatch>> patchesByStopAndRoute = new ConcurrentHashMap<>();
+    private Map<StopAndRouteOrTripKey, Set<AlertPatch>> patchesByStopAndTrip = new ConcurrentHashMap<>();
+    private Map<AgencyAndId, Set<AlertPatch>> patchesByTrip = new ConcurrentHashMap<>();
+    private Map<String, Set<AlertPatch>> patchesByAgency = new ConcurrentHashMap<>();
+    private Map<String, Set<AlertPatch>> patchesByTripPattern = new ConcurrentHashMap<>();
 
     public AlertPatchServiceImpl(Graph graph) {
         this.graph = graph;
@@ -70,19 +71,20 @@ public class AlertPatchServiceImpl implements AlertPatchService {
 
     @Override
     public Collection<AlertPatch> getRoutePatches(AgencyAndId route) {
-        Set<AlertPatch> result = patchesByRoute.get(route);
-        if (result == null) {
-            result = Collections.emptySet();
+        Set<AlertPatch> result = new HashSet<>();
+        if (patchesByRoute.containsKey(route)) {
+            result.addAll(patchesByRoute.get(route));
         }
+
         return result;
 
     }
 
     @Override
     public Collection<AlertPatch> getTripPatches(AgencyAndId trip) {
-        Set<AlertPatch> result = patchesByTrip.get(trip);
-        if (result == null) {
-            result = Collections.emptySet();
+        Set<AlertPatch> result = new HashSet<>();
+        if (patchesByTrip.containsKey(trip)) {
+            result.addAll(patchesByTrip.get(trip));
         }
         return result;
     }
@@ -90,38 +92,45 @@ public class AlertPatchServiceImpl implements AlertPatchService {
 
     @Override
     public Collection<AlertPatch> getAgencyPatches(String agency) {
-        Set<AlertPatch> result = patchesByAgency.get(agency);
-        if (result == null) {
-            result = Collections.emptySet();
+        Set<AlertPatch> result = new HashSet<>();
+        if (patchesByAgency.containsKey(agency)) {
+            result.addAll(patchesByAgency.get(agency));
         }
         return result;
     }
 
     @Override
     public Collection<AlertPatch> getStopAndRoutePatches(AgencyAndId stop, AgencyAndId route) {
-        Set<AlertPatch> result = patchesByStopAndRoute.get(new StopAndRouteOrTripKey(stop, route));
-        if (result == null) {
-            result = Collections.emptySet();
+        Set<AlertPatch> result = new HashSet<>();
+        if (patchesByStopAndRoute.containsKey(new StopAndRouteOrTripKey(stop, route))) {
+            result.addAll(patchesByStopAndRoute.get(new StopAndRouteOrTripKey(stop, route)));
         }
         return result;
     }
 
     @Override
     public Collection<AlertPatch> getStopAndTripPatches(AgencyAndId stop, AgencyAndId trip) {
-        Set<AlertPatch> result = patchesByStopAndTrip.get(new StopAndRouteOrTripKey(stop, trip));
-        if (result == null) {
-            result = Collections.emptySet();
+        Set<AlertPatch> result = new HashSet<>();
+        if (patchesByStopAndTrip.containsKey(new StopAndRouteOrTripKey(stop, trip))) {
+            result.addAll(patchesByStopAndTrip.get(new StopAndRouteOrTripKey(stop, trip)));
         }
         return result;
     }
 
     @Override
     public Collection<AlertPatch> getTripPatternPatches(TripPattern pattern) {
-        Set<AlertPatch> result = patchesByTripPattern.get(pattern.code);
-        if (result == null) {
-            result = Collections.emptySet();
+        Set<AlertPatch> result = new HashSet<>();
+        if (patchesByTripPattern.containsKey(pattern.code)) {
+            result.addAll(patchesByTripPattern.get(pattern.code));
         }
         return result;
+    }
+
+    @Override
+    public synchronized void applyAll(Set<AlertPatch> alertPatches) {
+        for (AlertPatch alertPatch : alertPatches) {
+            apply(alertPatch);
+        }
     }
 
     @Override
