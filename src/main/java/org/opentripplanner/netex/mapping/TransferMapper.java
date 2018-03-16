@@ -16,6 +16,19 @@ public class TransferMapper {
 
         transfer.setTransferType(1);
 
+        if (interchange.isStaySeated() != null) {
+            transfer.setStaySeated(interchange.isStaySeated());
+        }
+        if (interchange.isPlanned() != null) {
+            transfer.setPlanned(interchange.isPlanned());
+        }
+        if (interchange.isGuaranteed() != null) {
+            transfer.setGuaranteed(interchange.isGuaranteed());
+        }
+        if (interchange.isAdvertised() != null) {
+            transfer.setAdvertised(interchange.isAdvertised());
+        }
+
         String fromStopId = netexDao.quayIdByStopPointRef.lookup(interchange.getFromPointRef().getRef());
         String toStopId = netexDao.quayIdByStopPointRef.lookup(interchange.getToPointRef().getRef());
 
@@ -40,6 +53,8 @@ public class TransferMapper {
 
         transfer.setFromRoute(transfer.getFromTrip().getRoute());
         transfer.setToRoute(transfer.getToTrip().getRoute());
+
+        LOG.info(transfer.toString());
 
         return transfer;
     }

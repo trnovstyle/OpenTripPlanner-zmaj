@@ -345,7 +345,16 @@ public abstract class GraphPathToTripPlanConverter {
         addModeAndAlerts(graph, leg, states, disableAlertFiltering, requestedLocale);
         if (leg.isTransitLeg()) addRealTimeData(leg, states);
 
+        addTransferDetails(states, leg);
+
         return leg;
+    }
+
+    private static void addTransferDetails (State[] states, Leg leg) {
+        Edge backEdge = states[states.length - 1].backEdge;
+        if (backEdge instanceof TimedTransferEdge) {
+            leg.timedTransferEdge = (TimedTransferEdge) backEdge;
+        }
     }
 
     private static void addFrequencyFields(State[] states, Leg leg) {
@@ -620,12 +629,22 @@ public abstract class GraphPathToTripPlanConverter {
                                     requestedLocale, leg.startTime.getTime(), leg.endTime.getTime());
                 }
 
+                if (leg.to != null && leg.to.stopId != null) {
+                    addAlertPatchesToLeg(leg, getAlertsForStop(graph, leg.to.stopId),
+                                    requestedLocale, leg.startTime.getTime(), leg.endTime.getTime());
+                }
+
                 if (leg.tripId != null) {
                     addAlertPatchesToLeg(leg, graph.index.getAlertsForTrip(graph.index.tripForId.get(leg.tripId)),
                                     requestedLocale, leg.startTime.getTime(), leg.endTime.getTime());
                 }
                 if (leg.routeId != null) {
                     addAlertPatchesToLeg(leg, graph.index.getAlertsForRoute(graph.index.routeForId.get(leg.routeId)),
+                                    requestedLocale, leg.startTime.getTime(), leg.endTime.getTime());
+                }
+
+                if (leg.agencyId != null) {
+                    addAlertPatchesToLeg(leg, graph.index.getAlertsForAgency(graph.index.getAgencyWithoutFeedId(leg.agencyId)),
                                     requestedLocale, leg.startTime.getTime(), leg.endTime.getTime());
                 }
 
