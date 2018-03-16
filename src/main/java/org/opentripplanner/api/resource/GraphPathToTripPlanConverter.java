@@ -348,7 +348,16 @@ public abstract class GraphPathToTripPlanConverter {
         addModeAndAlerts(graph, leg, states, disableAlertFiltering, requestedLocale);
         if (leg.isTransitLeg()) addRealTimeData(leg, states);
 
+        addTransferDetails(states, leg);
+
         return leg;
+    }
+
+    private static void addTransferDetails (State[] states, Leg leg) {
+        Edge backEdge = states[states.length - 1].backEdge;
+        if (backEdge instanceof TimedTransferEdge) {
+            leg.timedTransferEdge = (TimedTransferEdge) backEdge;
+        }
     }
 
     private static void addFrequencyFields(State[] states, Leg leg) {

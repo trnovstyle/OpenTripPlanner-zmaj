@@ -40,6 +40,16 @@ public final class Transfer implements Serializable {
 
     private int minTransferTime = MISSING_VALUE;
 
+    private boolean staySeated = false;
+
+    private boolean planned = true;
+
+    private boolean guaranteed = false;
+
+    private boolean advertised = false;
+
+    //TODO maximumWaitTime
+
     public Transfer() {
     }
 
@@ -52,6 +62,10 @@ public final class Transfer implements Serializable {
         this.toTrip = obj.toTrip;
         this.transferType = obj.transferType;
         this.minTransferTime = obj.minTransferTime;
+        this.staySeated = obj.staySeated;
+        this.planned = obj.planned;
+        this.guaranteed = obj.guaranteed;
+        this.advertised = obj.advertised;
     }
 
     public Stop getFromStop() {
@@ -125,6 +139,22 @@ public final class Transfer implements Serializable {
     public void clearMinTransferTime() {
         this.minTransferTime = MISSING_VALUE;
     }
+
+    public boolean isStaySeated() { return staySeated; }
+
+    public void setStaySeated(boolean staySeated) { this.staySeated = staySeated; }
+
+    public boolean isPlanned() { return planned; }
+
+    public void setPlanned(boolean planned) { this.planned = planned; }
+
+    public boolean isGuaranteed() { return guaranteed; }
+
+    public void setGuaranteed(boolean guaranteed) { this.guaranteed = guaranteed; }
+
+    public boolean isAdvertised() { return advertised; }
+
+    public void setAdvertised(boolean advertised) { this.advertised = advertised; }
 
     public String toString() {
         return "<Transfer"
