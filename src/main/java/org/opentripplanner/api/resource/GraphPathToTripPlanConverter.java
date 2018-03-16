@@ -663,7 +663,11 @@ public abstract class GraphPathToTripPlanConverter {
             if (parentStop != null) {
                 Collection<AlertPatch> parentStopAlerts = graph.index.getAlertsForStopAndRoute(graph.index.stationForId.get(parentStop.getId()), graph.index.routeForId.get(routeId));
                 if (parentStopAlerts != null) {
-                    alertsForStopAndRoute.addAll(parentStopAlerts);
+                    for (AlertPatch parentStopAlert : parentStopAlerts) {
+                        if (parentStopAlert != null) {
+                            alertsForStopAndRoute.add(parentStopAlert);
+                        }
+                    }
                 }
             }
 
@@ -686,7 +690,11 @@ public abstract class GraphPathToTripPlanConverter {
             if (parentStop != null) {
                 Collection<AlertPatch> parentStopAlerts = graph.index.getAlertsForStopAndTrip(graph.index.stationForId.get(parentStop.getId()), graph.index.tripForId.get(tripId));
                 if (parentStopAlerts != null) {
-                    alertsForStopAndTrip.addAll(parentStopAlerts);
+                    for (AlertPatch parentStopAlert : parentStopAlerts) {
+                        if (parentStopAlert != null) {
+                            alertsForStopAndTrip.add(parentStopAlert);
+                        }
+                    }
                 }
             }
 
@@ -709,7 +717,11 @@ public abstract class GraphPathToTripPlanConverter {
             if (parentStop != null) {
                 Collection<AlertPatch> parentStopAlerts = graph.index.getAlertsForStop(graph.index.stationForId.get(parentStop.getId()));
                 if (parentStopAlerts != null) {
-                    alertsForStop.addAll(parentStopAlerts);
+                    for (AlertPatch parentStopAlert : parentStopAlerts) {
+                        if (parentStopAlert != null) {
+                            alertsForStop.add(parentStopAlert);
+                        }
+                    }
                 }
             }
 
