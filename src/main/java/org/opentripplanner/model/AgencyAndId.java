@@ -28,6 +28,8 @@ public class AgencyAndId implements Serializable, Comparable<AgencyAndId> {
 
     private String id;
 
+    private transient int hash = 0;
+
     public AgencyAndId(String agencyId, String id) {
         this.agencyId = agencyId;
         this.id = id;
@@ -70,7 +72,10 @@ public class AgencyAndId implements Serializable, Comparable<AgencyAndId> {
 
     @Override
     public int hashCode() {
-        return agencyId.hashCode() ^ id.hashCode();
+        if (hash == 0) {
+            hash = agencyId.hashCode() ^ id.hashCode();
+        }
+        return hash;
     }
 
     @Override

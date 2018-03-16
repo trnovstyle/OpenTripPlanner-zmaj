@@ -277,6 +277,7 @@ public class AlertPatchServiceImpl implements AlertPatchService {
     private class StopAndRouteOrTripKey {
         private final AgencyAndId stop;
         private final AgencyAndId routeOrTrip;
+        private transient int hash = 0;
 
         public StopAndRouteOrTripKey(AgencyAndId stop, AgencyAndId routeOrTrip) {
             this.stop = stop;
@@ -302,9 +303,11 @@ public class AlertPatchServiceImpl implements AlertPatchService {
 
         @Override
         public int hashCode() {
-            int result = stop.hashCode();
-            result = 31 * result + routeOrTrip.hashCode();
-            return result;
+            if (hash == 0) {
+                int result = stop.hashCode();
+                hash = 31 * result + routeOrTrip.hashCode();
+            }
+            return hash;
         }
     }
 }
