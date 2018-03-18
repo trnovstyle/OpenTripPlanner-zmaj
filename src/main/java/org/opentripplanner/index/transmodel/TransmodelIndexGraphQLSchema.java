@@ -708,6 +708,12 @@ public class TransmodelIndexGraphQLSchema {
                         .type(Scalars.GraphQLInt)
                         .defaultValue(defaultRoutingRequest.heuristicStepsPerMainStep)
                         .build())
+                .argument(GraphQLArgument.newArgument()
+                        .name("compactLegsByReversedSearch")
+                        .description("Whether legs should be compacted by performing a reversed search. Experimental argument, will be removed!.")
+                        .type(Scalars.GraphQLBoolean)
+                        .defaultValue(defaultRoutingRequest.compactLegsByReversedSearch)
+                        .build())
                 .dataFetcher(environment -> new TransmodelGraphQLPlanner(mappingUtil).plan(environment)
                 )
                 .build();
