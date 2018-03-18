@@ -333,11 +333,6 @@ public class GraphPathFinder {
         reversedOptions.rctx.remainingWeightHeuristic = remainingWeightHeuristic;
         reversedOptions.longDistance = true;
         reversedOptions.bannedTrips = options.bannedTrips;
-        reversedOptions.bannedAgencies = options.bannedAgencies;
-        reversedOptions.bannedStops = options.bannedStops;
-        reversedOptions.bannedStopsHard = options.bannedStopsHard;
-        reversedOptions.whiteListedAgencies = options.whiteListedAgencies;
-        reversedOptions.whiteListedRoutes = options.whiteListedRoutes;
         return reversedOptions;
     }
 
