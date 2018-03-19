@@ -13,7 +13,6 @@
 
 package org.opentripplanner.routing.edgetype;
 
-import org.opentripplanner.model.Transfer;
 import org.opentripplanner.routing.core.State;
 import org.opentripplanner.routing.core.StateEditor;
 import org.opentripplanner.routing.core.TraverseMode;
@@ -42,8 +41,6 @@ public class TimedTransferEdge extends Edge {
 
     private static final long serialVersionUID = 20110730L; // MMMMDDYY
 
-    private Transfer transferDetails;
-
     public TimedTransferEdge(Vertex from, Vertex to) {
         super(from, to);
     }
@@ -55,10 +52,6 @@ public class TimedTransferEdge extends Edge {
         s1.setBackMode(TraverseMode.WALK);
         return s1.makeState();
     }
-
-    public Transfer getTransferDetails() { return transferDetails; }
-
-    public void setTransferDetails(Transfer transferDetails) { this.transferDetails = transferDetails; }
 
     @Override
     public double getDistance() {
