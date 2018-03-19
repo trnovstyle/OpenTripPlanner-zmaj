@@ -19,14 +19,8 @@ public class TransferMapper {
         if (interchange.isStaySeated() != null) {
             transfer.setStaySeated(interchange.isStaySeated());
         }
-        if (interchange.isPlanned() != null) {
-            transfer.setPlanned(interchange.isPlanned());
-        }
         if (interchange.isGuaranteed() != null) {
             transfer.setGuaranteed(interchange.isGuaranteed());
-        }
-        if (interchange.isAdvertised() != null) {
-            transfer.setAdvertised(interchange.isAdvertised());
         }
 
         String fromStopId = netexDao.quayIdByStopPointRef.lookup(interchange.getFromPointRef().getRef());
