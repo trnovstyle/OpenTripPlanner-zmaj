@@ -25,6 +25,7 @@ import org.opentripplanner.model.*;
 import org.opentripplanner.profile.BikeRentalStationInfo;
 import org.opentripplanner.routing.alertpatch.Alert;
 import org.opentripplanner.routing.alertpatch.AlertPatch;
+import org.opentripplanner.routing.alertpatch.StopCondition;
 import org.opentripplanner.routing.core.*;
 import org.opentripplanner.routing.edgetype.*;
 import org.opentripplanner.routing.error.TrivialPathException;
@@ -170,6 +171,14 @@ public abstract class GraphPathToTripPlanConverter {
         }
 
         addWalkSteps(graph, itinerary.legs, legsStates, requestedLocale);
+
+
+        for (int i = 0; i < itinerary.legs.size(); i++) {
+            Leg leg = itinerary.legs.get(i);
+            boolean isFirstLeg = i == 0;
+
+            addAlertPatchesToLeg(graph, leg, isFirstLeg, requestedLocale);
+        }
 
         fixupLegs(itinerary.legs, legsStates);
 
@@ -584,36 +593,48 @@ public abstract class GraphPathToTripPlanConverter {
                 }
             }
         }
+    }
+
+    private static void addAlertPatchesToLeg(Graph graph, Leg leg, boolean isFirstLeg, Locale requestedLocale) {
+
         if (graph.index != null) {
+            Set<StopCondition> departingStopConditions = new HashSet<>();
+            departingStopConditions.add(StopCondition.START_POINT);
+
+            if(!isFirstLeg) {
+                departingStopConditions.add(StopCondition.EXCEPTIONAL_STOP);
+            }
+
+            Set<StopCondition> passingStopConditions = new HashSet<>();
+            passingStopConditions.add(StopCondition.NOT_STOPPING);
+
+            Set<StopCondition> arrivingStopConditions = new HashSet<>();
+            arrivingStopConditions.add(StopCondition.DESTINATION);
+
             if (leg.routeId != null) {
 
-                //TODO: Check if alerts are applicable for departing stop
                 if (leg.from != null && leg.from.stopId != null) {
-                    addAlertPatchesToLeg(leg, getAlertsForStopAndRoute(graph, leg.from.stopId, leg.routeId), requestedLocale, leg.startTime.getTime(), leg.endTime.getTime());
+                    addAlertPatchesToLeg(leg, departingStopConditions, getAlertsForStopAndRoute(graph, leg.from.stopId, leg.routeId), requestedLocale, leg.startTime.getTime(), leg.endTime.getTime());
                 }
 
-                //TODO: Check if alerts are applicable for arrival stop
                 if (leg.to != null && leg.to.stopId != null) {
-                    addAlertPatchesToLeg(leg, getAlertsForStopAndRoute(graph, leg.to.stopId, leg.routeId), requestedLocale, leg.startTime.getTime(), leg.endTime.getTime());
+                    addAlertPatchesToLeg(leg, arrivingStopConditions, getAlertsForStopAndRoute(graph, leg.to.stopId, leg.routeId), requestedLocale, leg.startTime.getTime(), leg.endTime.getTime());
                 }
             }
 
             if (leg.tripId != null) {
                 if (leg.from != null && leg.from.stopId != null) {
-                    addAlertPatchesToLeg(leg, getAlertsForStopAndTrip(graph, leg.from.stopId, leg.tripId), requestedLocale, leg.startTime.getTime(), leg.endTime.getTime());
+                    addAlertPatchesToLeg(leg, departingStopConditions, getAlertsForStopAndTrip(graph, leg.from.stopId, leg.tripId), requestedLocale, leg.startTime.getTime(), leg.endTime.getTime());
                 }
 
-                //TODO: Check if alerts are applicable for arrival stop
                 if (leg.to != null && leg.to.stopId != null) {
-                    addAlertPatchesToLeg(leg, getAlertsForStopAndTrip(graph, leg.to.stopId, leg.tripId), requestedLocale, leg.startTime.getTime(), leg.endTime.getTime());
+                    addAlertPatchesToLeg(leg, arrivingStopConditions, getAlertsForStopAndTrip(graph, leg.to.stopId, leg.tripId), requestedLocale, leg.startTime.getTime(), leg.endTime.getTime());
                 }
 
-
-                //TODO: Check if alerts are applicable for passing stops (i.e. not arriving or departing)
                 if (leg.stop != null) {
                     for (Place place : leg.stop) {
                         if (place.stopId != null) {
-                            addAlertPatchesToLeg(leg, getAlertsForStopAndTrip(graph, place.stopId, leg.tripId),
+                            addAlertPatchesToLeg(leg, passingStopConditions, getAlertsForStopAndTrip(graph, place.stopId, leg.tripId),
                                     requestedLocale, place.arrival.getTime(), place.departure.getTime());
                         }
                     }
@@ -623,20 +644,19 @@ public abstract class GraphPathToTripPlanConverter {
             if (leg.stop != null) {
                 for (Place place : leg.stop) {
                     if (place.stopId != null) {
-                        addAlertPatchesToLeg(leg, getAlertsForStop(graph, place.stopId),
+                        addAlertPatchesToLeg(leg, passingStopConditions, getAlertsForStop(graph, place.stopId),
                                 requestedLocale, place.arrival.getTime(), place.departure.getTime());
                     }
                 }
             }
 
-
             if (leg.from != null && leg.from.stopId != null) {
-                addAlertPatchesToLeg(leg, getAlertsForStop(graph, leg.from.stopId),
+                addAlertPatchesToLeg(leg, departingStopConditions, getAlertsForStop(graph, leg.from.stopId),
                         requestedLocale, leg.startTime.getTime(), leg.endTime.getTime());
             }
 
             if (leg.to != null && leg.to.stopId != null) {
-                addAlertPatchesToLeg(leg, getAlertsForStop(graph, leg.to.stopId),
+                addAlertPatchesToLeg(leg, arrivingStopConditions, getAlertsForStop(graph, leg.to.stopId),
                         requestedLocale, leg.startTime.getTime(), leg.endTime.getTime());
             }
 
@@ -728,16 +748,29 @@ public abstract class GraphPathToTripPlanConverter {
         return alertsForStop;
     }
 
-    private static void addAlertPatchesToLeg(Leg leg, Collection<AlertPatch> alertsPatches, Locale requestedLocale, Date fromTime, Date toTime) {
-        if (alertsPatches != null) {
-            for (AlertPatch alert : alertsPatches) {
+
+    private static void addAlertPatchesToLeg(Leg leg, Collection<StopCondition> stopConditions, Collection<AlertPatch> alertPatches, Locale requestedLocale, Date fromTime, Date toTime) {
+        if (alertPatches != null) {
+            for (AlertPatch alert : alertPatches) {
                 if (alert.getAlert().effectiveStartDate.before(toTime) &&
                         (alert.getAlert().effectiveEndDate == null || alert.getAlert().effectiveEndDate.after(fromTime))) {
-
-                    leg.addAlertPatch(alert);
+                    if (stopConditions != null && !stopConditions.isEmpty()) {
+                        for (StopCondition stopCondition : stopConditions) {
+                            if (alert.getStopConditions().contains(stopCondition)) {
+                                leg.addAlertPatch(alert);
+                                break; //Only add alert once
+                            }
+                        }
+                    } else {
+                        leg.addAlertPatch(alert);
+                    }
                 }
             }
         }
+    }
+
+    private static void addAlertPatchesToLeg(Leg leg, Collection<AlertPatch> alertPatches, Locale requestedLocale, Date fromTime, Date toTime) {
+        addAlertPatchesToLeg(leg, null, alertPatches, requestedLocale, fromTime, toTime);
     }
 
     /**

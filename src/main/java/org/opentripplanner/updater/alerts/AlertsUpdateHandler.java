@@ -21,6 +21,7 @@ import org.opentripplanner.model.Route;
 import org.opentripplanner.model.calendar.ServiceDate;
 import org.opentripplanner.routing.alertpatch.Alert;
 import org.opentripplanner.routing.alertpatch.AlertPatch;
+import org.opentripplanner.routing.alertpatch.StopCondition;
 import org.opentripplanner.routing.alertpatch.TimePeriod;
 import org.opentripplanner.routing.core.TraverseMode;
 import org.opentripplanner.routing.services.AlertPatchService;
@@ -208,6 +209,9 @@ public class AlertsUpdateHandler {
                         alertPatch.setStop(stopId);
                         alertPatch.setTimePeriods(periods);
                         alertPatch.setId(id);
+
+                        updateStopConditions(alertPatch, stopPoint.getStopConditions());
+
                         patches.add(alertPatch);
                     }
                 }
@@ -325,7 +329,7 @@ public class AlertsUpdateHandler {
                         lineRef = affectedVehicleJourney.getLineRef().getValue();
                     }
 
-                    List<AgencyAndId> affectedStops = new ArrayList<>();
+                    List<AffectedStopPointStructure> affectedStops = new ArrayList<>();
 
                     List<AffectedRouteStructure> routes = affectedVehicleJourney.getRoutes();
                     // Resolve AffectedStop-ids
@@ -336,10 +340,7 @@ public class AlertsUpdateHandler {
                                 for (Serializable serializable : stopPointsList) {
                                     if (serializable instanceof AffectedStopPointStructure) {
                                         AffectedStopPointStructure stopPointStructure = (AffectedStopPointStructure) serializable;
-                                        AgencyAndId stop = siriFuzzyTripMatcher.getStop(stopPointStructure.getStopPointRef().getValue());
-                                        if (stop != null) {
-                                            affectedStops.add(stop);
-                                        }
+                                        affectedStops.add(stopPointStructure);
                                     }
                                 }
                             }
@@ -366,13 +367,19 @@ public class AlertsUpdateHandler {
                                 }
                                 if (tripId != null) {
                                     if (! affectedStops.isEmpty()) {
-                                        for (AgencyAndId affectedStop : affectedStops) {
-                                            String id = paddedSituationNumber + tripId.getId() + "-" + affectedStop.getId();
+                                        for (AffectedStopPointStructure affectedStop : affectedStops) {
+                                            AgencyAndId stop = siriFuzzyTripMatcher.getStop(affectedStop.getStopPointRef().getValue());
+                                            if (stop == null) {
+                                                continue;
+                                            }
+                                            String id = paddedSituationNumber + tripId.getId() + "-" + stop.getId();
 
                                             AlertPatch alertPatch = new AlertPatch();
                                             alertPatch.setTrip(tripId);
-                                            alertPatch.setStop(affectedStop);
+                                            alertPatch.setStop(stop);
                                             alertPatch.setId(id);
+
+                                            updateStopConditions(alertPatch, affectedStop.getStopConditions());
 
                                             //  A tripId for a given date may be reused for other dates not affected by this alert.
                                             List<TimePeriod> timePeriodList = new ArrayList<>();
@@ -463,6 +470,32 @@ public class AlertsUpdateHandler {
         }
 
         return Pair.of(idsToExpire, patches);
+    }
+
+    private void updateStopConditions(AlertPatch alertPatch, List<RoutePointTypeEnumeration> stopConditions) {
+        if (stopConditions != null) {
+            Set<StopCondition> alertStopConditions = new HashSet<>();
+            for (RoutePointTypeEnumeration stopCondition : stopConditions) {
+                switch (stopCondition) {
+                    case EXCEPTIONAL_STOP:
+                        alertStopConditions.add(StopCondition.EXCEPTIONAL_STOP);
+                        break;
+                    case DESTINATION:
+                        alertStopConditions.add(StopCondition.DESTINATION);
+                        break;
+                    case NOT_STOPPING:
+                        alertStopConditions.add(StopCondition.NOT_STOPPING);
+                        break;
+                    case REQUEST_STOP:
+                        alertStopConditions.add(StopCondition.REQUEST_STOP);
+                        break;
+                    case START_POINT:
+                        alertStopConditions.add(StopCondition.START_POINT);
+                        break;
+                }
+            }
+            alertPatch.getStopConditions().addAll(alertStopConditions);
+        }
     }
 
     private boolean isListNullOrEmpty(List list) {

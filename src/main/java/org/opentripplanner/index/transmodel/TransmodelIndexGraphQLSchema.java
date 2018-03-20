@@ -25,6 +25,7 @@ import org.opentripplanner.model.*;
 import org.opentripplanner.model.calendar.ServiceDate;
 import org.opentripplanner.routing.alertpatch.Alert;
 import org.opentripplanner.routing.alertpatch.AlertPatch;
+import org.opentripplanner.routing.alertpatch.StopCondition;
 import org.opentripplanner.routing.bike_park.BikePark;
 import org.opentripplanner.routing.bike_rental.BikeRentalStation;
 import org.opentripplanner.routing.bike_rental.BikeRentalStationService;
@@ -51,7 +52,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.text.ParseException;
-import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -95,6 +95,15 @@ public class TransmodelIndexGraphQLSchema {
             .name("ReportType") //SIRI - ReportTypeEnumeration
             .value("general", "general", "Indicates a general info-message that should not affect trip.")
             .value("incident", "incident", "Indicates an incident that may affect trip.")
+            .build();
+
+    private static GraphQLEnumType stopConditionEnum = GraphQLEnumType.newEnum()
+            .name("StopCondition") //SIRI - RoutePointTypeEnumeration
+            .value("destination", StopCondition.DESTINATION, "Situation applies when stop is the destination of the leg.")
+            .value("startPoint", StopCondition.START_POINT, "Situation applies when stop is the startpoint of the leg.")
+            .value("exceptionalStop", StopCondition.EXCEPTIONAL_STOP, "Situation applies when transfering to another leg at the stop.")
+            .value("notStopping", StopCondition.NOT_STOPPING, "Situation applies when passing the stop, without stopping.")
+            .value("requestStop", StopCondition.REQUEST_STOP, "Situation applies when at the stop, and the stop requires a request to stop.")
             .build();
 
     private static GraphQLEnumType realtimeStateEnum = GraphQLEnumType.newEnum()
@@ -864,6 +873,13 @@ public class TransmodelIndexGraphQLSchema {
                         .type(reportTypeEnum)
                         .description("ReportType of this situation")
                         .dataFetcher(environment -> ((AlertPatch) environment.getSource()).getAlert().alertType)
+                        .build())
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("stopConditions")
+                        .type(new GraphQLList(stopConditionEnum))
+                        .deprecate("Temorary attribute used for data-verification.")
+                        .description("StopConditions of this situation")
+                        .dataFetcher(environment -> ((AlertPatch) environment.getSource()).getStopConditions())
                         .build())
                 .build();
 
