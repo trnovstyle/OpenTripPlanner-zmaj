@@ -20,7 +20,6 @@ import org.opentripplanner.model.AgencyAndId;
 import org.opentripplanner.routing.alertpatch.Alert;
 import org.opentripplanner.routing.alertpatch.AlertPatch;
 import org.opentripplanner.routing.core.TraverseMode;
-import org.opentripplanner.routing.edgetype.TimedTransferEdge;
 import org.opentripplanner.util.model.EncodedPolylineBean;
 
 import javax.xml.bind.annotation.XmlAttribute;
@@ -193,12 +192,6 @@ public class Leg {
     @XmlAttribute
     @JsonSerialize
     public String serviceDate = null;
-
-     /**
-      * For transfer legs, provide additional info about the transfer
-      */
-
-    public TimedTransferEdge timedTransferEdge;
 
      /**
       * For transit leg, the route's branding URL (if one exists). For non-transit legs, null.

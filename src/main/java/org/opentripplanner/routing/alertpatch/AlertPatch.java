@@ -13,28 +13,8 @@
 
 package org.opentripplanner.routing.alertpatch;
 
-import static java.util.Collections.emptyList;
-
-import java.io.IOException;
-import java.io.ObjectOutputStream;
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.stream.Collectors;
-import java.util.Map;
-
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
-
-import org.opentripplanner.model.Agency;
-import org.opentripplanner.model.AgencyAndId;
-import org.opentripplanner.model.Route;
-import org.opentripplanner.model.Stop;
-import org.opentripplanner.model.Trip;
 import org.opentripplanner.api.adapters.AgencyAndIdAdapter;
+import org.opentripplanner.model.*;
 import org.opentripplanner.routing.core.State;
 import org.opentripplanner.routing.edgetype.PreAlightEdge;
 import org.opentripplanner.routing.edgetype.PreBoardEdge;
@@ -44,6 +24,17 @@ import org.opentripplanner.routing.graph.Graph;
 import org.opentripplanner.routing.vertextype.TransitStop;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
+import java.util.*;
+import java.util.stream.Collectors;
+
+import static java.util.Collections.emptyList;
 
 /**
  * This adds a note to all boardings of a given route or stop (optionally, in a given direction)
@@ -89,6 +80,11 @@ public class AlertPatch implements Serializable {
      * Direction id of the GTFS trips this alert concerns, set to -1 if no direction.
      */
     private int directionId = -1;
+
+    /**
+     * Used to limit when
+     */
+    private Set<StopCondition> stopConditions = new HashSet<>();
 
     @XmlElement
     public Alert getAlert() {
@@ -457,5 +453,9 @@ public class AlertPatch implements Serializable {
                 (route == null ? 0 : route.hashCode()) +
                 (alert == null ? 0 : alert.hashCode()) +
                 (feedId == null ? 0 : feedId.hashCode()));
+    }
+
+    public Set<StopCondition> getStopConditions() {
+        return stopConditions;
     }
 }

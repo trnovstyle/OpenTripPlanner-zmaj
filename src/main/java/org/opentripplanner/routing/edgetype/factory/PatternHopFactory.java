@@ -833,8 +833,7 @@ public class PatternHopFactory {
                             }
                         }
                         if (!hasTimedTransferEdge) {
-                            TimedTransferEdge timedTransferEdge = new TimedTransferEdge(fromVertex, toVertex);
-                            timedTransferEdge.setTransferDetails(t);
+                            new TimedTransferEdge(fromVertex, toVertex);
                         }
                         // add to transfer table to handle specificity
                         transferTable.addTransferTime(fromStop, toStop, fromRoute, toRoute, fromTrip, toTrip, StopTransfer.TIMED_TRANSFER);
