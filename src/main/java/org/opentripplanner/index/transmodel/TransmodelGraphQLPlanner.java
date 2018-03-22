@@ -156,7 +156,7 @@ public class TransmodelGraphQLPlanner {
 
         callWith.argument("wheelchair", request::setWheelchairAccessible);
         callWith.argument("numTripPatterns", request::setNumItineraries);
-        callWith.argument("maxWalkDistance", request::setMaxWalkDistance);
+        callWith.argument("maximumWalkDistance", request::setMaxWalkDistance);
         callWith.argument("maxPreTransitTime", request::setMaxPreTransitTime);
         callWith.argument("walkReluctance", request::setWalkReluctance);
         callWith.argument("walkOnStreetReluctance", request::setWalkOnStreetReluctance);
