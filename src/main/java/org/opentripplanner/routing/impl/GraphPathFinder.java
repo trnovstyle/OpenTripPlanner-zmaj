@@ -277,6 +277,11 @@ public class GraphPathFinder {
 
                     if((!options.arriveBy && joinedPath.states.getFirst().getTimeInMillis() >= options.dateTime * 1000) ||
                             (options.arriveBy && joinedPath.states.getLast().getTimeInMillis() <= options.dateTime * 1000)){
+
+                        if (joinedPath.getTrips().size() > newPath.getTrips().size()) {
+                            continue;
+                        }
+
                         joinedPaths.add(joinedPath);
                         if(newPaths.size() > 1){
                             for (AgencyAndId tripId : joinedPath.getTrips()) {
