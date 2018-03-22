@@ -52,6 +52,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.TimeZone;
 
 /**
  * A RoutingContext holds information needed to carry out a search for a particular TraverseOptions, on a specific graph.
@@ -362,11 +363,7 @@ public class RoutingContext implements Cloneable {
      * TraverseOptions already has a CalendarService set.
      */
     private void setServiceDays() {
-        Calendar c = Calendar.getInstance();
-        c.setTime(new Date(opt.getSecondsSinceEpoch() * 1000));
-        c.setTimeZone(graph.getTimeZone());
-
-        final ServiceDate serviceDate = new ServiceDate(c);
+        final ServiceDate serviceDate = opt.getServiceDate();
         this.serviceDays = new ArrayList<ServiceDay>(3);
         if (calendarService == null && graph.getCalendarService() != null
                 && (opt.modes == null || opt.modes.contains(TraverseMode.TRANSIT))) {
@@ -374,12 +371,18 @@ public class RoutingContext implements Cloneable {
             return;
         }
 
+        Set<TimeZone> agencyTimeZones=new HashSet<>();
+
         for (String feedId : graph.getFeedIds()) {
             for (Agency agency : graph.getAgencies(feedId)) {
-                addIfNotExists(this.serviceDays, new ServiceDay(graph, serviceDate.previous(), calendarService, agency.getId()));
-                addIfNotExists(this.serviceDays, new ServiceDay(graph, serviceDate, calendarService, agency.getId()));
-                addIfNotExists(this.serviceDays, new ServiceDay(graph, serviceDate.next(), calendarService, agency.getId()));
+                agencyTimeZones.add(calendarService.getTimeZoneForAgencyId(agency.getId()));
             }
+        }
+
+        for (TimeZone timeZone: agencyTimeZones) {
+            addIfNotExists(this.serviceDays, new ServiceDay(graph, serviceDate.previous(), calendarService, timeZone));
+            addIfNotExists(this.serviceDays, new ServiceDay(graph, serviceDate, calendarService, timeZone));
+            addIfNotExists(this.serviceDays, new ServiceDay(graph, serviceDate.next(), calendarService, timeZone));
         }
     }
 
