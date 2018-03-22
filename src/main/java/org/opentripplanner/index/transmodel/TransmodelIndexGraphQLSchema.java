@@ -570,7 +570,7 @@ public class TransmodelIndexGraphQLSchema {
                         .build())
                 .argument(GraphQLArgument.newArgument()
                         .name("maximumWalkDistance")
-                        .description("The maximum distance (in meters) the user is willing to walk. Note that trip patterns with longer walking distances will be penalized, but not altogether disallowed.")
+                        .description("The maximum distance (in meters) the user is willing to walk. Note that trip patterns with longer walking distances will be penalized, but not altogether disallowed. Maximum allowed value is 15000 m")
                          .defaultValue(defaultRoutingRequest.maxWalkDistance)
                         .type(Scalars.GraphQLFloat)
                         .build())
