@@ -21,7 +21,6 @@ import org.opentripplanner.routing.core.TraverseMode;
 import org.opentripplanner.routing.impl.GraphPathFinder;
 import org.opentripplanner.routing.spt.GraphPath;
 import org.opentripplanner.standalone.Router;
-import org.opentripplanner.util.ResourceBundleSingleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -134,9 +133,7 @@ public class TransmodelGraphQLPlanner {
         String placeRef = mappingUtil.preparePlaceRef((String) m.get("place"));
         String name = m.get("name") == null ? "" : (String) m.get("name");
 
-        String place = Joiner.on(",").skipNulls().join(placeRef, lat, lon);
-
-        return new GenericLocation(name, place);
+        return new GenericLocation(name, placeRef, lat, lon);
     }
 
     private RoutingRequest createRequest(DataFetchingEnvironment environment) {

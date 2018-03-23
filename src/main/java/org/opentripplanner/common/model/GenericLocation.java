@@ -13,6 +13,7 @@
 
 package org.opentripplanner.common.model;
 
+import com.google.common.base.Joiner;
 import com.vividsolutions.jts.geom.Coordinate;
 
 import java.io.Serializable;
@@ -147,6 +148,8 @@ public class GenericLocation implements Cloneable, Serializable {
         this.heading = heading;
     }
 
+
+
     /**
      * Construct from a name, place pair.
      * Parses latitude, longitude data, heading and numeric edge ID out of the place string.
@@ -195,6 +198,14 @@ public class GenericLocation implements Cloneable, Serializable {
         if(vertexId == null && !text.isEmpty()) {
             vertexId = text;
         }
+    }
+
+    public GenericLocation(String name, String vertexId, Double lat, Double lng) {
+        this.name = name;
+        this.vertexId = vertexId;
+        this.lat = lat;
+        this.lng = lng;
+        this.place = Joiner.on(",").skipNulls().join(vertexId, lat, lng);
     }
 
     /**
