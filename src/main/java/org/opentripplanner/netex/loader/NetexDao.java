@@ -1,9 +1,6 @@
 package org.opentripplanner.netex.loader;
 
-import org.opentripplanner.netex.loader.support.HierarchicalMap;
-import org.opentripplanner.netex.loader.support.HierarchicalMapById;
-import org.opentripplanner.netex.loader.support.HierarchicalMultimap;
-import org.opentripplanner.netex.loader.support.HierarchicalMultimapById;
+import org.opentripplanner.netex.loader.support.*;
 import org.rutebanken.netex.model.Authority;
 import org.rutebanken.netex.model.DayType;
 import org.rutebanken.netex.model.DayTypeAssignment;
@@ -132,7 +129,8 @@ public class NetexDao {
         this.groupOfLinesById = new HierarchicalMapById<>(parent.groupOfLinesById);
         this.groupOfLinesByLineId = new HierarchicalMap<>(parent.groupOfLinesByLineId);
         this.groupsOfStopPlacesById = new HierarchicalMapById<>(parent.groupsOfStopPlacesById);
-        this.interchanges = new HierarchicalMap<>(parent.interchanges);
+        // Interchanges are complex relations and the mapping is done AFTER all lines in a group is read
+        this.interchanges = new DelegateToParentHierarchicalMap<>(parent.interchanges);
         this.journeyPatternsById = new HierarchicalMapById<>(parent.journeyPatternsById);
         this.journeyPatternsByStopPointId = new HierarchicalMap<>(parent.journeyPatternsByStopPointId);
         this.lineById = new HierarchicalMapById<>(parent.lineById);
@@ -145,7 +143,8 @@ public class NetexDao {
         this.operatorsById = new HierarchicalMapById<>(parent.operatorsById);
         this.parkingById = new HierarchicalMultimapById<>(parent.parkingById);
         this.quayById = new HierarchicalMultimapById<>(parent.quayById);
-        this.quayIdByStopPointRef = new HierarchicalMap<>(parent.quayIdByStopPointRef);
+        // QuayIdByStopPointRefs are used for mapping Interchanges; hence must be available AFTER all lines are read
+        this.quayIdByStopPointRef = new DelegateToParentHierarchicalMap<>(parent.quayIdByStopPointRef);
         this.routeById = new HierarchicalMapById<>(parent.routeById);
         this.serviceJourneyByPatternId = new HierarchicalMultimap<>(parent.serviceJourneyByPatternId);
         this.stopPlaceById = new HierarchicalMultimapById<>(parent.stopPlaceById);

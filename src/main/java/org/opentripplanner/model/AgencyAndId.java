@@ -24,15 +24,16 @@ public class AgencyAndId implements Serializable, Comparable<AgencyAndId> {
 
     private static final long serialVersionUID = 1L;
 
-    private String agencyId;
+    private final String agencyId;
 
-    private String id;
+    private final String id;
 
-    private transient int hash = 0;
+    private final transient int hash;
 
     public AgencyAndId(String agencyId, String id) {
         this.agencyId = agencyId;
         this.id = id;
+        this.hash = agencyId.hashCode() ^ id.hashCode();
     }
 
     public String getAgencyId() {
@@ -72,9 +73,6 @@ public class AgencyAndId implements Serializable, Comparable<AgencyAndId> {
 
     @Override
     public int hashCode() {
-        if (hash == 0) {
-            hash = agencyId.hashCode() ^ id.hashCode();
-        }
         return hash;
     }
 
