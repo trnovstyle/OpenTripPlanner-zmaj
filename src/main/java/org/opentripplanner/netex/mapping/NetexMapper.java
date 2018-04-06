@@ -50,7 +50,7 @@ public class NetexMapper {
         this.agencyId = agencyId;
     }
 
-    public void mapNetexToOtpEntities(NetexDao netexDao) {
+    public void mapNetexToOtp(NetexDao netexDao) {
         AgencyAndIdFactory.setAgencyId(agencyId);
 
         for (Authority authority : netexDao.authoritiesById.values()) {
@@ -111,35 +111,6 @@ public class NetexMapper {
             transitBuilder.getParkings().add(parkingMapper.mapParking(netexDao.parkingById.lookupLastVersionById(parkingId)));
         }
 
-        for (Notice notice : netexDao.noticeById.values()) {
-            org.opentripplanner.model.Notice otpNotice = noticeMapper.mapNotice(notice);
-            transitBuilder.getNoticesById().add(otpNotice);
-        }
-
-        for (org.rutebanken.netex.model.NoticeAssignment noticeAssignment : netexDao.noticeAssignmentById.values()) {
-            Collection<NoticeAssignment> otpNoticeAssignments = noticeAssignmentMapper.mapNoticeAssignment(noticeAssignment, netexDao);
-            for (NoticeAssignment otpNoticeAssignment : otpNoticeAssignments) {
-                transitBuilder.getNoticeAssignmentsById().add(otpNoticeAssignment);
-            }
-        }
-    }
-
-
-    /**
-     * Relations between entities must be mapped after the entities are mapped, entities may come from
-     * different files.
-     *
-     * One example is Interchanges between lines. Lines may be defined in different files and the interchange may be
-     * defined in either one of these files. Therefore the relation can not be mapped before both lines are
-     * mapped.
-     *
-     * NOTE! This is not an ideal solution, since the mapping kode relay on the order of entities in the
-     * input files and how the files are read. A much better solution would be to map all entities
-     * while reading the files and then creating CommandObjects to do linking of entities(possibly defined in different
-     * files). This way all XML-objects can be thrown away for garbitch collection imeadeatly after it is read, not
-     * keeping it in the NetexDao.
-     */
-    public void mapNetexToOtpComplexRelations(NetexDao netexDao) {
         for (org.rutebanken.netex.model.ServiceJourneyInterchange interchange : netexDao.interchanges.values()) {
             if (interchange != null) {
                 Transfer transfer = transferMapper.mapTransfer(interchange, transitBuilder, netexDao);
@@ -147,6 +118,17 @@ public class NetexMapper {
                     transitBuilder.getTransfers().add(transfer);
                 }
             }
+        }
+
+        for (Notice notice : netexDao.noticeById.values()) {
+            org.opentripplanner.model.Notice otpNotice = noticeMapper.mapNotice(notice);
+            transitBuilder.getNoticesById().add(otpNotice);
+        }
+
+        for (org.rutebanken.netex.model.NoticeAssignment noticeAssignment : netexDao.noticeAssignmentById.values()) {
+            Collection<NoticeAssignment> otpNoticeAssignments = noticeAssignmentMapper.mapNoticeAssignment(noticeAssignment, netexDao);
+            for (NoticeAssignment otpNoticeAssignment : otpNoticeAssignments){
+            transitBuilder.getNoticeAssignmentsById().add( otpNoticeAssignment);}
         }
     }
 }

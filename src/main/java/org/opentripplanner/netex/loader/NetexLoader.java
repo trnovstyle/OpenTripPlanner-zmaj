@@ -30,6 +30,7 @@ import org.rutebanken.netex.model.DayTypes_RelStructure;
 import org.rutebanken.netex.model.DestinationDisplay;
 import org.rutebanken.netex.model.GroupOfLines;
 import org.rutebanken.netex.model.GroupOfStopPlaces;
+import org.rutebanken.netex.model.GroupOfStopPlacesRefStructure;
 import org.rutebanken.netex.model.GroupsOfLinesInFrame_RelStructure;
 import org.rutebanken.netex.model.GroupsOfStopPlacesInFrame_RelStructure;
 import org.rutebanken.netex.model.Interchange_VersionStructure;
@@ -46,6 +47,7 @@ import org.rutebanken.netex.model.NoticeAssignment;
 import org.rutebanken.netex.model.OperatingPeriod;
 import org.rutebanken.netex.model.OperatingPeriod_VersionStructure;
 import org.rutebanken.netex.model.Operator;
+import org.rutebanken.netex.model.Organisation_VersionStructure;
 import org.rutebanken.netex.model.ParkingsInFrame_RelStructure;
 import org.rutebanken.netex.model.PassengerStopAssignment;
 import org.rutebanken.netex.model.PointInLinkSequence_VersionedChildStructure;
@@ -122,24 +124,23 @@ public class NetexLoader {
 
         // Load global shared files
         loadFiles("shared file", entries.sharedEntries(), zipFile);
-        mapCurrentNetexEntitiesIntoOtpTransitObjects();
+        mapCurrentNetexDaoIntoOtpTransitObjects();
 
         for (GroupEntries group : entries.groups()) {
             newNetexDaoScope(() -> {
                 // Load shared group files
                 loadFiles("shared group file", group.sharedEntries(), zipFile);
-                mapCurrentNetexEntitiesIntoOtpTransitObjects();
+                mapCurrentNetexDaoIntoOtpTransitObjects();
 
                 for (ZipEntry entry : group.independentEntries()) {
                     newNetexDaoScope(() -> {
                         // Load each independent file in group
                         loadFile("group file", entry, zipFile);
-                        mapCurrentNetexEntitiesIntoOtpTransitObjects();
+                        mapCurrentNetexDaoIntoOtpTransitObjects();
                     });
                 }
             });
         }
-        mapCurrentNetexComplexRelationsIntoOtpTransitObjects();
     }
 
     private NetexDao currentNetexDao() {
@@ -152,12 +153,8 @@ public class NetexLoader {
         netexDaoStack.removeFirst();
     }
 
-    private void mapCurrentNetexEntitiesIntoOtpTransitObjects() {
-        otpMapper.mapNetexToOtpEntities(currentNetexDao());
-    }
-
-    private void mapCurrentNetexComplexRelationsIntoOtpTransitObjects() {
-        otpMapper.mapNetexToOtpComplexRelations(currentNetexDao());
+    private void mapCurrentNetexDaoIntoOtpTransitObjects() {
+        otpMapper.mapNetexToOtp(currentNetexDao());
     }
 
     private Unmarshaller createUnmarshaller() throws Exception {
