@@ -203,6 +203,7 @@ public class TransmodelGraphQLPlanner {
 
         callWith.argument("heuristicStepsPerMainStep", (Integer v) -> request.heuristicStepsPerMainStep = v);
         callWith.argument("compactLegsByReversedSearch", (Boolean v) -> request.compactLegsByReversedSearch = v);
+        callWith.argument("allowBikeRental", (Boolean v) -> request.allowBikeRental = v);
 
         callWith.argument("transferPenalty", (Integer v) -> request.transferPenalty = v);
         if (optimize == OptimizeType.TRANSFERS) {
