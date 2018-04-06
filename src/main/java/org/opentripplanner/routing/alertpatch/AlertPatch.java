@@ -82,9 +82,14 @@ public class AlertPatch implements Serializable {
     private int directionId = -1;
 
     /**
-     * Used to limit when
+     * Used to limit when Alert is applicable
      */
     private Set<StopCondition> stopConditions = new HashSet<>();
+
+    /**
+     * The provider's internal ID for this alert
+     */
+    private String situationNumber;
 
     @XmlElement
     public Alert getAlert() {
@@ -352,6 +357,18 @@ public class AlertPatch implements Serializable {
         return trip != null;
     }
 
+    public Set<StopCondition> getStopConditions() {
+        return stopConditions;
+    }
+
+    public void setSituationNumber(String situationNumber) {
+        this.situationNumber = situationNumber;
+    }
+
+    public String getSituationNumber() {
+        return situationNumber;
+    }
+
     public boolean equals(Object o) {
         if (!(o instanceof AlertPatch)) {
             return false;
@@ -453,9 +470,5 @@ public class AlertPatch implements Serializable {
                 (route == null ? 0 : route.hashCode()) +
                 (alert == null ? 0 : alert.hashCode()) +
                 (feedId == null ? 0 : feedId.hashCode()));
-    }
-
-    public Set<StopCondition> getStopConditions() {
-        return stopConditions;
     }
 }

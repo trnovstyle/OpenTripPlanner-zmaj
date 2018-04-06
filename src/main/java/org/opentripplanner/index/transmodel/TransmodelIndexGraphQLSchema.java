@@ -887,6 +887,12 @@ public class TransmodelIndexGraphQLSchema {
                         .description("StopConditions of this situation")
                         .dataFetcher(environment -> ((AlertPatch) environment.getSource()).getStopConditions())
                         .build())
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("situationNumber")
+                        .type(Scalars.GraphQLString)
+                        .description("Operator's internal id for this situation")
+                        .dataFetcher(environment -> ((AlertPatch) environment.getSource()).getSituationNumber())
+                        .build())
                 .build();
 
 

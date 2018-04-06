@@ -150,10 +150,12 @@ public class AlertsUpdateHandler {
             periods.add(new TimePeriod(0, Long.MAX_VALUE));
         }
 
-        String situationNumber = null;
+        String situationNumber;
 
         if (situation.getSituationNumber() != null) {
             situationNumber = situation.getSituationNumber().getValue();
+        } else {
+            situationNumber = null;
         }
 
         String paddedSituationNumber = situationNumber + ":";
@@ -451,7 +453,7 @@ public class AlertsUpdateHandler {
         // Alerts are not partially updated - cancel ALL current related alerts before adding updated.
         idsToExpire.addAll(alertPatchService.getAllAlertPatches()
             .stream()
-            .filter(alertPatch -> alertPatch.getId().startsWith(paddedSituationNumber))
+            .filter(alertPatch -> alertPatch.getSituationNumber().equals(situationNumber))
             .map(alertPatch -> alertPatch.getId())
             .collect(Collectors.toList()));
 
@@ -462,6 +464,7 @@ public class AlertsUpdateHandler {
                     patch.setAlert(alert);
                 }
                 patch.getAlert().alertType = situation.getReportType();
+                patch.setSituationNumber(situationNumber);
             }
         } else if (expireSituation) {
             log.debug("Expired non-existing alert - ignoring situation with situationNumber {}", situationNumber);
