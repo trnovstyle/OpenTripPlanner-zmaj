@@ -34,13 +34,12 @@ public class AgencyAndIdMapperTest {
         assertEquals("1", mappedId.getId());
     }
 
-    @Test
+    @Test(expected = NullPointerException.class)
     public void testMapAgencyAndIdWithNulls() throws Exception {
         org.onebusaway.gtfs.model.AgencyAndId inputId = new org.onebusaway.gtfs.model.AgencyAndId();
 
-        AgencyAndId mappedId = mapAgencyAndId(inputId);
-
-        assertNull(mappedId.getAgencyId());
-        assertNull(mappedId.getId());
+        // We expect a NPE when agenId or id is null,
+        // it does not make sense to have null is an id
+        mapAgencyAndId(inputId);
     }
 }
