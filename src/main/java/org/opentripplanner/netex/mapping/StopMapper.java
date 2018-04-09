@@ -1,6 +1,5 @@
 package org.opentripplanner.netex.mapping;
 
-import com.google.common.collect.Iterables;
 import com.google.common.collect.ListMultimap;
 import org.opentripplanner.model.AgencyAndId;
 import org.opentripplanner.model.Stop;
@@ -12,16 +11,17 @@ import org.rutebanken.netex.model.Quay;
 import org.rutebanken.netex.model.StopPlace;
 import org.rutebanken.netex.model.StopPlaceRefStructure;
 import org.rutebanken.netex.model.StopPlaceRefs_RelStructure;
-import org.rutebanken.netex.model.TariffZone;
 import org.rutebanken.netex.model.TariffZoneRef;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -33,61 +33,58 @@ public class StopMapper {
     private String DEFAULT_TIMEZONE = "Europe/Oslo";
 
     public Collection<Stop> mapParentAndChildStops(Collection<StopPlace> stopPlaceAllVersions, OtpTransitBuilder transitBuilder, NetexDao netexDao){
+
+        StopPlace currentStopPlace = getStopPlaceVersionValidToday(stopPlaceAllVersions);
+
         ArrayList<Stop> stops = new ArrayList<>();
 
         Stop multiModalStop = null;
+
         Stop stop = new Stop();
         stop.setLocationType(1);
 
-        // Sort by versions, latest first
-        stopPlaceAllVersions = stopPlaceAllVersions.stream()
-                .sorted(Comparator.comparingInt(o -> Integer.parseInt(o.getVersion())))
-                .collect(Collectors.toList());
-
-        StopPlace stopPlaceLatest = Iterables.getLast(stopPlaceAllVersions);
-
-        if (stopPlaceLatest.getParentSiteRef() != null) {
-            AgencyAndId id = AgencyAndIdFactory.createAgencyAndId(stopPlaceLatest.getParentSiteRef().getRef());
+        if (currentStopPlace.getParentSiteRef() != null) {
+            AgencyAndId id = AgencyAndIdFactory.createAgencyAndId(currentStopPlace.getParentSiteRef().getRef());
             if (transitBuilder.getMultiModalStops().containsKey(id)) {
                 multiModalStop = transitBuilder.getMultiModalStops().get(id);
                 transitBuilder.getStationsByMultiModalStop().put(multiModalStop, stop);
             }
         }
 
-        if (stopPlaceLatest.getName() != null) {
-            stop.setName(stopPlaceLatest.getName().getValue());
+        if (currentStopPlace.getName() != null) {
+            stop.setName(currentStopPlace.getName().getValue());
         } else if (multiModalStop != null) {
             String parentName = multiModalStop.getName();
             if (parentName != null) {
                 stop.setName(parentName);
             } else {
-                LOG.warn("No name found for stop " + stopPlaceLatest.getId() + " or in parent stop");
+                LOG.warn("No name found for stop " + currentStopPlace.getId() + " or in parent stop");
                 stop.setName("N/A");
             }
         } else {
             stop.setName("N/A");
         }
 
-        if(stopPlaceLatest.getCentroid() != null){
-            stop.setLat(stopPlaceLatest.getCentroid().getLocation().getLatitude().doubleValue());
-            stop.setLon(stopPlaceLatest.getCentroid().getLocation().getLongitude().doubleValue());
+        if(currentStopPlace.getCentroid() != null){
+            stop.setLat(currentStopPlace.getCentroid().getLocation().getLatitude().doubleValue());
+            stop.setLon(currentStopPlace.getCentroid().getLocation().getLongitude().doubleValue());
         }else{
-            LOG.warn(stopPlaceLatest.getId() + " does not contain any coordinates.");
+            LOG.warn(currentStopPlace.getId() + " does not contain any coordinates.");
         }
 
-        stop.setId(AgencyAndIdFactory.createAgencyAndId(stopPlaceLatest.getId()));
+        stop.setId(AgencyAndIdFactory.createAgencyAndId(currentStopPlace.getId()));
 
-        stop.setVehicleType(transportModeMapper.getTransportMode(stopPlaceLatest));
+        stop.setVehicleType(transportModeMapper.getTransportMode(currentStopPlace));
 
         stop.setTimezone(DEFAULT_TIMEZONE);
 
-        stop.setWeight(mapInterchange(stopPlaceLatest));
+        stop.setWeight(mapInterchange(currentStopPlace));
 
-        if (stopPlaceLatest.getAccessibilityAssessment() != null
-                && stopPlaceLatest.getAccessibilityAssessment().getLimitations() != null
-                && stopPlaceLatest.getAccessibilityAssessment().getLimitations().getAccessibilityLimitation() != null &&
-                stopPlaceLatest.getAccessibilityAssessment().getLimitations().getAccessibilityLimitation().getWheelchairAccess() != null){
-            switch (stopPlaceLatest.getAccessibilityAssessment().getLimitations().getAccessibilityLimitation().getWheelchairAccess().value()) {
+        if (currentStopPlace.getAccessibilityAssessment() != null
+                && currentStopPlace.getAccessibilityAssessment().getLimitations() != null
+                && currentStopPlace.getAccessibilityAssessment().getLimitations().getAccessibilityLimitation() != null &&
+                currentStopPlace.getAccessibilityAssessment().getLimitations().getAccessibilityLimitation().getWheelchairAccess() != null){
+            switch (currentStopPlace.getAccessibilityAssessment().getLimitations().getAccessibilityLimitation().getWheelchairAccess().value()) {
                 case "true":
                     stop.setWheelchairBoarding(1);
                     break;
@@ -106,12 +103,12 @@ public class StopMapper {
             stop.setWheelchairBoarding(0);
         }
 
-        if (stopPlaceLatest.getDescription() != null) {
-            stop.setDesc(stopPlaceLatest.getDescription().getValue());
+        if (currentStopPlace.getDescription() != null) {
+            stop.setDesc(currentStopPlace.getDescription().getValue());
         }
 
-        if (stopPlaceLatest.getTariffZones() != null) {
-            for (TariffZoneRef tariffZoneRef : stopPlaceLatest.getTariffZones().getTariffZoneRef()) {
+        if (currentStopPlace.getTariffZones() != null) {
+            for (TariffZoneRef tariffZoneRef : currentStopPlace.getTariffZones().getTariffZoneRef()) {
                 AgencyAndId ref = AgencyAndIdFactory.createAgencyAndId(tariffZoneRef.getRef());
                 if (transitBuilder.getTariffZones().containsKey(ref)) {
                     stop.getTariffZones().add(transitBuilder.getTariffZones().get(ref));
@@ -124,72 +121,62 @@ public class StopMapper {
         // Get quays from all versions of stop place
         Set<String> quaysSeen = new HashSet<>();
 
-        for (StopPlace stopPlace : stopPlaceAllVersions) {
-            if (stopPlace.getQuays() != null) {
-                List<Object> quayRefOrQuay = stopPlace.getQuays().getQuayRefOrQuay();
-                for (Object quayObject : quayRefOrQuay) {
-                    if (quayObject instanceof Quay) {
-                        Quay quay = (Quay) quayObject;
-                        Stop stopQuay = new Stop();
-                        stopQuay.setLocationType(0);
-                        if (quay.getCentroid() == null || quay.getCentroid().getLocation() == null
-                                || quay.getCentroid().getLocation().getLatitude() == null
-                                || quay.getCentroid().getLocation().getLatitude() == null) {
-                            LOG.warn("Quay " + quay.getId() + " does not contain any coordinates.");
-                            continue;
-                        }
-                        stopQuay.setName(stop.getName());
-                        stopQuay.setLat(quay.getCentroid().getLocation().getLatitude().doubleValue());
-                        stopQuay.setLon(quay.getCentroid().getLocation().getLongitude().doubleValue());
-                        stopQuay.setId(AgencyAndIdFactory.createAgencyAndId(quay.getId()));
-                        stopQuay.setPlatformCode(quay.getPublicCode());
-                        stopQuay.setVehicleType(stop.getVehicleType());
-                        stopQuay.setParentStation(stop.getId().getId());
-                        stopQuay.setWeight(stop.getWeight());
-                        if (quay.getDescription() != null) {
-                            stopQuay.setDesc(quay.getDescription().getValue());
-                        }
-                        if (multiModalStop != null) {
-                            stopQuay.setMultiModalStation(multiModalStop.getId().getId());
-                        }
-
-                        if (quay.getAccessibilityAssessment() != null
-                                && quay.getAccessibilityAssessment().getLimitations() != null
-                                && quay.getAccessibilityAssessment().getLimitations().getAccessibilityLimitation() != null &&
-                                quay.getAccessibilityAssessment().getLimitations().getAccessibilityLimitation().getWheelchairAccess() != null){
-                            switch (quay.getAccessibilityAssessment().getLimitations().getAccessibilityLimitation().getWheelchairAccess().value()) {
-                                case "true":
-                                    stopQuay.setWheelchairBoarding(1);
-                                    break;
-                                case "false":
-                                    stopQuay.setWheelchairBoarding(2);
-                                    break;
-                                case "unknown":
-                                    stopQuay.setWheelchairBoarding(1);
-                                    break;
-                                default:
-                                    stopQuay.setWheelchairBoarding(0);
-                                    break;
-                            }
-                        } else {
-                            stopQuay.setWheelchairBoarding(stop.getWheelchairBoarding());
-                        }
-
-                        stopQuay.setTimezone(DEFAULT_TIMEZONE);
-
-                        // Continue if this is not newest version of quay
-                        if (netexDao.quayById.lookup(stopQuay.getId().getId()).stream()
-                                .anyMatch(q -> Integer.parseInt(q.getVersion()) > Integer.parseInt(quay.getVersion()))) {
-                            continue;
-                        }
-
-                        if (!quaysSeen.contains(quay.getId())) {
-                            stops.add(stopQuay);
-                            quaysSeen.add(quay.getId());
-                        }
+        if (currentStopPlace.getQuays() != null) {
+            List<Object> quayRefOrQuay = currentStopPlace.getQuays().getQuayRefOrQuay();
+            for (Object quayObject : quayRefOrQuay) {
+                if (quayObject instanceof Quay) {
+                    Quay quay = (Quay) quayObject;
+                    Stop stopQuay = new Stop();
+                    stopQuay.setLocationType(0);
+                    if (quay.getCentroid() == null || quay.getCentroid().getLocation() == null
+                            || quay.getCentroid().getLocation().getLatitude() == null
+                            || quay.getCentroid().getLocation().getLatitude() == null) {
+                        LOG.warn("Quay " + quay.getId() + " does not contain any coordinates.");
+                        continue;
                     }
+                    stopQuay.setName(stop.getName());
+                    stopQuay.setLat(quay.getCentroid().getLocation().getLatitude().doubleValue());
+                    stopQuay.setLon(quay.getCentroid().getLocation().getLongitude().doubleValue());
+                    stopQuay.setId(AgencyAndIdFactory.createAgencyAndId(quay.getId()));
+                    stopQuay.setPlatformCode(quay.getPublicCode());
+                    stopQuay.setVehicleType(stop.getVehicleType());
+                    stopQuay.setParentStation(stop.getId().getId());
+                    stopQuay.setWeight(stop.getWeight());
+                    if (quay.getDescription() != null) {
+                        stopQuay.setDesc(quay.getDescription().getValue());
+                    }
+                    if (multiModalStop != null) {
+                        stopQuay.setMultiModalStation(multiModalStop.getId().getId());
+                    }
+
+                    if (quay.getAccessibilityAssessment() != null
+                            && quay.getAccessibilityAssessment().getLimitations() != null
+                            && quay.getAccessibilityAssessment().getLimitations().getAccessibilityLimitation() != null &&
+                            quay.getAccessibilityAssessment().getLimitations().getAccessibilityLimitation().getWheelchairAccess() != null){
+                        switch (quay.getAccessibilityAssessment().getLimitations().getAccessibilityLimitation().getWheelchairAccess().value()) {
+                            case "true":
+                                stopQuay.setWheelchairBoarding(1);
+                                break;
+                            case "false":
+                                stopQuay.setWheelchairBoarding(2);
+                                break;
+                            case "unknown":
+                                stopQuay.setWheelchairBoarding(1);
+                                break;
+                            default:
+                                stopQuay.setWheelchairBoarding(0);
+                                break;
+                        }
+                    } else {
+                        stopQuay.setWheelchairBoarding(stop.getWheelchairBoarding());
+                    }
+
+                    stopQuay.setTimezone(DEFAULT_TIMEZONE);
+
+                    stops.add(stopQuay);
                 }
             }
+
         }
         return stops;
     }
@@ -250,7 +237,7 @@ public class StopMapper {
         return group;
     }
 
-    Stop.interchangeWeightingEnumeration mapInterchange(StopPlace stopPlace) {
+    private Stop.interchangeWeightingEnumeration mapInterchange(StopPlace stopPlace) {
         if  (stopPlace.getWeighting() != null) {
             switch (stopPlace.getWeighting()) {
                 case PREFERRED_INTERCHANGE:
@@ -268,5 +255,38 @@ public class StopMapper {
         else {
             return Stop.interchangeWeightingEnumeration.INTERCHANGE_ALLOWED;
         }
+    }
+
+    private StopPlace getStopPlaceVersionValidToday(Collection<StopPlace> stopPlaces) {
+        LocalDateTime now = LocalDateTime.now();
+
+        Collection<StopPlace> stopPlacesWithValidity = stopPlaces.stream()
+                .filter(t -> t.getValidBetween().size() > 0).collect(Collectors.toList());
+
+        // Find stopPlace valid today
+        Optional<StopPlace> currentStopPlace = stopPlacesWithValidity.stream()
+                .filter(t -> (t.getValidBetween().get(0).getFromDate() != null && t.getValidBetween().get(0).getFromDate().isBefore(now))
+                && (t.getValidBetween().get(0).getToDate() == null || t.getValidBetween().get(0).getToDate().isAfter(now))).findFirst();
+
+        // If not find first valid stopPlace after today
+        if (!currentStopPlace.isPresent()) {
+            currentStopPlace = stopPlacesWithValidity.stream().filter(t -> t.getValidBetween().get(0).getFromDate() != null
+                    && t.getValidBetween().get(0).getFromDate().isAfter(now))
+                    .min(Comparator.comparing(a -> a.getValidBetween().get(0).getFromDate()));
+        }
+
+        // If not find first valid stopPlace before today
+        if (!currentStopPlace.isPresent()) {
+            currentStopPlace = stopPlacesWithValidity.stream().filter(t -> t.getValidBetween().get(0).getToDate() != null
+                    && t.getValidBetween().get(0).getToDate().isBefore(now))
+                    .max(Comparator.comparing(a -> a.getValidBetween().get(0).getToDate()));
+        }
+
+        // If not return first stopPlace in list
+        if (!currentStopPlace.isPresent()) {
+            currentStopPlace = stopPlaces.stream().findFirst();
+        }
+
+        return currentStopPlace.get();
     }
 }
