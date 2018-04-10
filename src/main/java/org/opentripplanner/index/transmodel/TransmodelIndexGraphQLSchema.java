@@ -1,6 +1,5 @@
 package org.opentripplanner.index.transmodel;
 
-import com.google.common.collect.Sets;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Envelope;
 import com.vividsolutions.jts.geom.LineString;
@@ -21,6 +20,7 @@ import org.opentripplanner.index.transmodel.model.TransmodelTransportSubmode;
 import org.opentripplanner.index.transmodel.model.scalars.DateScalarFactory;
 import org.opentripplanner.index.transmodel.model.scalars.DateTimeScalarFactory;
 import org.opentripplanner.index.transmodel.model.scalars.TimeScalarFactory;
+import org.opentripplanner.index.util.TripTimeShortHelper;
 import org.opentripplanner.model.*;
 import org.opentripplanner.model.calendar.ServiceDate;
 import org.opentripplanner.routing.alertpatch.Alert;
@@ -33,17 +33,13 @@ import org.opentripplanner.routing.car_park.CarPark;
 import org.opentripplanner.routing.car_park.CarParkService;
 import org.opentripplanner.routing.core.OptimizeType;
 import org.opentripplanner.routing.core.RoutingRequest;
-import org.opentripplanner.routing.core.ServiceDay;
 import org.opentripplanner.routing.core.TraverseMode;
-import org.opentripplanner.routing.edgetype.Timetable;
-import org.opentripplanner.routing.edgetype.TimetableSnapshot;
 import org.opentripplanner.routing.edgetype.TripPattern;
 import org.opentripplanner.routing.error.VertexNotFoundException;
 import org.opentripplanner.routing.graph.GraphIndex;
 import org.opentripplanner.routing.trippattern.RealTimeState;
 import org.opentripplanner.routing.vertextype.TransitVertex;
 import org.opentripplanner.standalone.Router;
-import org.opentripplanner.updater.stoptime.TimetableSnapshotSource;
 import org.opentripplanner.util.PolylineEncoder;
 import org.opentripplanner.util.ResourceBundleSingleton;
 import org.opentripplanner.util.TranslatedString;
@@ -51,7 +47,6 @@ import org.opentripplanner.util.model.EncodedPolylineBean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.text.ParseException;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -282,6 +277,7 @@ public class TransmodelIndexGraphQLSchema {
 
     private TransmodelMappingUtil mappingUtil;
 
+    private TripTimeShortHelper tripTimeShortHelper;
     private String fixedAgencyId;
 
     private GraphQLScalarType dateTimeScalar;
@@ -352,6 +348,7 @@ public class TransmodelIndexGraphQLSchema {
 
         Map<String, TraverseMode> traverseModeMap = modeEnum.getValues().stream().filter(valueDef -> valueDef.getValue() instanceof TraverseMode).collect(Collectors.toMap(GraphQLEnumValueDefinition::getName, valueDef -> (TraverseMode) valueDef.getValue()));
         mappingUtil = new TransmodelMappingUtil(fixedAgencyId, traverseModeMap);
+        tripTimeShortHelper = new TripTimeShortHelper(index);
         dateTimeScalar = DateTimeScalarFactory.createMillisecondsSinceEpochAsDateTimeStringScalar(index.graph.getTimeZone());
         timeType = TimeScalarFactory.createSecondsSinceMidnightAsTimeObject();
         dateScalar = DateScalarFactory.createSecondsSinceEpochAsDateStringScalar(index.graph.getTimeZone());
@@ -1594,7 +1591,7 @@ public class TransmodelIndexGraphQLSchema {
                             final Trip trip = environment.getSource();
 
                             final ServiceDate serviceDate = mappingUtil.secondsSinceEpochToServiceDate(environment.getArgument("date"));
-                            return getTripTimesShort(trip, serviceDate);
+                            return tripTimeShortHelper.getTripTimesShort(trip, serviceDate);
                         })
                         .build())
                 .field(GraphQLFieldDefinition.newFieldDefinition()
@@ -2704,27 +2701,6 @@ public class TransmodelIndexGraphQLSchema {
                 .build(dictionary);
     }
 
-    private List<TripTimeShort> getTripTimesShort(Trip trip, ServiceDate serviceDate) {
-        final ServiceDay serviceDay = new ServiceDay(index.graph, serviceDate,
-                index.graph.getCalendarService(), trip.getRoute().getAgency().getId());
-        TimetableSnapshotSource timetableSnapshotSource = index.graph.timetableSnapshotSource;
-        Timetable timetable = null;
-        if (timetableSnapshotSource != null) {
-            TimetableSnapshot timetableSnapshot = timetableSnapshotSource.getTimetableSnapshot();
-            if (timetableSnapshot != null) {
-                // Check if realtime-data is available for trip
-                TripPattern pattern = timetableSnapshot.getLastAddedTripPattern(timetableSnapshotSource.getFeedId(), trip.getId().getId(), serviceDate);
-                if (pattern == null) {
-                    pattern = index.patternForTrip.get(trip);
-                }
-                timetable = timetableSnapshot.resolve(pattern, serviceDate);
-            }
-        }
-        if (timetable == null) {
-            timetable = index.patternForTrip.get(trip).scheduledTimetable;
-        }
-        return TripTimeShort.fromTripTimes(timetable, trip, serviceDay);
-    }
 
     private RoutingRequest getDefaultRoutingRequest(Router router) {
         RoutingRequest defaultRoutingRequest = router.defaultRoutingRequest;
@@ -3033,19 +3009,13 @@ public class TransmodelIndexGraphQLSchema {
                         .name("fromEstimatedCall")
                         .description("EstimatedCall for the quay where the leg originates.")
                         .type(estimatedCallType)
-                        .dataFetcher(environment -> {
-                            Leg leg = environment.getSource();
-                            return getTripTimeShortForLegPlace(leg, leg.from);
-                        })
+                        .dataFetcher(environment -> tripTimeShortHelper.getTripTimeShortForFromPlace(environment.getSource()))
                         .build())
                 .field(GraphQLFieldDefinition.newFieldDefinition()
                         .name("toEstimatedCall")
                         .description("EstimatedCall for the quay where the leg ends.")
                         .type(estimatedCallType)
-                        .dataFetcher(environment -> {
-                            Leg leg = environment.getSource();
-                            return getTripTimeShortForLegPlace(leg, leg.to);
-                        })
+                               .dataFetcher(environment -> tripTimeShortHelper.getTripTimeShortForToPlace(environment.getSource()))
                         .build())
                 .field(GraphQLFieldDefinition.newFieldDefinition()
                         .name("line")
@@ -3073,13 +3043,13 @@ public class TransmodelIndexGraphQLSchema {
                         .name("intermediateEstimatedCalls")
                         .description("For ride legs, estimated calls for quays between the Place where the leg originates and the Place where the leg ends. For non-ride legs, null.")
                         .type(new GraphQLList(estimatedCallType))
-                        .dataFetcher(environment -> getIntermediateTripTimeShortsForLeg(environment.getSource()))
+                        .dataFetcher(environment -> tripTimeShortHelper.getIntermediateTripTimeShortsForLeg(environment.getSource()))
                         .build())
                 .field(GraphQLFieldDefinition.newFieldDefinition()
                         .name("serviceJourneyEstimatedCalls")
                         .description("For ride legs, all estimated calls for the service journey. For non-ride legs, null.")
                         .type(new GraphQLList(estimatedCallType))
-                        .dataFetcher(environment -> getAllTripTimeShortsForLegsTrip(environment.getSource()))
+                        .dataFetcher(environment -> tripTimeShortHelper.getAllTripTimeShortsForLegsTrip(environment.getSource()))
                         .build())
                 .field(GraphQLFieldDefinition.newFieldDefinition()
                         .name("via")
@@ -3575,117 +3545,6 @@ public class TransmodelIndexGraphQLSchema {
                 .build();
     }
 
-    /**
-     * Find trip time shorts for all intermediate stops for a leg.
-     */
-    private TripTimeShort getTripTimeShortForLegPlace(Leg leg, Place place) {
-        if (place == null || !VertexType.TRANSIT.equals(place.vertexType)) {
-            return null;
-        }
-        Stop stop = index.stopForId.get(place.stopId);
-        if (stop == null) {
-            return null;
-        }
-
-        List<TripTimeShort> tripTimeShorts = getTripTimeShortForQuays(leg, Sets.newHashSet(stop.getId()));
-        if (CollectionUtils.isEmpty(tripTimeShorts)) {
-            return null;
-        }
-        return tripTimeShorts.get(0);
-    }
-
-    /**
-     * Find trip time shorts for all intermediate stops for a leg.
-     */
-    private List<TripTimeShort> getIntermediateTripTimeShortsForLeg(Leg leg) {
-        Set<AgencyAndId> intermediateQuayIds = leg.stop.stream().map(place -> place.stopId).filter(Objects::nonNull).collect(Collectors.toSet());
-
-        return getTripTimeShortForQuays(leg, intermediateQuayIds);
-    }
-
-    /**
-     * Find trip time shorts for all stops for the full trip of a leg.
-     */
-    private List<TripTimeShort> getAllTripTimeShortsForLegsTrip(Leg leg) {
-        if (leg.tripId == null || leg.serviceDate == null) {
-            return new ArrayList<>();
-        }
-        Trip trip= index.tripForId.get(leg.tripId);
-        ServiceDate serviceDate=parseServiceDate(leg.serviceDate);
-        return getTripTimesShort(trip,serviceDate);
-    }
-
-    private List<TripTimeShort> getTripTimeShortForQuays(Leg leg, Set<AgencyAndId> intermediateQuayIds) {
-        Trip trip = index.tripForId.get(leg.tripId);
-
-        if (trip == null) {
-
-            return null;
-        }
-        ServiceDate serviceDate = parseServiceDate(leg.serviceDate);
-
-        final ServiceDay serviceDay = new ServiceDay(index.graph, serviceDate,
-                index.graph.getCalendarService(), trip.getRoute().getAgency().getId());
-        TimetableSnapshotSource timetableSnapshotSource = index.graph.timetableSnapshotSource;
-        Timetable timetable = null;
-        if (timetableSnapshotSource != null) {
-            TimetableSnapshot timetableSnapshot = timetableSnapshotSource.getTimetableSnapshot();
-            if (timetableSnapshot != null) {
-                // Check if realtime-data is available for trip
-                TripPattern pattern = timetableSnapshot.getLastAddedTripPattern(timetableSnapshotSource.getFeedId(), trip.getId().getId(), serviceDate);
-                if (pattern == null) {
-                    pattern = index.patternForTrip.get(trip);
-                }
-                timetable = timetableSnapshot.resolve(pattern, serviceDate);
-            }
-        }
-        if (timetable == null) {
-            timetable = index.patternForTrip.get(trip).scheduledTimetable;
-        }
-
-        long startTimeSeconds = (leg.startTime.toInstant().toEpochMilli() - serviceDate.getAsDate().getTime()) / 1000;
-        long endTimeSeconds = (leg.endTime.toInstant().toEpochMilli() - serviceDate.getAsDate().getTime()) / 1000;
-        Stream<TripTimeShort> matchingByQuayOrSiblingQuayStream = TripTimeShort.fromTripTimes(timetable, trip, serviceDay).stream()
-                                                                          .filter(tripTime -> matchesIntermediateQuayOrSiblingQuay(intermediateQuayIds, tripTime.stopId));
-        if (Boolean.TRUE.equals(leg.realTime)) {
-            return matchingByQuayOrSiblingQuayStream.filter(tripTime -> tripTime.realtimeDeparture >= startTimeSeconds && tripTime.realtimeArrival <= endTimeSeconds)
-                           .collect(Collectors.toList());
-        }
-        return matchingByQuayOrSiblingQuayStream.filter(tripTime -> tripTime.scheduledDeparture >= startTimeSeconds && tripTime.scheduledArrival <= endTimeSeconds)
-                       .collect(Collectors.toList());
-    }
-
-    private ServiceDate parseServiceDate(String serviceDateString) {
-        ServiceDate serviceDate;
-        try {
-            serviceDate = ServiceDate.parseString(serviceDateString);
-        } catch (ParseException pe) {
-            throw new RuntimeException("Unparsable service date: " + serviceDateString, pe);
-        }
-        return serviceDate;
-    }
-
-
-    private boolean matchesIntermediateQuayOrSiblingQuay(Set<AgencyAndId> intermediateQuayIds, AgencyAndId stopId) {
-        boolean foundMatch = intermediateQuayIds.contains(stopId);
-        if (!foundMatch) {
-            //Check parentStops
-            Stop stop = index.stopForId.get(stopId);
-            if (stop != null && stop.getParentStation() != null) {
-                AgencyAndId parentStopId = stop.getParentStationAgencyAndId();
-                Stop parentStation = index.stationForId.get(parentStopId);
-                if (parentStation != null) {
-                    Collection<Stop> childStops = index.stopsForParentStation.get(parentStation.getId());
-                    for (Stop childStop : childStops) {
-                        if (intermediateQuayIds.contains(childStop.getId())) {
-                            return true;
-                        }
-                    }
-                }
-            }
-        }
-        return foundMatch;
-    }
 
     private <T> List<T> wrapInListUnlessNull(T element) {
         if (element == null) {

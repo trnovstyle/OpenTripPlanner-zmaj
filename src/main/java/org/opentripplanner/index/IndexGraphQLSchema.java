@@ -14,6 +14,7 @@ import org.opentripplanner.api.parameter.QualifiedModeSet;
 import org.opentripplanner.gtfs.GtfsLibrary;
 import org.opentripplanner.index.model.StopTimesInPattern;
 import org.opentripplanner.index.model.TripTimeShort;
+import org.opentripplanner.index.util.TripTimeShortHelper;
 import org.opentripplanner.model.*;
 import org.opentripplanner.model.calendar.ServiceDate;
 import org.opentripplanner.profile.StopCluster;
@@ -195,6 +196,8 @@ public class IndexGraphQLSchema {
 
     public GraphQLSchema indexSchema;
 
+    private TripTimeShortHelper tripTimeShortHelper;
+
     private Relay relay = new Relay();
 
     private GraphQLInterfaceType nodeInterface = relay.nodeInterface(new TypeResolver() {
@@ -293,6 +296,7 @@ public class IndexGraphQLSchema {
 
     @SuppressWarnings("unchecked")
     public IndexGraphQLSchema(GraphIndex index) {
+        tripTimeShortHelper = new TripTimeShortHelper(index);
         createPlanType(index);
 
         GraphQLInputObjectType coordinateInputType = GraphQLInputObjectType.newInputObject()
@@ -2966,7 +2970,7 @@ public class IndexGraphQLSchema {
                 .name("intermediateStoptimes")
                 .description("For transit legs, stop time for intermediate stops between the Place where the leg originates and the Place where the leg ends. For non-transit legs, null.")
                 .type(new GraphQLList(stoptimeType))
-                 .dataFetcher(environment -> getIntermediateTripTimeShortsForLeg(index, environment.getSource()))
+                 .dataFetcher(environment -> tripTimeShortHelper.getIntermediateTripTimeShortsForLeg(environment.getSource()))
                 .build())
             .field(GraphQLFieldDefinition.newFieldDefinition()
                 .name("intermediatePlace")
@@ -3163,73 +3167,4 @@ public class IndexGraphQLSchema {
             .build();
     }
 
-    /**
-     * Find trip time shorts for all intermediate stops for a leg.
-     *
-     */
-    private List<TripTimeShort> getIntermediateTripTimeShortsForLeg(GraphIndex index, Leg leg) {
-        Trip trip = index.tripForId.get(leg.tripId);
-
-        if (trip == null) {
-
-            return null;
-        }
-        ServiceDate serviceDate;
-        try {
-            serviceDate = ServiceDate.parseString(leg.serviceDate);
-        } catch (ParseException pe) {
-            throw new RuntimeException("Unparsable service date: " + leg.serviceDate, pe);
-        }
-
-        final ServiceDay serviceDay = new ServiceDay(index.graph, serviceDate,
-                                                            index.graph.getCalendarService(), trip.getRoute().getAgency().getId());
-        TimetableSnapshotSource timetableSnapshotSource = index.graph.timetableSnapshotSource;
-        Timetable timetable = null;
-        if (timetableSnapshotSource != null) {
-            TimetableSnapshot timetableSnapshot = timetableSnapshotSource.getTimetableSnapshot();
-            if (timetableSnapshot != null) {
-                // Check if realtime-data is available for trip
-                TripPattern pattern = timetableSnapshot.getLastAddedTripPattern(timetableSnapshotSource.getFeedId(), trip.getId().getId(), serviceDate);
-                if (pattern == null) {
-                    pattern = index.patternForTrip.get(trip);
-                }
-                timetable = timetableSnapshot.resolve(pattern, serviceDate);
-            }
-        }
-        if (timetable == null) {
-            timetable = index.patternForTrip.get(trip).scheduledTimetable;
-        }
-        Set<AgencyAndId> intermediateQuayIds = leg.stop.stream().map(place -> place.stopId).filter(Objects::nonNull).collect(Collectors.toSet());
-
-        long startTimeSeconds = (leg.startTime.toInstant().toEpochMilli() - serviceDate.getAsDate().getTime()) / 1000;
-        long endTimeSeconds = (leg.endTime.toInstant().toEpochMilli() - serviceDate.getAsDate().getTime()) / 1000;
-        Stream<TripTimeShort> matchingByQuayOrSiblingQuayStream = TripTimeShort.fromTripTimes(timetable, trip, serviceDay).stream()
-                                                                          .filter(tripTime -> matchesIntermediateQuayOrSiblingQuay(index, intermediateQuayIds, tripTime.stopId));
-        if (Boolean.TRUE.equals(leg.realTime)) {
-            return matchingByQuayOrSiblingQuayStream.filter(tripTime -> tripTime.realtimeDeparture >= startTimeSeconds && tripTime.realtimeArrival <= endTimeSeconds)
-                           .collect(Collectors.toList());
-        }
-        return matchingByQuayOrSiblingQuayStream.filter(tripTime -> tripTime.scheduledDeparture >= startTimeSeconds && tripTime.scheduledArrival <= endTimeSeconds)
-                       .collect(Collectors.toList());
-    }
-
-    private boolean matchesIntermediateQuayOrSiblingQuay(GraphIndex index, Set<AgencyAndId> intermediateQuayIds, AgencyAndId stopId) {
-        boolean foundMatch = intermediateQuayIds.contains(stopId);
-        if (!foundMatch) {
-            //Check parentStops
-            Stop stop = index.stopForId.get(stopId);
-            if (stop != null && stop.getParentStation() != null) {
-                Stop parentStation = index.stationForId.get(stop.getParentStationAgencyAndId());
-                if (parentStation != null) {
-                    Collection<Stop> childStops = index.stopsForParentStation.get(parentStation.getId());
-                    for (Stop childStop : childStops) {
-                        if (intermediateQuayIds.contains(childStop.getId())) {
-                            return true;
-                        }
-                    }
-                }
-            }
-        }
-        return foundMatch;
-    }
 }
