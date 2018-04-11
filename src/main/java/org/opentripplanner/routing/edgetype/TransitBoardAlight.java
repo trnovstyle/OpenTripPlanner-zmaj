@@ -396,11 +396,13 @@ public class TransitBoardAlight extends TablePatternEdge implements OnboardEdge 
             if (!options.modes.get(modeMask)) {
                 return Double.POSITIVE_INFINITY;
             }
-                        /* We assume all trips in a pattern are on the same route. Check if that route is banned. */
-            if (options.routeIsBanned(this.getPattern().route)) return Double.POSITIVE_INFINITY;
             BitSet services = getPattern().services;
             for (ServiceDay sd : options.rctx.serviceDays) {
-                if (sd.anyServiceRunning(services)) return 0;
+                if (sd.anyServiceRunning(services)) {
+                    /* We assume all trips in a pattern are on the same route. Check if that route is banned. */
+                    return options.routeIsBanned(this.getPattern().route) ? Double.POSITIVE_INFINITY : 0;
+                }
+
             }
             return Double.POSITIVE_INFINITY;
         } else {
