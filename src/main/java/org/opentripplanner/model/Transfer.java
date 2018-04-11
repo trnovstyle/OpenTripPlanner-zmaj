@@ -17,6 +17,7 @@
 package org.opentripplanner.model;
 
 import java.io.Serializable;
+import java.time.Duration;
 
 public final class Transfer implements Serializable {
 
@@ -47,6 +48,10 @@ public final class Transfer implements Serializable {
     private boolean guaranteed = false;
 
     private boolean advertised = false;
+
+    private Duration maximumWaitTime;
+
+    private int priority;
 
     //TODO maximumWaitTime
 
@@ -155,6 +160,14 @@ public final class Transfer implements Serializable {
     public boolean isAdvertised() { return advertised; }
 
     public void setAdvertised(boolean advertised) { this.advertised = advertised; }
+
+    public Duration getMaximumWaitTime() { return maximumWaitTime; }
+
+    public void setMaximumWaitTime(Duration maximumWaitTime) { this.maximumWaitTime = maximumWaitTime; }
+
+    public int getPriority() { return priority; }
+
+    public void setPriority(int priority) { this.priority = priority; }
 
     public String toString() {
         return "<Transfer"
