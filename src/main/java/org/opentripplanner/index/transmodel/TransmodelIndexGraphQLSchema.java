@@ -1080,12 +1080,33 @@ public class TransmodelIndexGraphQLSchema {
                                 .type(Scalars.GraphQLBoolean)
                                 .defaultValue(false)
                                 .build())
+                        .argument(GraphQLArgument.newArgument()
+                                .name("whiteListed")
+                                .description("Whitelisted")
+                                .description("Parameters for indicating the only authorities and/or lines or quays to list estimatedCalls for")
+                                .type(whiteListedInputType)
+                                .build())
                         .dataFetcher(environment -> {
                             boolean omitNonBoarding = environment.getArgument("omitNonBoarding");
                             Stop stop = environment.getSource();
                             if (stop.getLocationType() != 1) {
                                 // Not a stop place
                                 return null;
+                            }
+
+                            Set<String> authorityIds = new HashSet();
+                            Set<AgencyAndId> lineIds = new HashSet();
+                            Map<String, List<String>> whiteList = environment.getArgument("whiteListed");
+                            if (whiteList != null) {
+                                List<String> authorityIdList = whiteList.get("authorities");
+                                if (authorityIdList != null) {
+                                    authorityIds.addAll(authorityIdList);
+                                }
+
+                                List<String> lineIdList = whiteList.get("lines");
+                                if (lineIdList != null) {
+                                    lineIds.addAll(lineIdList.stream().map(id -> mappingUtil.fromIdString(id)).collect(Collectors.toSet()));
+                                }
                             }
 
                             Long startTimeMs = environment.getArgument("startTime") == null ? 0l : environment.getArgument("startTime");
@@ -1103,6 +1124,7 @@ public class TransmodelIndexGraphQLSchema {
                                     .flatMap(stoptimesWithPattern -> stoptimesWithPattern.times.stream())
                                     .sorted(Comparator.comparing(t -> t.serviceDay + t.realtimeDeparture))
                                     .distinct()
+                                    .filter(tts -> isTripTimeShortAcceptable(tts, authorityIds, lineIds))
                                     .limit((long) (int) environment.getArgument("numberOfDepartures"))
                                     .collect(Collectors.toList());
                         })
@@ -1203,8 +1225,30 @@ public class TransmodelIndexGraphQLSchema {
                                 .type(Scalars.GraphQLBoolean)
                                 .defaultValue(false)
                                 .build())
+                        .argument(GraphQLArgument.newArgument()
+                                .name("whiteListed")
+                                .description("Whitelisted")
+                                .description("Parameters for indicating the only authorities and/or lines or quays to list estimatedCalls for")
+                                .type(whiteListedInputType)
+                                .build())
                         .dataFetcher(environment -> {
                             boolean omitNonBoarding = environment.getArgument("omitNonBoarding");
+
+                            Set<String> authorityIds =new HashSet();
+                            Set<AgencyAndId> lineIds = new HashSet();
+                            Map<String, List<String>> whiteList=environment.getArgument("whiteListed");
+                            if (whiteList!=null){
+                                List<String> authorityIdList = whiteList.get("authorities");
+                                if (authorityIdList != null) {
+                                    authorityIds.addAll(authorityIdList);
+                                }
+
+                                List<String> lineIdList = whiteList.get("lines");
+                                if (lineIdList != null) {
+                                    lineIds.addAll(lineIdList.stream().map(id -> mappingUtil.fromIdString(id)).collect(Collectors.toSet()));
+                                }
+                            }
+
                             Long startTimeMs = environment.getArgument("startTime") == null ? 0l : environment.getArgument("startTime");
                             Long startTimeSeconds = startTimeMs / 1000;
                             return index.stopTimesForStop(
@@ -1216,6 +1260,7 @@ public class TransmodelIndexGraphQLSchema {
                                     .flatMap(stoptimesWithPattern -> stoptimesWithPattern.times.stream())
                                     .sorted(Comparator.comparing(t -> t.serviceDay + t.realtimeDeparture))
                                     .distinct()
+                                    .filter(tts -> isTripTimeShortAcceptable(tts, authorityIds, lineIds))
                                     .limit((long) (int) environment.getArgument("numberOfDepartures"))
                                     .collect(Collectors.toList());
                         })
@@ -3576,5 +3621,22 @@ public class TransmodelIndexGraphQLSchema {
 
     private String reverseMapEnumVal(GraphQLEnumType enumType, Object otpVal) {
         return enumType.getValues().stream().filter(e -> e.getValue().equals(otpVal)).findFirst().get().getName();
+    }
+
+    private boolean isTripTimeShortAcceptable(TripTimeShort tts, Set<String> authorityIds, Set<AgencyAndId> lineIds) {
+        if (CollectionUtils.isEmpty(authorityIds) && CollectionUtils.isEmpty(lineIds)) {
+            return true;
+        }
+        Trip trip = index.tripForId.get(tts.tripId);
+
+        if (trip == null || trip.getRoute() == null) {
+            return true;
+        }
+
+        Route route = trip.getRoute();
+        boolean okForAuthority = authorityIds.contains(route.getAgency().getId());
+        boolean okForLine = lineIds.contains(route.getId());
+
+        return okForAuthority || okForLine;
     }
 }
