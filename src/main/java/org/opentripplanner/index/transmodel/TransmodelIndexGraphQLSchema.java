@@ -389,7 +389,9 @@ public class TransmodelIndexGraphQLSchema {
                 .field(GraphQLFieldDefinition.newFieldDefinition()
                         .name("maximumWaitTime")
                         .type(Scalars.GraphQLInt)
-                        .dataFetcher(environment -> ((Transfer) environment.getSource()).getMaximumWaitTime().getSeconds())
+                        .dataFetcher(environment -> (((Transfer) environment.getSource()).getMaximumWaitTime()) != null ?
+                                ((Transfer) environment.getSource()).getMaximumWaitTime().getSeconds()
+                                : null)
                         .build())
                 .field(GraphQLFieldDefinition.newFieldDefinition()
                         .name("FromLine")
