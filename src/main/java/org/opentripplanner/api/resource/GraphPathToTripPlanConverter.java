@@ -363,7 +363,6 @@ public abstract class GraphPathToTripPlanConverter {
         Edge backEdge = states[states.length - 1].backEdge;
         if (backEdge instanceof TimedTransferEdge) {
             leg.timedTransferEdge = (TimedTransferEdge) backEdge;
-            leg.mode = TraverseMode.INTERCHANGE.toString();
         }
     }
 

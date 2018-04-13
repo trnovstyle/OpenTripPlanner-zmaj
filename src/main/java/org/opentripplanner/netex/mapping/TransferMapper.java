@@ -7,8 +7,6 @@ import org.rutebanken.netex.model.ServiceJourneyInterchange;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.time.Duration;
-
 public class TransferMapper {
     private static final Logger LOG = LoggerFactory.getLogger(TransferMapper.class);
 
@@ -18,26 +16,11 @@ public class TransferMapper {
 
         transfer.setTransferType(1);
 
-        if (interchange.isGuaranteed() != null) {
-            transfer.setGuaranteed(interchange.isGuaranteed());
-        }
-        else {
-            // Default to true
-            transfer.setGuaranteed(true);
-        }
-
         if (interchange.isStaySeated() != null) {
             transfer.setStaySeated(interchange.isStaySeated());
         }
-
-        transfer.setMaximumWaitTime(interchange.getMaximumWaitTime());
-
-        if (interchange.getPriority() != null) {
-            transfer.setPriority(interchange.getPriority().intValue());
-        }
-        else {
-            // Default to preferred interchange
-            transfer.setPriority(2);
+        if (interchange.isGuaranteed() != null) {
+            transfer.setGuaranteed(interchange.isGuaranteed());
         }
 
         String fromStopId = netexDao.quayIdByStopPointRef.lookup(interchange.getFromPointRef().getRef());
