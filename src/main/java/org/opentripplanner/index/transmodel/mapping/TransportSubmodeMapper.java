@@ -11,12 +11,12 @@ public class TransportSubmodeMapper {
 
     private Map<Integer, TransmodelTransportSubmode> fromOtpMap = new HashMap<>();
 
-    private static final TransmodelTransportSubmode DEFAULT_TRANSMODEL_VALUE = TransmodelTransportSubmode.UNKNOWN;
+    private static final TransmodelTransportSubmode DEFAULT_TRANSMODEL_VALUE = null;
     public TransportSubmodeMapper() {
         init();
     }
 
-    public TransmodelTransportSubmode toTransmodel(int otpMode) {
+    public TransmodelTransportSubmode toTransmodel(Integer otpMode) {
         TransmodelTransportSubmode transmodelTransportSubmode = fromOtpMap.get(otpMode);
         if (transmodelTransportSubmode != null) {
             return transmodelTransportSubmode;
