@@ -1,10 +1,13 @@
 package org.opentripplanner.netex.mapping;
 
+import org.opentripplanner.api.parameter.WMSVersion;
 import org.opentripplanner.model.AgencyAndId;
 import org.opentripplanner.model.impl.OtpTransitBuilder;
 import org.opentripplanner.model.Trip;
 import org.opentripplanner.netex.loader.NetexDao;
 import org.rutebanken.netex.model.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.xml.bind.JAXBElement;
 
@@ -13,6 +16,7 @@ import javax.xml.bind.JAXBElement;
  */
 
 public class TripMapper {
+    private static final Logger LOG = LoggerFactory.getLogger(TripMapper.class);
 
     public Trip mapServiceJourney(ServiceJourney serviceJourney, OtpTransitBuilder gtfsDao, NetexDao netexDao){
 
@@ -63,6 +67,7 @@ public class TripMapper {
         }
 
         trip.setWheelchairAccessible(1);
+        trip.setServiceAlteration(mapServiceAlteration(serviceJourney.getServiceAlteration()));
 
         // Map to right shapeId
         JourneyPattern journeyPattern = netexDao.journeyPatternsById.lookup(serviceJourney.getJourneyPatternRef().getValue().getRef());
@@ -72,5 +77,17 @@ public class TripMapper {
         }
 
         return trip;
+    }
+
+    private Trip.ServiceAlteration mapServiceAlteration(ServiceAlterationEnumeration netexValue) {
+        if (netexValue == null) {
+            return null;
+        }
+        try {
+            return Trip.ServiceAlteration.valueOf(netexValue.value());
+        } catch (Exception e) {
+            LOG.warn("Unable to map unknown ServiceAlterationEnumeration value from NeTEx:" + netexValue);
+        }
+        return null;
     }
 }

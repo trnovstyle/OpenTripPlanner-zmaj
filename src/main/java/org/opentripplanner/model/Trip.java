@@ -17,6 +17,8 @@ package org.opentripplanner.model;
 
 public final class Trip extends IdentityBean<AgencyAndId> {
 
+    public enum ServiceAlteration {cancelled, planned, extraJourney};
+
     private static final long serialVersionUID = 1L;
 
     private AgencyAndId id;
@@ -44,6 +46,8 @@ public final class Trip extends IdentityBean<AgencyAndId> {
     private AgencyAndId shapeId;
 
     private int wheelchairAccessible = 0;
+
+    private ServiceAlteration serviceAlteration;
 
     @Deprecated private int tripBikesAllowed = 0;
 
@@ -224,4 +228,11 @@ public final class Trip extends IdentityBean<AgencyAndId> {
         this.fareId = fareId;
     }
 
+    public ServiceAlteration getServiceAlteration() {
+        return serviceAlteration;
+    }
+
+    public void setServiceAlteration(ServiceAlteration serviceAlteration) {
+        this.serviceAlteration = serviceAlteration;
+    }
 }
