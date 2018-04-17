@@ -17,7 +17,7 @@ package org.opentripplanner.model;
 
 public final class Trip extends IdentityBean<AgencyAndId> {
 
-    public enum ServiceAlteration {cancelled, planned, extraJourney};
+    public enum ServiceAlteration {cancellation, planned, extraJourney};
 
     private static final long serialVersionUID = 1L;
 
