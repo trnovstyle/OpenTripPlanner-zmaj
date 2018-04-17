@@ -119,6 +119,13 @@ public class TransmodelIndexGraphQLSchema {
             .value("parkAndRide", VertexType.PARKANDRIDE)
             .build();
 
+    private static GraphQLEnumType serviceAlterationEnum = GraphQLEnumType.newEnum()
+            .name("ServiceAlteration")
+            .value("planned", Trip.ServiceAlteration.planned)
+            .value("cancellation", Trip.ServiceAlteration.cancellation)
+            .value("extraJourney", Trip.ServiceAlteration.extraJourney)
+            .build();
+
     private static GraphQLEnumType modeEnum = GraphQLEnumType.newEnum()
             .name("Mode")
             .value("air", TraverseMode.AIRPLANE)
@@ -1510,7 +1517,7 @@ public class TransmodelIndexGraphQLSchema {
                 .field(GraphQLFieldDefinition.newFieldDefinition()
                         .name("cancellation")
                         .type(Scalars.GraphQLBoolean)
-                        .description("Whether stop is cancelled.")
+                        .description("Whether stop is cancellation.")
                         .dataFetcher(environment -> ((TripTimeShort) environment.getSource()).isCancelledStop)
                         .build())
                 .field(GraphQLFieldDefinition.newFieldDefinition()
@@ -1561,6 +1568,12 @@ public class TransmodelIndexGraphQLSchema {
                                 .getServiceDatesForServiceId((((Trip) environment.getSource()).getServiceId()))
                                 .stream().map(serviceDate -> mappingUtil.serviceDateToSecondsSinceEpoch(serviceDate)).sorted().collect(Collectors.toList())
                         )
+                        .build())
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("serviceAlteration")
+                        .type(serviceAlterationEnum)
+                        .description("Whether journey is as planned, a cancellation or an extra journey. Default is as planned")
+                        .dataFetcher(environment -> (((Trip) environment.getSource()).getServiceAlteration()))
                         .build())
                 .field(GraphQLFieldDefinition.newFieldDefinition()
                         .name("publicCode")
