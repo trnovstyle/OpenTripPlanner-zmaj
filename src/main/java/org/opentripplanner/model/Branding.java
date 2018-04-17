@@ -1,7 +1,9 @@
 package org.opentripplanner.model;
 
-
-public class Operator extends IdentityBean<AgencyAndId> {
+/**
+ * Generic marketing classification.
+ */
+public class Branding  extends IdentityBean<AgencyAndId> {
 
     private static final long serialVersionUID = 1L;
 
@@ -11,15 +13,19 @@ public class Operator extends IdentityBean<AgencyAndId> {
 
     private String url;
 
-    private String phone;
+    /**
+     * URL to image file for branding.
+     */
+    private String image;
 
-    private Branding branding;
+    private String description;
 
     @Override
     public AgencyAndId getId() {
         return id;
     }
 
+    @Override
     public void setId(AgencyAndId id) {
         this.id = id;
     }
@@ -40,23 +46,23 @@ public class Operator extends IdentityBean<AgencyAndId> {
         this.url = url;
     }
 
-    public String getPhone() {
-        return phone;
+    public String getImage() {
+        return image;
     }
 
-    public void setPhone(String phone) {
-        this.phone = phone;
+    public void setImage(String image) {
+        this.image = image;
     }
 
-    public Branding getBranding() {
-        return branding;
+    public String getDescription() {
+        return description;
     }
 
-    public void setBranding(Branding branding) {
-        this.branding = branding;
+    public void setDescription(String description) {
+        this.description = description;
     }
 
     public String toString() {
-        return "<Agency " + this.id + ">";
+        return "<Branding " + this.id + ">";
     }
 }

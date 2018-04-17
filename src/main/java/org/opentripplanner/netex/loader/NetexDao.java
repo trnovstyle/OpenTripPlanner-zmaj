@@ -2,6 +2,7 @@ package org.opentripplanner.netex.loader;
 
 import org.opentripplanner.netex.loader.support.*;
 import org.rutebanken.netex.model.Authority;
+import org.rutebanken.netex.model.Branding;
 import org.rutebanken.netex.model.DayType;
 import org.rutebanken.netex.model.DayTypeAssignment;
 import org.rutebanken.netex.model.DestinationDisplay;
@@ -59,6 +60,7 @@ public class NetexDao {
     public final HierarchicalMap<String, Network> networkByLineId;
     public final HierarchicalMapById<NoticeAssignment> noticeAssignmentById;
     public final HierarchicalMapById<Notice> noticeById;
+    public final HierarchicalMapById<Branding> brandingById;
     public final HierarchicalMapById<Route> routeById;
     public final HierarchicalMapById<OperatingPeriod> operatingPeriodById;
     public final HierarchicalMapById<Operator> operatorsById;
@@ -102,6 +104,7 @@ public class NetexDao {
         this.networkByLineId = new HierarchicalMap<>();
         this.noticeAssignmentById = new HierarchicalMapById<>();
         this.noticeById = new HierarchicalMapById<>();
+        this.brandingById = new HierarchicalMapById<>();
         this.operatingPeriodById = new HierarchicalMapById<>();
         this.operatorsById = new HierarchicalMapById<>();
         this.parkingById = new HierarchicalMultimapById<>();
@@ -142,6 +145,7 @@ public class NetexDao {
         this.networkByLineId = new HierarchicalMap<>(parent.networkByLineId);
         this.noticeAssignmentById = new HierarchicalMapById<>(parent.noticeAssignmentById);
         this.noticeById = new HierarchicalMapById<>(parent.noticeById);
+        this.brandingById = new HierarchicalMapById<>(parent.brandingById);
         this.operatingPeriodById = new HierarchicalMapById<>(parent.operatingPeriodById);
         this.operatorsById = new HierarchicalMapById<>(parent.operatorsById);
         this.parkingById = new HierarchicalMultimapById<>(parent.parkingById);

@@ -19,6 +19,7 @@ import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Multimap;
 import org.opentripplanner.model.Agency;
 import org.opentripplanner.model.AgencyAndId;
+import org.opentripplanner.model.Branding;
 import org.opentripplanner.model.FareAttribute;
 import org.opentripplanner.model.FareRule;
 import org.opentripplanner.model.FeedInfo;
@@ -79,6 +80,8 @@ public class OtpTransitBuilder {
     private final EntityMap<AgencyAndId, Notice> noticesById = new EntityMap<>();
 
     private final EntityMap<AgencyAndId, NoticeAssignment> noticeAssignmentsById = new EntityMap<>();
+
+    private final EntityMap<AgencyAndId, Branding> brandingById = new EntityMap<>();
 
     private final EntityMap<AgencyAndId, Operator> operatorsById = new EntityMap<>();
 
@@ -153,6 +156,10 @@ public class OtpTransitBuilder {
 
     public EntityMap<AgencyAndId, NoticeAssignment> getNoticeAssignmentsById() {
         return noticeAssignmentsById;
+    }
+
+    public EntityMap<AgencyAndId, Branding> getBrandingById() {
+        return brandingById;
     }
 
     public EntityMap<AgencyAndId, Operator> getOperatorsById() {

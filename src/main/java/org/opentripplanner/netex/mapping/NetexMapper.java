@@ -1,26 +1,21 @@
 package org.opentripplanner.netex.mapping;
 
-import org.apache.commons.lang3.mutable.MutableDouble;
-import org.apache.commons.lang3.mutable.MutableInt;
 import org.opentripplanner.model.NoticeAssignment;
-import org.opentripplanner.model.ShapePoint;
-import org.opentripplanner.netex.loader.NetexDao;
 import org.opentripplanner.model.Route;
+import org.opentripplanner.model.ShapePoint;
 import org.opentripplanner.model.Stop;
-import org.opentripplanner.model.impl.OtpTransitBuilder;
 import org.opentripplanner.model.Transfer;
+import org.opentripplanner.model.impl.OtpTransitBuilder;
+import org.opentripplanner.netex.loader.NetexDao;
 import org.rutebanken.netex.model.Authority;
+import org.rutebanken.netex.model.Branding;
 import org.rutebanken.netex.model.GroupOfStopPlaces;
 import org.rutebanken.netex.model.JourneyPattern;
 import org.rutebanken.netex.model.Line;
-import org.rutebanken.netex.model.LinkInLinkSequence_VersionedChildStructure;
 import org.rutebanken.netex.model.Notice;
-import org.rutebanken.netex.model.ServiceLink;
-import org.rutebanken.netex.model.ServiceLinkInJourneyPattern_VersionedChildStructure;
 import org.rutebanken.netex.model.StopPlace;
 import org.rutebanken.netex.model.TariffZone;
 
-import java.awt.*;
 import java.util.Collection;
 
 import static org.opentripplanner.netex.mapping.CalendarMapper.mapToCalendarDates;
@@ -30,6 +25,8 @@ public class NetexMapper {
     private final AuthorityToAgencyMapper authorityToAgencyMapper = new AuthorityToAgencyMapper();
 
     private final NoticeMapper noticeMapper = new NoticeMapper();
+
+    private final BrandingMapper brandingMapper = new BrandingMapper();
 
     private final NoticeAssignmentMapper noticeAssignmentMapper = new NoticeAssignmentMapper();
 
@@ -62,12 +59,17 @@ public class NetexMapper {
     public void mapNetexToOtpEntities(NetexDao netexDao) {
         AgencyAndIdFactory.setAgencyId(agencyId);
 
+        for (Branding branding : netexDao.brandingById.values()) {
+            org.opentripplanner.model.Branding otpBranding = brandingMapper.mapBranding(branding);
+            transitBuilder.getBrandingById().add(otpBranding);
+        }
+
         for (Authority authority : netexDao.authoritiesById.values()) {
             transitBuilder.getAgencies().add(authorityToAgencyMapper.mapAgency(authority, netexDao.getTimeZone()));
         }
 
         for (org.rutebanken.netex.model.Operator operator : netexDao.operatorsById.values()) {
-            transitBuilder.getOperatorsById().add(operatorMapper.map(operator));
+            transitBuilder.getOperatorsById().add(operatorMapper.map(operator, transitBuilder));
         }
 
         for (JourneyPattern journeyPattern : netexDao.journeyPatternsById.values()) {

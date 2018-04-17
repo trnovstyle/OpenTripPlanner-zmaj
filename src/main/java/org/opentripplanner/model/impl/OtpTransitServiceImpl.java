@@ -19,6 +19,7 @@ package org.opentripplanner.model.impl;
 
 import org.opentripplanner.model.Agency;
 import org.opentripplanner.model.AgencyAndId;
+import org.opentripplanner.model.Branding;
 import org.opentripplanner.model.FareAttribute;
 import org.opentripplanner.model.FareRule;
 import org.opentripplanner.model.FeedInfo;
@@ -74,6 +75,8 @@ class OtpTransitServiceImpl implements OtpTransitService {
 
     private final Map<AgencyAndId, Notice> noticeById;
 
+    private final Map<AgencyAndId, Branding> brandingById;
+
     private final Collection<Parking> parkings;
 
     private final Collection<Pathway> pathways;
@@ -115,6 +118,7 @@ class OtpTransitServiceImpl implements OtpTransitService {
         this.parkings = nullSafeUnmodifiableList(builder.getParkings());
         this.noticeById = unmodifiableMap(builder.getNoticesById().asMap());
         this.noticeAssignmentById = unmodifiableMap(builder.getNoticeAssignmentsById().asMap());
+        this.brandingById = unmodifiableMap(builder.getBrandingById().asMap());
         this.operators = nullSafeUnmodifiableList(builder.getOperatorsById().values());
         this.pathways = nullSafeUnmodifiableList(builder.getPathways());
         this.serviceIds = nullSafeUnmodifiableList(builder.findAllServiceIds());
@@ -153,6 +157,9 @@ class OtpTransitServiceImpl implements OtpTransitService {
 
     @Override
     public Map<AgencyAndId, NoticeAssignment> getNoticeAssignmentById() { return noticeAssignmentById; }
+
+    @Override
+    public Map<AgencyAndId, Branding> getBrandingById() { return brandingById; }
 
     @Override
     public Collection<Parking> getAllParkings() {

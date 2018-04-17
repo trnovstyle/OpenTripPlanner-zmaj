@@ -272,6 +272,8 @@ public class TransmodelIndexGraphQLSchema {
 
     private GraphQLObjectType keyValueType;
 
+    private GraphQLObjectType brandingType;
+
     private GraphQLObjectType linkGeometryType;
 
     private GraphQLObjectType queryType;
@@ -432,6 +434,40 @@ public class TransmodelIndexGraphQLSchema {
                         .description("Identifier of type of key")
                         .type(Scalars.GraphQLString)
                         .dataFetcher(environment -> ((KeyValue) environment.getSource()).getTypeOfKey())
+                        .build())
+                  .build();
+
+        brandingType = GraphQLObjectType.newObject()
+                 .name("Branding")
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("id")
+                        .type(Scalars.GraphQLString)
+                        .dataFetcher(
+                                environment -> ((Branding) environment.getSource()).getId().getId())
+                        .build())
+                 .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("name")
+                        .description("Full name to be used for branding.")
+                        .type(Scalars.GraphQLString)
+                        .dataFetcher(environment -> ((Branding) environment.getSource()).getName())
+                        .build())
+                 .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("description")
+                        .description("Description of branding.")
+                        .type(Scalars.GraphQLString)
+                        .dataFetcher(environment -> ((Branding) environment.getSource()).getDescription())
+                        .build())
+                 .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("url")
+                        .description("URL to be used for branding")
+                        .type(Scalars.GraphQLString)
+                        .dataFetcher(environment -> ((Branding) environment.getSource()).getUrl())
+                        .build())
+                 .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("image")
+                        .description("URL to an image be used for branding")
+                        .type(Scalars.GraphQLString)
+                        .dataFetcher(environment -> ((Branding) environment.getSource()).getImage())
                         .build())
                   .build();
 
@@ -2051,6 +2087,11 @@ public class TransmodelIndexGraphQLSchema {
                 .field(GraphQLFieldDefinition.newFieldDefinition()
                         .name("phone")
                         .type(Scalars.GraphQLString)
+                        .build())
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("branding")
+                        .description("Branding for operator.")
+                        .type(brandingType)
                         .build())
                 .field(GraphQLFieldDefinition.newFieldDefinition()
                         .name("lines")

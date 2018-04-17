@@ -33,6 +33,8 @@ public interface OtpTransitService {
 
     Map<AgencyAndId, Notice> getNoticeById();
 
+    Map<AgencyAndId, Branding> getBrandingById();
+
     Collection<Pathway> getAllPathways();
 
     /** @return all ids for both Calendars and CalendarDates merged into on list without duplicates */

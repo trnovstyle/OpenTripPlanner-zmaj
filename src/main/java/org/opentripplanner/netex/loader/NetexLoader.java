@@ -14,62 +14,13 @@
 */
 package org.opentripplanner.netex.loader;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.io.IOUtils;
 import org.opentripplanner.graph_builder.module.NetexModule;
 import org.opentripplanner.model.impl.OtpTransitBuilder;
 import org.opentripplanner.netex.mapping.NetexMapper;
 import org.opentripplanner.netex.mapping.ServiceIdMapper;
-import org.rutebanken.netex.model.Authority;
-import org.rutebanken.netex.model.Common_VersionFrameStructure;
-import org.rutebanken.netex.model.CompositeFrame;
-import org.rutebanken.netex.model.DataManagedObjectStructure;
-import org.rutebanken.netex.model.DayType;
-import org.rutebanken.netex.model.DayTypeAssignment;
-import org.rutebanken.netex.model.DayTypeRefs_RelStructure;
-import org.rutebanken.netex.model.DayTypes_RelStructure;
-import org.rutebanken.netex.model.DestinationDisplay;
-import org.rutebanken.netex.model.GroupOfLines;
-import org.rutebanken.netex.model.GroupOfStopPlaces;
-import org.rutebanken.netex.model.GroupsOfLinesInFrame_RelStructure;
-import org.rutebanken.netex.model.GroupsOfStopPlacesInFrame_RelStructure;
-import org.rutebanken.netex.model.Interchange_VersionStructure;
-import org.rutebanken.netex.model.JourneyPattern;
-import org.rutebanken.netex.model.JourneyPatternsInFrame_RelStructure;
-import org.rutebanken.netex.model.Journey_VersionStructure;
-import org.rutebanken.netex.model.JourneysInFrame_RelStructure;
-import org.rutebanken.netex.model.Line;
-import org.rutebanken.netex.model.LinesInFrame_RelStructure;
-import org.rutebanken.netex.model.LinkSequence_VersionStructure;
-import org.rutebanken.netex.model.Network;
-import org.rutebanken.netex.model.Notice;
-import org.rutebanken.netex.model.NoticeAssignment;
-import org.rutebanken.netex.model.OperatingPeriod;
-import org.rutebanken.netex.model.OperatingPeriod_VersionStructure;
-import org.rutebanken.netex.model.Operator;
-import org.rutebanken.netex.model.ParkingsInFrame_RelStructure;
-import org.rutebanken.netex.model.PassengerStopAssignment;
-import org.rutebanken.netex.model.PointInLinkSequence_VersionedChildStructure;
-import org.rutebanken.netex.model.Parking;
-import org.rutebanken.netex.model.PublicationDeliveryStructure;
-import org.rutebanken.netex.model.Quay;
-import org.rutebanken.netex.model.ResourceFrame;
-import org.rutebanken.netex.model.Route;
-import org.rutebanken.netex.model.RoutesInFrame_RelStructure;
-import org.rutebanken.netex.model.ServiceCalendarFrame;
-import org.rutebanken.netex.model.ServiceFrame;
-import org.rutebanken.netex.model.ServiceJourney;
-import org.rutebanken.netex.model.ServiceJourneyInterchange;
-import org.rutebanken.netex.model.ServiceLink;
-import org.rutebanken.netex.model.SiteFrame;
-import org.rutebanken.netex.model.StopAssignment_VersionStructure;
-import org.rutebanken.netex.model.StopAssignmentsInFrame_RelStructure;
-import org.rutebanken.netex.model.StopPlace;
-import org.rutebanken.netex.model.StopPlacesInFrame_RelStructure;
-import org.rutebanken.netex.model.StopPointInJourneyPattern;
-import org.rutebanken.netex.model.TariffZone;
-import org.rutebanken.netex.model.TariffZonesInFrame_RelStructure;
-import org.rutebanken.netex.model.TimetableFrame;
-import org.rutebanken.netex.model.VersionFrameDefaultsStructure;
+import org.rutebanken.netex.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -546,6 +497,15 @@ public class NetexLoader {
                 if(element.getValue() instanceof Operator) {
                     Operator operator = (Operator) element.getValue();
                     currentNetexDao().operatorsById.add(operator);
+                }
+            }
+
+            TypesOfValueInFrame_RelStructure typesOfValueInFrame_relStructure = resourceFrame.getTypesOfValue();
+            if (typesOfValueInFrame_relStructure != null && !CollectionUtils.isEmpty(typesOfValueInFrame_relStructure.getValueSetOrTypeOfValue())) {
+                for (JAXBElement<? extends DataManagedObjectStructure> element : typesOfValueInFrame_relStructure.getValueSetOrTypeOfValue()) {
+                    if (element.getValue() instanceof Branding) {
+                        currentNetexDao().brandingById.add((Branding) element.getValue());
+                    }
                 }
             }
         }
