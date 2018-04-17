@@ -78,6 +78,7 @@ public final class Trip extends IdentityBean<AgencyAndId> {
         this.tripBikesAllowed = obj.tripBikesAllowed;
         this.bikesAllowed = obj.bikesAllowed;
         this.fareId = obj.fareId;
+        this.serviceAlteration = obj.serviceAlteration;
     }
 
     public AgencyAndId getId() {
