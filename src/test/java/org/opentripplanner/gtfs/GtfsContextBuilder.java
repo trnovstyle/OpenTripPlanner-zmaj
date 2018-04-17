@@ -164,7 +164,7 @@ public class GtfsContextBuilder {
 
     private void setAgencyToFeedIdForAllElements() {
 
-        for (ShapePoint shapePoint : transitBuilder.getShapePoints()) {
+        for (ShapePoint shapePoint : transitBuilder.getShapePoints().values()) {
             shapePoint.setShapeId(new AgencyAndId(this.feedId.getId(), shapePoint.getShapeId().getId()));
         }
         for (Route route : transitBuilder.getRoutes().values()) {

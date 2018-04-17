@@ -118,7 +118,7 @@ class OtpTransitServiceImpl implements OtpTransitService {
         this.operators = nullSafeUnmodifiableList(builder.getOperatorsById().values());
         this.pathways = nullSafeUnmodifiableList(builder.getPathways());
         this.serviceIds = nullSafeUnmodifiableList(builder.findAllServiceIds());
-        this.shapePointsByShapeId = mapShapePoints(builder.getShapePoints());
+        this.shapePointsByShapeId = mapShapePoints(builder.getShapePoints().values());
         this.stationsByMultiModalStop = new HashMap<>(builder.getStationsByMultiModalStop().asMap());
         this.stopsByGroupOfStopPlace = new HashMap<>(builder.getStopByGroupOfStopPlaces().asMap());
         this.stopsById = unmodifiableMap(builder.getStops().asMap());
@@ -256,7 +256,7 @@ class OtpTransitServiceImpl implements OtpTransitService {
         if (c instanceof List) {
             list = (List<T>) c;
         } else {
-            list = new ArrayList<>(c);
+            list = c != null ? new ArrayList<>(c) : new ArrayList<>();
         }
         return Collections.unmodifiableList(list);
     }

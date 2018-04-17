@@ -61,6 +61,7 @@ import org.rutebanken.netex.model.ServiceCalendarFrame;
 import org.rutebanken.netex.model.ServiceFrame;
 import org.rutebanken.netex.model.ServiceJourney;
 import org.rutebanken.netex.model.ServiceJourneyInterchange;
+import org.rutebanken.netex.model.ServiceLink;
 import org.rutebanken.netex.model.SiteFrame;
 import org.rutebanken.netex.model.StopAssignment_VersionStructure;
 import org.rutebanken.netex.model.StopAssignmentsInFrame_RelStructure;
@@ -407,6 +408,13 @@ public class NetexLoader {
             if (sf.getDestinationDisplays() != null) {
                 for (DestinationDisplay destinationDisplay : sf.getDestinationDisplays().getDestinationDisplay()) {
                     currentNetexDao().destinationDisplayById.add(destinationDisplay);
+                }
+            }
+
+            //serviceLinks
+            if (sf.getServiceLinks() != null) {
+                for (ServiceLink serviceLink : sf.getServiceLinks().getServiceLink()) {
+                    currentNetexDao().serviceLinkById.add(serviceLink);
                 }
             }
         }

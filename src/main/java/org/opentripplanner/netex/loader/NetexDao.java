@@ -22,6 +22,7 @@ import org.rutebanken.netex.model.Quay;
 import org.rutebanken.netex.model.Route;
 import org.rutebanken.netex.model.ServiceJourney;
 import org.rutebanken.netex.model.ServiceJourneyInterchange;
+import org.rutebanken.netex.model.ServiceLink;
 import org.rutebanken.netex.model.StopPlace;
 import org.rutebanken.netex.model.StopPointInJourneyPattern;
 import org.rutebanken.netex.model.TariffZone;
@@ -68,6 +69,7 @@ public class NetexDao {
     public final HierarchicalMultimapById<Quay> quayById;
     public final HierarchicalMap<String, String> quayIdByStopPointRef;
     public final HierarchicalMultimap<String, ServiceJourney> serviceJourneyByPatternId;
+    public final HierarchicalMapById<ServiceLink> serviceLinkById;
     public final HierarchicalMultimapById<StopPlace> stopPlaceById;
     public final HierarchicalMapById<StopPointInJourneyPattern> stopPointInJourneyPatternById;
     public final HierarchicalMapById<TariffZone> tariffZoneById;
@@ -110,6 +112,7 @@ public class NetexDao {
         this.quayIdByStopPointRef = new HierarchicalMap<>();
         this.routeById = new HierarchicalMapById<>();
         this.serviceJourneyByPatternId = new HierarchicalMultimap<>();
+        this.serviceLinkById = new HierarchicalMapById<>();
         this.stopPlaceById = new HierarchicalMultimapById<>();
         this.stopPointInJourneyPatternById = new HierarchicalMapById<>();
         this.tariffZoneById = new HierarchicalMapById<>();
@@ -147,6 +150,7 @@ public class NetexDao {
         this.quayById = new HierarchicalMultimapById<>(parent.quayById);
         this.quayIdByStopPointRef = new HierarchicalMap<>(parent.quayIdByStopPointRef);
         this.routeById = new HierarchicalMapById<>(parent.routeById);
+        this.serviceLinkById = new HierarchicalMapById<>(parent.serviceLinkById);
         this.serviceJourneyByPatternId = new HierarchicalMultimap<>(parent.serviceJourneyByPatternId);
         this.stopPlaceById = new HierarchicalMultimapById<>(parent.stopPlaceById);
         this.stopPointInJourneyPatternById = new HierarchicalMapById<>(parent.stopPointInJourneyPatternById);
