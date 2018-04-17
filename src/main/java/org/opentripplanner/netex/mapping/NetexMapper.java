@@ -1,6 +1,9 @@
 package org.opentripplanner.netex.mapping;
 
+import org.apache.commons.lang3.mutable.MutableDouble;
+import org.apache.commons.lang3.mutable.MutableInt;
 import org.opentripplanner.model.NoticeAssignment;
+import org.opentripplanner.model.ShapePoint;
 import org.opentripplanner.netex.loader.NetexDao;
 import org.opentripplanner.model.Route;
 import org.opentripplanner.model.Stop;
@@ -10,10 +13,14 @@ import org.rutebanken.netex.model.Authority;
 import org.rutebanken.netex.model.GroupOfStopPlaces;
 import org.rutebanken.netex.model.JourneyPattern;
 import org.rutebanken.netex.model.Line;
+import org.rutebanken.netex.model.LinkInLinkSequence_VersionedChildStructure;
 import org.rutebanken.netex.model.Notice;
+import org.rutebanken.netex.model.ServiceLink;
+import org.rutebanken.netex.model.ServiceLinkInJourneyPattern_VersionedChildStructure;
 import org.rutebanken.netex.model.StopPlace;
 import org.rutebanken.netex.model.TariffZone;
 
+import java.awt.*;
 import java.util.Collection;
 
 import static org.opentripplanner.netex.mapping.CalendarMapper.mapToCalendarDates;
@@ -38,6 +45,8 @@ public class NetexMapper {
 
     private final OperatorMapper operatorMapper = new OperatorMapper();
 
+    private final ServiceLinkMapper serviceLinkMapper = new ServiceLinkMapper();
+
     private final TariffZoneMapper tariffZoneMapper = new TariffZoneMapper();
 
     private final TransferMapper transferMapper = new TransferMapper();
@@ -59,6 +68,12 @@ public class NetexMapper {
 
         for (org.rutebanken.netex.model.Operator operator : netexDao.operatorsById.values()) {
             transitBuilder.getOperatorsById().add(operatorMapper.map(operator));
+        }
+
+        for (JourneyPattern journeyPattern : netexDao.journeyPatternsById.values()) {
+            for (ShapePoint shapePoint : serviceLinkMapper.getShapePointsByJourneyPattern(journeyPattern, netexDao)) {
+                transitBuilder.getShapePoints().put(shapePoint.getShapeId(), shapePoint);
+            }
         }
 
         for (Line line : netexDao.lineById.values()) {

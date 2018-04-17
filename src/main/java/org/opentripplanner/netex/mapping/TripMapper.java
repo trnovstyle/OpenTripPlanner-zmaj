@@ -1,5 +1,6 @@
 package org.opentripplanner.netex.mapping;
 
+import org.opentripplanner.model.AgencyAndId;
 import org.opentripplanner.model.impl.OtpTransitBuilder;
 import org.opentripplanner.model.Trip;
 import org.opentripplanner.netex.loader.NetexDao;
@@ -62,6 +63,13 @@ public class TripMapper {
         }
 
         trip.setWheelchairAccessible(1);
+
+        // Map to right shapeId
+        JourneyPattern journeyPattern = netexDao.journeyPatternsById.lookup(serviceJourney.getJourneyPatternRef().getValue().getRef());
+        AgencyAndId serviceLinkId = AgencyAndIdFactory.createAgencyAndId(journeyPattern.getId().replace("JourneyPattern", "ServiceLink"));
+        if (gtfsDao.getShapePoints().get(serviceLinkId) != null) {
+            trip.setShapeId(serviceLinkId);
+        }
 
         return trip;
     }

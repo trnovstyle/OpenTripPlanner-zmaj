@@ -44,8 +44,10 @@ import org.opentripplanner.model.Parking;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public class OtpTransitBuilder {
@@ -84,7 +86,7 @@ public class OtpTransitBuilder {
 
     private final EntityMap<AgencyAndId, Route> routesById = new EntityMap<>();
 
-    private final List<ShapePoint> shapePoints = new ArrayList<>();
+    private final ListMultimap<AgencyAndId, ShapePoint> shapePoints = ArrayListMultimap.create();
 
     private final EntityMap<AgencyAndId, Stop> stopsById = new EntityMap<>();
 
@@ -167,7 +169,7 @@ public class OtpTransitBuilder {
         return routesById;
     }
 
-    public List<ShapePoint> getShapePoints() {
+    public Multimap<AgencyAndId, ShapePoint> getShapePoints() {
         return shapePoints;
     }
 

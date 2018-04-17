@@ -13,8 +13,14 @@
 
 package org.opentripplanner.gtfs.mapping;
 
+import org.opentripplanner.model.AgencyAndId;
+import org.opentripplanner.model.ShapePoint;
 import org.opentripplanner.model.StopTime;
 import org.opentripplanner.model.impl.OtpTransitBuilder;
+
+import java.awt.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 
 public class OtpTransitDaoMapper {
@@ -68,7 +74,8 @@ public class OtpTransitDaoMapper {
         builder.getFrequencies().addAll(frequencyMapper.map(data.getAllFrequencies()));
         builder.getPathways().addAll(pathwayMapper.map(data.getAllPathways()));
         builder.getRoutes().addAll(routeMapper.map(data.getAllRoutes()));
-        builder.getShapePoints().addAll(shapePointMapper.map(data.getAllShapePoints()));
+        data.getAllShapePoints().forEach(s -> { ShapePoint shapePoint = shapePointMapper.map(s);
+            builder.getShapePoints().put(shapePoint.getShapeId(), shapePoint);});
         builder.getStops().addAll(stopMapper.map(data.getAllStops()));
         builder.getStopTimesSortedByTrip().addAll(stopTimeMapper.map(data.getAllStopTimes()),
                 StopTime::getTrip);
