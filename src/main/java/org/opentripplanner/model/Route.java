@@ -15,6 +15,8 @@
  */
 package org.opentripplanner.model;
 
+import java.util.List;
+
 public final class Route extends IdentityBean<AgencyAndId> {
 
     private static final long serialVersionUID = 1L;
@@ -40,6 +42,8 @@ public final class Route extends IdentityBean<AgencyAndId> {
     private String color;
 
     private String textColor;
+
+    private List<KeyValue> keyValues;
 
     @Deprecated private int routeBikesAllowed = 0;
 
@@ -182,6 +186,18 @@ public final class Route extends IdentityBean<AgencyAndId> {
 
     public void setBrandingUrl(String brandingUrl) {
         this.brandingUrl = brandingUrl;
+    }
+
+    public static long getSerialVersionUID() {
+        return serialVersionUID;
+    }
+
+    public List<KeyValue> getKeyValues() {
+        return keyValues;
+    }
+
+    public void setKeyValues(List<KeyValue> keyValues) {
+        this.keyValues = keyValues;
     }
 
     @Override

@@ -22,6 +22,7 @@ public class RouteMapper {
     private TransportModeMapper transportModeMapper = new TransportModeMapper();
     private AuthorityToAgencyMapper authorityToAgencyMapper = new AuthorityToAgencyMapper();
     private HexBinaryAdapter hexBinaryAdapter = new HexBinaryAdapter();
+    private KeyValueMapper keyValueMapper = new KeyValueMapper();
 
     public org.opentripplanner.model.Route mapRoute(Line line, OtpTransitBuilder transitBuilder, NetexDao netexDao, String timeZone) {
 
@@ -34,7 +35,7 @@ public class RouteMapper {
         otpRoute.setShortName(line.getPublicCode());
         otpRoute.setType(transportModeMapper.getTransportMode(line.getTransportMode(), line.getTransportSubmode()));
         otpRoute.setType(transportModeMapper.getTransportMode(line.getTransportMode(), line.getTransportSubmode()));
-
+        otpRoute.setKeyValues(keyValueMapper.mapKeyValues(line.getKeyList()));
         // Temp fix
         if (otpRoute.getShortName() == null)
             otpRoute.setShortName("");

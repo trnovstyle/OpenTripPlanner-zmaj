@@ -270,6 +270,8 @@ public class TransmodelIndexGraphQLSchema {
 
     private GraphQLInputObjectType locationType;
 
+    private GraphQLObjectType keyValueType;
+
     private GraphQLObjectType linkGeometryType;
 
     private GraphQLObjectType queryType;
@@ -410,6 +412,28 @@ public class TransmodelIndexGraphQLSchema {
                         .dataFetcher(environment -> ((Transfer) environment.getSource()).getToTrip())
                         .build())
                 .build();
+
+        keyValueType = GraphQLObjectType.newObject()
+                 .name("KeyValue")
+                 .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("key")
+                        .description("Identifier of value.")
+                        .type(Scalars.GraphQLString)
+                        .dataFetcher(environment -> ((KeyValue) environment.getSource()).getKey())
+                        .build())
+                 .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("value")
+                        .description("The actual value")
+                        .type(Scalars.GraphQLString)
+                        .dataFetcher(environment -> ((KeyValue) environment.getSource()).getValue())
+                        .build())
+                 .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("typeOfKey")
+                        .description("Identifier of type of key")
+                        .type(Scalars.GraphQLString)
+                        .dataFetcher(environment -> ((KeyValue) environment.getSource()).getTypeOfKey())
+                        .build())
+                  .build();
 
         destinationDisplayType = GraphQLObjectType.newObject()
                 .name("DestinationDisplay")
@@ -1682,6 +1706,12 @@ public class TransmodelIndexGraphQLSchema {
                         .dataFetcher(dataFetchingEnvironment -> index.getAlertsForTrip(
                                 dataFetchingEnvironment.getSource()))
                         .build())
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("keyValues")
+                        .description("List of keyValue pairs for the service journey.")
+                        .type(new GraphQLList(keyValueType))
+                        .dataFetcher(environment -> ((Trip) environment.getSource()).getKeyValues())
+                        .build())
                 .build();
 
         journeyPatternType = GraphQLObjectType.newObject()
@@ -1891,6 +1921,12 @@ public class TransmodelIndexGraphQLSchema {
                         .type(new GraphQLList(ptSituationElementType))
                         .dataFetcher(dataFetchingEnvironment -> index.getAlertsForRoute(
                                 dataFetchingEnvironment.getSource()))
+                        .build())
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("keyValues")
+                        .description("List of keyValue pairs for the line.")
+                        .type(new GraphQLList(keyValueType))
+                        .dataFetcher(environment -> ((Route)environment.getSource()).getKeyValues())
                         .build())
                 .build();
 

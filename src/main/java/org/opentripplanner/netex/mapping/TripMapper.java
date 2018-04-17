@@ -1,11 +1,13 @@
 package org.opentripplanner.netex.mapping;
 
-import org.opentripplanner.api.parameter.WMSVersion;
 import org.opentripplanner.model.AgencyAndId;
-import org.opentripplanner.model.impl.OtpTransitBuilder;
 import org.opentripplanner.model.Trip;
+import org.opentripplanner.model.impl.OtpTransitBuilder;
 import org.opentripplanner.netex.loader.NetexDao;
-import org.rutebanken.netex.model.*;
+import org.rutebanken.netex.model.JourneyPattern;
+import org.rutebanken.netex.model.LineRefStructure;
+import org.rutebanken.netex.model.ServiceAlterationEnumeration;
+import org.rutebanken.netex.model.ServiceJourney;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,6 +19,8 @@ import javax.xml.bind.JAXBElement;
 
 public class TripMapper {
     private static final Logger LOG = LoggerFactory.getLogger(TripMapper.class);
+
+    private KeyValueMapper keyValueMapper = new KeyValueMapper();
 
     public Trip mapServiceJourney(ServiceJourney serviceJourney, OtpTransitBuilder gtfsDao, NetexDao netexDao){
 
@@ -65,7 +69,7 @@ public class TripMapper {
         if (trip.getTripShortName() == null) {
             trip.setTripShortName("");
         }
-
+        trip.setKeyValues(keyValueMapper.mapKeyValues(serviceJourney.getKeyList()));
         trip.setWheelchairAccessible(1);
         trip.setServiceAlteration(mapServiceAlteration(serviceJourney.getServiceAlteration()));
 

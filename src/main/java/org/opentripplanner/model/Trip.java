@@ -15,6 +15,8 @@
  */
 package org.opentripplanner.model;
 
+import java.util.List;
+
 public final class Trip extends IdentityBean<AgencyAndId> {
 
     public enum ServiceAlteration {cancellation, planned, extraJourney};
@@ -49,6 +51,8 @@ public final class Trip extends IdentityBean<AgencyAndId> {
 
     private ServiceAlteration serviceAlteration;
 
+    private List<KeyValue> keyValues;
+
     @Deprecated private int tripBikesAllowed = 0;
 
     /**
@@ -79,6 +83,7 @@ public final class Trip extends IdentityBean<AgencyAndId> {
         this.bikesAllowed = obj.bikesAllowed;
         this.fareId = obj.fareId;
         this.serviceAlteration = obj.serviceAlteration;
+        this.keyValues = obj.keyValues;
     }
 
     public AgencyAndId getId() {
@@ -235,5 +240,13 @@ public final class Trip extends IdentityBean<AgencyAndId> {
 
     public void setServiceAlteration(ServiceAlteration serviceAlteration) {
         this.serviceAlteration = serviceAlteration;
+    }
+
+    public List<KeyValue> getKeyValues() {
+        return keyValues;
+    }
+
+    public void setKeyValues(List<KeyValue> keyValues) {
+        this.keyValues = keyValues;
     }
 }
