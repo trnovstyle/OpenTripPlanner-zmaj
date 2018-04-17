@@ -1805,6 +1805,7 @@ public class TransmodelIndexGraphQLSchema {
                         .name("quays")
                         .description("Quays visited by service journeys for this journey patterns")
                         .type(new GraphQLList(new GraphQLNonNull(quayType)))
+                        .dataFetcher(environment -> ((TripPattern) environment.getSource()).getStops())
                         .build())
                 .field(GraphQLFieldDefinition.newFieldDefinition()
                         .name("pointsOnLink")
