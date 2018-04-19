@@ -1,24 +1,21 @@
 package org.opentripplanner.netex.mapping;
 
-import org.opentripplanner.model.ShapePoint;
-import org.opentripplanner.netex.loader.NetexDao;
 import org.opentripplanner.model.Stop;
 import org.opentripplanner.model.StopPattern;
 import org.opentripplanner.model.StopTime;
 import org.opentripplanner.model.Trip;
 import org.opentripplanner.model.impl.OtpTransitBuilder;
+import org.opentripplanner.netex.loader.NetexDao;
 import org.opentripplanner.routing.edgetype.TripPattern;
 import org.opentripplanner.routing.trippattern.Deduplicator;
 import org.opentripplanner.routing.trippattern.TripTimes;
 import org.rutebanken.netex.model.DestinationDisplay;
 import org.rutebanken.netex.model.JourneyPattern;
-import org.rutebanken.netex.model.LinkInLinkSequence_VersionedChildStructure;
 import org.rutebanken.netex.model.PointInJourneyPatternRefStructure;
 import org.rutebanken.netex.model.PointInLinkSequence_VersionedChildStructure;
 import org.rutebanken.netex.model.Route;
 import org.rutebanken.netex.model.ScheduledStopPointRefStructure;
 import org.rutebanken.netex.model.ServiceJourney;
-import org.rutebanken.netex.model.ServiceLinkRefStructure;
 import org.rutebanken.netex.model.StopPointInJourneyPattern;
 import org.rutebanken.netex.model.TimetabledPassingTime;
 import org.rutebanken.netex.model.TimetabledPassingTimes_RelStructure;
@@ -124,6 +121,11 @@ public class TripPatternMapper {
             } else {
                 TripTimes tripTimes = new TripTimes(trip,
                         transitBuilder.getStopTimesSortedByTrip().get(trip), deduplicator);
+
+                if (Trip.ServiceAlteration.cancellation.equals(trip.getServiceAlteration())) {
+                    // Trip is cancelled in plan data
+                    tripTimes.cancelAllStops();
+                }
                 tripPattern.add(tripTimes);
                 transitBuilder.getTrips().add(trip);
             }
