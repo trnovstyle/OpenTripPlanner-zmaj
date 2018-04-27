@@ -1112,6 +1112,13 @@ public class TransmodelIndexGraphQLSchema {
                         .type(new GraphQLList(quayType))
                         .dataFetcher(environment -> index.stopsForParentStation.get(((Stop) environment.getSource()).getId()))
                         .build())
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("parent")
+                        .description("Returns parent stop for this stop")
+                        .type(stopPlaceType)
+                        .dataFetcher(environment -> index.stationForId.get(mappingUtil.fromIdString((((Stop) environment.getSource()).getMultiModalStation()))))
+                        .build())
+
 
                 .field(GraphQLFieldDefinition.newFieldDefinition()
                         .name("estimatedCalls")

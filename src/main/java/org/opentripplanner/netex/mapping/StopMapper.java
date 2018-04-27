@@ -82,6 +82,9 @@ public class StopMapper {
         stop.setTimezone(DEFAULT_TIMEZONE);
 
         stop.setWeight(mapInterchange(stopPlaceLatest));
+        if (multiModalStop != null) {
+            stop.setMultiModalStation(multiModalStop.getId().getId());
+        }
 
         if (stopPlaceLatest.getAccessibilityAssessment() != null
                 && stopPlaceLatest.getAccessibilityAssessment().getLimitations() != null
