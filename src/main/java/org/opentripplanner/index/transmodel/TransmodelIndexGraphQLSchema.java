@@ -1116,7 +1116,13 @@ public class TransmodelIndexGraphQLSchema {
                         .name("parent")
                         .description("Returns parent stop for this stop")
                         .type(stopPlaceType)
-                        .dataFetcher(environment -> index.stationForId.get(mappingUtil.fromIdString((((Stop) environment.getSource()).getMultiModalStation()))))
+                        .dataFetcher(environment -> {
+                            String parentId = ((Stop) environment.getSource()).getMultiModalStation();
+                            if (parentId == null) {
+                                return null;
+                            }
+                            return index.stationForId.get(mappingUtil.fromIdString(parentId));
+                        })
                         .build())
 
 
