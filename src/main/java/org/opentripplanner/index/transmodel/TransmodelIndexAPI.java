@@ -55,7 +55,7 @@ public class TransmodelIndexAPI {
      */
     @GET
     @Path("/live")
-    public void getStatus() {
+    public void isAlive() {
 
     }
 
