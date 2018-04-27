@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DefaultValue;
+import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -48,6 +49,15 @@ public class TransmodelIndexAPI {
     }
 
     private Router router;
+
+    /**
+     * Return 200 when service is loaded.
+     */
+    @GET
+    @Path("/live")
+    public void getStatus() {
+
+    }
 
     @POST
     @Path("/graphql")
