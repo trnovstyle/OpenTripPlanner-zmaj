@@ -17,7 +17,7 @@ import org.opentripplanner.index.model.StopTimesInPattern;
 import org.opentripplanner.index.model.TripTimeShort;
 import org.opentripplanner.index.transmodel.mapping.TransmodelMappingUtil;
 import org.opentripplanner.index.transmodel.mapping.TransportSubmodeMapper;
-import org.opentripplanner.index.transmodel.model.TransmodelTransportSubmode;
+import org.opentripplanner.model.TransmodelTransportSubmode;
 import org.opentripplanner.index.transmodel.model.scalars.DateScalarFactory;
 import org.opentripplanner.index.transmodel.model.scalars.DateTimeScalarFactory;
 import org.opentripplanner.index.transmodel.model.scalars.TimeScalarFactory;
@@ -1932,7 +1932,7 @@ public class TransmodelIndexGraphQLSchema {
                 .field(GraphQLFieldDefinition.newFieldDefinition()
                         .name("transportSubmode")
                         .type(transportSubmode)
-                        .dataFetcher(environment -> transportSubmodeMapper.toTransmodel(((Route) environment.getSource()).getType()))
+                        .dataFetcher(environment -> (((Route) environment.getSource()).getTransportSubmode()))
                         .build())
                 .field(GraphQLFieldDefinition.newFieldDefinition()
                         .name("description")

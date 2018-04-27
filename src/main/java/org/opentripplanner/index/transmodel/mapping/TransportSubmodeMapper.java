@@ -1,6 +1,6 @@
 package org.opentripplanner.index.transmodel.mapping;
 
-import org.opentripplanner.index.transmodel.model.TransmodelTransportSubmode;
+import org.opentripplanner.model.TransmodelTransportSubmode;
 
 import java.util.HashMap;
 import java.util.Map;

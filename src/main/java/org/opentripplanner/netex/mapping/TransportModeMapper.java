@@ -1,11 +1,53 @@
 package org.opentripplanner.netex.mapping;
 
+import org.opentripplanner.model.TransmodelTransportSubmode;
 import org.rutebanken.netex.model.AllVehicleModesOfTransportEnumeration;
 import org.rutebanken.netex.model.TransportSubmodeStructure;
+
+import java.util.Arrays;
 
 public class TransportModeMapper {
 
     private static final Integer DEFAULT_OTP_VALUE = 3;
+
+
+    public TransmodelTransportSubmode getTransportSubmode(TransportSubmodeStructure transportSubmodeStructure) {
+        if (transportSubmodeStructure == null) {
+            return null;
+        }
+        String transportSubmodeVal = null;
+
+        if (transportSubmodeStructure.getBusSubmode() != null) {
+            transportSubmodeVal = transportSubmodeStructure.getBusSubmode().value();
+        }
+        else if (transportSubmodeStructure.getCoachSubmode() != null) {
+            transportSubmodeVal = transportSubmodeStructure.getCoachSubmode().value();
+        }
+        else if (transportSubmodeStructure.getFunicularSubmode() != null) {
+            transportSubmodeVal = transportSubmodeStructure.getFunicularSubmode().value();
+        }
+        else if (transportSubmodeStructure.getMetroSubmode() != null) {
+            transportSubmodeVal = transportSubmodeStructure.getMetroSubmode().value();
+        }
+        else if (transportSubmodeStructure.getRailSubmode() != null) {
+            transportSubmodeVal = transportSubmodeStructure.getRailSubmode().value();
+        }
+        else if (transportSubmodeStructure.getTelecabinSubmode() != null) {
+            transportSubmodeVal = transportSubmodeStructure.getTelecabinSubmode().value();
+        }
+        else if (transportSubmodeStructure.getTramSubmode() != null) {
+            transportSubmodeVal = transportSubmodeStructure.getTramSubmode().value();
+        } else if (transportSubmodeStructure.getWaterSubmode() != null) {
+            transportSubmodeVal = transportSubmodeStructure.getWaterSubmode().value();
+        }
+        else if (transportSubmodeStructure.getAirSubmode() != null) {
+            transportSubmodeVal = transportSubmodeStructure.getAirSubmode().value();
+        }
+
+
+        return TransmodelTransportSubmode.fromValue(transportSubmodeVal);
+    }
+
 
     public int getTransportMode(AllVehicleModesOfTransportEnumeration netexTransportMode, TransportSubmodeStructure transportSubmodeStructure) {
         if (netexTransportMode != null) {
@@ -168,8 +210,7 @@ public class TransportModeMapper {
                 default:
                     return DEFAULT_OTP_VALUE;
             }
-        }
-        else {
+        } else {
             return DEFAULT_OTP_VALUE;
         }
     }

@@ -35,6 +35,8 @@ public final class Route extends IdentityBean<AgencyAndId> {
 
     private int type;
 
+    private TransmodelTransportSubmode transportSubmode;
+
     private String desc;
 
     private String url;
@@ -141,6 +143,14 @@ public final class Route extends IdentityBean<AgencyAndId> {
 
     public void setTextColor(String textColor) {
         this.textColor = textColor;
+    }
+
+    public TransmodelTransportSubmode getTransportSubmode() {
+        return transportSubmode;
+    }
+
+    public void setTransportSubmode(TransmodelTransportSubmode transportSubmode) {
+        this.transportSubmode = transportSubmode;
     }
 
     @Deprecated

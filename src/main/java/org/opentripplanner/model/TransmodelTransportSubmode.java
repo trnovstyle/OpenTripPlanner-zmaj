@@ -1,5 +1,7 @@
-package org.opentripplanner.index.transmodel.model;
+package org.opentripplanner.model;
 
+
+import java.util.Arrays;
 
 public enum TransmodelTransportSubmode {
 
@@ -135,5 +137,9 @@ public enum TransmodelTransportSubmode {
 
     public String getValue() {
         return value;
+    }
+
+    public static TransmodelTransportSubmode fromValue(String value) {
+        return Arrays.stream(TransmodelTransportSubmode.values()).filter(tp -> tp.getValue().equals(value)).findFirst().orElse(null);
     }
 }
