@@ -328,7 +328,10 @@ public class TransmodelIndexGraphQLSchema {
                     .build())
             .typeResolver(o -> {
                     if (o instanceof Stop) {
-                        return (GraphQLObjectType) stopPlaceType;
+                        if (((Stop)o).getLocationType()==1 ) {
+                            return (GraphQLObjectType) stopPlaceType;
+                        }
+                        return (GraphQLObjectType) quayType;
                     }
                     if (o instanceof BikeRentalStation) {
                         return (GraphQLObjectType) bikeRentalStationType;
