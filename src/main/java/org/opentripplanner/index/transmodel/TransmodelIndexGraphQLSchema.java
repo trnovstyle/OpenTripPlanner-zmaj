@@ -194,6 +194,14 @@ public class TransmodelIndexGraphQLSchema {
             .value("us", "us")
             .build();
 
+    private static GraphQLEnumType multiModalModeEnum = GraphQLEnumType.newEnum()
+             .name("MultiModalMode")
+             .value("parent", "parent", "Multi modal parent stop places without their mono modal children.")
+             .value("child", "child", "Only mono modal children stop places, not their multi modal parent stop")
+             .value("all", "all", "Both multiModal parents and their mono modal child stop places.")
+             .build();
+
+
     private static GraphQLEnumType transportSubmode;
 
     static {
@@ -1116,16 +1124,8 @@ public class TransmodelIndexGraphQLSchema {
                         .name("parent")
                         .description("Returns parent stop for this stop")
                         .type(stopPlaceType)
-                        .dataFetcher(environment -> {
-                            String parentId = ((Stop) environment.getSource()).getMultiModalStation();
-                            if (parentId == null) {
-                                return null;
-                            }
-                            return index.stationForId.get(mappingUtil.fromIdString(parentId));
-                        })
+                        .dataFetcher(environment -> getParentStopPlace(environment.getSource()).orElse(null))
                         .build())
-
-
                 .field(GraphQLFieldDefinition.newFieldDefinition()
                         .name("estimatedCalls")
                         .description("List of visits to this stop place as part of vehicle journeys.")
@@ -2359,7 +2359,14 @@ public class TransmodelIndexGraphQLSchema {
                                 .name("authority")
                                 .type(Scalars.GraphQLString)
                                 .build())
-                        .dataFetcher(environment -> index.graph.streetIndex
+                        .argument(GraphQLArgument.newArgument()
+                                .name("multiModalMode")
+                                .type(multiModalModeEnum)
+                                .description("MultiModalMode for query. To control whether multi modal parent stop places, their mono modal children or both are included in the response." +
+                                                     " Does not affect mono modal stop places that do not belong to a multi modal stop place.")
+                                .defaultValue("parent")
+                                .build())
+                        .dataFetcher(environment -> { Stream<Stop> stops= index.graph.streetIndex
                                 .getTransitStopForEnvelope(new Envelope(new Coordinate(environment.getArgument("minimumLongitude"),
                                         environment.getArgument("minimumLatitude")),
                                         new Coordinate(environment.getArgument("maximumLongitude"),
@@ -2372,10 +2379,19 @@ public class TransmodelIndexGraphQLSchema {
                                                 quay.getParentStation())))
                                 .filter(Objects::nonNull)
                                 .distinct()
-
                                 .filter(stop -> environment.getArgument("authority") == null || stop.getId()
-                                        .getAgencyId().equalsIgnoreCase(environment.getArgument("authority")))
-                                .collect(Collectors.toList()))
+                                        .getAgencyId().equalsIgnoreCase(environment.getArgument("authority")));
+
+                                String multiModalMode=environment.getArgument("multiModalMode");
+                                if ("parent".equals(multiModalMode)){
+                                    stops = stops.map(s -> getParentStopPlace(s).orElse(s));
+                                }
+                                List<Stop> stopList=stops.distinct().collect(Collectors.toList());
+                                if ("all".equals(multiModalMode)) {
+                                    stopList.addAll(stopList.stream().map(s -> getParentStopPlace(s).orElse(null)).filter(Objects::nonNull).distinct().collect(Collectors.toList()));
+                                }
+                                return stopList;}
+                                )
                         .build())
                 .field(GraphQLFieldDefinition.newFieldDefinition()
                         .name("quay")
@@ -3801,5 +3817,13 @@ public class TransmodelIndexGraphQLSchema {
         boolean okForLine = lineIds.contains(route.getId());
 
         return okForAuthority || okForLine;
+    }
+
+    private Optional<Stop> getParentStopPlace(Stop stopPlace) {
+        String parentId = stopPlace.getMultiModalStation();
+        if (parentId == null) {
+            return Optional.empty();
+        }
+        return Optional.of(index.stationForId.get(mappingUtil.fromIdString(parentId)));
     }
 }
