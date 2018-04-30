@@ -36,7 +36,12 @@ public class CorsFilter implements ContainerRequestFilter, ContainerResponseFilt
                     requestContext.getHeaderString("Access-Control-Request-Headers"));
             }
             if (requestContext.getHeaderString("Access-Control-Request-Method") != null) {
-                preflightResponse.header("Access-Control-Allow-Method", "GET,POST");
+                preflightResponse.header("Access-Control-Allow-Method", "GET,POST, OPTIONS");
+                preflightResponse.header("Access-Control-Allow-Methods", "GET,POST, OPTIONS");
+            }
+            if (requestContext.getHeaderString("Access-Control-Request-Methods") != null) {
+                preflightResponse.header("Access-Control-Allow-Method", "GET,POST, OPTIONS");
+                preflightResponse.header("Access-Control-Allow-Methods", "GET,POST, OPTIONS");
             }
             // Allow caching of pre-flight options for up to an hour
             preflightResponse.header("Access-Control-Max-Age", "3600");
