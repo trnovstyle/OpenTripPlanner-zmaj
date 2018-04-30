@@ -79,6 +79,10 @@ public class TransmodelGraphIndex {
         Response.ResponseBuilder res = Response.status(Response.Status.OK);
         HashMap<String, Object> content = getGraphQLExecutionResult(query, router, variables,
                 operationName, timeout, maxResolves);
+        if (content.get("errors") != null) {
+            // TODO: Put correct error code, eg. 400 for syntax error
+            res = Response.status(Response.Status.INTERNAL_SERVER_ERROR);
+        }
         return res.entity(content).build();
     }
 
