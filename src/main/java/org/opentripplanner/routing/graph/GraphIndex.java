@@ -460,6 +460,10 @@ public class GraphIndex {
             this.place = place;
             this.distance = distance;
         }
+
+        public int getDistance() {
+            return distance;
+        }
     }
 
     static private class StopFinderTraverseVisitor implements TraverseVisitor {

@@ -4,15 +4,19 @@ import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import org.opentripplanner.common.model.GenericLocation;
 import org.opentripplanner.gtfs.GtfsLibrary;
+import org.opentripplanner.index.transmodel.model.TransmodelPlaceType;
 import org.opentripplanner.model.AgencyAndId;
 import org.opentripplanner.model.Route;
 import org.opentripplanner.model.calendar.ServiceDate;
 import org.opentripplanner.routing.core.TraverseMode;
+import org.opentripplanner.routing.graph.GraphIndex;
 
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -135,5 +139,33 @@ public class TransmodelMappingUtil {
             return new ServiceDate();
         }
         return new ServiceDate(new Date(secondsSinceEpoch * 1000));
+    }
+
+
+    public List<GraphIndex.PlaceType> mapPlaceTypes(List<TransmodelPlaceType> inputTypes) {
+        if (inputTypes == null) {
+            return null;
+        }
+
+        return inputTypes.stream().map(pt -> mapPlaceType(pt)).distinct().collect(Collectors.toList());
+    }
+
+    private GraphIndex.PlaceType mapPlaceType(TransmodelPlaceType transmodelType){
+        if (transmodelType!=null) {
+            switch (transmodelType) {
+                case QUAY:
+                case STOP_PLACE:
+                    return GraphIndex.PlaceType.STOP;
+                case DEPARTURE:
+                    return GraphIndex.PlaceType.DEPARTURE_ROW;
+                case BICYLCE_RENT:
+                    return GraphIndex.PlaceType.BICYCLE_RENT;
+                case BIKE_PARK:
+                    return GraphIndex.PlaceType.BIKE_PARK;
+                case CAR_PARK:
+                    return GraphIndex.PlaceType.CAR_PARK;
+            }
+        }
+        return null;
     }
 }

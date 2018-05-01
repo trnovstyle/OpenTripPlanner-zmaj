@@ -17,6 +17,7 @@ import org.opentripplanner.index.model.StopTimesInPattern;
 import org.opentripplanner.index.model.TripTimeShort;
 import org.opentripplanner.index.transmodel.mapping.TransmodelMappingUtil;
 import org.opentripplanner.index.transmodel.mapping.TransportSubmodeMapper;
+import org.opentripplanner.index.transmodel.model.TransmodelPlaceType;
 import org.opentripplanner.model.TransmodelTransportSubmode;
 import org.opentripplanner.index.transmodel.model.scalars.DateScalarFactory;
 import org.opentripplanner.index.transmodel.model.scalars.DateTimeScalarFactory;
@@ -213,11 +214,12 @@ public class TransmodelIndexGraphQLSchema {
 
     private static GraphQLEnumType filterPlaceTypeEnum = GraphQLEnumType.newEnum()
             .name("FilterPlaceType")
-            .value("quay", GraphIndex.PlaceType.STOP, "quay")
-            .value("departure", GraphIndex.PlaceType.DEPARTURE_ROW, "Departure")
-            .value("bicycleRent", GraphIndex.PlaceType.BICYCLE_RENT, "Bicycle rent stations")
-            .value("bikePark", GraphIndex.PlaceType.BIKE_PARK, "Bike parks")
-            .value("carPark", GraphIndex.PlaceType.CAR_PARK, "Car parks")
+            .value("quay", TransmodelPlaceType.QUAY, "Quay")
+            .value("stopPlace", TransmodelPlaceType.STOP_PLACE, "StopPlace")
+            .value("departure", TransmodelPlaceType.DEPARTURE, "Departure")
+            .value("bicycleRent", TransmodelPlaceType.BICYLCE_RENT, "Bicycle rent stations")
+            .value("bikePark",TransmodelPlaceType.BIKE_PARK, "Bike parks")
+            .value("carPark", TransmodelPlaceType.CAR_PARK, "Car parks")
             .build();
 
     private static GraphQLEnumType optimisationMethodEnum = GraphQLEnumType.newEnum()
@@ -2571,6 +2573,13 @@ public class TransmodelIndexGraphQLSchema {
                                 .description("Only include places that match one of the given ids.")
                                 .type(filterInputType)
                                 .build())
+                        .argument(GraphQLArgument.newArgument()
+                                .name("multiModalMode")
+                                .type(multiModalModeEnum)
+                                .description("MultiModalMode for query. To control whether multi modal parent stop places, their mono modal children or both are included in the response." +
+                                                     " Does not affect mono modal stop places that do not belong to a multi modal stop place. Only applicable for placeType StopPlace")
+                                .defaultValue("parent")
+                                .build())
                         .argument(relay.getConnectionFieldArguments())
                         .dataFetcher(environment -> {
                             List<AgencyAndId> filterByStops = null;
@@ -2589,7 +2598,8 @@ public class TransmodelIndexGraphQLSchema {
                             }
 
                             List<TraverseMode> filterByTransportModes = environment.getArgument("filterByModes");
-                            List<GraphIndex.PlaceType> filterByPlaceTypes = environment.getArgument("filterByPlaceTypes");
+                            List<TransmodelPlaceType> placeTypes = environment.getArgument("filterByPlaceTypes");
+                            List<GraphIndex.PlaceType> filterByPlaceTypes = mappingUtil.mapPlaceTypes(placeTypes);
 
                             List<GraphIndex.PlaceAndDistance> places;
                             try {
@@ -2605,12 +2615,12 @@ public class TransmodelIndexGraphQLSchema {
                                         filterByBikeRentalStations,
                                         filterByBikeParks,
                                         filterByCarParks
-                                )
-                                .stream()
-                                .collect(Collectors.toList());
+                                );
                             } catch (VertexNotFoundException e) {
                                 places = Collections.emptyList();
                             }
+
+                            places = convertQuaysToStopPlaces(placeTypes, places,  environment.getArgument("multiModalMode"));
 
                             return new SimpleListConnection(places).get(environment);
                         })
@@ -2901,6 +2911,43 @@ public class TransmodelIndexGraphQLSchema {
         indexSchema = GraphQLSchema.newSchema()
                 .query(queryType)
                 .build(dictionary);
+    }
+
+    /**
+     * Create PlaceAndDistance objects for all unique stopPlaces according to specified multiModalMode if client has requested stopPlace type.
+     *
+     * Necessary because nearest does not support StopPlace (stations), so we need to fetch quays instead and map the response.
+     *
+     * Remove PlaceAndDistance objects for quays if client has not requested these.
+     */
+    private List<GraphIndex.PlaceAndDistance> convertQuaysToStopPlaces(List<TransmodelPlaceType> placeTypes, List<GraphIndex.PlaceAndDistance> places, String multiModalMode) {
+        if (placeTypes==null || placeTypes.contains(TransmodelPlaceType.STOP_PLACE)) {
+            // Convert quays to stop places
+            List<GraphIndex.PlaceAndDistance> stations = places.stream().filter(p -> p.place instanceof Stop)
+                                                                 .map(p -> new GraphIndex.PlaceAndDistance(index.stationForId.get(((Stop) p.place).getParentStationAgencyAndId()), p.distance))
+                                                                 .filter(Objects::nonNull).collect(Collectors.toList());
+
+            if ("parent".equals(multiModalMode)) {
+                // Replace monomodal children with their multimodal parents
+                stations = stations.stream().map(p -> new GraphIndex.PlaceAndDistance(getParentStopPlace((Stop) p.place).orElse((Stop) p.place), p.distance)).collect(Collectors.toList());
+            }
+            if ("all".equals(multiModalMode)) {
+                // Add multimodal parents in addition to their monomodal children
+                places.addAll(stations.stream().map(p -> new GraphIndex.PlaceAndDistance(getParentStopPlace((Stop) p.place).orElse(null), p.distance)).filter(p -> p.place != null).collect(Collectors.toList()));
+            }
+
+            places.addAll(stations);
+
+            if (placeTypes != null && !placeTypes.contains(TransmodelPlaceType.QUAY)) {
+                // Remove quays if only stop places are requested
+                places = places.stream().filter(p -> !(p.place instanceof Stop && ((Stop) p.place).getLocationType() == 0)).collect(Collectors.toList());
+            }
+
+        }
+        Collections.sort(places, Comparator.comparing(GraphIndex.PlaceAndDistance::getDistance));
+
+        Set<Object> uniquePlaces= new HashSet<>();
+        return places.stream().filter(s -> uniquePlaces.add(s.place)).collect(Collectors.toList());
     }
 
 
@@ -3829,4 +3876,5 @@ public class TransmodelIndexGraphQLSchema {
         }
         return Optional.of(index.stationForId.get(mappingUtil.fromIdString(parentId)));
     }
+
 }
