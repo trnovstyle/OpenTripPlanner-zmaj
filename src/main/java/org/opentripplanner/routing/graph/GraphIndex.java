@@ -413,7 +413,7 @@ public class GraphIndex {
                 return false;
             }
         };
-        astar.getShortestPathTree(rr, 100, strategy); // timeout in seconds
+        astar.getShortestPathTree(rr, 10, strategy); // timeout in seconds
         // Destroy the routing context, to clean up the temporary edges & vertices
         rr.rctx.destroy();
         List<PlaceAndDistance> results = visitor.placesFound;
