@@ -49,6 +49,8 @@ public final class Stop extends IdentityBean<AgencyAndId> {
 
     private String multiModalStation;
 
+    private TransmodelTransportSubmode transportSubmode;
+
     private int wheelchairBoarding = 0;
 
     private String direction;
@@ -165,6 +167,14 @@ public final class Stop extends IdentityBean<AgencyAndId> {
 
     public void setMultiModalStation(String multiModalStation) {
         this.multiModalStation = multiModalStation;
+    }
+
+    public TransmodelTransportSubmode getTransportSubmode() {
+        return transportSubmode;
+    }
+
+    public void setTransportSubmode(TransmodelTransportSubmode transportSubmode) {
+        this.transportSubmode = transportSubmode;
     }
 
     public String getParentStation() {

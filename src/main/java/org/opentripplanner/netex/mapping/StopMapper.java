@@ -12,7 +12,6 @@ import org.rutebanken.netex.model.Quay;
 import org.rutebanken.netex.model.StopPlace;
 import org.rutebanken.netex.model.StopPlaceRefStructure;
 import org.rutebanken.netex.model.StopPlaceRefs_RelStructure;
-import org.rutebanken.netex.model.TariffZone;
 import org.rutebanken.netex.model.TariffZoneRef;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,7 +27,9 @@ import java.util.stream.Collectors;
 public class StopMapper {
     private static final Logger LOG = LoggerFactory.getLogger(StopMapper.class);
 
-    private StopPlaceTypeMapper transportModeMapper  = new StopPlaceTypeMapper();
+    private StopPlaceTypeMapper stopPlaceTypeMapper = new StopPlaceTypeMapper();
+
+    private TransportModeMapper transportModeMapper = new TransportModeMapper();
 
     private String DEFAULT_TIMEZONE = "Europe/Oslo";
 
@@ -77,8 +78,8 @@ public class StopMapper {
 
         stop.setId(AgencyAndIdFactory.createAgencyAndId(stopPlaceLatest.getId()));
 
-        stop.setVehicleType(transportModeMapper.getTransportMode(stopPlaceLatest));
-
+        stop.setVehicleType(stopPlaceTypeMapper.getTransportMode(stopPlaceLatest));
+        stop.setTransportSubmode(transportModeMapper.getTransportSubmode(stopPlaceLatest));
         stop.setTimezone(DEFAULT_TIMEZONE);
 
         stop.setWeight(mapInterchange(stopPlaceLatest));
