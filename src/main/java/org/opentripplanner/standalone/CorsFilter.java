@@ -62,8 +62,8 @@ public class CorsFilter implements ContainerRequestFilter, ContainerResponseFilt
 
         // TODO remove me. tmp logging for debuging i test env
         if (HttpMethod.OPTIONS.equals(request.getMethod())) {
-        LOG.info("Request:"+ Joiner.on(",").join(request.getHeaders().entrySet());
-        LOG.info("Response: "+ Joiner.on(",").join(response.getHeaders().entrySet());
+        LOG.info("Request:"+ Joiner.on(",").join(request.getHeaders().entrySet()));
+        LOG.info("Response: "+ Joiner.on(",").join(response.getHeaders().entrySet()));
         }
     }
 
