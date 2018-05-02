@@ -701,7 +701,6 @@ public class RoutingRequest implements Cloneable, Serializable {
             bannedRoutes = RouteMatcher.emptyMatcher();
 
         bannedRoutesInUse = !bannedRoutes.isEmpty();
-        updateBannedFilterActive();
     }
 
     public void setWhiteListedRoutes(String s) {
@@ -753,7 +752,7 @@ public class RoutingRequest implements Cloneable, Serializable {
     }
 
     private void updateBannedFilterActive() {
-        bannedFilterInUse = whiteListedAgenciesInUse || whiteListedRoutesInUse || bannedRoutesInUse || bannedAgenciesInUse;
+        bannedFilterInUse = whiteListedAgenciesInUse || whiteListedRoutesInUse || bannedRoutesInUse;
     }
 
     public final static int MIN_SIMILARITY = 1000;
