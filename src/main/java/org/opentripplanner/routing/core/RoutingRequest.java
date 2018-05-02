@@ -16,8 +16,15 @@ package org.opentripplanner.routing.core;
 import com.google.common.base.Objects;
 import org.opentripplanner.model.AgencyAndId;
 import org.opentripplanner.model.Route;
+import org.opentripplanner.model.Trip;
+import org.opentripplanner.model.AgencyAndId;
+import org.opentripplanner.model.Route;
+import org.opentripplanner.model.Trip;
 import org.opentripplanner.api.common.Message;
 import org.opentripplanner.api.common.ParameterException;
+import org.opentripplanner.model.AgencyAndId;
+import org.opentripplanner.model.Route;
+import org.opentripplanner.model.Trip;
 import org.opentripplanner.api.parameter.QualifiedModeSet;
 import org.opentripplanner.common.MavenVersion;
 import org.opentripplanner.common.model.GenericLocation;
@@ -267,13 +274,13 @@ public class RoutingRequest implements Cloneable, Serializable {
     public RouteMatcher bannedRoutes = RouteMatcher.emptyMatcher();
 
     /** Only use certain named routes */
-    private RouteMatcher whiteListedRoutes = RouteMatcher.emptyMatcher();
+    public RouteMatcher whiteListedRoutes = RouteMatcher.emptyMatcher();
 
     /** Do not use certain named agencies */
-    private HashSet<String> bannedAgencies = new HashSet<String>();
+    public HashSet<String> bannedAgencies = new HashSet<String>();
 
     /** Only use certain named agencies */
-    private HashSet<String> whiteListedAgencies = new HashSet<>();
+    public HashSet<String> whiteListedAgencies = new HashSet<String>();
 
     /** Do not use certain trips */
     public HashMap<AgencyAndId, BannedStopSet> bannedTrips = new HashMap<AgencyAndId, BannedStopSet>();
@@ -282,23 +289,14 @@ public class RoutingRequest implements Cloneable, Serializable {
     public StopMatcher bannedStops = StopMatcher.emptyMatcher(); 
     
     /** Do not use certain stops. See for more information the bannedStopsHard property in the RoutingResource class. */
-    public StopMatcher bannedStopsHard = StopMatcher.emptyMatcher();
+    public StopMatcher bannedStopsHard = StopMatcher.emptyMatcher(); 
     
     /** Set of preferred routes by user. */
     public RouteMatcher preferredRoutes = RouteMatcher.emptyMatcher();
     
     /** Set of preferred agencies by user. */
     public HashSet<String> preferredAgencies = new HashSet<String>();
-
-    private boolean whiteListedAgenciesInUse;
-
-    private boolean whiteListedRoutesInUse;
-
-    private boolean bannedAgenciesInUse;
-
-    private boolean bannedRoutesInUse;
-
-    private boolean bannedFilterInUse=false;
+    
     /**
      * Penalty added for using every route that is not preferred if user set any route as preferred. We return number of seconds that we are willing
      * to wait for preferred route.
@@ -699,8 +697,6 @@ public class RoutingRequest implements Cloneable, Serializable {
             bannedRoutes = RouteMatcher.parse(s);
         else
             bannedRoutes = RouteMatcher.emptyMatcher();
-
-        bannedRoutesInUse = !bannedRoutes.isEmpty();
     }
 
     public void setWhiteListedRoutes(String s) {
@@ -708,13 +704,6 @@ public class RoutingRequest implements Cloneable, Serializable {
             whiteListedRoutes = RouteMatcher.parse(s);
         else
             whiteListedRoutes = RouteMatcher.emptyMatcher();
-
-        whiteListedRoutesInUse = !whiteListedRoutes.isEmpty();
-        updateBannedFilterActive();
-    }
-
-    public RouteMatcher getWhiteListedRoutes() {
-        return whiteListedRoutes;
     }
 
     public void setBannedStops(String s) {
@@ -736,23 +725,13 @@ public class RoutingRequest implements Cloneable, Serializable {
     }
     
     public void setBannedAgencies(String s) {
-        if (s != null && !s.equals("")) {
+        if (s != null && !s.equals(""))
             bannedAgencies = new HashSet<String>(Arrays.asList(s.split(",")));
-            bannedAgenciesInUse = !bannedAgencies.isEmpty();
-        }
-        updateBannedFilterActive();
     }
 
     public void setWhiteListedAgencies(String s) {
-        if (s != null && !s.equals("")) {
+        if (s != null && !s.equals(""))
             whiteListedAgencies = new HashSet<String>(Arrays.asList(s.split(",")));
-            whiteListedAgenciesInUse = !whiteListedAgencies.isEmpty();
-        }
-        updateBannedFilterActive();
-    }
-
-    private void updateBannedFilterActive() {
-        bannedFilterInUse = whiteListedAgenciesInUse || whiteListedRoutesInUse || bannedRoutesInUse;
     }
 
     public final static int MIN_SIMILARITY = 1000;
@@ -1237,7 +1216,7 @@ public class RoutingRequest implements Cloneable, Serializable {
     }
 
     public boolean edgeIsBanned(Edge e) {
-        if (bannedFilterInUse && e instanceof TablePatternEdge) {
+        if (e instanceof TablePatternEdge) {
             TripPattern tripPattern = ((TablePatternEdge) e).getPattern();
             if (tripPattern != null & tripPattern.route != null) {
                 return routeIsBanned(tripPattern.route);
@@ -1247,30 +1226,40 @@ public class RoutingRequest implements Cloneable, Serializable {
     }
 
     public boolean routeIsBanned(Route route) {
-        if (!bannedFilterInUse) {
-            return false;
-        }
         /* check if agency is banned for this plan */
-        if (bannedAgenciesInUse && bannedAgencies.contains(route.getAgency().getId())) {
-            return true;
+        if (bannedAgencies != null && !bannedAgencies.isEmpty()) {
+            if (bannedAgencies.contains(route.getAgency().getId())) {
+                return true;
+            }
         }
 
         /* check if route banned for this plan */
-        if (bannedRoutesInUse && bannedRoutes.matches(route)) {
-            return true;
+        if (bannedRoutes != null && !bannedRoutes.isEmpty()) {
+            if (bannedRoutes.matches(route)) {
+                return true;
+            }
         }
 
-        if (whiteListedAgenciesInUse || whiteListedRoutesInUse) {
+        boolean whiteListed = false;
+        boolean whiteListInUse = false;
 
-            /* check if agency is whitelisted for this plan */
-            if (whiteListedAgenciesInUse && whiteListedAgencies.contains(route.getAgency().getId())) {
-                return false;
+        /* check if agency is whitelisted for this plan */
+        if (whiteListedAgencies != null && whiteListedAgencies.size() > 0) {
+            whiteListInUse = true;
+            if (whiteListedAgencies.contains(route.getAgency().getId())) {
+                whiteListed = true;
             }
+        }
 
-            /* check if route is whitelisted for this plan */
-            if (whiteListedRoutesInUse && whiteListedRoutes.matches(route)) {
-                return false;
+        /* check if route is whitelisted for this plan */
+        if (whiteListedRoutes != null && !whiteListedRoutes.isEmpty()) {
+            whiteListInUse = true;
+            if (whiteListedRoutes.matches(route)) {
+                whiteListed = true;
             }
+        }
+
+        if (whiteListInUse && !whiteListed) {
             return true;
         }
 

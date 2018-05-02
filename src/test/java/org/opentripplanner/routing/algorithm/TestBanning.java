@@ -112,7 +112,7 @@ public class TestBanning extends TestCase {
                 if (s.getBackEdge() instanceof PatternHop) {
                     PatternHop e = (PatternHop) s.getBackEdge();
                     Route route = e.getPattern().route;
-                    assertTrue(options.getWhiteListedRoutes().matches(route));
+                    assertTrue(options.whiteListedRoutes.matches(route));
                     boolean notFoundMaxLine = true;
                     boolean foundMaxLine = false;
                     for (int j = 0; j < maxLines.length; ++j) {
