@@ -1,6 +1,8 @@
 package org.opentripplanner.standalone;
 
-import java.io.IOException;
+import com.google.common.base.Joiner;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.HttpMethod;
 import javax.ws.rs.container.ContainerRequestContext;
@@ -9,6 +11,7 @@ import javax.ws.rs.container.ContainerResponseContext;
 import javax.ws.rs.container.ContainerResponseFilter;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
+import java.io.IOException;
 
 /**
  * The Same Origin Policy states that JavaScript code (or other scripts) running on a web page may
@@ -21,7 +24,7 @@ import javax.ws.rs.core.Response;
  * have switched to that system.
  */
 public class CorsFilter implements ContainerRequestFilter, ContainerResponseFilter {
-
+    private static final Logger LOG = LoggerFactory.getLogger(CorsFilter.class);
     /**
      * CORS request filter.
      * Hijack "preflight" OPTIONS requests before the Jersey resources get them.
@@ -56,6 +59,12 @@ public class CorsFilter implements ContainerRequestFilter, ContainerResponseFilt
         headers.add("Access-Control-Allow-Origin", origin);
         boolean secureTransport = request.getSecurityContext().isSecure();
         headers.add("Access-Control-Allow-Credentials", secureTransport);
+
+        // TODO remove me. tmp logging for debuging i test env
+        if (HttpMethod.OPTIONS.equals(request.getMethod())) {
+        LOG.info("Request:"+ Joiner.on(",").join(request.getHeaders().entrySet());
+        LOG.info("Response: "+ Joiner.on(",").join(response.getHeaders().entrySet());
+        }
     }
 
 }
