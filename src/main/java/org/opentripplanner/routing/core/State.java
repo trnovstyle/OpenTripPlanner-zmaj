@@ -403,9 +403,8 @@ public class State implements Cloneable {
     public Trip getBackTrip () {
         if (backEdge instanceof TablePatternEdge || backEdge instanceof PatternInterlineDwell) {
             return stateData.tripTimes.trip;
-        }
-        else {
-            return backEdge.getTrip();
+        } else {
+            return backEdge != null ? backEdge.getTrip() : null;
         }
     }
 
