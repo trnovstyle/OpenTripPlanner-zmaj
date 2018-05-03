@@ -14,21 +14,17 @@
 package org.opentripplanner.routing.core;
 
 import com.google.common.base.Objects;
+import org.apache.commons.collections.CollectionUtils;
+import org.opentripplanner.gtfs.GtfsLibrary;
 import org.opentripplanner.model.AgencyAndId;
 import org.opentripplanner.model.Route;
-import org.opentripplanner.model.Trip;
-import org.opentripplanner.model.AgencyAndId;
-import org.opentripplanner.model.Route;
-import org.opentripplanner.model.Trip;
 import org.opentripplanner.api.common.Message;
 import org.opentripplanner.api.common.ParameterException;
-import org.opentripplanner.model.AgencyAndId;
-import org.opentripplanner.model.Route;
-import org.opentripplanner.model.Trip;
 import org.opentripplanner.api.parameter.QualifiedModeSet;
 import org.opentripplanner.common.MavenVersion;
 import org.opentripplanner.common.model.GenericLocation;
 import org.opentripplanner.common.model.NamedPlace;
+import org.opentripplanner.model.TransmodelTransportSubmode;
 import org.opentripplanner.model.calendar.ServiceDate;
 import org.opentripplanner.routing.edgetype.StreetEdge;
 import org.opentripplanner.routing.edgetype.TablePatternEdge;
@@ -54,6 +50,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.TimeZone;
 
 import javax.xml.datatype.DatatypeConfigurationException;
@@ -131,6 +128,8 @@ public class RoutingRequest implements Cloneable, Serializable {
 
     /** The set of TraverseModes that a user is willing to use. Defaults to WALK | TRANSIT. */
     public TraverseModeSet modes = new TraverseModeSet("TRANSIT,WALK"); // defaults in constructor overwrite this
+
+    public Map<TraverseMode, Set<TransmodelTransportSubmode>> transportSubmodes = new HashMap<>();
 
     /** The set of characteristics that the user wants to optimize for -- defaults to QUICK, or optimize for transit time. */
     public OptimizeType optimize = OptimizeType.QUICK;
@@ -289,14 +288,14 @@ public class RoutingRequest implements Cloneable, Serializable {
     public StopMatcher bannedStops = StopMatcher.emptyMatcher(); 
     
     /** Do not use certain stops. See for more information the bannedStopsHard property in the RoutingResource class. */
-    public StopMatcher bannedStopsHard = StopMatcher.emptyMatcher(); 
+    public StopMatcher bannedStopsHard = StopMatcher.emptyMatcher();
     
     /** Set of preferred routes by user. */
     public RouteMatcher preferredRoutes = RouteMatcher.emptyMatcher();
     
     /** Set of preferred agencies by user. */
     public HashSet<String> preferredAgencies = new HashSet<String>();
-    
+
     /**
      * Penalty added for using every route that is not preferred if user set any route as preferred. We return number of seconds that we are willing
      * to wait for preferred route.
@@ -1236,6 +1235,14 @@ public class RoutingRequest implements Cloneable, Serializable {
         /* check if route banned for this plan */
         if (bannedRoutes != null && !bannedRoutes.isEmpty()) {
             if (bannedRoutes.matches(route)) {
+                return true;
+            }
+        }
+
+        if (!transportSubmodes.isEmpty()) {
+            Set<TransmodelTransportSubmode> allowedSubmodesForMode=transportSubmodes.get(GtfsLibrary.getTraverseMode(route));
+            if (!CollectionUtils.isEmpty(allowedSubmodesForMode) && !allowedSubmodesForMode.contains(route.getTransportSubmode()) ) {
+                // TODO need to look at transportSubmode for trip/serviceJourney when added to model
                 return true;
             }
         }

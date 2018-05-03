@@ -651,6 +651,21 @@ public class TransmodelIndexGraphQLSchema {
                         .build())
                 .build();
 
+        GraphQLInputObjectType transportSubmodeFilterInputType = GraphQLInputObjectType.newInputObject()
+                .name("TransportSubmodeFilter")
+                .description("Filter trips by allowing only certain transport submodes per mode.")
+                .field(GraphQLInputObjectField.newInputObjectField()
+                        .name("transportMode")
+                        .description("Set of ids for lines that should be used")
+                        .type(new GraphQLNonNull(transportModeEnum))
+                        .build())
+                .field(GraphQLInputObjectField.newInputObjectField()
+                        .name("transportSubmodes")
+                        .description("Set of transport submodes allowed for transport mode.")
+                        .type(new GraphQLNonNull(new GraphQLList(transportSubmode)))
+                        .build())
+                 .build();
+
 
         GraphQLFieldDefinition tripFieldType = GraphQLFieldDefinition.newFieldDefinition()
                 .name("trip")
@@ -752,6 +767,12 @@ public class TransmodelIndexGraphQLSchema {
                         .type(new GraphQLList(modeEnum))
                         .defaultValue(defaultRoutingRequest.modes.getModes())
                         .build())
+                .argument(GraphQLArgument.newArgument()
+                         .name("transportSubmodes")
+                         .description("Optional set of allowed submodes per transport mode provided in 'modes'. If at least one submode is set for a transport mode all submodes not set will be disregarded. Note that transportMode must also be included in 'modes' for the submodes to be allowed")
+                         .type(new GraphQLList(transportSubmodeFilterInputType))
+                         .defaultValue(new ArrayList<>())
+                         .build())
                 .argument(GraphQLArgument.newArgument()
                         .name("allowBikeRental")
                         .description("Is bike rental allowed?")

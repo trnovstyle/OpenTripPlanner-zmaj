@@ -3,6 +3,7 @@ package org.opentripplanner.index.transmodel;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableMap;
 import graphql.schema.DataFetchingEnvironment;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.opentripplanner.api.common.Message;
 import org.opentripplanner.api.common.ParameterException;
@@ -15,6 +16,7 @@ import org.opentripplanner.api.resource.DebugOutput;
 import org.opentripplanner.api.resource.GraphPathToTripPlanConverter;
 import org.opentripplanner.common.model.GenericLocation;
 import org.opentripplanner.index.transmodel.mapping.TransmodelMappingUtil;
+import org.opentripplanner.model.TransmodelTransportSubmode;
 import org.opentripplanner.routing.core.OptimizeType;
 import org.opentripplanner.routing.core.RoutingRequest;
 import org.opentripplanner.routing.core.TraverseMode;
@@ -28,6 +30,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -231,6 +234,17 @@ public class TransmodelGraphQLPlanner {
 
             // Apply cable car setting 
             request.modes.setCableCar(cableCar);
+        }
+
+        List<Map<String, ?>> transportSubmodeFilters = environment.getArgument("transportSubmodes");
+        if (transportSubmodeFilters != null) {
+            for (Map<String, ?> transportSubmodeFilter : transportSubmodeFilters) {
+                TraverseMode transportMode = (TraverseMode) transportSubmodeFilter.get("transportMode");
+                List<TransmodelTransportSubmode> transportSubmodes = (List<TransmodelTransportSubmode>) transportSubmodeFilter.get("transportSubmodes");
+                if (!CollectionUtils.isEmpty(transportSubmodes)) {
+                    request.transportSubmodes.put(transportMode, new HashSet<>(transportSubmodes));
+                }
+            }
         }
 
         if (request.allowBikeRental && !hasArgument(environment, "bikeSpeed")) {
