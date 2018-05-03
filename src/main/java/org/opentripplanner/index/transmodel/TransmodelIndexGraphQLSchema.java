@@ -1704,6 +1704,12 @@ public class TransmodelIndexGraphQLSchema {
                         .dataFetcher(environment -> (((Trip) environment.getSource()).getServiceAlteration()))
                         .build())
                 .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("transportSubmode")
+                        .type(transportSubmode)
+                        .description("The transport submode of the journey, if different from lines transport submode.")
+                        .dataFetcher(environment -> (((Trip) environment.getSource()).getTransportSubmode()))
+                        .build())
+                .field(GraphQLFieldDefinition.newFieldDefinition()
                         .name("publicCode")
                         .type(Scalars.GraphQLString)
                         .description("Publicly announced code for service journey, differentiating it from other service journeys for the same line.")
@@ -3200,7 +3206,15 @@ public class TransmodelIndexGraphQLSchema {
                         .name("transportSubmode")
                         .description("The transport sub mode (e.g., localBus or expressBus) used when traversing this leg. Null if leg is not a ride")
                         .type(transportSubmode)
-                        .dataFetcher(environment -> transportSubmodeMapper.toTransmodel(((Leg) environment.getSource()).routeType))
+                        .dataFetcher(environment -> {
+                           Leg leg=environment.getSource();
+                           Trip trip= index.tripForId.get(leg.tripId);
+                            TransmodelTransportSubmode submode = null;
+                            if (trip != null) {
+                                submode = trip.getTransportSubmode();
+                            }
+                            return submode;
+                        })
                         .build())
                 .field(GraphQLFieldDefinition.newFieldDefinition()
                         .name("duration")

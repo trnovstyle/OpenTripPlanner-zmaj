@@ -21,6 +21,7 @@ public class TripMapper {
     private static final Logger LOG = LoggerFactory.getLogger(TripMapper.class);
 
     private KeyValueMapper keyValueMapper = new KeyValueMapper();
+    private TransportModeMapper transportModeMapper = new TransportModeMapper();
 
     public Trip mapServiceJourney(ServiceJourney serviceJourney, OtpTransitBuilder gtfsDao, NetexDao netexDao){
 
@@ -72,6 +73,10 @@ public class TripMapper {
         trip.setKeyValues(keyValueMapper.mapKeyValues(serviceJourney.getKeyList()));
         trip.setWheelchairAccessible(1);
         trip.setServiceAlteration(mapServiceAlteration(serviceJourney.getServiceAlteration()));
+        trip.setTransportSubmode(transportModeMapper.getTransportSubmode(serviceJourney.getTransportSubmode()));
+        if (trip.getTransportSubmode()==null) {
+            trip.setTransportSubmode(trip.getRoute().getTransportSubmode());
+        }
 
         // Map to right shapeId
         JourneyPattern journeyPattern = netexDao.journeyPatternsById.lookup(serviceJourney.getJourneyPatternRef().getValue().getRef());

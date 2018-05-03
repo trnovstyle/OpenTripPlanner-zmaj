@@ -53,6 +53,8 @@ public final class Trip extends IdentityBean<AgencyAndId> {
 
     private List<KeyValue> keyValues;
 
+    private TransmodelTransportSubmode transportSubmode;
+
     @Deprecated private int tripBikesAllowed = 0;
 
     /**
@@ -84,6 +86,7 @@ public final class Trip extends IdentityBean<AgencyAndId> {
         this.fareId = obj.fareId;
         this.serviceAlteration = obj.serviceAlteration;
         this.keyValues = obj.keyValues;
+        this.transportSubmode = obj.transportSubmode;
     }
 
     public AgencyAndId getId() {
@@ -248,5 +251,13 @@ public final class Trip extends IdentityBean<AgencyAndId> {
 
     public void setKeyValues(List<KeyValue> keyValues) {
         this.keyValues = keyValues;
+    }
+
+    public TransmodelTransportSubmode getTransportSubmode() {
+        return transportSubmode;
+    }
+
+    public void setTransportSubmode(TransmodelTransportSubmode transportSubmode) {
+        this.transportSubmode = transportSubmode;
     }
 }
