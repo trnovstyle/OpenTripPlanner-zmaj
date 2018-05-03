@@ -2634,13 +2634,20 @@ public class TransmodelIndexGraphQLSchema {
                             List<TransmodelPlaceType> placeTypes = environment.getArgument("filterByPlaceTypes");
                             List<GraphIndex.PlaceType> filterByPlaceTypes = mappingUtil.mapPlaceTypes(placeTypes);
 
+                            // Need to fetch more than requested no of places if stopPlaces are allowed, as this requires fetching potentially multiple quays for the same stop place and mapping them to unique stop places.
+                            int orgMaxResults = environment.getArgument("maximumResults");
+                            int maxResults = orgMaxResults;
+                            if (placeTypes != null && placeTypes.contains(TransmodelPlaceType.STOP_PLACE)) {
+                                maxResults *= 5;
+                            }
+
                             List<GraphIndex.PlaceAndDistance> places;
                             try {
                                 places = index.findClosestPlacesByWalking(
                                         environment.getArgument("latitude"),
                                         environment.getArgument("longitude"),
                                         environment.getArgument("maximumDistance"),
-                                        environment.getArgument("maximumResults"),
+                                        maxResults,
                                         filterByTransportModes,
                                         filterByPlaceTypes,
                                         filterByStops,
@@ -2653,7 +2660,7 @@ public class TransmodelIndexGraphQLSchema {
                                 places = Collections.emptyList();
                             }
 
-                            places = convertQuaysToStopPlaces(placeTypes, places,  environment.getArgument("multiModalMode"));
+                            places = convertQuaysToStopPlaces(placeTypes, places,  environment.getArgument("multiModalMode")).stream().limit(orgMaxResults).collect(Collectors.toList());
 
                             return new SimpleListConnection(places).get(environment);
                         })
