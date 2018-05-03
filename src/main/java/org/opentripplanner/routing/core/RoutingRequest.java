@@ -15,16 +15,17 @@ package org.opentripplanner.routing.core;
 
 import com.google.common.base.Objects;
 import org.apache.commons.collections.CollectionUtils;
-import org.opentripplanner.gtfs.GtfsLibrary;
-import org.opentripplanner.model.AgencyAndId;
-import org.opentripplanner.model.Route;
 import org.opentripplanner.api.common.Message;
 import org.opentripplanner.api.common.ParameterException;
 import org.opentripplanner.api.parameter.QualifiedModeSet;
 import org.opentripplanner.common.MavenVersion;
 import org.opentripplanner.common.model.GenericLocation;
 import org.opentripplanner.common.model.NamedPlace;
+import org.opentripplanner.gtfs.GtfsLibrary;
+import org.opentripplanner.model.AgencyAndId;
+import org.opentripplanner.model.Route;
 import org.opentripplanner.model.TransmodelTransportSubmode;
+import org.opentripplanner.model.Trip;
 import org.opentripplanner.model.calendar.ServiceDate;
 import org.opentripplanner.routing.edgetype.StreetEdge;
 import org.opentripplanner.routing.edgetype.TablePatternEdge;
@@ -40,6 +41,10 @@ import org.opentripplanner.util.DateUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.xml.datatype.DatatypeConfigurationException;
+import javax.xml.datatype.DatatypeConstants;
+import javax.xml.datatype.DatatypeFactory;
+import javax.xml.datatype.XMLGregorianCalendar;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -52,11 +57,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.TimeZone;
-
-import javax.xml.datatype.DatatypeConfigurationException;
-import javax.xml.datatype.DatatypeConstants;
-import javax.xml.datatype.DatatypeFactory;
-import javax.xml.datatype.XMLGregorianCalendar;
 
 /**
  * A trip planning request. Some parameters may not be honored by the trip planner for some or all itineraries.
@@ -1224,6 +1224,19 @@ public class RoutingRequest implements Cloneable, Serializable {
         return false;
     }
 
+    public boolean tripIsBanned(Trip trip) {
+        if (trip==null) {
+            return false;
+        }
+        if (!transportSubmodes.isEmpty()) {
+            Set<TransmodelTransportSubmode> allowedSubmodesForMode=transportSubmodes.get(GtfsLibrary.getTraverseMode(trip.getRoute()));
+            if (!CollectionUtils.isEmpty(allowedSubmodesForMode) && !allowedSubmodesForMode.contains(trip.getTransportSubmode()) ) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public boolean routeIsBanned(Route route) {
         /* check if agency is banned for this plan */
         if (bannedAgencies != null && !bannedAgencies.isEmpty()) {
@@ -1235,14 +1248,6 @@ public class RoutingRequest implements Cloneable, Serializable {
         /* check if route banned for this plan */
         if (bannedRoutes != null && !bannedRoutes.isEmpty()) {
             if (bannedRoutes.matches(route)) {
-                return true;
-            }
-        }
-
-        if (!transportSubmodes.isEmpty()) {
-            Set<TransmodelTransportSubmode> allowedSubmodesForMode=transportSubmodes.get(GtfsLibrary.getTraverseMode(route));
-            if (!CollectionUtils.isEmpty(allowedSubmodesForMode) && !allowedSubmodesForMode.contains(route.getTransportSubmode()) ) {
-                // TODO need to look at transportSubmode for trip/serviceJourney when added to model
                 return true;
             }
         }
