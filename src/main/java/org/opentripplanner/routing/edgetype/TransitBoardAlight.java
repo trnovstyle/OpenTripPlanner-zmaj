@@ -146,8 +146,6 @@ public class TransitBoardAlight extends TablePatternEdge implements OnboardEdge 
         /* We assume all trips in a pattern are on the same route. Check if that route is banned. */
         if (options.routeIsBanned(this.getPattern().route)) return null;
 
-        if (options.tripIsBanned(s0.getBackTrip())) return null;
-
         /* If the user requested a wheelchair accessible trip, check whether and this stop is not accessible. */
         if (options.wheelchairAccessible && ! getPattern().wheelchairAccessible(stopIndex)) {
             return null;
