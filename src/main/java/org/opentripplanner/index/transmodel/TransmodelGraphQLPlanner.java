@@ -263,7 +263,7 @@ public class TransmodelGraphQLPlanner {
 
 
         callWith.argument("ignoreRealtimeUpdates", (Boolean v) -> request.ignoreRealtimeUpdates = v);
-
+        callWith.argument("includePlannedCancellations", (Boolean v) -> request.includePlannedCancellations = v);
         return request;
     }
 

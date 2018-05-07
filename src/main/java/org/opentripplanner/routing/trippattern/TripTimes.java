@@ -435,6 +435,11 @@ public class TripTimes implements Serializable, Comparable<TripTimes>, Cloneable
         if (bicycle && BikeAccess.fromTrip(trip) != BikeAccess.ALLOWED) {
             return false;
         }
+
+        if (!options.includePlannedCancellations && Trip.ServiceAlteration.cancellation.equals(trip.getServiceAlteration())){
+            return false;
+        }
+
         return true;
     }
 
@@ -444,9 +449,7 @@ public class TripTimes implements Serializable, Comparable<TripTimes>, Cloneable
         Arrays.fill(arrivalTimes, UNAVAILABLE);
         departureTimes = arrivalTimes;
 
-        // Flag all stops as cancelled
-        isCancelledStop = new boolean[getNumStops()];
-        Arrays.fill(isCancelledStop, true);
+        cancelAllStops();
 
         pickups = new int[getNumStops()];
         Arrays.fill(pickups, PICKDROP_NONE);
@@ -455,6 +458,13 @@ public class TripTimes implements Serializable, Comparable<TripTimes>, Cloneable
         // Update the real-time state
         realTimeState = RealTimeState.CANCELED;
     }
+
+    public void cancelAllStops() {
+        // Flag all stops as cancelled
+        isCancelledStop = new boolean[getNumStops()];
+        Arrays.fill(isCancelledStop, true);
+    }
+
 
     public void updateDepartureTime(final int stop, final int time) {
         checkCreateTimesArrays();
