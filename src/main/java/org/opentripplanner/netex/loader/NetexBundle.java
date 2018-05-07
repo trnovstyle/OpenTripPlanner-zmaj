@@ -31,6 +31,8 @@ public class NetexBundle {
 
     public final boolean parkAndRideFromTransitData;
 
+    public final boolean removeStopsNotInUse = true;
+
     public NetexBundle(File netexZipFile, GraphBuilderParameters builderParams) {
         this.file = netexZipFile;
         this.linkStopsToParentStations = builderParams.parentStopLinking;

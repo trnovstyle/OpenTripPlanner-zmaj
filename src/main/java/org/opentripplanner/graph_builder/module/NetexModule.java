@@ -40,6 +40,10 @@ public class NetexModule implements GraphBuilderModule {
 
                 calendarService.addData(daoBuilder);
 
+                if (netexBundle.removeStopsNotInUse) {
+                    daoBuilder.removeStopsNotInUse();
+                }
+
                 PatternHopFactory hf = new PatternHopFactory(
                         new GtfsFeedId.Builder().id(netexBundle.netexParameters.netexFeedId).build(),
                         daoBuilder.build(),
