@@ -16,6 +16,7 @@ import org.rutebanken.netex.model.TariffZoneRef;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -155,6 +156,12 @@ public class StopMapper {
                         }
                         if (multiModalStop != null) {
                             stopQuay.setMultiModalStation(multiModalStop.getId().getId());
+                        }
+
+                        LocalDateTime toDate = stopPlace.getValidBetween() != null && stopPlace.getValidBetween().size() > 0
+                                ? stopPlace.getValidBetween().get(0).getToDate() : null;
+                        if (toDate != null && toDate.isBefore(LocalDateTime.now())) {
+                            stopQuay.setExpired(true);
                         }
 
                         if (quay.getAccessibilityAssessment() != null
