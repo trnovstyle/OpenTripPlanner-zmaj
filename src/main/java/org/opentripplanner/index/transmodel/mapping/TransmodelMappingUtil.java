@@ -8,15 +8,11 @@ import org.opentripplanner.index.transmodel.model.TransmodelPlaceType;
 import org.opentripplanner.model.AgencyAndId;
 import org.opentripplanner.model.Route;
 import org.opentripplanner.model.calendar.ServiceDate;
-import org.opentripplanner.routing.core.TraverseMode;
 import org.opentripplanner.routing.graph.GraphIndex;
 
 import java.util.Collection;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -30,11 +26,8 @@ public class TransmodelMappingUtil {
 
     private String fixedAgencyId;
 
-    private Map<String, TraverseMode> traverseModeMap;
-
-    public TransmodelMappingUtil(String fixedAgencyId, Map<String, TraverseMode> traverseModeMap) {
+    public TransmodelMappingUtil(String fixedAgencyId) {
         this.fixedAgencyId = fixedAgencyId;
-        this.traverseModeMap = traverseModeMap;
     }
 
 
@@ -90,14 +83,6 @@ public class TransmodelMappingUtil {
         return id;
     }
 
-    /**
-     * Convert a comma separated list of transmodel mode values into a corresponding comma separated list of otp modes.
-     */
-    public String mapListOfModes(List<String> transmodelModes) {
-        return mapCollectionOfValues(transmodelModes, this::mapMode);
-    }
-
-
     public String mapCollectionOfValues(Collection<String> values, Function<String, String> mapElementFunction) {
         if (values == null) {
             return null;
@@ -105,14 +90,6 @@ public class TransmodelMappingUtil {
         List<String> otpModelModes = values.stream().map(value -> mapElementFunction.apply(value)).collect(Collectors.toList());
 
         return Joiner.on(LIST_VALUE_SEPARATOR).join(otpModelModes);
-    }
-
-    public String mapMode(String transmodelMode) {
-        TraverseMode traverseMode = traverseModeMap.get(transmodelMode.trim());
-        if (traverseMode == null) {
-            throw new IllegalArgumentException("Mode not supported: " + transmodelMode);
-        }
-        return traverseMode.name();
     }
 
     // Create a dummy route to be able to reuse GtfsLibrary functionality

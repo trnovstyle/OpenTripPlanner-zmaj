@@ -412,8 +412,7 @@ public class TransmodelIndexGraphQLSchema {
                     "'. All AgencyAndIds in API will be assumed to belong to this agency.");
         }
 
-        Map<String, TraverseMode> traverseModeMap = modeEnum.getValues().stream().filter(valueDef -> valueDef.getValue() instanceof TraverseMode).collect(Collectors.toMap(GraphQLEnumValueDefinition::getName, valueDef -> (TraverseMode) valueDef.getValue()));
-        mappingUtil = new TransmodelMappingUtil(fixedAgencyId, traverseModeMap);
+        mappingUtil = new TransmodelMappingUtil(fixedAgencyId);
         tripTimeShortHelper = new TripTimeShortHelper(index);
         dateTimeScalar = DateTimeScalarFactory.createMillisecondsSinceEpochAsDateTimeStringScalar(index.graph.getTimeZone());
         timeType = TimeScalarFactory.createSecondsSinceMidnightAsTimeObject();
