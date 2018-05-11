@@ -246,6 +246,9 @@ public class GraphPathFinder {
             Vertex toVertex = options.arriveBy ? transitStop : options.rctx.toVertex;
             RoutingRequest reversedTransitRequest = createReversedTransitRequest(originalReq, options, fromVertex, toVertex,
                     arrDepTime, new EuclideanRemainingWeightHeuristic());
+            // Set boardCost to max value instead of only allowing traverseMode walk. This is so we are able to use station
+            // to stop links that are not allowed when using walk only.
+            reversedTransitRequest.walkBoardCost = Integer.MAX_VALUE;
             aStar.getShortestPathTree(reversedTransitRequest, timeout);
             List<GraphPath> pathsToTarget = aStar.getPathsToTarget();
             if(pathsToTarget.isEmpty()){
