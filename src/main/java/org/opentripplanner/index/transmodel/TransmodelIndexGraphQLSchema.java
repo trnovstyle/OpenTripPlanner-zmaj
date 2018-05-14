@@ -183,7 +183,6 @@ public class TransmodelIndexGraphQLSchema {
             .value("rail", TraverseMode.RAIL)
             .value("metro", TraverseMode.SUBWAY)
             .value("tram", TraverseMode.TRAM)
-            .value("coach", TraverseMode.COACH)
             .value("transit", TraverseMode.TRANSIT, "Any for of public transportation")
             .value("foot", TraverseMode.WALK)
             .value("car_park", TraverseMode.CAR_PARK, "Combine with foot and transit for park and ride.")
@@ -201,7 +200,6 @@ public class TransmodelIndexGraphQLSchema {
             .value("rail", TraverseMode.RAIL)
             .value("metro", TraverseMode.SUBWAY)
             .value("tram", TraverseMode.TRAM)
-            .value("coach", TraverseMode.COACH)
             .value("unknown", "unknown")
             .build();
 
