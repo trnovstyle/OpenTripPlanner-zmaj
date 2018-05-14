@@ -65,8 +65,6 @@ public final class Stop extends IdentityBean<AgencyAndId> {
 
     private Collection<TariffZone> tariffZones = new ArrayList<>();
 
-    private boolean expired = false;
-
     public Stop() {
 
     }
@@ -255,8 +253,4 @@ public final class Stop extends IdentityBean<AgencyAndId> {
 
     public enum interchangeWeightingEnumeration { PREFERRED_INTERCHANGE, RECOMMENDED_INTERCHANGE, INTERCHANGE_ALLOWED,
         NO_INTERCHANGE }
-
-    public boolean isExpired() { return expired; }
-
-    public void setExpired(boolean expired) { this.expired = expired; }
 }

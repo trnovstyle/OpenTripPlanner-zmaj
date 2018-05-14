@@ -33,8 +33,6 @@ public class EntityMap<I extends Serializable, E extends IdentityBean<I>> {
         routes.forEach(this::add);
     }
 
-    public void remove(E entity) { map.remove(entity.getId()); }
-
     /** Delegates to {@link java.util.Map#values()} */
     public Collection<E> values() {
         return map.values();

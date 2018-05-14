@@ -40,24 +40,20 @@ import org.opentripplanner.model.TariffZone;
 import org.opentripplanner.model.Transfer;
 import org.opentripplanner.model.Trip;
 import org.opentripplanner.model.OtpTransitService;
-import org.opentripplanner.netex.mapping.AgencyAndIdFactory;
 import org.opentripplanner.routing.edgetype.TripPattern;
 import org.opentripplanner.model.Parking;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 public class OtpTransitBuilder {
-    private static final Logger LOG = LoggerFactory.getLogger(OtpTransitBuilder.class);
-
     private final List<Agency> agencies = new ArrayList<>();
+
 
     private final List<ServiceCalendarDate> calendarDates = new ArrayList<>();
 
@@ -230,89 +226,6 @@ public class OtpTransitBuilder {
         createNoneExistingIds();
 
         return new OtpTransitServiceImpl(this);
-    }
-
-    public void removeStopsNotInUse() {
-        // Quays are location type 0
-        Set<Stop> quays = stopsById.values().stream().filter(s -> s.getLocationType() == 0).collect(Collectors.toSet());
-
-        // StopPlaces are location type 0 except multimodal and groupsOfStopPlaces
-        Set<Stop> stopPlaces = stopsById.values().stream().filter(s -> s.getLocationType() == 1
-                && !multiModalStops.containsKey(s.getId()) && !groupsOfStopPlaces.containsKey(s.getId())).collect(Collectors.toSet());
-
-        // Create quaysByStopPlace
-        ListMultimap<Stop, Stop> quaysByStopPlace = ArrayListMultimap.create();
-        for (Stop stop : quays) {
-            quaysByStopPlace.put(stopsById.get(AgencyAndIdFactory.createAgencyAndId(stop.getParentStation())), stop);
-        }
-
-        // Find quays not used
-        Set<Stop> quaysNotInUse = new HashSet<>(quays);
-        for (StopPattern stopPattern : tripPatterns.keySet()) {
-            for (Stop stop : stopPattern.stops) {
-                quaysNotInUse.remove(stop);
-            }
-        }
-
-        // Also filter by expired
-        quaysNotInUse.removeIf(q -> !q.isExpired());
-
-        // Find stopPlaces not used
-        Set<Stop> stopPlacesNotInUse = new HashSet<>(stopPlaces);
-        for (Map.Entry<Stop, Collection<Stop>> entry : quaysByStopPlace.asMap().entrySet()) {
-            if (entry.getValue().stream().anyMatch(s -> !quaysNotInUse.contains(s))) {
-                stopPlacesNotInUse.remove(entry.getKey());
-            }
-        }
-
-        // Remove  multimodal stopPlaces not used
-        Set<Stop> multiModalStopPlacesNotInUse = new HashSet<>(multiModalStops.values());
-        for (Map.Entry<Stop, Collection<Stop>> entry : stationsByMultiModalStop.asMap().entrySet()) {
-            if (entry.getValue().stream().anyMatch(s -> !stopPlacesNotInUse.contains(s))) {
-                multiModalStopPlacesNotInUse.remove(entry.getKey());
-            }
-        }
-
-        // Remove  groupOfStopPlaces not used
-        Set<Stop> groupOfStopPlacesNotInUse = new HashSet<>(groupsOfStopPlaces.values());
-        for (Map.Entry<Stop, Collection<Stop>> entry : stopByGroupOfStopPlaces.asMap().entrySet()) {
-            if (entry.getValue().stream().anyMatch(s -> !stopPlacesNotInUse.contains(s))
-                    && entry.getValue().stream().anyMatch(s -> !multiModalStopPlacesNotInUse.contains(s))) {
-                groupOfStopPlacesNotInUse.remove(entry.getKey());
-            }
-        }
-
-        // Remove quays
-        quaysNotInUse.forEach(q ->
-            stopsById.remove(q)
-        );
-
-        LOG.info(quaysNotInUse.size() + " quays removed (expired and not in use)");
-
-        // Remove stopPlaces
-        stopPlacesNotInUse.forEach(s ->
-            stopsById.remove(s)
-        );
-
-        LOG.info(stopPlacesNotInUse.size() + " stopPlaces removed (expired and not in use)");
-
-        // Remove multimodal stopPlaces
-        multiModalStopPlacesNotInUse.forEach(m -> {
-            stopsById.remove(m);
-            multiModalStops.remove(m);
-            stationsByMultiModalStop.removeAll(m);
-        });
-
-        LOG.info(multiModalStopPlacesNotInUse.size() + " multimodal stopPlaces removed (expired and not in use)");
-
-        // Remove groupsOfStopPlaces
-        groupOfStopPlacesNotInUse.forEach(g -> {
-            stopsById.remove(g);
-            groupsOfStopPlaces.remove(g);
-            stopByGroupOfStopPlaces.removeAll(g);
-        });
-
-        LOG.info(groupOfStopPlacesNotInUse.size() + " groupsOfStopPlaces removed (expired and not in use)");
     }
 
     private void createNoneExistingIds() {
