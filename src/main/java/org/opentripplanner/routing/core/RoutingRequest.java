@@ -129,7 +129,7 @@ public class RoutingRequest implements Cloneable, Serializable {
     /** The set of TraverseModes that a user is willing to use. Defaults to WALK | TRANSIT. */
     public TraverseModeSet modes = new TraverseModeSet("TRANSIT,WALK"); // defaults in constructor overwrite this
 
-    public Map<TraverseMode, Set<TransmodelTransportSubmode>> transportSubmodes = new HashMap<>();
+    public HashMap<TraverseMode, Set<TransmodelTransportSubmode>> transportSubmodes = new HashMap<>();
 
     /** The set of characteristics that the user wants to optimize for -- defaults to QUICK, or optimize for transit time. */
     public OptimizeType optimize = OptimizeType.QUICK;
@@ -886,6 +886,7 @@ public class RoutingRequest implements Cloneable, Serializable {
             clone.bannedTrips = (HashMap<AgencyAndId, BannedStopSet>) bannedTrips.clone();
             clone.bannedStops = bannedStops.clone();
             clone.bannedStopsHard = bannedStopsHard.clone();
+            clone.transportSubmodes =(HashMap<TraverseMode, Set<TransmodelTransportSubmode>>) transportSubmodes.clone();
             if (this.bikeWalkingOptions != this)
                 clone.bikeWalkingOptions = this.bikeWalkingOptions.clone();
             else
