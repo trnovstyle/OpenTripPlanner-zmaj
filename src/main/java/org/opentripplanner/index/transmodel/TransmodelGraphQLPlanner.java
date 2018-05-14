@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -230,6 +231,9 @@ public class TransmodelGraphQLPlanner {
             if (!StringUtils.isEmpty(modesAsString)) {
                 new QualifiedModeSet(modesAsString).applyToRoutingRequest(request);
                 request.setModes(request.modes);
+            } else if (cableCar) {
+                // Clear default modes in case only cable car is selected
+                request.clearModes();
             }
 
             // Apply cable car setting 
