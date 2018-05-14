@@ -242,6 +242,7 @@ public class TransmodelGraphQLPlanner {
 
         List<Map<String, ?>> transportSubmodeFilters = environment.getArgument("transportSubmodes");
         if (transportSubmodeFilters != null) {
+            request.transportSubmodes = new HashMap<>();
             for (Map<String, ?> transportSubmodeFilter : transportSubmodeFilters) {
                 TraverseMode transportMode = (TraverseMode) transportSubmodeFilter.get("transportMode");
                 List<TransmodelTransportSubmode> transportSubmodes = (List<TransmodelTransportSubmode>) transportSubmodeFilter.get("transportSubmodes");
