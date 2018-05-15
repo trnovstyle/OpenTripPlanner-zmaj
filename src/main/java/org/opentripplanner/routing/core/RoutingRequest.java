@@ -886,7 +886,11 @@ public class RoutingRequest implements Cloneable, Serializable {
             clone.bannedTrips = (HashMap<AgencyAndId, BannedStopSet>) bannedTrips.clone();
             clone.bannedStops = bannedStops.clone();
             clone.bannedStopsHard = bannedStopsHard.clone();
-            clone.transportSubmodes =(HashMap<TraverseMode, Set<TransmodelTransportSubmode>>) transportSubmodes.clone();
+            clone.transportSubmodes = (HashMap<TraverseMode, Set<TransmodelTransportSubmode>>) transportSubmodes.clone();
+            clone.whiteListedAgencies = (HashSet<String>) whiteListedAgencies.clone();
+            clone.whiteListedRoutes = whiteListedRoutes.clone();
+            clone.preferredAgencies = (HashSet<String>) preferredAgencies.clone();
+            clone.preferredRoutes = preferredRoutes.clone();
             if (this.bikeWalkingOptions != this)
                 clone.bikeWalkingOptions = this.bikeWalkingOptions.clone();
             else
