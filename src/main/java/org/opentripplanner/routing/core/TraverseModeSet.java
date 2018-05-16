@@ -53,10 +53,8 @@ public class TraverseModeSet implements Cloneable, Serializable {
 
     private static final int MODE_AIRPLANE = 4096;
 
-    private static final int MODE_COACH = 8192;
-
     private static final int MODE_TRANSIT = MODE_TRAM | MODE_RAIL | MODE_SUBWAY | MODE_FUNICULAR
-            | MODE_GONDOLA | MODE_CABLE_CAR | MODE_BUS | MODE_FERRY | MODE_AIRPLANE | MODE_COACH;
+            | MODE_GONDOLA | MODE_CABLE_CAR | MODE_BUS | MODE_FERRY | MODE_AIRPLANE;
  
     private static final int MODE_ALL = MODE_TRANSIT | MODE_WALK | MODE_BICYCLE;
 
@@ -118,8 +116,6 @@ public class TraverseModeSet implements Cloneable, Serializable {
             return MODE_AIRPLANE;
         case TRANSIT:
             return MODE_TRANSIT;
-        case COACH:
-            return MODE_COACH;
         }
         return 0;
     }
@@ -176,11 +172,7 @@ public class TraverseModeSet implements Cloneable, Serializable {
     public boolean getFunicular() {
         return (modes & MODE_FUNICULAR) != 0;
     }
-
-    public boolean getCoach() {
-        return (modes & MODE_COACH) != 0;
-    }
-
+    
     public boolean getRail() {
         return (modes & MODE_RAIL) != 0;
     }
@@ -263,14 +255,6 @@ public class TraverseModeSet implements Cloneable, Serializable {
             modes |= MODE_FUNICULAR;
         } else {
             modes &= ~MODE_FUNICULAR;
-        }
-    }
-
-    public void setCoach(boolean coach) {
-        if (coach) {
-            modes |= MODE_COACH;
-        } else {
-            modes &= ~MODE_COACH;
         }
     }
 
