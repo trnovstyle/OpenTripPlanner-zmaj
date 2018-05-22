@@ -54,7 +54,9 @@ public class GtfsLibrary {
         if (routeType >= 100 && routeType < 200) { // Railway Service
             return TraverseMode.RAIL;
         } else if (routeType >= 200 && routeType < 300) { //Coach Service
-            return TraverseMode.COACH;
+            // TODO mapping coach to bus until front end is prepared for coach
+            // return TraverseMode.COACH;
+            return TraverseMode.BUS;
         } else if (routeType >= 300
                 && routeType < 500) { //Suburban Railway Service and Urban Railway service
             if (routeType >= 401 && routeType <= 402) {
