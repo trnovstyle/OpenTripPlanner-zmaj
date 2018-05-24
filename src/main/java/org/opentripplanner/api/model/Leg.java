@@ -198,7 +198,11 @@ public class Leg {
       * For transfer legs, provide additional info about the transfer
       */
 
-    public TimedTransferEdge timedTransferEdge;
+     public TimedTransferEdge timedTransferEdge;
+
+     public TimedTransferEdge transferFrom;
+
+     public TimedTransferEdge transferTo;
 
      /**
       * For transit leg, the route's branding URL (if one exists). For non-transit legs, null.
