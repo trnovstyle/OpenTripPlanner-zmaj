@@ -439,11 +439,16 @@ public class TimetableSnapshotSource {
             return false;
         }
 
+        Boolean isMonitored = activity.getMonitoredVehicleJourney().isMonitored();
+        if (isMonitored != null && !isMonitored) {
+            //Vehicle is reported as NOT monitored
+            return false;
+        }
+
         Set<Trip> trips = siriFuzzyTripMatcher.match(activity);
 
         if (trips == null || trips.isEmpty()) {
             if (keepLogging) {
-                Boolean isMonitored = activity.getMonitoredVehicleJourney().isMonitored();
                 String lineRef = (activity.getMonitoredVehicleJourney().getLineRef() != null ? activity.getMonitoredVehicleJourney().getLineRef().getValue():null);
                 String vehicleRef = (activity.getMonitoredVehicleJourney().getVehicleRef() != null ? activity.getMonitoredVehicleJourney().getVehicleRef().getValue():null);
                 String tripId =  (activity.getMonitoredVehicleJourney().getCourseOfJourneyRef() != null ? activity.getMonitoredVehicleJourney().getCourseOfJourneyRef().getValue():null);
@@ -494,6 +499,11 @@ public class TimetableSnapshotSource {
 
 
     private boolean handleModifiedTrip(Graph graph, EstimatedVehicleJourney estimatedVehicleJourney) {
+
+        if (estimatedVehicleJourney.isMonitored() != null && !estimatedVehicleJourney.isMonitored()) {
+            //EstimatedVehicleJourney is reported as NOT monitored
+            return false;
+        }
 
         EstimatedVehicleJourney.EstimatedCalls estimatedCalls = estimatedVehicleJourney.getEstimatedCalls();
         if (estimatedCalls == null) {
