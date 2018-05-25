@@ -42,6 +42,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * A library class with only static methods used in converting internal GraphPaths to TripPlans, which are
@@ -182,6 +183,10 @@ public abstract class GraphPathToTripPlanConverter {
 
         fixupLegs(itinerary.legs, legsStates);
 
+        moveTransferDetailsToTransitLegs(itinerary);
+
+        removeStaySeatedTransferLegs(itinerary);
+
         itinerary.duration = lastState.getElapsedTimeSeconds();
         itinerary.startTime = makeCalendar(states[0]);
         itinerary.endTime = makeCalendar(lastState);
@@ -200,6 +205,25 @@ public abstract class GraphPathToTripPlanConverter {
 
         return itinerary;
     }
+
+    private static void moveTransferDetailsToTransitLegs(Itinerary itinerary) {
+        // Loop through all legs except first and last to check for transfer legs.
+        for (int i = 1; i < itinerary.legs.size() - 1; i++) {
+            // Move transfer details to the legs immediately before and after
+            TimedTransferEdge transferEdge = itinerary.legs.get(i).timedTransferEdge;
+            if (itinerary.legs.get(i).timedTransferEdge != null) {
+                itinerary.legs.get(i - 1).transferTo = transferEdge;
+                itinerary.legs.get(i + 1).transferFrom = transferEdge;
+            }
+        }
+    }
+
+    private static void removeStaySeatedTransferLegs(Itinerary itinerary) {
+        itinerary.legs = itinerary.legs.stream().filter(l -> l.timedTransferEdge == null
+                || l.timedTransferEdge.getTransferDetails() == null
+                || !l.timedTransferEdge.getTransferDetails().isStaySeated()).collect(Collectors.toList());
+    }
+
 
     private static Calendar makeCalendar(State state) {
         RoutingContext rctx = state.getContext();

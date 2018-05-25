@@ -25,6 +25,9 @@ import org.opentripplanner.model.Route;
 import org.opentripplanner.model.Stop;
 import org.opentripplanner.model.Trip;
 import org.opentripplanner.common.model.P2;
+import org.opentripplanner.routing.edgetype.SimpleTransfer;
+import org.opentripplanner.routing.edgetype.TimedTransferEdge;
+import org.opentripplanner.routing.edgetype.TransferEdge;
 import org.opentripplanner.routing.vertextype.TransitStop;
 
 /**
@@ -67,7 +70,7 @@ public class TransferTable implements Serializable {
      *   can be found in the StopTransfer.*_TRANSFER constants. If no transfer is found,
      *   StopTransfer.UNKNOWN_TRANSFER is returned.
      */
-    public int getTransferTime(Stop fromStop, Stop toStop, Trip fromTrip, Trip toTrip, boolean forwardInTime) {
+    public int getTransferTime(Stop fromStop, Stop toStop, Trip fromTrip, Trip toTrip, boolean forwardInTime, State state) {
         checkNotNull(fromStop);
         checkNotNull(toStop);
         
@@ -80,9 +83,22 @@ public class TransferTable implements Serializable {
             fromTrip = toTrip;
             toTrip = tempTrip;
         }
-        
+
         // Get transfer time between the two stops
         int transferTime = getTransferTime(fromStop.getId(), toStop.getId(), fromTrip, toTrip);
+
+        // Check transfer details to see if we are using the right transfer based on trips
+        if (state.backEdge instanceof TimedTransferEdge
+                && ((TimedTransferEdge)state.backEdge).getTransferDetails() != null
+                &&  ((TimedTransferEdge)state.backEdge).getTransferDetails().getFromTrip() != null
+                &&  ((TimedTransferEdge)state.backEdge).getTransferDetails().getToTrip() != null) {
+            if (!((TimedTransferEdge)state.backEdge).getTransferDetails().getFromTrip().getId().equals(fromTrip.getId())
+                || !((TimedTransferEdge)state.backEdge).getTransferDetails().getToTrip().getId().equals(toTrip.getId())) {
+                if (transferTime != StopTransfer.UNKNOWN_TRANSFER) {
+                    transferTime = StopTransfer.UNKNOWN_TRANSFER;
+                }
+            }
+        }
         
         // Check parents of stops if no transfer was found
         if (transferTime == StopTransfer.UNKNOWN_TRANSFER) {
@@ -120,6 +136,10 @@ public class TransferTable implements Serializable {
         }
         
         return transferTime;
+    }
+
+    public int getTransferTime(Stop fromStop, Stop toStop, Trip fromTrip, Trip toTrip, boolean forwardInTime) {
+        return getTransferTime(fromStop, toStop, fromTrip, toTrip, forwardInTime, null);
     }
     
     /**

@@ -821,21 +821,9 @@ public class PatternHopFactory {
                         // Handle with edges that bypass the street network.
                         // from and to vertex here are stop_arrive and stop_depart vertices
 
-                        // only add edge when it doesn't exist already
-                        boolean hasTimedTransferEdge = false;
+                        TimedTransferEdge timedTransferEdge = new TimedTransferEdge(fromVertex, toVertex);
+                        timedTransferEdge.setTransferDetails(t);
 
-                        for (Edge outgoingEdge : fromVertex.getOutgoing()) {
-                            if (outgoingEdge instanceof TimedTransferEdge) {
-                                if (outgoingEdge.getToVertex() == toVertex) {
-                                    hasTimedTransferEdge = true;
-                                    break;
-                                }
-                            }
-                        }
-                        if (!hasTimedTransferEdge) {
-                            TimedTransferEdge timedTransferEdge = new TimedTransferEdge(fromVertex, toVertex);
-                            timedTransferEdge.setTransferDetails(t);
-                        }
                         // add to transfer table to handle specificity
                         transferTable.addTransferTime(fromStop, toStop, fromRoute, toRoute, fromTrip, toTrip, StopTransfer.TIMED_TRANSFER);
                         break;

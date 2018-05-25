@@ -3414,10 +3414,17 @@ public class TransmodelIndexGraphQLSchema {
                         .dataFetcher(environment -> ((Leg) environment.getSource()).walkSteps)
                         .build())
                 .field(GraphQLFieldDefinition.newFieldDefinition()
-                        .name("interchange")
+                        .name("interchangeFrom")
                         .type(interchangeType)
-                        .dataFetcher(environment -> ((Leg) environment.getSource()).timedTransferEdge != null
-                                ? ((Leg) environment.getSource()).timedTransferEdge.getTransferDetails()
+                        .dataFetcher(environment -> ((Leg) environment.getSource()).transferFrom != null
+                                ? ((Leg) environment.getSource()).transferFrom.getTransferDetails()
+                                : null)
+                        .build())
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("interchangeTo")
+                        .type(interchangeType)
+                        .dataFetcher(environment -> ((Leg) environment.getSource()).transferTo != null
+                                ? ((Leg) environment.getSource()).transferTo.getTransferDetails()
                                 : null)
                         .build())
                 .build();
