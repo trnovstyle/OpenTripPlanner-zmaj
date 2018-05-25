@@ -88,7 +88,7 @@ public class TransferTable implements Serializable {
         int transferTime = getTransferTime(fromStop.getId(), toStop.getId(), fromTrip, toTrip);
 
         // Check transfer details to see if we are using the right transfer based on trips
-        if (state.backEdge instanceof TimedTransferEdge
+        if (state != null && state.backEdge instanceof TimedTransferEdge
                 && ((TimedTransferEdge)state.backEdge).getTransferDetails() != null
                 &&  ((TimedTransferEdge)state.backEdge).getTransferDetails().getFromTrip() != null
                 &&  ((TimedTransferEdge)state.backEdge).getTransferDetails().getToTrip() != null) {
