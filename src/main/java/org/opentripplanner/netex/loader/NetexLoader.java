@@ -301,8 +301,8 @@ public class NetexLoader {
             if(lines != null){
                 List<JAXBElement<? extends DataManagedObjectStructure>> line_ = lines.getLine_();
                 for (JAXBElement element : line_) {
-                    if (element.getValue() instanceof Line) {
-                        Line line = (Line) element.getValue();
+                    if (element.getValue() instanceof Line_VersionStructure) {
+                        Line_VersionStructure line = (Line_VersionStructure) element.getValue();
                         currentNetexDao().lineById.add(line);
                         String groupRef = line.getRepresentedByGroupRef().getRef();
                         Network network2 = currentNetexDao().networkById.lookup(groupRef);

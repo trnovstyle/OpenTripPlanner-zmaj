@@ -11,7 +11,7 @@ import org.rutebanken.netex.model.Authority;
 import org.rutebanken.netex.model.Branding;
 import org.rutebanken.netex.model.GroupOfStopPlaces;
 import org.rutebanken.netex.model.JourneyPattern;
-import org.rutebanken.netex.model.Line;
+import org.rutebanken.netex.model.Line_VersionStructure;
 import org.rutebanken.netex.model.Notice;
 import org.rutebanken.netex.model.StopPlace;
 import org.rutebanken.netex.model.TariffZone;
@@ -78,7 +78,7 @@ public class NetexMapper {
             }
         }
 
-        for (Line line : netexDao.lineById.values()) {
+        for (Line_VersionStructure line : netexDao.lineById.values()) {
             Route route = routeMapper.mapRoute(line, transitBuilder, netexDao, netexDao.getTimeZone());
             transitBuilder.getRoutes().add(route);
         }

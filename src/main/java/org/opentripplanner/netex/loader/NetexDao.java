@@ -10,6 +10,7 @@ import org.rutebanken.netex.model.GroupOfLines;
 import org.rutebanken.netex.model.GroupOfStopPlaces;
 import org.rutebanken.netex.model.JourneyPattern;
 import org.rutebanken.netex.model.Line;
+import org.rutebanken.netex.model.Line_VersionStructure;
 import org.rutebanken.netex.model.Network;
 import org.rutebanken.netex.model.Notice;
 import org.rutebanken.netex.model.NoticeAssignment;
@@ -54,7 +55,7 @@ public class NetexDao {
     public final HierarchicalMap<String, ServiceJourneyInterchange> interchanges;
     public final HierarchicalMapById<JourneyPattern> journeyPatternsById;
     public final HierarchicalMap<String, JourneyPattern> journeyPatternsByStopPointId;
-    public final HierarchicalMapById<Line> lineById;
+    public final HierarchicalMapById<Line_VersionStructure> lineById;
     public final HierarchicalMapById<StopPlace> multimodalStopPlaceById;
     public final HierarchicalMapById<Network> networkById;
     public final HierarchicalMap<String, Network> networkByLineId;

@@ -6,7 +6,7 @@ import org.opentripplanner.model.impl.OtpTransitBuilder;
 import org.opentripplanner.netex.loader.NetexDao;
 import org.rutebanken.netex.model.Authority;
 import org.rutebanken.netex.model.GroupOfLines;
-import org.rutebanken.netex.model.Line;
+import org.rutebanken.netex.model.Line_VersionStructure;
 import org.rutebanken.netex.model.Network;
 import org.rutebanken.netex.model.OperatorRefStructure;
 import org.rutebanken.netex.model.PresentationStructure;
@@ -24,7 +24,7 @@ public class RouteMapper {
     private HexBinaryAdapter hexBinaryAdapter = new HexBinaryAdapter();
     private KeyValueMapper keyValueMapper = new KeyValueMapper();
 
-    public org.opentripplanner.model.Route mapRoute(Line line, OtpTransitBuilder transitBuilder, NetexDao netexDao, String timeZone) {
+    public org.opentripplanner.model.Route mapRoute(Line_VersionStructure line, OtpTransitBuilder transitBuilder, NetexDao netexDao, String timeZone) {
 
         org.opentripplanner.model.Route otpRoute = new org.opentripplanner.model.Route();
 
@@ -53,7 +53,7 @@ public class RouteMapper {
         return otpRoute;
     }
 
-    private Operator findLineOperator(Line line, OtpTransitBuilder transitBuilder) {
+    private Operator findLineOperator(Line_VersionStructure line, OtpTransitBuilder transitBuilder) {
         OperatorRefStructure opeRef = line.getOperatorRef();
 
         if(opeRef != null) {
@@ -63,7 +63,7 @@ public class RouteMapper {
         return null;
     }
 
-    private Agency findAuthorityForRoute(OtpTransitBuilder transitBuilder, NetexDao netexDao, Line line, String timeZone) {
+    private Agency findAuthorityForRoute(OtpTransitBuilder transitBuilder, NetexDao netexDao, Line_VersionStructure line, String timeZone) {
         Agency otpAgency = null;
         Network network = netexDao.networkByLineId.lookup(line.getId());
         GroupOfLines groupOfLines = netexDao.groupOfLinesByLineId.lookup(line.getId());
@@ -81,7 +81,7 @@ public class RouteMapper {
         return otpAgency != null ? otpAgency : getDefaultAgency(transitBuilder, line, timeZone);
     }
 
-    private Agency getDefaultAgency(OtpTransitBuilder transitBuilder, Line line, String timeZone) {
+    private Agency getDefaultAgency(OtpTransitBuilder transitBuilder, Line_VersionStructure line, String timeZone) {
         LOG.warn("No authority found for " + line.getId());
         Agency agency = authorityToAgencyMapper.getDefaultAgency(timeZone);
 
