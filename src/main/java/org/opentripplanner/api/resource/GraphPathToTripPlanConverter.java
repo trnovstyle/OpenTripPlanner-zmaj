@@ -632,6 +632,7 @@ public abstract class GraphPathToTripPlanConverter {
 
         if (graph.index != null) {
             Set<StopCondition> departingStopConditions = new HashSet<>();
+            departingStopConditions.add(StopCondition.STOP);
             departingStopConditions.add(StopCondition.START_POINT);
 
             if(!isFirstLeg) {
@@ -639,9 +640,11 @@ public abstract class GraphPathToTripPlanConverter {
             }
 
             Set<StopCondition> passingStopConditions = new HashSet<>();
+            passingStopConditions.add(StopCondition.STOP);
             passingStopConditions.add(StopCondition.NOT_STOPPING);
 
             Set<StopCondition> arrivingStopConditions = new HashSet<>();
+            arrivingStopConditions.add(StopCondition.STOP);
             arrivingStopConditions.add(StopCondition.DESTINATION);
 
             if (leg.routeId != null) {
@@ -787,7 +790,9 @@ public abstract class GraphPathToTripPlanConverter {
             for (AlertPatch alert : alertPatches) {
                 if (alert.getAlert().effectiveStartDate.before(toTime) &&
                         (alert.getAlert().effectiveEndDate == null || alert.getAlert().effectiveEndDate.after(fromTime))) {
-                    if (stopConditions != null && !stopConditions.isEmpty()) {
+
+                    if (!alert.getStopConditions().isEmpty() &&  // Skip if stopConditions are not set for alert
+                            stopConditions != null && !stopConditions.isEmpty()) { // ...or specific stopConditions are not requested
                         for (StopCondition stopCondition : stopConditions) {
                             if (alert.getStopConditions().contains(stopCondition)) {
                                 leg.addAlertPatch(alert);
