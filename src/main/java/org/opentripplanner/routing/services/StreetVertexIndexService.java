@@ -19,6 +19,7 @@ import org.opentripplanner.common.model.GenericLocation;
 import org.opentripplanner.routing.core.RoutingRequest;
 import org.opentripplanner.routing.graph.Edge;
 import org.opentripplanner.routing.graph.Vertex;
+import org.opentripplanner.routing.vertextype.BikeRentalStationVertex;
 import org.opentripplanner.routing.vertextype.TransitStop;
 
 import java.util.Collection;
@@ -55,6 +56,14 @@ public interface StreetVertexIndexService {
      * @return The transit stops within an envelope.
      */
     public List<TransitStop> getTransitStopForEnvelope(Envelope envelope);
+
+    /**
+     * @param envelope
+     * @return The bike parks within an envelope.
+     */
+    public List<BikeRentalStationVertex> getBikeRentalStationForEnvelope(Envelope envelope);
+
+    public void addToSpatialIndex(Vertex v);
 
     /**
      * Finds the appropriate vertex for this location.
