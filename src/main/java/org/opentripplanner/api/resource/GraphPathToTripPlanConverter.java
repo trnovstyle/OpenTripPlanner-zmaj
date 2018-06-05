@@ -931,7 +931,7 @@ public abstract class GraphPathToTripPlanConverter {
             name = ((StreetVertex) vertex).getIntersectionName(requestedLocale).toString(requestedLocale);
         }
         // Sets the name as the connecting stop in case the leg starts/ends at a splitter vertex
-        if (vertex instanceof SplitterVertex) {
+        if (vertex instanceof SplitterVertex || vertex instanceof OsmVertex) {
             for (Edge outgoing : vertex.getOutgoing()) {
                 if (outgoing.getToVertex() instanceof TransitStop) {
                     name = outgoing.getToVertex().getName();
