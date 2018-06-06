@@ -111,7 +111,7 @@ public class BikeRentalUpdater extends PollingGraphUpdater {
             } else if (sourceType.equals("share-bike")) {
                 source = new ShareBikeRentalDataSource();
             } else if (sourceType.equals("uip-bike")) {
-                source = new UIPBikeRentalDataSource(apiKey);
+                source = new UIPBikeRentalDataSource(apiKey, networkName);
             } else if (sourceType.equals("gbfs")) {
                 source = new GbfsBikeRentalDataSource();
             }
@@ -192,6 +192,7 @@ public class BikeRentalUpdater extends PollingGraphUpdater {
                         LOG.warn("{} not near any streets; it will not be usable.", station);
                     }
                     verticesByStation.put(station, vertex);
+                    graph.streetIndex.addToSpatialIndex(vertex);
                     new RentABikeOnEdge(vertex, vertex, station.networks);
                     if (station.allowDropoff)
                         new RentABikeOffEdge(vertex, vertex, station.networks);

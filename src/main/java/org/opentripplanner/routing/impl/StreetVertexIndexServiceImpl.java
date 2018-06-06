@@ -14,7 +14,6 @@
 package org.opentripplanner.routing.impl;
 
 
-import com.google.common.collect.Iterables;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Envelope;
 import com.vividsolutions.jts.geom.LineString;
@@ -29,8 +28,6 @@ import org.opentripplanner.common.model.GenericLocation;
 import org.opentripplanner.common.model.P2;
 import org.opentripplanner.graph_builder.linking.SimpleStreetSplitter;
 import org.opentripplanner.routing.core.RoutingRequest;
-import org.opentripplanner.routing.core.TraversalRequirements;
-import org.opentripplanner.routing.core.TraverseModeSet;
 import org.opentripplanner.routing.edgetype.*;
 import org.opentripplanner.routing.graph.Edge;
 import org.opentripplanner.routing.graph.Graph;
@@ -38,12 +35,11 @@ import org.opentripplanner.routing.graph.Vertex;
 import org.opentripplanner.routing.location.TemporaryStreetLocation;
 import org.opentripplanner.routing.services.StreetVertexIndexService;
 import org.opentripplanner.routing.util.ElevationUtils;
+import org.opentripplanner.routing.vertextype.BikeRentalStationVertex;
 import org.opentripplanner.routing.vertextype.SampleVertex;
 import org.opentripplanner.routing.vertextype.StreetVertex;
 import org.opentripplanner.routing.vertextype.TransitStop;
 import org.opentripplanner.util.I18NString;
-import org.opentripplanner.util.NonLocalizedString;
-import org.opentripplanner.util.ResourceBundleSingleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -67,6 +63,7 @@ public class StreetVertexIndexServiceImpl implements StreetVertexIndexService {
     private SpatialIndex edgeTree;
     private SpatialIndex transitStopTree;
     private SpatialIndex verticesTree;
+    private SpatialIndex bikeRentalStationTree;
 
     // private static final double SEARCH_RADIUS_M = 100; // meters
     // private static final double SEARCH_RADIUS_DEG = DistanceLibrary.metersToDegrees(SEARCH_RADIUS_M);
@@ -99,10 +96,12 @@ public class StreetVertexIndexServiceImpl implements StreetVertexIndexService {
             edgeTree = new HashGridSpatialIndex<>();
             transitStopTree = new HashGridSpatialIndex<>();
             verticesTree = new HashGridSpatialIndex<>();
+            bikeRentalStationTree = new HashGridSpatialIndex<>();
         } else {
             edgeTree = new STRtree();
             transitStopTree = new STRtree();
             verticesTree = new STRtree();
+            bikeRentalStationTree = new STRtree();
         }
         postSetup();
         if (!hashGrid) {
@@ -239,12 +238,7 @@ public class StreetVertexIndexServiceImpl implements StreetVertexIndexService {
                 else
                     edgeTree.insert(env, e);
             }
-            if (v instanceof TransitStop) {
-                Envelope env = new Envelope(v.getCoordinate());
-                transitStopTree.insert(env, v);
-            }
-            Envelope env = new Envelope(v.getCoordinate());
-            verticesTree.insert(env, v);
+            addToSpatialIndex(v);
         }
     }
 
@@ -303,6 +297,32 @@ public class StreetVertexIndexServiceImpl implements StreetVertexIndexService {
                 its.remove();
         }
         return transitStops;
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public List<BikeRentalStationVertex> getBikeRentalStationForEnvelope(Envelope envelope) {
+        List<BikeRentalStationVertex> bikeParks = bikeRentalStationTree.query(envelope);
+        for (Iterator<BikeRentalStationVertex> its = bikeParks.iterator(); its.hasNext();) {
+            BikeRentalStationVertex ts = its.next();
+            if (!envelope.intersects(new Coordinate(ts.getLon(), ts.getLat())))
+                its.remove();
+        }
+        return bikeParks;
+    }
+
+    @Override
+    public void addToSpatialIndex(Vertex v) {
+        if (v instanceof TransitStop) {
+            Envelope env = new Envelope(v.getCoordinate());
+            transitStopTree.insert(env, v);
+        }
+        if (v instanceof BikeRentalStationVertex) {
+            Envelope env = new Envelope(v.getCoordinate());
+            bikeRentalStationTree.insert(env, v);
+        }
+        Envelope env = new Envelope(v.getCoordinate());
+        verticesTree.insert(env, v);
     }
 
     /**

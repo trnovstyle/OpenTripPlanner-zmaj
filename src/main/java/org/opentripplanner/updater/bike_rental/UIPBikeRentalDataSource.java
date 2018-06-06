@@ -6,14 +6,20 @@ import org.opentripplanner.routing.bike_rental.BikeRentalStation;
 import org.opentripplanner.util.NonLocalizedString;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class UIPBikeRentalDataSource extends GenericJsonBikeRentalDataSource {
 
     private String baseURL = null;
 
-    UIPBikeRentalDataSource(String apiKey) {
+    private Set<String> networks = null;
+
+    UIPBikeRentalDataSource(String apiKey, String network) {
         super("stations", "Client-Identifier", apiKey);
+        this.networks = new HashSet<>();
+        this.networks.add(network);
     }
 
     /**
@@ -34,6 +40,8 @@ public class UIPBikeRentalDataSource extends GenericJsonBikeRentalDataSource {
 
         brstation.bikesAvailable = rentalStationNode.path("availability").path("bikes").asInt();
         brstation.spacesAvailable = rentalStationNode.path("availability").path("locks").asInt();
+
+        brstation.networks = this.networks;
         return brstation;
     }
 
