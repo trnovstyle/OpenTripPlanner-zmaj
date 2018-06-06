@@ -2826,9 +2826,7 @@ public class TransmodelIndexGraphQLSchema {
                             if (environment.getArgument("publicCode") != null) {
                                 stream = stream
                                         .filter(route -> route.getShortName() != null)
-                                        .filter(route -> route.getShortName().toLowerCase().startsWith(
-                                                ((String) environment.getArgument("publicCode")).toLowerCase())
-                                        );
+                                        .filter(route -> route.getShortName().equals(environment.getArgument("publicCode")));
                             }
                             if (environment.getArgument("transportModes") != null) {
 
