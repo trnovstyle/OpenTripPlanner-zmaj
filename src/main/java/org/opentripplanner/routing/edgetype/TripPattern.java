@@ -553,7 +553,7 @@ public class TripPattern implements Cloneable, Serializable {
             stopVertices[stop + 1] = stopArrive.getStopVertex(); // this will only have an effect on the last stop
 
             // For trips that cross midnight more than once, extended serviceDates need to be used
-            boolean extendedDates = (this.scheduledTimetable.tripTimes.stream()
+            boolean extendedDates = !this.scheduledTimetable.tripTimes.isEmpty() && (this.scheduledTimetable.tripTimes.stream()
                     .mapToInt(tripTimes -> tripTimes.getArrivalTime(nStops - 1)).max()
                     .getAsInt() - NUMBER_OF_SECONDS_IN_DAY) > NUMBER_OF_SECONDS_IN_DAY;
 
