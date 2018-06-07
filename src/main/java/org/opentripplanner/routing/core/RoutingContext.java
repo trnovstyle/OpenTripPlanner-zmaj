@@ -108,6 +108,10 @@ public class RoutingContext implements Cloneable {
      */
     public ArrayList<ServiceDay> serviceDays;
 
+    public ArrayList<ServiceDay> extendedServiceDays;
+
+    private final int additionalDays = 7;
+
     /**
      * The search will be aborted if it is still running after this time (in milliseconds since the epoch). A negative or zero value implies no limit.
      * This provides an absolute timeout, whereas the maxComputationTime is relative to the beginning of an individual search. While the two might
@@ -367,8 +371,11 @@ public class RoutingContext implements Cloneable {
         c.setTime(new Date(opt.getSecondsSinceEpoch() * 1000));
         c.setTimeZone(graph.getTimeZone());
 
+
+
         final ServiceDate serviceDate = new ServiceDate(c);
         this.serviceDays = new ArrayList<ServiceDay>(3);
+        this.extendedServiceDays = new ArrayList<ServiceDay>(17);
         if (calendarService == null && graph.getCalendarService() != null
                 && (opt.modes == null || opt.modes.contains(TraverseMode.TRANSIT))) {
             LOG.warn("RoutingContext has no CalendarService. Transit will never be boarded.");
@@ -384,9 +391,13 @@ public class RoutingContext implements Cloneable {
         }
 
         for (TimeZone timeZone: agencyTimeZones) {
-            addIfNotExists(this.serviceDays, new ServiceDay(graph, serviceDate.previous(), calendarService, timeZone));
-            addIfNotExists(this.serviceDays, new ServiceDay(graph, serviceDate, calendarService, timeZone));
-            addIfNotExists(this.serviceDays, new ServiceDay(graph, serviceDate.next(), calendarService, timeZone));
+            for (int dayOffset = -1; dayOffset <= 1; dayOffset++) {
+                addIfNotExists(this.serviceDays, new ServiceDay(graph, serviceDate.shift(dayOffset), calendarService, timeZone));
+            }
+            // Add extended serviceDates both before and after standard yesterday/today/tomorrow dates
+            for (int dayOffset = -1 - additionalDays; dayOffset <= 1 + additionalDays; dayOffset++) {
+                addIfNotExists(this.extendedServiceDays, new ServiceDay(graph, serviceDate.shift(dayOffset), calendarService, timeZone));
+            }
         }
     }
 

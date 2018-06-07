@@ -51,6 +51,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Represents a group of trips on a route, with the same direction id that all call at the same
@@ -75,6 +76,7 @@ public class TripPattern implements Cloneable, Serializable {
     public static final int SHIFT_DROPOFF = 3;
     public static final int NO_PICKUP = 1;
     public static final int FLAG_BIKES_ALLOWED = 32;
+    public static final int NUMBER_OF_SECONDS_IN_DAY = 86400;
 
     /**
      * The GTFS Route of all trips in this pattern.
@@ -550,12 +552,17 @@ public class TripPattern implements Cloneable, Serializable {
             stopVertices[stop] = stopDepart.getStopVertex();
             stopVertices[stop + 1] = stopArrive.getStopVertex(); // this will only have an effect on the last stop
 
+            // For trips that cross midnight more than once, extended serviceDates need to be used
+            boolean extendedDates = (this.scheduledTimetable.tripTimes.stream()
+                    .mapToInt(tripTimes -> tripTimes.getArrivalTime(nStops - 1)).max()
+                    .getAsInt() - NUMBER_OF_SECONDS_IN_DAY) > NUMBER_OF_SECONDS_IN_DAY;
+
             /* Create board/alight edges, but only if pickup/dropoff is enabled in GTFS. */
             if (this.canBoard(stop)) {
-                boardEdges[stop] = new TransitBoardAlight(stopDepart, pdv0, stop, mode);
+                boardEdges[stop] = new TransitBoardAlight(stopDepart, pdv0, stop, mode, extendedDates);
             }
             if (this.canAlight(stop + 1)) {
-                alightEdges[stop + 1] = new TransitBoardAlight(pav1, stopArrive, stop + 1, mode);
+                alightEdges[stop + 1] = new TransitBoardAlight(pav1, stopArrive, stop + 1, mode, extendedDates);
             }
         }
     }

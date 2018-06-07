@@ -59,6 +59,8 @@ public class TransitBoardAlight extends TablePatternEdge implements OnboardEdge 
 
     private final int stopIndex;
 
+    private final boolean extendedDates;
+
     private int modeMask; // TODO: via TablePatternEdge it should be possible to grab this from the pattern
    
     /** True if this edge represents boarding a vehicle, false if it represents alighting. */
@@ -66,20 +68,22 @@ public class TransitBoardAlight extends TablePatternEdge implements OnboardEdge 
 
     /** Boarding constructor (TransitStopDepart --> PatternStopVertex) */
     public TransitBoardAlight (TransitStopDepart fromStopVertex, PatternStopVertex toPatternVertex, 
-            int stopIndex, TraverseMode mode) {
+            int stopIndex, TraverseMode mode, boolean extendedDates) {
         super(fromStopVertex, toPatternVertex);
         this.stopIndex = stopIndex;
         this.modeMask = new TraverseModeSet(mode).getMask();
         this.boarding = true;
+        this.extendedDates = extendedDates;
     }
     
     /** Alighting constructor (PatternStopVertex --> TransitStopArrive) */
     public TransitBoardAlight (PatternStopVertex fromPatternStop, TransitStopArrive toStationVertex,
-            int stopIndex, TraverseMode mode) {
+            int stopIndex, TraverseMode mode, boolean extendedDates) {
         super(fromPatternStop, toStationVertex);
         this.stopIndex = stopIndex;
         this.modeMask = new TraverseModeSet(mode).getMask();
         this.boarding = false;
+        this.extendedDates = extendedDates;
     }
     
     /** 
@@ -149,7 +153,7 @@ public class TransitBoardAlight extends TablePatternEdge implements OnboardEdge 
         /* If the user requested a wheelchair accessible trip, check whether and this stop is not accessible. */
         if (options.wheelchairAccessible && ! getPattern().wheelchairAccessible(stopIndex)) {
             return null;
-        };
+        }
 
         Timetable scheduledTimetable = getPattern().scheduledTimetable;
 
@@ -270,7 +274,7 @@ public class TransitBoardAlight extends TablePatternEdge implements OnboardEdge 
             int bestWait = -1;
             TripTimes  bestTripTimes  = null;
             ServiceDay bestServiceDay = null;
-            for (ServiceDay sd : rctx.serviceDays) {
+            for (ServiceDay sd : this.extendedDates ? rctx.extendedServiceDays : rctx.serviceDays) {
                 /* Find the proper timetable (updated or original) if there is a realtime snapshot. */
                 Timetable timetable = tripPattern.getUpdatedTimetable(options, sd);
                 if (timetable.serviceDate != null && !sd.getServiceDate().equals(timetable.serviceDate)) {
@@ -397,7 +401,7 @@ public class TransitBoardAlight extends TablePatternEdge implements OnboardEdge 
                 return Double.POSITIVE_INFINITY;
             }
             BitSet services = getPattern().services;
-            for (ServiceDay sd : options.rctx.serviceDays) {
+            for (ServiceDay sd : this.extendedDates ? options.rctx.extendedServiceDays : options.rctx.serviceDays) {
                 if (sd.anyServiceRunning(services)) {
                     /* We assume all trips in a pattern are on the same route. Check if that route is banned. */
                     return options.routeIsBanned(this.getPattern().route) ? Double.POSITIVE_INFINITY : 0;

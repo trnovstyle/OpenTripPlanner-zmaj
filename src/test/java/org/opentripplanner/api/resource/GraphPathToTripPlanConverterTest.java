@@ -549,7 +549,7 @@ public class GraphPathToTripPlanConverterTest {
         PreBoardEdge e7 = new PreBoardEdge(
                 v6, v8);
         TransitBoardAlight e9 = new TransitBoardAlight(
-                v8, v10, 0, TraverseMode.RAIL);
+                v8, v10, 0, TraverseMode.RAIL, false);
         PatternHop e11 = new PatternHop(
                 v10, v12, trainStopDepart, trainStopDwell, 0);
         PatternDwell e13 = new PatternDwell(
@@ -561,7 +561,7 @@ public class GraphPathToTripPlanConverterTest {
         PatternHop e19 = new PatternHop(
                 v18, v20, trainStopInterline, trainStopArrive, 0);
         TransitBoardAlight e21 = new TransitBoardAlight(
-                v20, v22, 1, TraverseMode.RAIL);
+                v20, v22, 1, TraverseMode.RAIL, false);
         PreAlightEdge e23 = new PreAlightEdge(
                 v22, v24);
 
@@ -571,11 +571,11 @@ public class GraphPathToTripPlanConverterTest {
         PreBoardEdge e27 = new PreBoardEdge(
                 v26, v28);
         TransitBoardAlight e29 = new TransitBoardAlight(
-                v28, v30, 0, TraverseMode.FERRY);
+                v28, v30, 0, TraverseMode.FERRY, false);
         PatternHop e31 = new PatternHop(
                 v30, v32, ferryStopDepart, ferryStopArrive, 0);
         TransitBoardAlight e33 = new TransitBoardAlight(
-                v32, v34, 1, TraverseMode.FERRY);
+                v32, v34, 1, TraverseMode.FERRY, false);
         PreAlightEdge e35 = new PreAlightEdge(
                 v34, v36);
         StreetTransitLink e37 = new StreetTransitLink(
