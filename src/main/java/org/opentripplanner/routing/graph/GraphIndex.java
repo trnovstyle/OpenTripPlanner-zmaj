@@ -1,6 +1,7 @@
 package org.opentripplanner.routing.graph;
 
 import com.google.common.collect.*;
+import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Envelope;
@@ -122,6 +123,8 @@ public class GraphIndex {
 
     /** Used for finding first/last trip of the day. This is the time at which service ends for the day. */
     public final int overnightBreak = 60 * 60 * 2; // FIXME not being set, this was done in transitIndex
+
+    private final int NUMBER_OF_SECONDS_IN_DAY = 86400;
 
     /** Store distances from each stop to all nearby street intersections. Useful in speeding up analyst requests. */
     private transient StopTreeCache stopTreeCache = null;
@@ -769,11 +772,27 @@ public class GraphIndex {
         final TimetableSnapshot snapshot = (graph.timetableSnapshotSource != null)
             ? graph.timetableSnapshotSource.getTimetableSnapshot() : null;
 
+        // For trips that cross midnight more than once, extended serviceDates need to be used
+        int nStops = pattern.stopPattern.size;
+        boolean useExtendedDates = !pattern.scheduledTimetable.tripTimes.isEmpty() && (pattern.scheduledTimetable.tripTimes.stream()
+                .mapToInt(tripTimes -> tripTimes.getArrivalTime(nStops - 1)).max()
+                .getAsInt() - NUMBER_OF_SECONDS_IN_DAY) > NUMBER_OF_SECONDS_IN_DAY;
+
         Date date = new Date(startTime * 1000);
         final ServiceDate[] serviceDates = {new ServiceDate(date).previous(), new ServiceDate(date), new ServiceDate(date).next()};
 
+        // Add extended serviceDates both before and after standard yesterday/today/tomorrow dates
+        final ServiceDate[] extendedServiceDates = new ServiceDate[17];
+        if (useExtendedDates) {
+            int additionalDays = 7;
+            for (int dayOffset = -1 - additionalDays; dayOffset <= 1 + additionalDays; dayOffset++) {
+                int test = dayOffset + additionalDays + 1;
+                extendedServiceDates[dayOffset + additionalDays + 1] = new ServiceDate(date).shift(dayOffset);
+            }
+        }
+
         // Loop through all possible days
-        for (final ServiceDate serviceDate : serviceDates) {
+        for (final ServiceDate serviceDate : useExtendedDates ? extendedServiceDates : serviceDates) {
             final ServiceDay sd = new ServiceDay(graph, serviceDate, calendarService,
                     pattern.route.getAgency().getId());
             Timetable tt;
