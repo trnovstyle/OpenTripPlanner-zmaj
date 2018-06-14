@@ -206,15 +206,19 @@ public class AlertsUpdateHandler {
                     AgencyAndId stopId = siriFuzzyTripMatcher.getStop(stopPointRef.getValue());
 
                     String id = paddedSituationNumber + stopPointRef.getValue();
-                    if (stopId != null) {
-                        AlertPatch alertPatch = new AlertPatch();
-                        alertPatch.setStop(stopId);
-                        alertPatch.setTimePeriods(periods);
-                        alertPatch.setId(id);
+                    if (expireSituation) {
+                        idsToExpire.add(id);
+                    } else {
+                        if (stopId != null) {
+                            AlertPatch alertPatch = new AlertPatch();
+                            alertPatch.setStop(stopId);
+                            alertPatch.setTimePeriods(periods);
+                            alertPatch.setId(id);
 
-                        updateStopConditions(alertPatch, stopPoint.getStopConditions());
+                            updateStopConditions(alertPatch, stopPoint.getStopConditions());
 
-                        patches.add(alertPatch);
+                            patches.add(alertPatch);
+                        }
                     }
                 }
             }
@@ -251,25 +255,29 @@ public class AlertsUpdateHandler {
                     AgencyAndId stopId = siriFuzzyTripMatcher.getStop(stopPlace.getValue());
 
                     String id = paddedSituationNumber + stopPlace.getValue();
-                    if (stopId != null) {
+                    if (expireSituation) {
+                        idsToExpire.add(id);
+                    } else {
+                        if (stopId != null) {
 
-                        if (stopRoutes.isEmpty()) {
-                            AlertPatch stopOnlyAlertPatch = new AlertPatch();
-                            stopOnlyAlertPatch.setStop(stopId);
-                            stopOnlyAlertPatch.setTimePeriods(periods);
-                            stopOnlyAlertPatch.setId(id);
-                            patches.add(stopOnlyAlertPatch);
-                        } else {
-                            //Adding combination of stop & route
-                            for (Route route : stopRoutes) {
-                                id = paddedSituationNumber + stopPlace.getValue() + "-" + route.getId().getId();
+                            if (stopRoutes.isEmpty()) {
+                                AlertPatch stopOnlyAlertPatch = new AlertPatch();
+                                stopOnlyAlertPatch.setStop(stopId);
+                                stopOnlyAlertPatch.setTimePeriods(periods);
+                                stopOnlyAlertPatch.setId(id);
+                                patches.add(stopOnlyAlertPatch);
+                            } else {
+                                //Adding combination of stop & route
+                                for (Route route : stopRoutes) {
+                                    id = paddedSituationNumber + stopPlace.getValue() + "-" + route.getId().getId();
 
-                                AlertPatch alertPatch = new AlertPatch();
-                                alertPatch.setStop(stopId);
-                                alertPatch.setRoute(route.getId());
-                                alertPatch.setTimePeriods(periods);
-                                alertPatch.setId(id);
-                                patches.add(alertPatch);
+                                    AlertPatch alertPatch = new AlertPatch();
+                                    alertPatch.setStop(stopId);
+                                    alertPatch.setRoute(route.getId());
+                                    alertPatch.setTimePeriods(periods);
+                                    alertPatch.setId(id);
+                                    patches.add(alertPatch);
+                                }
                             }
                         }
                     }
@@ -375,13 +383,43 @@ public class AlertsUpdateHandler {
                                                 continue;
                                             }
                                             String id = paddedSituationNumber + tripId.getId() + "-" + stop.getId();
+                                            if (expireSituation) {
+                                                idsToExpire.add(id);
+                                            } else {
+                                                AlertPatch alertPatch = new AlertPatch();
+                                                alertPatch.setTrip(tripId);
+                                                alertPatch.setStop(stop);
+                                                alertPatch.setId(id);
 
+                                                updateStopConditions(alertPatch, affectedStop.getStopConditions());
+
+                                                //  A tripId for a given date may be reused for other dates not affected by this alert.
+                                                List<TimePeriod> timePeriodList = new ArrayList<>();
+                                                timePeriodList.add(new TimePeriod(originAimedDepartureTime.toEpochSecond() * 1000, originAimedDepartureTime.plusDays(1).toEpochSecond() * 1000));
+                                                alertPatch.setTimePeriods(timePeriodList);
+
+
+                                                Alert vehicleJourneyAlert = new Alert();
+                                                vehicleJourneyAlert.alertHeaderText = alert.alertHeaderText;
+                                                vehicleJourneyAlert.alertDescriptionText = alert.alertDescriptionText;
+                                                vehicleJourneyAlert.alertDetailText = alert.alertDetailText;
+                                                vehicleJourneyAlert.alertUrl = alert.alertUrl;
+                                                vehicleJourneyAlert.effectiveStartDate = serviceDate.getAsDate();
+                                                vehicleJourneyAlert.effectiveEndDate = serviceDate.next().getAsDate();
+
+                                                alertPatch.setAlert(vehicleJourneyAlert);
+
+                                                patches.add(alertPatch);
+                                            }
+                                        }
+                                    } else {
+                                        String id = paddedSituationNumber + tripId.getId();
+                                        if (expireSituation) {
+                                            idsToExpire.add(id);
+                                        } else {
                                             AlertPatch alertPatch = new AlertPatch();
                                             alertPatch.setTrip(tripId);
-                                            alertPatch.setStop(stop);
                                             alertPatch.setId(id);
-
-                                            updateStopConditions(alertPatch, affectedStop.getStopConditions());
 
                                             //  A tripId for a given date may be reused for other dates not affected by this alert.
                                             List<TimePeriod> timePeriodList = new ArrayList<>();
@@ -401,30 +439,6 @@ public class AlertsUpdateHandler {
 
                                             patches.add(alertPatch);
                                         }
-                                    } else {
-                                        String id = paddedSituationNumber + tripId.getId();
-
-                                        AlertPatch alertPatch = new AlertPatch();
-                                        alertPatch.setTrip(tripId);
-                                        alertPatch.setId(id);
-
-                                        //  A tripId for a given date may be reused for other dates not affected by this alert.
-                                        List<TimePeriod> timePeriodList = new ArrayList<>();
-                                        timePeriodList.add(new TimePeriod(originAimedDepartureTime.toEpochSecond() * 1000, originAimedDepartureTime.plusDays(1).toEpochSecond() * 1000));
-                                        alertPatch.setTimePeriods(timePeriodList);
-
-
-                                        Alert vehicleJourneyAlert = new Alert();
-                                        vehicleJourneyAlert.alertHeaderText = alert.alertHeaderText;
-                                        vehicleJourneyAlert.alertDescriptionText = alert.alertDescriptionText;
-                                        vehicleJourneyAlert.alertDetailText = alert.alertDetailText;
-                                        vehicleJourneyAlert.alertUrl = alert.alertUrl;
-                                        vehicleJourneyAlert.effectiveStartDate = serviceDate.getAsDate();
-                                        vehicleJourneyAlert.effectiveEndDate = serviceDate.next().getAsDate();
-
-                                        alertPatch.setAlert(vehicleJourneyAlert);
-
-                                        patches.add(alertPatch);
                                     }
                                 }
                             }
