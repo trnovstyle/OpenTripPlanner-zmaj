@@ -6,12 +6,34 @@ import com.vividsolutions.jts.geom.LineString;
 import graphql.Scalars;
 import graphql.relay.Relay;
 import graphql.relay.SimpleListConnection;
-import graphql.schema.*;
+import graphql.schema.DataFetchingEnvironmentImpl;
+import graphql.schema.GraphQLArgument;
+import graphql.schema.GraphQLEnumType;
+import graphql.schema.GraphQLEnumValueDefinition;
+import graphql.schema.GraphQLFieldDefinition;
+import graphql.schema.GraphQLInputObjectField;
+import graphql.schema.GraphQLInputObjectType;
+import graphql.schema.GraphQLInterfaceType;
+import graphql.schema.GraphQLList;
+import graphql.schema.GraphQLNonNull;
+import graphql.schema.GraphQLObjectType;
+import graphql.schema.GraphQLOutputType;
+import graphql.schema.GraphQLScalarType;
+import graphql.schema.GraphQLSchema;
+import graphql.schema.GraphQLType;
+import graphql.schema.GraphQLTypeReference;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.opentripplanner.api.common.Message;
-import org.opentripplanner.api.model.*;
+import org.opentripplanner.api.model.AbsoluteDirection;
+import org.opentripplanner.api.model.Itinerary;
+import org.opentripplanner.api.model.Leg;
+import org.opentripplanner.api.model.Place;
+import org.opentripplanner.api.model.RelativeDirection;
+import org.opentripplanner.api.model.TripPlan;
+import org.opentripplanner.api.model.VertexType;
+import org.opentripplanner.api.model.WalkStep;
 import org.opentripplanner.gtfs.GtfsLibrary;
 import org.opentripplanner.index.model.StopTimesInPattern;
 import org.opentripplanner.index.model.TripTimeShort;
@@ -21,7 +43,18 @@ import org.opentripplanner.index.transmodel.model.scalars.DateScalarFactory;
 import org.opentripplanner.index.transmodel.model.scalars.DateTimeScalarFactory;
 import org.opentripplanner.index.transmodel.model.scalars.TimeScalarFactory;
 import org.opentripplanner.index.util.TripTimeShortHelper;
-import org.opentripplanner.model.*;
+import org.opentripplanner.model.Agency;
+import org.opentripplanner.model.AgencyAndId;
+import org.opentripplanner.model.Branding;
+import org.opentripplanner.model.KeyValue;
+import org.opentripplanner.model.Notice;
+import org.opentripplanner.model.Operator;
+import org.opentripplanner.model.Route;
+import org.opentripplanner.model.Stop;
+import org.opentripplanner.model.TariffZone;
+import org.opentripplanner.model.Transfer;
+import org.opentripplanner.model.TransmodelTransportSubmode;
+import org.opentripplanner.model.Trip;
 import org.opentripplanner.model.calendar.ServiceDate;
 import org.opentripplanner.routing.alertpatch.Alert;
 import org.opentripplanner.routing.alertpatch.AlertPatch;
@@ -47,7 +80,19 @@ import org.opentripplanner.util.model.EncodedPolylineBean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.AbstractMap;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.BitSet;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -1396,24 +1441,9 @@ public class TransmodelIndexGraphQLSchema {
                 .field(GraphQLFieldDefinition.newFieldDefinition()
                         .name("situations")
                         .description("Get all situations active for the quay")
-                        .argument(GraphQLArgument.newArgument()
-                                .name("startTime")
-                                .type(dateTimeScalar)
-                                .description("DateTime for when to fetch situations from.")
-                                .build())
-                        .argument(GraphQLArgument.newArgument()
-                                .name("endTime")
-                                .type(dateTimeScalar)
-                                .description("DateTime for when to fetch situations to.")
-                                .build())
-                        .argument(GraphQLArgument.newArgument()
-                                .name("timeRange")
-                                .type(Scalars.GraphQLInt)
-                                .description("Optionally to set timeRange instead of endTime.")
-                                .build())
                         .type(new GraphQLList(ptSituationElementType))
-                        .dataFetcher(dataFetchingEnvironment -> filterSituationsByDate(index.getAlertsForStop(
-                                dataFetchingEnvironment.getSource()), dataFetchingEnvironment))
+                        .dataFetcher(dataFetchingEnvironment -> index.getAlertsForStop(
+                                dataFetchingEnvironment.getSource()))
                         .build())
                 .build();
 
@@ -1829,24 +1859,9 @@ public class TransmodelIndexGraphQLSchema {
                 .field(GraphQLFieldDefinition.newFieldDefinition()
                         .name("situations")
                         .description("Get all situations active for the service journey")
-                        .argument(GraphQLArgument.newArgument()
-                                .name("startTime")
-                                .type(dateTimeScalar)
-                                .description("DateTime for when to fetch situations from.")
-                                .build())
-                        .argument(GraphQLArgument.newArgument()
-                                .name("endTime")
-                                .type(dateTimeScalar)
-                                .description("DateTime for when to fetch situations to.")
-                                .build())
-                        .argument(GraphQLArgument.newArgument()
-                                .name("timeRange")
-                                .type(Scalars.GraphQLInt)
-                                .description("Optionally to set timeRange instead of endTime.")
-                                .build())
                         .type(new GraphQLList(ptSituationElementType))
-                        .dataFetcher(dataFetchingEnvironment -> filterSituationsByDate(index.getAlertsForTrip(
-                                dataFetchingEnvironment.getSource()), dataFetchingEnvironment))
+                        .dataFetcher(dataFetchingEnvironment -> index.getAlertsForTrip(
+                                dataFetchingEnvironment.getSource()))
                         .build())
                 .field(GraphQLFieldDefinition.newFieldDefinition()
                         .name("keyValues")
@@ -1929,23 +1944,8 @@ public class TransmodelIndexGraphQLSchema {
                         .name("situations")
                         .description("Get all situations active for the journey pattern")
                         .type(new GraphQLList(ptSituationElementType))
-                        .argument(GraphQLArgument.newArgument()
-                                .name("startTime")
-                                .type(dateTimeScalar)
-                                .description("DateTime for when to fetch situations from.")
-                                .build())
-                        .argument(GraphQLArgument.newArgument()
-                                .name("endTime")
-                                .type(dateTimeScalar)
-                                .description("DateTime for when to fetch situations to.")
-                                .build())
-                        .argument(GraphQLArgument.newArgument()
-                                .name("timeRange")
-                                .type(Scalars.GraphQLInt)
-                                .description("Optionally to set timeRange instead of endTime.")
-                                .build())
-                        .dataFetcher(dataFetchingEnvironment -> filterSituationsByDate(index.getAlertsForPattern(
-                                dataFetchingEnvironment.getSource()), dataFetchingEnvironment))
+                        .dataFetcher(dataFetchingEnvironment -> index.getAlertsForPattern(
+                                dataFetchingEnvironment.getSource()))
                         .build())
                 .field(GraphQLFieldDefinition.newFieldDefinition()
                         .name("notices")
@@ -2076,23 +2076,9 @@ public class TransmodelIndexGraphQLSchema {
                 .field(GraphQLFieldDefinition.newFieldDefinition()
                         .name("situations")
                         .description("Get all situations active for the line")
-                        .argument(GraphQLArgument.newArgument()
-                                .name("startTime")
-                                .type(dateTimeScalar)
-                                .description("DateTime for when to fetch situations from.")
-                                .build())
-                        .argument(GraphQLArgument.newArgument()
-                                .name("endTime")
-                                .type(dateTimeScalar)
-                                .description("DateTime for when to fetch situations to.")
-                                .build())
-                        .argument(GraphQLArgument.newArgument()
-                                .name("timeRange")
-                                .type(Scalars.GraphQLInt)
-                                .description("Optionally to set timeRange instead of endTime.")
-                                .build())
                         .type(new GraphQLList(ptSituationElementType))
-                        .dataFetcher(dataFetchingEnvironment -> filterSituationsByDate(index.getAlertsForRoute(dataFetchingEnvironment.getSource()), dataFetchingEnvironment))
+                        .dataFetcher(dataFetchingEnvironment -> index.getAlertsForRoute(
+                                dataFetchingEnvironment.getSource()))
                         .build())
                 .field(GraphQLFieldDefinition.newFieldDefinition()
                         .name("keyValues")
@@ -2147,24 +2133,8 @@ public class TransmodelIndexGraphQLSchema {
                         .name("situations")
                         .description("Get all situations active for the organisation")
                         .type(new GraphQLList(ptSituationElementType))
-
-                        .argument(GraphQLArgument.newArgument()
-                                .name("startTime")
-                                .type(dateTimeScalar)
-                                .description("DateTime for when to fetch situations from.")
-                                .build())
-                        .argument(GraphQLArgument.newArgument()
-                                .name("endTime")
-                                .type(dateTimeScalar)
-                                .description("DateTime for when to fetch situations to.")
-                                .build())
-                        .argument(GraphQLArgument.newArgument()
-                                .name("timeRange")
-                                .type(Scalars.GraphQLInt)
-                                .description("Optionally to set timeRange instead of endTime.")
-                                .build())
-                        .dataFetcher(dataFetchingEnvironment -> filterSituationsByDate(index.getAlertsForAgency(
-                                dataFetchingEnvironment.getSource()), dataFetchingEnvironment))
+                        .dataFetcher(dataFetchingEnvironment -> index.getAlertsForAgency(
+                                dataFetchingEnvironment.getSource()))
                         .build())
                 .build();
 
@@ -2213,24 +2183,8 @@ public class TransmodelIndexGraphQLSchema {
                         .name("situations")
                         .description("Get all situations active for the authority")
                         .type(new GraphQLList(ptSituationElementType))
-
-                        .argument(GraphQLArgument.newArgument()
-                                .name("startTime")
-                                .type(dateTimeScalar)
-                                .description("DateTime for when to fetch situations from.")
-                                .build())
-                        .argument(GraphQLArgument.newArgument()
-                                .name("endTime")
-                                .type(dateTimeScalar)
-                                .description("DateTime for when to fetch situations to.")
-                                .build())
-                        .argument(GraphQLArgument.newArgument()
-                                .name("timeRange")
-                                .type(Scalars.GraphQLInt)
-                                .description("Optionally to set timeRange instead of endTime.")
-                                .build())
-                        .dataFetcher(dataFetchingEnvironment -> filterSituationsByDate(index.getAlertsForAgency(
-                                dataFetchingEnvironment.getSource()), dataFetchingEnvironment))
+                        .dataFetcher(dataFetchingEnvironment -> index.getAlertsForAgency(
+                                dataFetchingEnvironment.getSource()))
                         .build())
                 .build();
 
@@ -3059,25 +3013,9 @@ public class TransmodelIndexGraphQLSchema {
                         .build())
                 .field(GraphQLFieldDefinition.newFieldDefinition()
                         .name("situations")
-
-                        .argument(GraphQLArgument.newArgument()
-                                .name("startTime")
-                                .type(dateTimeScalar)
-                                .description("DateTime for when to fetch situations from.")
-                                .build())
-                        .argument(GraphQLArgument.newArgument()
-                                .name("endTime")
-                                .type(dateTimeScalar)
-                                .description("DateTime for when to fetch situations to.")
-                                .build())
-                        .argument(GraphQLArgument.newArgument()
-                                .name("timeRange")
-                                .type(Scalars.GraphQLInt)
-                                .description("Optionally to set timeRange instead of endTime.")
-                                .build())
                         .description("Get all active situations")
                         .type(new GraphQLList(ptSituationElementType))
-                        .dataFetcher(dataFetchingEnvironment -> filterSituationsByDate(index.getAlerts(), dataFetchingEnvironment))
+                        .dataFetcher(dataFetchingEnvironment -> index.getAlerts())
                         .build())
                 .build();
 
@@ -3087,32 +3025,6 @@ public class TransmodelIndexGraphQLSchema {
         indexSchema = GraphQLSchema.newSchema()
                 .query(queryType)
                 .build(dictionary);
-    }
-
-    private Collection<AlertPatch> filterSituationsByDate(Collection<AlertPatch> alertsForRoute, DataFetchingEnvironment dataFetchingEnvironment) {
-
-        long startTimeMs = 0L;
-        if (dataFetchingEnvironment.getArgument("startTime") != null) {
-            startTimeMs = dataFetchingEnvironment.getArgument("startTime");
-        }
-        Date startTime = new Date(startTimeMs);
-
-        Date endTime;
-        if (dataFetchingEnvironment.getArgument("endTime") != null) {
-            endTime = new Date((long)dataFetchingEnvironment.getArgument("endTime"));
-
-        } else if (dataFetchingEnvironment.getArgument("timeRange") != null) {
-            int timeRangeSec = dataFetchingEnvironment.getArgument("timeRange");
-            endTime = new Date(startTimeMs + (long)1000*timeRangeSec);
-
-        } else {
-            endTime = null;
-        }
-
-        return alertsForRoute.stream()
-                .filter(alertPatch -> (endTime == null || alertPatch.getAlert().effectiveStartDate.compareTo(endTime) <= 0)  // Before OR equal
-                        && (alertPatch.getAlert().effectiveEndDate == null || alertPatch.getAlert().effectiveEndDate.compareTo(startTime) >= 0)) // After OR equal
-                .collect(Collectors.toList());
     }
 
     /**
