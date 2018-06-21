@@ -6,34 +6,12 @@ import com.vividsolutions.jts.geom.LineString;
 import graphql.Scalars;
 import graphql.relay.Relay;
 import graphql.relay.SimpleListConnection;
-import graphql.schema.DataFetchingEnvironmentImpl;
-import graphql.schema.GraphQLArgument;
-import graphql.schema.GraphQLEnumType;
-import graphql.schema.GraphQLEnumValueDefinition;
-import graphql.schema.GraphQLFieldDefinition;
-import graphql.schema.GraphQLInputObjectField;
-import graphql.schema.GraphQLInputObjectType;
-import graphql.schema.GraphQLInterfaceType;
-import graphql.schema.GraphQLList;
-import graphql.schema.GraphQLNonNull;
-import graphql.schema.GraphQLObjectType;
-import graphql.schema.GraphQLOutputType;
-import graphql.schema.GraphQLScalarType;
-import graphql.schema.GraphQLSchema;
-import graphql.schema.GraphQLType;
-import graphql.schema.GraphQLTypeReference;
+import graphql.schema.*;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.opentripplanner.api.common.Message;
-import org.opentripplanner.api.model.AbsoluteDirection;
-import org.opentripplanner.api.model.Itinerary;
-import org.opentripplanner.api.model.Leg;
-import org.opentripplanner.api.model.Place;
-import org.opentripplanner.api.model.RelativeDirection;
-import org.opentripplanner.api.model.TripPlan;
-import org.opentripplanner.api.model.VertexType;
-import org.opentripplanner.api.model.WalkStep;
+import org.opentripplanner.api.model.*;
 import org.opentripplanner.gtfs.GtfsLibrary;
 import org.opentripplanner.index.model.StopTimesInPattern;
 import org.opentripplanner.index.model.TripTimeShort;
@@ -43,18 +21,7 @@ import org.opentripplanner.index.transmodel.model.scalars.DateScalarFactory;
 import org.opentripplanner.index.transmodel.model.scalars.DateTimeScalarFactory;
 import org.opentripplanner.index.transmodel.model.scalars.TimeScalarFactory;
 import org.opentripplanner.index.util.TripTimeShortHelper;
-import org.opentripplanner.model.Agency;
-import org.opentripplanner.model.AgencyAndId;
-import org.opentripplanner.model.Branding;
-import org.opentripplanner.model.KeyValue;
-import org.opentripplanner.model.Notice;
-import org.opentripplanner.model.Operator;
-import org.opentripplanner.model.Route;
-import org.opentripplanner.model.Stop;
-import org.opentripplanner.model.TariffZone;
-import org.opentripplanner.model.Transfer;
-import org.opentripplanner.model.TransmodelTransportSubmode;
-import org.opentripplanner.model.Trip;
+import org.opentripplanner.model.*;
 import org.opentripplanner.model.calendar.ServiceDate;
 import org.opentripplanner.routing.alertpatch.Alert;
 import org.opentripplanner.routing.alertpatch.AlertPatch;
@@ -80,19 +47,7 @@ import org.opentripplanner.util.model.EncodedPolylineBean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.AbstractMap;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.BitSet;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -1720,6 +1675,12 @@ public class TransmodelIndexGraphQLSchema {
                             return index.getNoticesForElement(tripTimeShort.stopTimeId);
                         })
                         .build())
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("situations")
+                        .type(new GraphQLList(ptSituationElementType))
+                        .description("Get all relevant situations for this EstimatedCall.")
+                        .dataFetcher(environment -> getAllRelevantAlerts((TripTimeShort)environment.getSource()))
+                        .build())
                 .build();
 
         serviceJourneyType = GraphQLObjectType.newObject()
@@ -3025,6 +2986,75 @@ public class TransmodelIndexGraphQLSchema {
         indexSchema = GraphQLSchema.newSchema()
                 .query(queryType)
                 .build(dictionary);
+    }
+
+    /**
+     * Resolves all AlertPatches that are relevant for the supplied TripTimeShort.
+     *
+     * @param tripTimeShort
+     * @return
+     */
+    private Collection<AlertPatch> getAllRelevantAlerts(TripTimeShort tripTimeShort) {
+        AgencyAndId tripId = tripTimeShort.tripId;
+        Trip trip = index.tripForId.get(tripId);
+        AgencyAndId routeId = trip.getRoute().getId();
+
+        AgencyAndId stopId = tripTimeShort.stopId;
+
+        Stop stop = index.stopForId.get(stopId);
+        AgencyAndId parentStopId = stop.getParentStationAgencyAndId();
+
+        Collection<AlertPatch> allAlerts = new HashSet<>();
+
+        // Quay
+        allAlerts.addAll(index.getAlertsForStopId(stopId));
+        allAlerts.addAll(index.getAlertsForStopAndTrip(stopId, tripId));
+        allAlerts.addAll(index.getAlertsForStopAndRoute(stopId, routeId));
+        // StopPlace
+        allAlerts.addAll(index.getAlertsForStopId(parentStopId));
+        allAlerts.addAll(index.getAlertsForStopAndTrip(parentStopId, tripId));
+        allAlerts.addAll(index.getAlertsForStopAndRoute(parentStopId, routeId));
+        // Trip
+        allAlerts.addAll(index.getAlertsForTripId(tripId));
+        // Route
+        allAlerts.addAll(index.getAlertsForRouteId(routeId));
+        // Agency
+        allAlerts.addAll(index.getAlertsForAgency(trip.getRoute().getAgency()));
+        // TripPattern
+        allAlerts.addAll(index.getAlertsForPattern(index.patternForTrip.get(trip)));
+
+        long serviceDayMillis = 1000 * tripTimeShort.serviceDay;
+        long arrivalMillis = 1000 * tripTimeShort.realtimeArrival;
+        long departureMillis = 1000 * tripTimeShort.realtimeDeparture;
+
+        filterSituationsByDateAndStopConditions(allAlerts,
+                new Date(serviceDayMillis + arrivalMillis),
+                new Date(serviceDayMillis + departureMillis),
+                Arrays.asList(StopCondition.STOP, StopCondition.START_POINT, StopCondition.EXCEPTIONAL_STOP));
+
+        return allAlerts;
+    }
+
+    private static void filterSituationsByDateAndStopConditions(Collection<AlertPatch> alertPatches, Date fromTime, Date toTime, List<StopCondition> stopConditions) {
+        if (alertPatches != null) {
+
+            alertPatches.removeIf(alert -> alert.getAlert().effectiveStartDate.after(toTime) ||
+                    (alert.getAlert().effectiveEndDate != null && alert.getAlert().effectiveEndDate.before(fromTime)));
+
+            alertPatches.removeIf(alert -> {
+                boolean removeByStopCondition = false;
+
+                if (!alert.getStopConditions().isEmpty()) {
+                    removeByStopCondition = true;
+                    for (StopCondition stopCondition : stopConditions) {
+                        if (alert.getStopConditions().contains(stopCondition)) {
+                            removeByStopCondition = false;
+                        }
+                    }
+                }
+                return removeByStopCondition;
+            });
+        }
     }
 
     /**
