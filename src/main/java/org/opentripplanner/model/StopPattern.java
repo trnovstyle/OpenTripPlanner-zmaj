@@ -1,15 +1,13 @@
 package org.opentripplanner.model;
 
+import com.google.common.hash.HashCode;
+import com.google.common.hash.HashFunction;
+import com.google.common.hash.Hasher;
+
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
-
-import com.google.common.hash.HashCode;
-import com.google.common.hash.HashFunction;
-import com.google.common.hash.Hasher;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * This class represents what is called a JourneyPattern in Transmodel: the sequence of stops at
@@ -50,12 +48,14 @@ public class StopPattern implements Serializable {
     public final Stop[] stops;
     public final int[]  pickups;
     public final int[]  dropoffs;
+    public final BookingArrangement[] bookingArrangements;
 
     private StopPattern (int size) {
         this.size = size;
         stops     = new Stop[size];
         pickups   = new int[size];
         dropoffs  = new int[size];
+        bookingArrangements = new BookingArrangement[size];
     }
 
     /** Assumes that stopTimes are already sorted by time. */

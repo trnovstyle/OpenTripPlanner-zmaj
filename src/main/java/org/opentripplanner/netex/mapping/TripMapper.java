@@ -1,9 +1,12 @@
 package org.opentripplanner.netex.mapping;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.opentripplanner.model.AgencyAndId;
+import org.opentripplanner.model.BookingArrangement;
 import org.opentripplanner.model.Trip;
 import org.opentripplanner.model.impl.OtpTransitBuilder;
 import org.opentripplanner.netex.loader.NetexDao;
+import org.rutebanken.netex.model.FlexibleServiceProperties;
 import org.rutebanken.netex.model.JourneyPattern;
 import org.rutebanken.netex.model.LineRefStructure;
 import org.rutebanken.netex.model.ServiceAlterationEnumeration;
@@ -12,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.xml.bind.JAXBElement;
+import java.util.stream.Collectors;
 
 /**
  * Agency id must be added when the stop is related to a line
@@ -22,6 +26,7 @@ public class TripMapper {
 
     private KeyValueMapper keyValueMapper = new KeyValueMapper();
     private TransportModeMapper transportModeMapper = new TransportModeMapper();
+    private ContactStructureMapper contactStructureMapper = new ContactStructureMapper();
 
     public Trip mapServiceJourney(ServiceJourney serviceJourney, OtpTransitBuilder gtfsDao, NetexDao netexDao){
 
@@ -85,7 +90,40 @@ public class TripMapper {
             trip.setShapeId(serviceLinkId);
         }
 
+        if (serviceJourney.getFlexibleServiceProperties()!=null) {
+            mapFlexibleServicePropertiesProperties(serviceJourney.getFlexibleServiceProperties(), trip);
+        }
+
         return trip;
+    }
+
+    private void mapFlexibleServicePropertiesProperties(FlexibleServiceProperties flexibleServiceProperties, Trip otpTrip) {
+        if (flexibleServiceProperties.getFlexibleServiceType() != null) {
+            otpTrip.setFlexibleTripType(Trip.FlexibleTripTypeEnum.valueOf(flexibleServiceProperties.getFlexibleServiceType().value()));
+        }
+
+        BookingArrangement otpBookingArrangement = new BookingArrangement();
+
+        otpBookingArrangement.setBookingContact(contactStructureMapper.mapContactStructure(flexibleServiceProperties.getBookingContact()));
+        if (flexibleServiceProperties.getBookingNote() != null) {
+            otpBookingArrangement.setBookingNote(flexibleServiceProperties.getBookingNote().getValue());
+        }
+        if(flexibleServiceProperties.getBookWhen()!=null) {
+            otpBookingArrangement.setBookWhen(BookingArrangement.PurchaseWhenEnum.valueOf(flexibleServiceProperties.getBookWhen().value()));
+        }
+        if(flexibleServiceProperties.getBookingAccess()!=null) {
+            otpBookingArrangement.setBookingAccess(BookingArrangement.BookingAccessEnum.valueOf(flexibleServiceProperties.getBookingAccess().value()));
+        }
+        if (!CollectionUtils.isEmpty(flexibleServiceProperties.getBuyWhen())) {
+            otpBookingArrangement.setBuyWhen(flexibleServiceProperties.getBuyWhen().stream().map(bw -> BookingArrangement.PurchaseMomentEnum.valueOf(bw.value())).collect(Collectors.toList()));
+        }
+        if (!CollectionUtils.isEmpty(flexibleServiceProperties.getBookingMethods())) {
+            otpBookingArrangement.setBookingMethods(flexibleServiceProperties.getBookingMethods().stream().map(bm -> BookingArrangement.BookingMethodEnum.valueOf(bm.value())).collect(Collectors.toList()));
+        }
+        otpBookingArrangement.setLatestBookingTime(flexibleServiceProperties.getLatestBookingTime());
+        otpBookingArrangement.setMinimumBookingPeriod(flexibleServiceProperties.getMinimumBookingPeriod());
+        otpTrip.setBookingArrangements(otpBookingArrangement);
+
     }
 
     private Trip.ServiceAlteration mapServiceAlteration(ServiceAlterationEnumeration netexValue) {

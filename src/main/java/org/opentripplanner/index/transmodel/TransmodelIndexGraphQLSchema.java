@@ -19,6 +19,7 @@ import org.opentripplanner.index.transmodel.mapping.TransmodelMappingUtil;
 import org.opentripplanner.index.transmodel.model.TransmodelPlaceType;
 import org.opentripplanner.index.transmodel.model.scalars.DateScalarFactory;
 import org.opentripplanner.index.transmodel.model.scalars.DateTimeScalarFactory;
+import org.opentripplanner.index.transmodel.model.scalars.LocalTimeScalarFactory;
 import org.opentripplanner.index.transmodel.model.scalars.TimeScalarFactory;
 import org.opentripplanner.index.util.TripTimeShortHelper;
 import org.opentripplanner.model.*;
@@ -48,6 +49,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -203,12 +205,25 @@ public class TransmodelIndexGraphQLSchema {
              .build();
 
 
-    private static GraphQLEnumType transportSubmode;
+    private static GraphQLEnumType transportSubmode = TransmodelIndexGraphQLSchema.createEnum("TransportSubmode", TransmodelTransportSubmode.values(), (t -> t.getValue()));
 
-    static {
-        GraphQLEnumType.Builder transportSubmodeEnumBuilder = GraphQLEnumType.newEnum().name("TransportSubmode");
-        Arrays.stream(TransmodelTransportSubmode.values()).forEach(type -> transportSubmodeEnumBuilder.value(type.getValue(), type));
-        transportSubmode = transportSubmodeEnumBuilder.build();
+    private static GraphQLEnumType flexibleLineTypeEnum = TransmodelIndexGraphQLSchema.createEnum("FlexibleLineType", Route.FlexibleRouteTypeEnum.values(), (t -> t.name()));
+
+    private static GraphQLEnumType flexibleServiceTypeEnum = TransmodelIndexGraphQLSchema.createEnum("FlexibleServiceType", Trip.FlexibleTripTypeEnum.values(), (t -> t.name()));
+
+    private static GraphQLEnumType purchaseMomentEnum = TransmodelIndexGraphQLSchema.createEnum("PurchaseMoment", BookingArrangement.PurchaseMomentEnum.values(), (t -> t.name()));
+
+    private static GraphQLEnumType purchaseWhenEnum = TransmodelIndexGraphQLSchema.createEnum("PurchaseWhen", BookingArrangement.PurchaseWhenEnum.values(), (t -> t.name()));
+
+    private static GraphQLEnumType bookingAccessEnum = TransmodelIndexGraphQLSchema.createEnum("BookingAccess", BookingArrangement.BookingAccessEnum.values(), (t -> t.name()));
+
+    private static GraphQLEnumType bookingMethodEnum = TransmodelIndexGraphQLSchema.createEnum("BookingMethod", BookingArrangement.BookingMethodEnum.values(), (t -> t.name()));
+
+
+    private static <T extends Enum> GraphQLEnumType createEnum(String name, T[] values, Function<T, String> mapping) {
+        GraphQLEnumType.Builder enumBuilder = GraphQLEnumType.newEnum().name(name);
+        Arrays.stream(values).forEach(type -> enumBuilder.value(mapping.apply(type), type));
+        return enumBuilder.build();
     }
 
 
@@ -278,6 +293,10 @@ public class TransmodelIndexGraphQLSchema {
 
     private GraphQLOutputType placeAtDistanceType = new GraphQLTypeReference("PlaceAtDistance");
 
+    private GraphQLOutputType bookingArrangementType = new GraphQLTypeReference("BookingArrangement");
+
+    private GraphQLOutputType contactType = new GraphQLTypeReference("Contact");
+
     private GraphQLInputObjectType locationType;
 
     private GraphQLObjectType keyValueType;
@@ -302,6 +321,7 @@ public class TransmodelIndexGraphQLSchema {
     private GraphQLObjectType timeType;
     private GraphQLScalarType dateScalar;
     private GraphQLObjectType destinationDisplayType;
+    private GraphQLScalarType localTimeScalar;
 
     public GraphQLSchema indexSchema;
 
@@ -372,6 +392,7 @@ public class TransmodelIndexGraphQLSchema {
         dateTimeScalar = DateTimeScalarFactory.createMillisecondsSinceEpochAsDateTimeStringScalar(index.graph.getTimeZone());
         timeType = TimeScalarFactory.createSecondsSinceMidnightAsTimeObject();
         dateScalar = DateScalarFactory.createSecondsSinceEpochAsDateStringScalar(index.graph.getTimeZone());
+        localTimeScalar = LocalTimeScalarFactory.createLocalTimeScalar();
 
         GraphQLInputObjectType coordinateInputType = GraphQLInputObjectType.newInputObject()
                 .name("InputCoordinates")
@@ -479,6 +500,80 @@ public class TransmodelIndexGraphQLSchema {
                         .dataFetcher(environment -> ((Branding) environment.getSource()).getImage())
                         .build())
                 .build();
+
+        contactType = GraphQLObjectType.newObject()
+                              .name("Contact")
+                              .field(GraphQLFieldDefinition.newFieldDefinition()
+                                             .name("contactPerson")
+                                             .description("Name of person to contact")
+                                             .type(Scalars.GraphQLString)//
+                                             .build())
+                              .field(GraphQLFieldDefinition.newFieldDefinition()
+                                             .name("email")
+                                             .description("Email adress for contact")
+                                             .type(Scalars.GraphQLString)//
+                                             .build())
+                              .field(GraphQLFieldDefinition.newFieldDefinition()
+                                             .name("url")
+                                             .description("Url for contact")
+                                             .type(Scalars.GraphQLString)//
+                                             .build())
+                              .field(GraphQLFieldDefinition.newFieldDefinition()
+                                             .name("phone")
+                                             .description("Phone number for contact")
+                                             .type(Scalars.GraphQLString)//
+                                             .build())
+                              .field(GraphQLFieldDefinition.newFieldDefinition()
+                                             .name("furtherDetails")
+                                             .description("Textual description of how to get in contact")
+                                             .type(Scalars.GraphQLString)//
+                                             .build())
+                              .build();
+
+
+        bookingArrangementType = GraphQLObjectType.newObject()
+                                         .name("BookingArrangement")
+                                         .field(GraphQLFieldDefinition.newFieldDefinition()
+                                                        .name("bookingAccess")
+                                                        .description("Who has access to book service?")
+                                                        .type(bookingAccessEnum)
+                                                        .build())
+                                         .field(GraphQLFieldDefinition.newFieldDefinition()
+                                                        .name("bookingMethods")
+                                                        .description("How should service be booked?")
+                                                        .type(new GraphQLList(bookingMethodEnum))
+                                                        .build())
+                                         .field(GraphQLFieldDefinition.newFieldDefinition()
+                                                        .name("bookWhen")
+                                                        .description("When should service be booked?")
+                                                        .type(purchaseWhenEnum)
+                                                        .build())
+                                         .field(GraphQLFieldDefinition.newFieldDefinition()
+                                                        .name("latestBookingTime")
+                                                        .description("Latest time service can be booked. ISO 8601 timestamp")
+                                                        .type(localTimeScalar)
+                                                        .build())
+                                         .field(GraphQLFieldDefinition.newFieldDefinition()
+                                                        .name("minimumBookingPeriod")
+                                                        .description("Minimum period in advance service can be booked as a ISO 8601 duration")
+                                                        .type(Scalars.GraphQLString)
+                                                        .build())
+                                         .field(GraphQLFieldDefinition.newFieldDefinition()
+                                                        .name("bookingNote")
+                                                        .description("Textual description of booking arrangement for service")
+                                                        .type(Scalars.GraphQLString)
+                                                        .build())
+                                         .field(GraphQLFieldDefinition.newFieldDefinition()
+                                                        .name("buyWhen")
+                                                        .description("When should ticket be purchased?")
+                                                        .type(new GraphQLList(purchaseMomentEnum))
+                                                        .build())
+                                         .field(GraphQLFieldDefinition.newFieldDefinition()
+                                                        .name("bookingContact")
+                                                        .description("Who should ticket be contacted for booking")
+                                                        .type(contactType)
+                                                        .build())
+                                         .build();
 
         destinationDisplayType = GraphQLObjectType.newObject()
                 .name("DestinationDisplay")
@@ -1474,6 +1569,12 @@ public class TransmodelIndexGraphQLSchema {
                             return index.getNoticesForElement(tripTimeShort.stopTimeId);
                         })
                         .build())
+                 .field(GraphQLFieldDefinition.newFieldDefinition()
+                         .name("bookingArrangements")
+                         .description("Booking arrangements for flexible service.")
+                         .dataFetcher(environment ->  getBookingArrangementForTripTimeShort(environment.getSource()))
+                         .type(bookingArrangementType)
+                         .build())
                 .build();
 
         estimatedCallType = GraphQLObjectType.newObject()
@@ -1681,6 +1782,12 @@ public class TransmodelIndexGraphQLSchema {
                         .description("Get all relevant situations for this EstimatedCall.")
                         .dataFetcher(environment -> getAllRelevantAlerts((TripTimeShort)environment.getSource()))
                         .build())
+                 .field(GraphQLFieldDefinition.newFieldDefinition()
+                         .name("bookingArrangements")
+                         .description("Booking arrangements for flexible service.")
+                         .dataFetcher(environment ->  getBookingArrangementForTripTimeShort(environment.getSource()))
+                         .type(bookingArrangementType)
+                         .build())
                 .build();
 
         serviceJourneyType = GraphQLObjectType.newObject()
@@ -1829,6 +1936,16 @@ public class TransmodelIndexGraphQLSchema {
                         .description("List of keyValue pairs for the service journey.")
                         .type(new GraphQLList(keyValueType))
                         .dataFetcher(environment -> ((Trip) environment.getSource()).getKeyValues())
+                        .build())
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("flexibleServiceType")
+                        .description("Type of flexible service, or null if service is not flexible.")
+                        .type(flexibleServiceTypeEnum)
+                        .build())
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("bookingArrangements")
+                        .description("Booking arrangements for flexible services.")
+                        .type(bookingArrangementType)
                         .build())
                 .build();
 
@@ -2047,6 +2164,17 @@ public class TransmodelIndexGraphQLSchema {
                         .type(new GraphQLList(keyValueType))
                         .dataFetcher(environment -> ((Route) environment.getSource()).getKeyValues())
                         .build())
+                           .field(GraphQLFieldDefinition.newFieldDefinition()
+                                          .name("flexibleLineType")
+                                          .description("Type of flexible line, or null if line is not flexible.")
+                                          .type(flexibleLineTypeEnum)
+                                          .dataFetcher(environment -> ((Route) environment.getSource()).getFlexibleRouteType())
+                                          .build())
+                           .field(GraphQLFieldDefinition.newFieldDefinition()
+                                          .name("bookingArrangements")
+                                          .description("Booking arrangements for flexible line.")
+                                          .type(bookingArrangementType)
+                                          .build())
                 .build();
 
         organisationType = GraphQLObjectType.newObject()
@@ -2988,6 +3116,18 @@ public class TransmodelIndexGraphQLSchema {
                 .build(dictionary);
     }
 
+    private BookingArrangement getBookingArrangementForTripTimeShort(TripTimeShort tripTimeShort) {
+        Trip trip = index.tripForId.get(tripTimeShort.tripId);
+        if (trip == null) {
+            return null;
+        }
+        TripPattern tripPattern = index.patternForTrip.get(trip);
+        if (tripPattern == null || tripPattern.stopPattern == null) {
+            return null;
+        }
+        return tripPattern.stopPattern.bookingArrangements[tripTimeShort.stopIndex];
+    }
+
     /**
      * Resolves all AlertPatches that are relevant for the supplied TripTimeShort.
      *
@@ -3483,6 +3623,10 @@ public class TransmodelIndexGraphQLSchema {
                         .dataFetcher(environment -> ((Leg) environment.getSource()).transferTo != null
                                 ? ((Leg) environment.getSource()).transferTo.getTransferDetails()
                                 : null)
+                        .build())
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("bookingArrangements")
+                        .type(bookingArrangementType)
                         .build())
                 .build();
 

@@ -47,6 +47,10 @@ public final class Route extends IdentityBean<AgencyAndId> {
 
     private List<KeyValue> keyValues;
 
+    private BookingArrangement bookingArrangements;
+
+    private FlexibleRouteTypeEnum flexibleRouteType;
+
     @Deprecated private int routeBikesAllowed = 0;
 
     /**
@@ -210,8 +214,38 @@ public final class Route extends IdentityBean<AgencyAndId> {
         this.keyValues = keyValues;
     }
 
+    public BookingArrangement getBookingArrangements() {
+        return bookingArrangements;
+    }
+
+    public void setBookingArrangements(BookingArrangement bookingArrangements) {
+        this.bookingArrangements = bookingArrangements;
+    }
+
+    public FlexibleRouteTypeEnum getFlexibleRouteType() {
+        return flexibleRouteType;
+    }
+
+    public void setFlexibleRouteType(FlexibleRouteTypeEnum flexibleRouteType) {
+        this.flexibleRouteType = flexibleRouteType;
+    }
+
     @Override
     public String toString() {
         return "<Route " + id + " " + shortName + ">";
     }
+
+    public enum FlexibleRouteTypeEnum {
+        corridorService,
+        mainRouteWithFlexibleEnds,
+        flexibleAreasOnly,
+        hailAndRideSections,
+        fixedStopAreaWide,
+        freeAreaAreaWide,
+        mixedFlexible,
+        mixedFlexibleAndFixed,
+        fixed,
+        other
+    }
+
 }

@@ -65,6 +65,10 @@ public final class Trip extends IdentityBean<AgencyAndId> {
     /** Custom extension for KCM to specify a fare per-trip */
     private String fareId;
 
+    private BookingArrangement bookingArrangements;
+
+    private FlexibleTripTypeEnum flexibleTripType;
+
     public Trip() {
     }
 
@@ -259,5 +263,25 @@ public final class Trip extends IdentityBean<AgencyAndId> {
 
     public void setTransportSubmode(TransmodelTransportSubmode transportSubmode) {
         this.transportSubmode = transportSubmode;
+    }
+
+    public BookingArrangement getBookingArrangements() {
+        return bookingArrangements;
+    }
+
+    public void setBookingArrangements(BookingArrangement bookingArrangements) {
+        this.bookingArrangements = bookingArrangements;
+    }
+
+    public FlexibleTripTypeEnum getFlexibleTripType() {
+        return flexibleTripType;
+    }
+
+    public void setFlexibleTripType(FlexibleTripTypeEnum flexibleTripType) {
+        this.flexibleTripType = flexibleTripType;
+    }
+
+    public enum FlexibleTripTypeEnum {
+        dynamicPassingTimes, fixedHeadwayFrequency, fixedPassingTimes, notFlexible, other
     }
 }

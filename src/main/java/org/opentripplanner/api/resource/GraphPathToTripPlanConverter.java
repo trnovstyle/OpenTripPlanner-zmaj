@@ -379,6 +379,7 @@ public abstract class GraphPathToTripPlanConverter {
         if (leg.isTransitLeg()) addRealTimeData(leg, states);
 
         addTransferDetails(states, leg);
+        addEffectiveBookingArrangements(states, leg, graph);
 
         return leg;
     }
@@ -388,6 +389,45 @@ public abstract class GraphPathToTripPlanConverter {
         if (backEdge instanceof TimedTransferEdge) {
             leg.timedTransferEdge = (TimedTransferEdge) backEdge;
         }
+    }
+
+    /**
+     * Generate a BookingArrantment object with the effective booking requirements for this leg.
+     * <p>
+     * BookingRequirements may be specified on three levels, Route (highest), Trip and StopTimes (lowest).
+     * Values specified on a lower level will always override corresponding value on a higher level.
+     */
+    private static void addEffectiveBookingArrangements(State[] states, Leg leg, Graph graph) {
+        BookingArrangement bookingArrangements = null;
+        Trip trip = states[states.length - 1].getBackTrip();
+        if (trip != null) {
+            Route route = trip.getRoute();
+            if (route != null && route.getBookingArrangements() != null) {
+                bookingArrangements = route.getBookingArrangements().copy();
+            }
+
+            if (trip.getBookingArrangements() != null) {
+                if (bookingArrangements == null) {
+                    bookingArrangements = trip.getBookingArrangements().copy();
+                } else {
+                    bookingArrangements.addOverrides(trip.getBookingArrangements());
+                }
+            }
+
+            TripPattern tripPattern = graph.index.patternForTrip.get(trip);
+            if (tripPattern != null && tripPattern.stopPattern != null && leg.from != null && leg.from.stopIndex != null) {
+                BookingArrangement stopPointBookingArrangements = tripPattern.stopPattern.bookingArrangements[leg.from.stopIndex];
+
+                if (stopPointBookingArrangements != null) {
+                    if (bookingArrangements == null) {
+                        bookingArrangements = stopPointBookingArrangements.copy();
+                    } else {
+                        bookingArrangements.addOverrides(stopPointBookingArrangements);
+                    }
+                }
+            }
+        }
+        leg.bookingArrangements = bookingArrangements;
     }
 
     private static void addFrequencyFields(State[] states, Leg leg) {

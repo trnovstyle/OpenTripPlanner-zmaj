@@ -17,6 +17,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import org.opentripplanner.api.model.alertpatch.LocalizedAlert;
 import org.opentripplanner.model.AgencyAndId;
+import org.opentripplanner.model.BookingArrangement;
 import org.opentripplanner.routing.alertpatch.Alert;
 import org.opentripplanner.routing.alertpatch.AlertPatch;
 import org.opentripplanner.routing.core.TraverseMode;
@@ -273,6 +274,8 @@ public class Leg {
      @XmlAttribute
      @JsonSerialize
      public Boolean intermediatePlace = false;
+
+     public BookingArrangement bookingArrangements;
 
      /**
      * Whether this leg is a transit leg or not.

@@ -1,5 +1,7 @@
 package org.opentripplanner.netex.mapping;
 
+import org.apache.commons.collections.CollectionUtils;
+import org.opentripplanner.model.BookingArrangement;
 import org.opentripplanner.model.Stop;
 import org.opentripplanner.model.StopPattern;
 import org.opentripplanner.model.StopTime;
@@ -31,9 +33,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static org.opentripplanner.model.StopPattern.PICKDROP_COORDINATE_WITH_DRIVER;
-import static org.opentripplanner.model.StopPattern.PICKDROP_NONE;
-import static org.opentripplanner.model.StopPattern.PICKDROP_SCHEDULED;
+import static org.opentripplanner.model.StopPattern.*;
 
 public class TripPatternMapper {
 
@@ -41,6 +41,7 @@ public class TripPatternMapper {
 
     private static final int DAY_IN_SECONDS = 3600 * 24;
 
+    private ContactStructureMapper contactStructureMapper = new ContactStructureMapper();
     private String currentHeadsign;
 
     public void mapTripPattern(JourneyPattern journeyPattern, OtpTransitBuilder transitBuilder, NetexDao netexDao) {
@@ -108,6 +109,7 @@ public class TripPatternMapper {
             return;
         }
 
+        addBookingArrangementsToStopPattern(journeyPattern, stopPattern);
         TripPattern tripPattern = new TripPattern(otpRoute, stopPattern);
         tripPattern.code = journeyPattern.getId();
         tripPattern.name = journeyPattern.getName() == null ? "" : journeyPattern.getName().getValue();
@@ -134,6 +136,18 @@ public class TripPatternMapper {
         transitBuilder.getTripPatterns().put(tripPattern.stopPattern, tripPattern);
     }
 
+    private void addBookingArrangementsToStopPattern(JourneyPattern journeyPattern, StopPattern stopPattern) {
+        int i=0;
+        List<PointInLinkSequence_VersionedChildStructure> points = journeyPattern
+                                                                           .getPointsInSequence()
+                                                                           .getPointInJourneyPatternOrStopPointInJourneyPatternOrTimingPointInJourneyPattern();
+        for (PointInLinkSequence_VersionedChildStructure point : points) {
+            if (point instanceof StopPointInJourneyPattern) {
+                stopPattern.bookingArrangements[i++]=mapBookingArrangement(((StopPointInJourneyPattern) point).getBookingArrangements());
+            }
+        }
+    }
+
     private List<StopTime> mapToStopTimes(JourneyPattern journeyPattern, OtpTransitBuilder transitBuilder, NetexDao netexDao, Trip trip, List<TimetabledPassingTime> timetabledPassingTimes) {
         List<StopTime> stopTimes = new ArrayList<>();
 
@@ -148,8 +162,8 @@ public class TripPatternMapper {
 
             if (quay != null) {
                 StopPointInJourneyPattern stopPoint = findStopPoint(ref, journeyPattern);
-                StopTime stopTime = mapToStopTime(trip, stopPoint, quay, passingTime, stopSequence, netexDao);
 
+                StopTime stopTime = mapToStopTime(trip, stopPoint, quay, passingTime, stopSequence, netexDao);
                 if (stopTimes.size() > 0 && stopTimeNegative(stopTimes.get(stopTimes.size() - 1), stopTime)) {
                     LOG.error("Stoptime increased by negative amount in serviceJourney " + trip.getId().getId());
                     return null;
@@ -162,6 +176,34 @@ public class TripPatternMapper {
             }
         }
         return stopTimes;
+    }
+
+    private BookingArrangement mapBookingArrangement(org.rutebanken.netex.model.BookingArrangementsStructure netexBookingArrangement) {
+        if (netexBookingArrangement == null) {
+            return null;
+        }
+
+        BookingArrangement otpBookingArrangement = new BookingArrangement();
+
+        otpBookingArrangement.setBookingContact(contactStructureMapper.mapContactStructure(netexBookingArrangement.getBookingContact()));
+        if (netexBookingArrangement.getBookingNote() != null) {
+            otpBookingArrangement.setBookingNote(netexBookingArrangement.getBookingNote().getValue());
+        }
+        if(netexBookingArrangement.getBookWhen()!=null) {
+            otpBookingArrangement.setBookWhen(BookingArrangement.PurchaseWhenEnum.valueOf(netexBookingArrangement.getBookWhen().value()));
+        }
+        if(netexBookingArrangement.getBookingAccess()!=null) {
+            otpBookingArrangement.setBookingAccess(BookingArrangement.BookingAccessEnum.valueOf(netexBookingArrangement.getBookingAccess().value()));
+        }
+        if (!CollectionUtils.isEmpty(netexBookingArrangement.getBuyWhen())) {
+            otpBookingArrangement.setBuyWhen(netexBookingArrangement.getBuyWhen().stream().map(bw -> BookingArrangement.PurchaseMomentEnum.valueOf(bw.value())).collect(Collectors.toList()));
+        }
+        if (!CollectionUtils.isEmpty(netexBookingArrangement.getBookingMethods())) {
+            otpBookingArrangement.setBookingMethods(netexBookingArrangement.getBookingMethods().stream().map(bm -> BookingArrangement.BookingMethodEnum.valueOf(bm.value())).collect(Collectors.toList()));
+        }
+        otpBookingArrangement.setLatestBookingTime(netexBookingArrangement.getLatestBookingTime());
+        otpBookingArrangement.setMinimumBookingPeriod(netexBookingArrangement.getMinimumBookingPeriod());
+        return otpBookingArrangement;
     }
 
     private boolean stopTimeNegative(StopTime stopTime1, StopTime stopTime2) {
