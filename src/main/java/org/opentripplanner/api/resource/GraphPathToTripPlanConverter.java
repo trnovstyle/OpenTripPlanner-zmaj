@@ -415,7 +415,8 @@ public abstract class GraphPathToTripPlanConverter {
             }
 
             TripPattern tripPattern = graph.index.patternForTrip.get(trip);
-            if (tripPattern != null && tripPattern.stopPattern != null && leg.from != null && leg.from.stopIndex != null) {
+            if (tripPattern != null && tripPattern.stopPattern != null &&
+            tripPattern.stopPattern.bookingArrangements != null && leg.from != null && leg.from.stopIndex != null){
                 BookingArrangement stopPointBookingArrangements = tripPattern.stopPattern.bookingArrangements[leg.from.stopIndex];
 
                 if (stopPointBookingArrangements != null) {
