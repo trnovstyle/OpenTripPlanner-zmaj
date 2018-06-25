@@ -28,7 +28,7 @@ public class RouteMapper {
     private AuthorityToAgencyMapper authorityToAgencyMapper = new AuthorityToAgencyMapper();
     private HexBinaryAdapter hexBinaryAdapter = new HexBinaryAdapter();
     private KeyValueMapper keyValueMapper = new KeyValueMapper();
-    private ContactStructureMapper contactStructureMapper = new ContactStructureMapper();
+    private BookingArrangementMapper bookingArrangementMapper = new BookingArrangementMapper();
 
     public org.opentripplanner.model.Route mapRoute(Line_VersionStructure line, OtpTransitBuilder transitBuilder, NetexDao netexDao, String timeZone) {
 
@@ -56,7 +56,7 @@ public class RouteMapper {
             }
         }
 
-        if (line instanceof FlexibleLine){
+        if (line instanceof FlexibleLine) {
             mapFlexibleLineProperties((FlexibleLine) line, otpRoute);
         }
 
@@ -68,34 +68,17 @@ public class RouteMapper {
             otpRoute.setFlexibleRouteType(Route.FlexibleRouteTypeEnum.valueOf(flexibleLine.getFlexibleLineType().value()));
         }
 
-        BookingArrangement otpBookingArrangement = new BookingArrangement();
+        BookingArrangement otpBookingArrangement = bookingArrangementMapper.mapBookingArrangment(flexibleLine.getBookingContact(), flexibleLine.getBookingNote(),
+                flexibleLine.getBookingAccess(), flexibleLine.getBookWhen(), flexibleLine.getBuyWhen(), flexibleLine.getBookingMethods(),
+                flexibleLine.getMinimumBookingPeriod(), flexibleLine.getLatestBookingTime());
 
-        otpBookingArrangement.setBookingContact(contactStructureMapper.mapContactStructure(flexibleLine.getBookingContact()));
-        if (flexibleLine.getBookingNote() != null) {
-            otpBookingArrangement.setBookingNote(flexibleLine.getBookingNote().getValue());
-        }
-        if(flexibleLine.getBookWhen()!=null) {
-            otpBookingArrangement.setBookWhen(BookingArrangement.PurchaseWhenEnum.valueOf(flexibleLine.getBookWhen().value()));
-        }
-        if(flexibleLine.getBookingAccess()!=null) {
-            otpBookingArrangement.setBookingAccess(BookingArrangement.BookingAccessEnum.valueOf(flexibleLine.getBookingAccess().value()));
-        }
-        if (!CollectionUtils.isEmpty(flexibleLine.getBuyWhen())) {
-            otpBookingArrangement.setBuyWhen(flexibleLine.getBuyWhen().stream().map(bw -> BookingArrangement.PurchaseMomentEnum.valueOf(bw.value())).collect(Collectors.toList()));
-        }
-        if (!CollectionUtils.isEmpty(flexibleLine.getBookingMethods())) {
-            otpBookingArrangement.setBookingMethods(flexibleLine.getBookingMethods().stream().map(bm -> BookingArrangement.BookingMethodEnum.valueOf(bm.value())).collect(Collectors.toList()));
-        }
-        otpBookingArrangement.setLatestBookingTime(flexibleLine.getLatestBookingTime());
-        otpBookingArrangement.setMinimumBookingPeriod(flexibleLine.getMinimumBookingPeriod());
         otpRoute.setBookingArrangements(otpBookingArrangement);
-
     }
 
     private Operator findLineOperator(Line_VersionStructure line, OtpTransitBuilder transitBuilder) {
         OperatorRefStructure opeRef = line.getOperatorRef();
 
-        if(opeRef != null) {
+        if (opeRef != null) {
             return transitBuilder.getOperatorsById().get(AgencyAndIdFactory.createAgencyAndId(opeRef.getRef()));
 
         }

@@ -1,6 +1,5 @@
 package org.opentripplanner.netex.mapping;
 
-import org.apache.commons.collections.CollectionUtils;
 import org.opentripplanner.model.BookingArrangement;
 import org.opentripplanner.model.Stop;
 import org.opentripplanner.model.StopPattern;
@@ -41,7 +40,7 @@ public class TripPatternMapper {
 
     private static final int DAY_IN_SECONDS = 3600 * 24;
 
-    private ContactStructureMapper contactStructureMapper = new ContactStructureMapper();
+    private BookingArrangementMapper bookingArrangementMapper = new BookingArrangementMapper();
     private String currentHeadsign;
 
     public void mapTripPattern(JourneyPattern journeyPattern, OtpTransitBuilder transitBuilder, NetexDao netexDao) {
@@ -183,26 +182,10 @@ public class TripPatternMapper {
             return null;
         }
 
-        BookingArrangement otpBookingArrangement = new BookingArrangement();
+        BookingArrangement otpBookingArrangement = bookingArrangementMapper.mapBookingArrangment(netexBookingArrangement.getBookingContact(), netexBookingArrangement.getBookingNote(),
+                netexBookingArrangement.getBookingAccess(), netexBookingArrangement.getBookWhen(), netexBookingArrangement.getBuyWhen(), netexBookingArrangement.getBookingMethods(),
+                netexBookingArrangement.getMinimumBookingPeriod(), netexBookingArrangement.getLatestBookingTime());
 
-        otpBookingArrangement.setBookingContact(contactStructureMapper.mapContactStructure(netexBookingArrangement.getBookingContact()));
-        if (netexBookingArrangement.getBookingNote() != null) {
-            otpBookingArrangement.setBookingNote(netexBookingArrangement.getBookingNote().getValue());
-        }
-        if(netexBookingArrangement.getBookWhen()!=null) {
-            otpBookingArrangement.setBookWhen(BookingArrangement.PurchaseWhenEnum.valueOf(netexBookingArrangement.getBookWhen().value()));
-        }
-        if(netexBookingArrangement.getBookingAccess()!=null) {
-            otpBookingArrangement.setBookingAccess(BookingArrangement.BookingAccessEnum.valueOf(netexBookingArrangement.getBookingAccess().value()));
-        }
-        if (!CollectionUtils.isEmpty(netexBookingArrangement.getBuyWhen())) {
-            otpBookingArrangement.setBuyWhen(netexBookingArrangement.getBuyWhen().stream().map(bw -> BookingArrangement.PurchaseMomentEnum.valueOf(bw.value())).collect(Collectors.toList()));
-        }
-        if (!CollectionUtils.isEmpty(netexBookingArrangement.getBookingMethods())) {
-            otpBookingArrangement.setBookingMethods(netexBookingArrangement.getBookingMethods().stream().map(bm -> BookingArrangement.BookingMethodEnum.valueOf(bm.value())).collect(Collectors.toList()));
-        }
-        otpBookingArrangement.setLatestBookingTime(netexBookingArrangement.getLatestBookingTime());
-        otpBookingArrangement.setMinimumBookingPeriod(netexBookingArrangement.getMinimumBookingPeriod());
         return otpBookingArrangement;
     }
 

@@ -26,7 +26,7 @@ public class TripMapper {
 
     private KeyValueMapper keyValueMapper = new KeyValueMapper();
     private TransportModeMapper transportModeMapper = new TransportModeMapper();
-    private ContactStructureMapper contactStructureMapper = new ContactStructureMapper();
+    private BookingArrangementMapper bookingArrangementMapper = new BookingArrangementMapper();
 
     public Trip mapServiceJourney(ServiceJourney serviceJourney, OtpTransitBuilder gtfsDao, NetexDao netexDao){
 
@@ -101,27 +101,9 @@ public class TripMapper {
         if (flexibleServiceProperties.getFlexibleServiceType() != null) {
             otpTrip.setFlexibleTripType(Trip.FlexibleTripTypeEnum.valueOf(flexibleServiceProperties.getFlexibleServiceType().value()));
         }
-
-        BookingArrangement otpBookingArrangement = new BookingArrangement();
-
-        otpBookingArrangement.setBookingContact(contactStructureMapper.mapContactStructure(flexibleServiceProperties.getBookingContact()));
-        if (flexibleServiceProperties.getBookingNote() != null) {
-            otpBookingArrangement.setBookingNote(flexibleServiceProperties.getBookingNote().getValue());
-        }
-        if(flexibleServiceProperties.getBookWhen()!=null) {
-            otpBookingArrangement.setBookWhen(BookingArrangement.PurchaseWhenEnum.valueOf(flexibleServiceProperties.getBookWhen().value()));
-        }
-        if(flexibleServiceProperties.getBookingAccess()!=null) {
-            otpBookingArrangement.setBookingAccess(BookingArrangement.BookingAccessEnum.valueOf(flexibleServiceProperties.getBookingAccess().value()));
-        }
-        if (!CollectionUtils.isEmpty(flexibleServiceProperties.getBuyWhen())) {
-            otpBookingArrangement.setBuyWhen(flexibleServiceProperties.getBuyWhen().stream().map(bw -> BookingArrangement.PurchaseMomentEnum.valueOf(bw.value())).collect(Collectors.toList()));
-        }
-        if (!CollectionUtils.isEmpty(flexibleServiceProperties.getBookingMethods())) {
-            otpBookingArrangement.setBookingMethods(flexibleServiceProperties.getBookingMethods().stream().map(bm -> BookingArrangement.BookingMethodEnum.valueOf(bm.value())).collect(Collectors.toList()));
-        }
-        otpBookingArrangement.setLatestBookingTime(flexibleServiceProperties.getLatestBookingTime());
-        otpBookingArrangement.setMinimumBookingPeriod(flexibleServiceProperties.getMinimumBookingPeriod());
+        BookingArrangement otpBookingArrangement = bookingArrangementMapper.mapBookingArrangment(flexibleServiceProperties.getBookingContact(), flexibleServiceProperties.getBookingNote(),
+                flexibleServiceProperties.getBookingAccess(), flexibleServiceProperties.getBookWhen(), flexibleServiceProperties.getBuyWhen(), flexibleServiceProperties.getBookingMethods(),
+                flexibleServiceProperties.getMinimumBookingPeriod(), flexibleServiceProperties.getLatestBookingTime());
         otpTrip.setBookingArrangements(otpBookingArrangement);
 
     }
