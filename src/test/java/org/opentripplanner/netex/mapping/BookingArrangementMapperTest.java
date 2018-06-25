@@ -31,7 +31,7 @@ public class BookingArrangementMapperTest {
         Duration minBookingPeriod = Duration.ofHours(2);
         LocalTime latestBookingTime = LocalTime.of(16, 30);
 
-        BookingArrangement mapped = bookingArrangementMapper.mapBookingArrangment(bookingContact, bookingNote, BookingAccessEnumeration.PUBLIC, PurchaseWhenEnumeration.ADVANCE_ONLY, Arrays.asList(PurchaseMomentEnumeration.AFTER_BOARDING, PurchaseMomentEnumeration.ON_BOARDING),
+        BookingArrangement mapped = bookingArrangementMapper.mapBookingArrangement(bookingContact, bookingNote, BookingAccessEnumeration.PUBLIC, PurchaseWhenEnumeration.ADVANCE_ONLY, Arrays.asList(PurchaseMomentEnumeration.AFTER_BOARDING, PurchaseMomentEnumeration.ON_BOARDING),
                 Arrays.asList(BookingMethodEnumeration.CALL_DRIVER, BookingMethodEnumeration.ONLINE), minBookingPeriod, latestBookingTime);
 
         Assert.assertNotNull(mapped);
@@ -56,7 +56,7 @@ public class BookingArrangementMapperTest {
 
     @Test
     public void testNoValues() {
-        BookingArrangement mapped = bookingArrangementMapper.mapBookingArrangment(null, null, null, null, new ArrayList<>(), new ArrayList<>(), null, null);
+        BookingArrangement mapped = bookingArrangementMapper.mapBookingArrangement(null, null, null, null, new ArrayList<>(), new ArrayList<>(), null, null);
         Assert.assertNotNull(mapped);
     }
 

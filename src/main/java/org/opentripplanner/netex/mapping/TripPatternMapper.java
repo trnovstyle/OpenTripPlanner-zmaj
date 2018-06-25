@@ -182,7 +182,7 @@ public class TripPatternMapper {
             return null;
         }
 
-        BookingArrangement otpBookingArrangement = bookingArrangementMapper.mapBookingArrangment(netexBookingArrangement.getBookingContact(), netexBookingArrangement.getBookingNote(),
+        BookingArrangement otpBookingArrangement = bookingArrangementMapper.mapBookingArrangement(netexBookingArrangement.getBookingContact(), netexBookingArrangement.getBookingNote(),
                 netexBookingArrangement.getBookingAccess(), netexBookingArrangement.getBookWhen(), netexBookingArrangement.getBuyWhen(), netexBookingArrangement.getBookingMethods(),
                 netexBookingArrangement.getMinimumBookingPeriod(), netexBookingArrangement.getLatestBookingTime());
 

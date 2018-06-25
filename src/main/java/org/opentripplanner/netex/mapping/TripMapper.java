@@ -1,6 +1,5 @@
 package org.opentripplanner.netex.mapping;
 
-import org.apache.commons.collections.CollectionUtils;
 import org.opentripplanner.model.AgencyAndId;
 import org.opentripplanner.model.BookingArrangement;
 import org.opentripplanner.model.Trip;
@@ -15,7 +14,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.xml.bind.JAXBElement;
-import java.util.stream.Collectors;
 
 /**
  * Agency id must be added when the stop is related to a line
@@ -101,7 +99,7 @@ public class TripMapper {
         if (flexibleServiceProperties.getFlexibleServiceType() != null) {
             otpTrip.setFlexibleTripType(Trip.FlexibleTripTypeEnum.valueOf(flexibleServiceProperties.getFlexibleServiceType().value()));
         }
-        BookingArrangement otpBookingArrangement = bookingArrangementMapper.mapBookingArrangment(flexibleServiceProperties.getBookingContact(), flexibleServiceProperties.getBookingNote(),
+        BookingArrangement otpBookingArrangement = bookingArrangementMapper.mapBookingArrangement(flexibleServiceProperties.getBookingContact(), flexibleServiceProperties.getBookingNote(),
                 flexibleServiceProperties.getBookingAccess(), flexibleServiceProperties.getBookWhen(), flexibleServiceProperties.getBuyWhen(), flexibleServiceProperties.getBookingMethods(),
                 flexibleServiceProperties.getMinimumBookingPeriod(), flexibleServiceProperties.getLatestBookingTime());
         otpTrip.setBookingArrangements(otpBookingArrangement);

@@ -1,6 +1,5 @@
 package org.opentripplanner.netex.mapping;
 
-import org.apache.commons.collections.CollectionUtils;
 import org.opentripplanner.model.Agency;
 import org.opentripplanner.model.BookingArrangement;
 import org.opentripplanner.model.Operator;
@@ -18,7 +17,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.xml.bind.annotation.adapters.HexBinaryAdapter;
-import java.util.stream.Collectors;
 
 public class RouteMapper {
 
@@ -68,7 +66,7 @@ public class RouteMapper {
             otpRoute.setFlexibleRouteType(Route.FlexibleRouteTypeEnum.valueOf(flexibleLine.getFlexibleLineType().value()));
         }
 
-        BookingArrangement otpBookingArrangement = bookingArrangementMapper.mapBookingArrangment(flexibleLine.getBookingContact(), flexibleLine.getBookingNote(),
+        BookingArrangement otpBookingArrangement = bookingArrangementMapper.mapBookingArrangement(flexibleLine.getBookingContact(), flexibleLine.getBookingNote(),
                 flexibleLine.getBookingAccess(), flexibleLine.getBookWhen(), flexibleLine.getBuyWhen(), flexibleLine.getBookingMethods(),
                 flexibleLine.getMinimumBookingPeriod(), flexibleLine.getLatestBookingTime());
 
