@@ -37,6 +37,7 @@ import org.opentripplanner.routing.trippattern.RealTimeState;
 import org.opentripplanner.routing.vertextype.TransitVertex;
 import org.opentripplanner.updater.GtfsRealtimeFuzzyTripMatcher;
 import org.opentripplanner.updater.stoptime.TimetableSnapshotSource;
+import org.opentripplanner.util.I18NString;
 import org.opentripplanner.util.ResourceBundleSingleton;
 import org.opentripplanner.util.TranslatedString;
 import org.opentripplanner.util.model.EncodedPolylineBean;
@@ -734,7 +735,14 @@ public class IndexGraphQLSchema {
                 .name("alertHeaderText")
                 .type(Scalars.GraphQLString)
                 .description("Header of alert if it exists")
-                .dataFetcher(environment -> ((AlertPatch) environment.getSource()).getAlert().alertHeaderText)
+                .dataFetcher(environment -> {
+
+                    I18NString alertHeaderText = ((AlertPatch) environment.getSource()).getAlert().alertHeaderText;
+                    if (alertHeaderText != null) {
+                        return alertHeaderText.toString();
+                    }
+                    return null;
+                })
                 .build())
             .field(GraphQLFieldDefinition.newFieldDefinition()
                 .name("alertHeaderTextTranslations")
@@ -754,7 +762,14 @@ public class IndexGraphQLSchema {
                 .name("alertDescriptionText")
                 .type(new GraphQLNonNull(Scalars.GraphQLString))
                 .description("Long description of alert notnull")
-                .dataFetcher(environment -> ((AlertPatch) environment.getSource()).getAlert().alertDescriptionText)
+                .dataFetcher(environment -> {
+
+                    I18NString alertDescriptionText = ((AlertPatch) environment.getSource()).getAlert().alertDescriptionText;
+                    if (alertDescriptionText != null) {
+                        return alertDescriptionText.toString();
+                    }
+                    return null;
+                })
                 .build())
             .field(GraphQLFieldDefinition.newFieldDefinition()
                 .name("alertDescriptionTextTranslations")
@@ -774,7 +789,14 @@ public class IndexGraphQLSchema {
                 .name("alertDetailText")
                 .type(new GraphQLNonNull(Scalars.GraphQLString))
                 .description("Additional details of alert notnull")
-                .dataFetcher(environment -> ((AlertPatch) environment.getSource()).getAlert().alertDetailText)
+                .dataFetcher(environment -> {
+
+                    I18NString alertDetailText = ((AlertPatch) environment.getSource()).getAlert().alertDetailText;
+                    if (alertDetailText != null) {
+                        return alertDetailText.toString();
+                    }
+                    return null;
+                })
                 .build())
             .field(GraphQLFieldDefinition.newFieldDefinition()
                 .name("alertDetailTextTranslations")
@@ -794,7 +816,14 @@ public class IndexGraphQLSchema {
                 .name("alertUrl")
                 .type(Scalars.GraphQLString)
                 .description("Url with more information")
-                .dataFetcher(environment -> ((AlertPatch) environment.getSource()).getAlert().alertUrl)
+                .dataFetcher(environment -> {
+
+                    I18NString alertUrl = ((AlertPatch) environment.getSource()).getAlert().alertUrl;
+                    if (alertUrl != null) {
+                        return alertUrl.toString();
+                    }
+                    return null;
+                })
                 .build())
             .field(GraphQLFieldDefinition.newFieldDefinition()
                 .name("effectiveStartDate")
