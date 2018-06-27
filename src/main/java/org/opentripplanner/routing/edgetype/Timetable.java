@@ -147,7 +147,7 @@ public class Timetable implements Serializable {
      */
     public TripTimes getNextTrip(State s0, ServiceDay serviceDay, int stopIndex, boolean boarding) {
         /* Search at the state's time, but relative to midnight on the given service day. */
-        int time = serviceDay.secondsSinceMidnight(s0.getTimeSeconds());
+        int time = getSecondsSinceStartOfRelevantDate(s0.getTimeSeconds(), serviceDay);
         // NOTE the time is sometimes negative here. That is fine, we search for the first trip of the day.
         // Adjust for possible boarding time TODO: This should be included in the trip and based on GTFS
         if (boarding) {
@@ -229,6 +229,21 @@ public class Timetable implements Serializable {
     }
 
     /**
+     * Convert seconds since epoch to seconds since midnight for the relevant service date.
+     *
+     * if this timetable is only valid for a single date, this date will be used as baseline. If not, the provided
+     * serviceDay will be used as baseline.
+     *
+     * Always using the provided serviceDay caused timetables with realtime updates valid for a single day to be matched with the wrong day.
+     */
+    private int getSecondsSinceStartOfRelevantDate(long secondsSinceEpoch, ServiceDay serviceDay) {
+        if (serviceDate != null) {
+            return (int) (secondsSinceEpoch - (serviceDate.getAsDate().getTime() / 1000));
+        }
+        return serviceDay.secondsSinceMidnight(secondsSinceEpoch);
+    }
+
+    /**
      * Check transfer table rules. Given the last alight time from the State,
      * return the boarding time t0 adjusted for this particular trip's minimum transfer time,
      * or -1 if boarding this trip is not allowed.
@@ -256,7 +271,7 @@ public class Timetable implements Serializable {
             return -1;
         }
         // There is a minimum transfer time to make this transfer. Ensure that it is respected.
-        int minTime = serviceDay.secondsSinceMidnight(state.getLastAlightedTimeSeconds());
+        int minTime = getSecondsSinceStartOfRelevantDate(state.getLastAlightedTimeSeconds(), serviceDay);
         if (boarding) {
             minTime += transferTime;
             if (minTime > t0) return minTime;
