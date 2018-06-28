@@ -269,30 +269,11 @@ public class NetexLoader {
             }
 
             //network
-            Network network = sf.getNetwork();
-            if(network != null){
-                currentNetexDao().networkById.add(network);
+            loadNetwork(sf.getNetwork());
 
-                String orgRef = network.getTransportOrganisationRef().getValue().getRef();
-
-                Authority authority = currentNetexDao().authoritiesById.lookup(orgRef);
-
-                if (authority != null) {
-                    currentNetexDao().authoritiesByNetworkId.add(network.getId(), authority);
-                }
-                else {
-                    LOG.warn("Authority is not found in NeTEx import. Missing authority id is {}.", orgRef);
-                }
-
-                if (network.getGroupsOfLines() != null) {
-                    GroupsOfLinesInFrame_RelStructure groupsOfLines = network.getGroupsOfLines();
-                    List<GroupOfLines> groupOfLines = groupsOfLines.getGroupOfLines();
-                    for (GroupOfLines group : groupOfLines) {
-                        currentNetexDao().groupOfLinesById.add(group);
-                        if (authority != null) {
-                            currentNetexDao().authoritiesByGroupOfLinesId.add(group.getId(), authority);
-                        }
-                    }
+            if (sf.getAdditionalNetworks() != null && sf.getAdditionalNetworks().getNetwork()!=null) {
+                for (Network additionalNetwork: sf.getAdditionalNetworks().getNetwork()) {
+                    loadNetwork(additionalNetwork);
                 }
             }
 
@@ -369,6 +350,34 @@ public class NetexLoader {
             if (sf.getServiceLinks() != null) {
                 for (ServiceLink serviceLink : sf.getServiceLinks().getServiceLink()) {
                     currentNetexDao().serviceLinkById.add(serviceLink);
+                }
+            }
+        }
+    }
+
+    private void loadNetwork(Network network) {
+        if(network != null){
+            currentNetexDao().networkById.add(network);
+
+            String orgRef = network.getTransportOrganisationRef().getValue().getRef();
+
+            Authority authority = currentNetexDao().authoritiesById.lookup(orgRef);
+
+            if (authority != null) {
+                currentNetexDao().authoritiesByNetworkId.add(network.getId(), authority);
+            }
+            else {
+                LOG.warn("Authority is not found in NeTEx import. Missing authority id is {}.", orgRef);
+            }
+
+            if (network.getGroupsOfLines() != null) {
+                GroupsOfLinesInFrame_RelStructure groupsOfLines = network.getGroupsOfLines();
+                List<GroupOfLines> groupOfLines = groupsOfLines.getGroupOfLines();
+                for (GroupOfLines group : groupOfLines) {
+                    currentNetexDao().groupOfLinesById.add(group);
+                    if (authority != null) {
+                        currentNetexDao().authoritiesByGroupOfLinesId.add(group.getId(), authority);
+                    }
                 }
             }
         }
