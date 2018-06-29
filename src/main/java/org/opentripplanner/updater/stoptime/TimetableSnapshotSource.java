@@ -19,6 +19,7 @@ import com.google.transit.realtime.GtfsRealtime.TripUpdate;
 import com.google.transit.realtime.GtfsRealtime.TripUpdate.StopTimeUpdate;
 import org.opentripplanner.model.*;
 import org.opentripplanner.model.calendar.ServiceDate;
+import org.opentripplanner.routing.core.ServiceDay;
 import org.opentripplanner.routing.edgetype.Timetable;
 import org.opentripplanner.routing.edgetype.TimetableSnapshot;
 import org.opentripplanner.routing.edgetype.TripPattern;
@@ -486,8 +487,7 @@ public class TimetableSnapshotSource {
     private boolean handleTripPatternUpdate(Graph graph, TripPattern pattern, VehicleActivityStructure activity, Trip trip, ServiceDate serviceDate) {
 
         // Apply update on the *scheduled* time table and set the updated trip times in the buffer
-        final TripTimes updatedTripTimes = pattern.scheduledTimetable.createUpdatedTripTimes(graph, activity, timeZone, trip.getId());
-
+        final TripTimes updatedTripTimes = getCurrentTimetable(pattern, serviceDate).createUpdatedTripTimes(graph, activity, timeZone, trip.getId());
         if (updatedTripTimes == null) {
             return false;
         }
@@ -497,6 +497,19 @@ public class TimetableSnapshotSource {
         return success;
     }
 
+    /**
+     * Get the latest timetable for TripPattern for a given service date.
+     *
+     * Snapshot timetable is used as source if initialised, trip patterns scheduled timetable if not.
+     *
+     */
+    private Timetable getCurrentTimetable(TripPattern tripPattern, ServiceDate serviceDate) {
+        TimetableSnapshot timetableSnapshot=getTimetableSnapshot();
+        if (timetableSnapshot!=null) {
+            return getTimetableSnapshot().resolve(tripPattern, serviceDate);
+        }
+        return tripPattern.scheduledTimetable;
+    }
 
     private boolean handleModifiedTrip(Graph graph, EstimatedVehicleJourney estimatedVehicleJourney) {
 
@@ -543,7 +556,8 @@ public class TimetableSnapshotSource {
         for (Trip matchingTrip : matchingTrips) {
             TripPattern pattern = getPatternForTrip(matchingTrip, estimatedVehicleJourney);
             if (pattern != null) {
-                TripTimes updatedTripTimes = pattern.scheduledTimetable.createUpdatedTripTimes(graph, estimatedVehicleJourney, timeZone, matchingTrip.getId());
+                ServiceDate serviceDate = getServiceDateForEstimatedVehicleJourney(estimatedVehicleJourney);
+                TripTimes updatedTripTimes = getCurrentTimetable(pattern, serviceDate).createUpdatedTripTimes(graph, estimatedVehicleJourney, timeZone, matchingTrip.getId());
                 if (updatedTripTimes != null && pattern.stopPattern.size == updatedTripTimes.getNumStops()) {
                     patterns.add(pattern);
                     times.add(updatedTripTimes);
@@ -560,19 +574,11 @@ public class TimetableSnapshotSource {
             return false;
         }
 
-        ZonedDateTime date;
-        if (estimatedVehicleJourney.getRecordedCalls() != null && !estimatedVehicleJourney.getRecordedCalls().getRecordedCalls().isEmpty()){
-            date = estimatedVehicleJourney.getRecordedCalls().getRecordedCalls().get(0).getAimedDepartureTime();
-        } else {
-            EstimatedCall firstCall = estimatedCalls.getEstimatedCalls().get(0);
-            date = firstCall.getAimedDepartureTime();
-        }
+        ServiceDate serviceDate = getServiceDateForEstimatedVehicleJourney(estimatedVehicleJourney);
 
-        if (date == null) {
+        if (serviceDate == null) {
             return false;
         }
-
-        ServiceDate serviceDate = new ServiceDate(date.getYear(), date.getMonthValue(), date.getDayOfMonth());
 
         boolean result = false;
         for (TripTimes tripTimes : times) {
@@ -588,8 +594,9 @@ public class TimetableSnapshotSource {
                         cancelPreviouslyAddedTrip(SIRI_FEED_ID, trip.getId().getId(), serviceDate);
 
                         // Calculate modified stop-pattern
-                        List<Stop> modifiedStops = pattern.scheduledTimetable.createModifiedStops(estimatedVehicleJourney, graphIndex);
-                        List<StopTime> modifiedStopTimes = pattern.scheduledTimetable.createModifiedStopTimes(tripTimes, estimatedVehicleJourney, trip, graphIndex);
+                        Timetable currentTimetable = getCurrentTimetable(pattern, serviceDate);
+                        List<Stop> modifiedStops = currentTimetable.createModifiedStops(estimatedVehicleJourney, graphIndex);
+                        List<StopTime> modifiedStopTimes = currentTimetable.createModifiedStopTimes(tripTimes, estimatedVehicleJourney, trip, graphIndex);
 
                         if (modifiedStops != null && modifiedStops.isEmpty()) {
                             tripTimes.cancel();
@@ -609,6 +616,23 @@ public class TimetableSnapshotSource {
         }
 
         return result;
+    }
+
+    private ServiceDate getServiceDateForEstimatedVehicleJourney(EstimatedVehicleJourney estimatedVehicleJourney) {
+        ZonedDateTime date;
+        if (estimatedVehicleJourney.getRecordedCalls() != null && !estimatedVehicleJourney.getRecordedCalls().getRecordedCalls().isEmpty()){
+            date = estimatedVehicleJourney.getRecordedCalls().getRecordedCalls().get(0).getAimedDepartureTime();
+        } else {
+            EstimatedCall firstCall = estimatedVehicleJourney.getEstimatedCalls().getEstimatedCalls().get(0);
+            date = firstCall.getAimedDepartureTime();
+        }
+
+        if (date == null) {
+            return null;
+        }
+
+
+        return new ServiceDate(date.getYear(), date.getMonthValue(), date.getDayOfMonth());
     }
 
     private int calculateSecondsSinceMidnight(ZonedDateTime dateTime) {
@@ -1096,15 +1120,6 @@ public class TimetableSnapshotSource {
         // Add to buffer as-is to include it in the 'lastAddedTripPattern'
         buffer.update(feedId, pattern, updatedTripTimes, serviceDate);
 
-        /*
-         * Update pattern with triptimes so that routing is possible.
-         * New patterns only affects a single trip, previously added tripTimes is no longer valid, and is therefore removed
-         */
-        pattern.scheduledTimetable.tripTimes.clear();
-        pattern.scheduledTimetable.addTripTimes(updatedTripTimes);
-        pattern.scheduledTimetable.finish();
-
-
         //TODO: Add pattern to index?
 
         // Add new trip times to the buffer
@@ -1388,7 +1403,7 @@ public class TimetableSnapshotSource {
             } else {
                 //Match origin only - since destination is not defined
                 if (firstStop.getId().getId().equals(siriOriginRef)) {
-                    tripPattern.scheduledTimetable.tripTimes.get(0).getDepartureTime(0);
+                    tripPattern.scheduledTimetable.tripTimes.get(0).getDepartureTime(0); // TODO does this line do anything?
                     patterns.add(tripPattern);
                 }
             }
@@ -1567,7 +1582,7 @@ public class TimetableSnapshotSource {
                         }
                     }
                     if (firstReportedStopIsFound) {
-                        for (TripTimes times : pattern.scheduledTimetable.tripTimes) {
+                        for (TripTimes times : getCurrentTimetable(pattern, serviceDate).tripTimes) {
                             if (times.getScheduledDepartureTime(stopNumber - 1) == departureInSecondsSinceMidnight) {
                                 if (graphIndex.graph.getCalendarService().getServiceDatesForServiceId(times.trip.getServiceId()).contains(serviceDate)) {
                                     result.add(times.trip);
