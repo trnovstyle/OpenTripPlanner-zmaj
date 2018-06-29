@@ -215,21 +215,6 @@ public class SiriFuzzyTripMatcher {
         }
     }
 
-    public Trip getTrip (Route route, int direction,
-                         int startTime, ServiceDate date) {
-        BitSet services = index.servicesRunning(date);
-        for (TripPattern pattern : index.patternsForRoute.get(route)) {
-            if (pattern.directionId != direction) continue;
-            for (TripTimes times : pattern.scheduledTimetable.tripTimes) {
-                if (times.getScheduledDepartureTime(0) == startTime &&
-                        services.get(times.serviceCode)) {
-                    return times.trip;
-                }
-            }
-        }
-        return null;
-    }
-
     private static String createStartStopKey(String lastStopId, int lastStopArrivalTime) {
         return lastStopId + ":" + lastStopArrivalTime;
     }
