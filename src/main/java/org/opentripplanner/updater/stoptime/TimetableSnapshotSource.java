@@ -1117,6 +1117,18 @@ public class TimetableSnapshotSource {
             pattern.setServices(services);
         }
 
+
+        /*
+         * Update pattern with triptimes so get correct dwell times and lower bound on running times.
+         * New patterns only affects a single trip, previously added tripTimes is no longer valid, and is therefore removed
+         */
+        pattern.scheduledTimetable.tripTimes.clear();
+        pattern.scheduledTimetable.addTripTimes(updatedTripTimes);
+        pattern.scheduledTimetable.finish();
+
+        // Remove trip times to avoid real time trip times being visible for ignoreRealtimeInformation queries
+        pattern.scheduledTimetable.tripTimes.clear();
+
         // Add to buffer as-is to include it in the 'lastAddedTripPattern'
         buffer.update(feedId, pattern, updatedTripTimes, serviceDate);
 
