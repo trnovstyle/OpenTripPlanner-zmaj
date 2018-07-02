@@ -155,15 +155,6 @@ public class TransitBoardAlight extends TablePatternEdge implements OnboardEdge 
             return null;
         }
 
-        Timetable scheduledTimetable = getPattern().scheduledTimetable;
-
-        if (scheduledTimetable != null && scheduledTimetable.serviceDate != null) {
-           if (!options.getServiceDate().equals(scheduledTimetable.serviceDate)) {
-               // if a specific ServiceDate is defined, and it does not match the requested travel-date. This is not a viable option
-               return null;
-           }
-        }
-
         /*
          * Determine whether we are going onto or off of transit. Entering and leaving transit is
          * not the same thing as boarding and alighting. When arriveBy == true, we are entering
