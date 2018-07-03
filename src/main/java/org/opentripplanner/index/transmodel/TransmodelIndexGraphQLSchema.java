@@ -2879,6 +2879,10 @@ public class TransmodelIndexGraphQLSchema {
                                 .build())
                         .argument(GraphQLArgument.newArgument()
                                 .name("publicCode")
+                                .type(Scalars.GraphQLString)
+                                .build())
+                        .argument(GraphQLArgument.newArgument()
+                                .name("publicCodes")
                                 .type(new GraphQLList(Scalars.GraphQLString))
                                 .build())
                         .argument(GraphQLArgument.newArgument()
@@ -2912,11 +2916,16 @@ public class TransmodelIndexGraphQLSchema {
                                                 ((String) environment.getArgument("name")).toLowerCase())
                                         );
                             }
-                            if (environment.getArgument("publicCode") instanceof List) {
-                                Set<String> publicCodes = new HashSet<>((List)environment.getArgument("publicCode"));
+                            if (environment.getArgument("publicCode") != null) {
                                 stream = stream
                                         .filter(route -> route.getShortName() != null)
-                                        .filter(route -> publicCodes.contains(route.getShortName()));
+                                        .filter(route -> route.getShortName().equals(environment.getArgument("publicCode")));
+                            }
+                            if (environment.getArgument("publicCodes") instanceof List) {
+                                Set<String> publicCodes = new HashSet<>((List)environment.getArgument("publicCodes"));
+                                stream = stream
+                                                 .filter(route -> route.getShortName() != null)
+                                                 .filter(route -> publicCodes.contains(route.getShortName()));
                             }
                             if (environment.getArgument("transportModes") != null) {
 
