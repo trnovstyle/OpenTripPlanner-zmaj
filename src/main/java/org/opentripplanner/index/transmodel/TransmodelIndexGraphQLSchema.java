@@ -1954,8 +1954,7 @@ public class TransmodelIndexGraphQLSchema {
                 .field(GraphQLFieldDefinition.newFieldDefinition()
                         .name("id")
                         .type(new GraphQLNonNull(Scalars.GraphQLID))
-                        .dataFetcher(environment -> relay.toGlobalId(
-                                journeyPatternType.getName(), ((TripPattern) environment.getSource()).code))
+                        .dataFetcher(environment ->   mappingUtil.toIdString(((TripPattern) environment.getSource()).id))
                         .build())
                 .field(GraphQLFieldDefinition.newFieldDefinition()
                         .name("line")
@@ -1975,6 +1974,7 @@ public class TransmodelIndexGraphQLSchema {
                 .field(GraphQLFieldDefinition.newFieldDefinition()
                         .name("destinationDisplay")
                         .type(destinationDisplayType)
+                        .deprecate("Get destinationDisplay from estimatedCall or timetabledPassingTime instead. DestinationDisplay from JourneyPattern is not correct according to model, will give misleading results in some cases and will be removed!")
                         .dataFetcher(environment -> ((TripPattern) environment.getSource()).getDirection())
                         .build())
                 .field(GraphQLFieldDefinition.newFieldDefinition()
