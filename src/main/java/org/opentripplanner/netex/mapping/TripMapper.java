@@ -74,7 +74,7 @@ public class TripMapper {
             trip.setTripShortName("");
         }
         trip.setKeyValues(keyValueMapper.mapKeyValues(serviceJourney.getKeyList()));
-        trip.setWheelchairAccessible(1);
+        trip.setWheelchairAccessible(0); // noInformation
         trip.setServiceAlteration(mapServiceAlteration(serviceJourney.getServiceAlteration()));
         trip.setTransportSubmode(transportModeMapper.getTransportSubmode(serviceJourney.getTransportSubmode()));
         if (trip.getTransportSubmode()==null) {
