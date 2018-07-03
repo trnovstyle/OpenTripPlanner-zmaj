@@ -2879,7 +2879,7 @@ public class TransmodelIndexGraphQLSchema {
                                 .build())
                         .argument(GraphQLArgument.newArgument()
                                 .name("publicCode")
-                                .type(Scalars.GraphQLString)
+                                .type(new GraphQLList(Scalars.GraphQLString))
                                 .build())
                         .argument(GraphQLArgument.newArgument()
                                 .name("transportModes")
@@ -2912,10 +2912,11 @@ public class TransmodelIndexGraphQLSchema {
                                                 ((String) environment.getArgument("name")).toLowerCase())
                                         );
                             }
-                            if (environment.getArgument("publicCode") != null) {
+                            if (environment.getArgument("publicCode") instanceof List) {
+                                Set<String> publicCodes = new HashSet<>((List)environment.getArgument("publicCode"));
                                 stream = stream
                                         .filter(route -> route.getShortName() != null)
-                                        .filter(route -> route.getShortName().equals(environment.getArgument("publicCode")));
+                                        .filter(route -> publicCodes.contains(route.getShortName()));
                             }
                             if (environment.getArgument("transportModes") != null) {
 
