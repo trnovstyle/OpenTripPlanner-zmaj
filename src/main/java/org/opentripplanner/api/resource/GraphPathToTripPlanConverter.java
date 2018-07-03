@@ -1062,6 +1062,11 @@ public abstract class GraphPathToTripPlanConverter {
                 transferStates.add(s);
                 for (Edge e : transferEdges) {
                     s = e.traverse(s);
+                    if (s == null) {
+                        LOG.warn("Unable to traverse transfer edges while generating walk steps. Got null state from edge: " + e);
+                        break;
+                    }
+
                     transferStates.add(s);
                 }
                 states = transferStates.toArray(new State[transferStates.size()]);
