@@ -1279,7 +1279,6 @@ public class TransmodelIndexGraphQLSchema {
                                 .description("Limit the number of departures pr headsign. The parameter is only applied " +
                                         "when the value is between 1 and 'numberOfDepartures'.")
                                 .type(Scalars.GraphQLInt)
-                                .defaultValue(5)
                                 .build())
                         .argument(GraphQLArgument.newArgument()
                                 .name("omitNonBoarding")
@@ -1295,7 +1294,7 @@ public class TransmodelIndexGraphQLSchema {
                         .dataFetcher(environment -> {
                             boolean omitNonBoarding = environment.getArgument("omitNonBoarding");
                             int numberOfDepartures = environment.getArgument("numberOfDepartures");
-                            int numberOfDeparturesPrDestinationDisplay = environment.getArgument("numberOfDeparturesPrDestinationDisplay");
+                            Integer numberOfDeparturesPrDestinationDisplay = environment.getArgument("numberOfDeparturesPrDestinationDisplay");
                             int timeRage = environment.getArgument("timeRange");
 
                             Stop stop = environment.getSource();
@@ -1439,7 +1438,6 @@ public class TransmodelIndexGraphQLSchema {
                                 .description("Limit the number of departures pr headsign. The parameter is only applied " +
                                         "when the value is between 1 and 'numberOfDepartures'.")
                                 .type(Scalars.GraphQLInt)
-                                .defaultValue(5)
                                 .build())
                         .argument(GraphQLArgument.newArgument()
                                 .name("omitNonBoarding")
@@ -1455,7 +1453,7 @@ public class TransmodelIndexGraphQLSchema {
                         .dataFetcher(environment -> {
                             boolean omitNonBoarding = environment.getArgument("omitNonBoarding");
                             int numberOfDepartures = environment.getArgument("numberOfDepartures");
-                            int numberOfDeparturesPrDestinationDisplay = environment.getArgument("numberOfDeparturesPrDestinationDisplay");
+                            Integer numberOfDeparturesPrDestinationDisplay = environment.getArgument("numberOfDeparturesPrDestinationDisplay");
                             int timeRange = environment.getArgument("timeRange");
                             Stop stop = environment.getSource();
 
@@ -4125,11 +4123,10 @@ public class TransmodelIndexGraphQLSchema {
             int timeRage,
             boolean omitNonBoarding,
             int numberOfDepartures,
-            int numberOfDeparturesPrDestinationDisplay
+            Integer numberOfDeparturesPrDestinationDisplay
     ) {
-        boolean limitOnHeadSign = numberOfDeparturesPrDestinationDisplay > 0 && numberOfDeparturesPrDestinationDisplay < numberOfDepartures;
 
-
+        boolean limitOnHeadSign = numberOfDeparturesPrDestinationDisplay != null && numberOfDeparturesPrDestinationDisplay > 0 && numberOfDeparturesPrDestinationDisplay < numberOfDepartures;
         int numberOfDeparturesPrTripPattern = limitOnHeadSign ? numberOfDeparturesPrDestinationDisplay : numberOfDepartures;
 
         List<StopTimesInPattern> stopTimesInPatterns = index.stopTimesForStop(
