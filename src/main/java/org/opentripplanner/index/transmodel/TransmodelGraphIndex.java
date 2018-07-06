@@ -4,10 +4,8 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import graphql.ExceptionWhileDataFetching;
 import graphql.ExecutionResult;
 import graphql.GraphQL;
+import graphql.analysis.MaxQueryComplexityInstrumentation;
 import graphql.schema.GraphQLSchema;
-import org.opentripplanner.index.IndexGraphQLSchema;
-import org.opentripplanner.index.ResourceConstrainedExecutorServiceExecutionStrategy;
-import org.opentripplanner.routing.graph.GraphIndex;
 import org.opentripplanner.standalone.Router;
 
 import javax.ws.rs.core.Response;
@@ -16,7 +14,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -36,11 +33,9 @@ public class TransmodelGraphIndex {
     }
 
     public HashMap<String, Object> getGraphQLExecutionResult(String query, Router router,
-                                                                    Map<String, Object> variables, String operationName, int timeout, long maxResolves) {
-        GraphQL graphQL = new GraphQL(
-                                             indexSchema,
-                                             new ResourceConstrainedExecutorServiceExecutionStrategy(threadPool, timeout, TimeUnit.MILLISECONDS, maxResolves)
-        );
+                                                                    Map<String, Object> variables, String operationName, int timeout, int maxResolves) {
+        MaxQueryComplexityInstrumentation instrumentation = new MaxQueryComplexityInstrumentation(maxResolves);
+        GraphQL graphQL = GraphQL.newGraphQL(indexSchema).instrumentation(instrumentation).build();
 
         if (variables == null) {
             variables = new HashMap<>();
@@ -75,7 +70,7 @@ public class TransmodelGraphIndex {
         return content;
     }
 
-    public Response getGraphQLResponse(String query, Router router, Map<String, Object> variables, String operationName, int timeout, long maxResolves) {
+    public Response getGraphQLResponse(String query, Router router, Map<String, Object> variables, String operationName, int timeout, int maxResolves) {
         Response.ResponseBuilder res = Response.status(Response.Status.OK);
         HashMap<String, Object> content = getGraphQLExecutionResult(query, router, variables,
                 operationName, timeout, maxResolves);

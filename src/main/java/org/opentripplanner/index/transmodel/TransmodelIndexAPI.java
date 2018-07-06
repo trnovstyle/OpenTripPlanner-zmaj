@@ -62,7 +62,7 @@ public class TransmodelIndexAPI {
     @POST
     @Path("/graphql")
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response getGraphQL(HashMap<String, Object> queryParameters, @HeaderParam("OTPTimeout") @DefaultValue("10000") int timeout, @HeaderParam("OTPMaxResolves") @DefaultValue("1000000") long maxResolves) {
+    public Response getGraphQL(HashMap<String, Object> queryParameters, @HeaderParam("OTPTimeout") @DefaultValue("10000") int timeout, @HeaderParam("OTPMaxResolves") @DefaultValue("1000000") int maxResolves) {
         int finalTimeout = checkTimeout(timeout);
         String query = (String) queryParameters.get("query");
         Object queryVariables = queryParameters.getOrDefault("variables", null);
@@ -86,7 +86,7 @@ public class TransmodelIndexAPI {
     @POST
     @Path("/graphql")
     @Consumes("application/graphql")
-    public Response getGraphQL(String query, @HeaderParam("OTPTimeout") @DefaultValue("10000") int timeout, @HeaderParam("OTPMaxResolves") @DefaultValue("1000000") long maxResolves) {
+    public Response getGraphQL(String query, @HeaderParam("OTPTimeout") @DefaultValue("10000") int timeout, @HeaderParam("OTPMaxResolves") @DefaultValue("1000000") int maxResolves) {
         int finalTimeout = checkTimeout(timeout);
         return index.getGraphQLResponse(query, router, null, null, finalTimeout, maxResolves);
     }
@@ -94,7 +94,7 @@ public class TransmodelIndexAPI {
     @POST
     @Path("/graphql/batch")
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response getGraphQLBatch(List<HashMap<String, Object>> queries, @HeaderParam("OTPTimeout") @DefaultValue("10000") int timeout, @HeaderParam("OTPMaxResolves") @DefaultValue("1000000") long maxResolves) {
+    public Response getGraphQLBatch(List<HashMap<String, Object>> queries, @HeaderParam("OTPTimeout") @DefaultValue("10000") int timeout, @HeaderParam("OTPMaxResolves") @DefaultValue("1000000") int maxResolves) {
         int finalTimeout = checkTimeout(timeout);
         List<Map<String, Object>> responses = new ArrayList<>();
         List<Callable<Map>> futures = new ArrayList();
