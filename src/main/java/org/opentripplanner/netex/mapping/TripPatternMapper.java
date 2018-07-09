@@ -69,20 +69,20 @@ public class TripPatternMapper {
             TimetabledPassingTimes_RelStructure passingTimes = serviceJourney.getPassingTimes();
             List<TimetabledPassingTime> timetabledPassingTimes = passingTimes.getTimetabledPassingTime();
 
-            List<StopTime> stopTimes = mapToStopTimes(
+            List<StopTimeWithBookingArrangement> stopTimes = mapToStopTimes(
                     journeyPattern, transitBuilder, netexDao, trip, timetabledPassingTimes
             );
 
             if (stopTimes != null && stopTimes.size() > 0) {
-                transitBuilder.getStopTimesSortedByTrip().put(trip, stopTimes);
+                transitBuilder.getStopTimesSortedByTrip().put(trip, stopTimes.stream().map(stwb -> stwb.stopTime).collect(Collectors.toList()));
 
-                List<StopTime> stopTimesWithHeadsign = stopTimes.stream()
-                        .filter(s -> s.getStopHeadsign() != null && s.getStopHeadsign() != "")
+                List<StopTimeWithBookingArrangement> stopTimesWithHeadsign = stopTimes.stream()
+                        .filter(s -> s.stopTime.getStopHeadsign() != null && s.stopTime.getStopHeadsign() != "")
                         .collect(Collectors.toList());
 
                 // Set first non-empty headsign as trip headsign
                 if (stopTimesWithHeadsign.size() > 0) {
-                    trip.setTripHeadsign(stopTimesWithHeadsign.stream()
+                    trip.setTripHeadsign(stopTimesWithHeadsign.stream().map(st -> st.stopTime)
                             .sorted(Comparator.comparingInt(StopTime::getStopSequence)).findFirst()
                             .get().getStopHeadsign());
                 }
@@ -95,6 +95,11 @@ public class TripPatternMapper {
                 // JourneyPattern
                 if (stopPattern == null) {
                     stopPattern = new StopPattern(transitBuilder.getStopTimesSortedByTrip().get(trip));
+                    int i=0;
+                    for (StopTimeWithBookingArrangement stwb: stopTimes) {
+                        stopPattern.bookingArrangements[i++] = stwb.bookingArrangement;
+                    }
+
                 }
             }
             else {
@@ -108,7 +113,6 @@ public class TripPatternMapper {
             return;
         }
 
-        addBookingArrangementsToStopPattern(journeyPattern, stopPattern);
         TripPattern tripPattern = new TripPattern(otpRoute, stopPattern);
         tripPattern.code = journeyPattern.getId();
         tripPattern.name = journeyPattern.getName() == null ? "" : journeyPattern.getName().getValue();
@@ -135,20 +139,8 @@ public class TripPatternMapper {
         transitBuilder.getTripPatterns().put(tripPattern.stopPattern, tripPattern);
     }
 
-    private void addBookingArrangementsToStopPattern(JourneyPattern journeyPattern, StopPattern stopPattern) {
-        int i=0;
-        List<PointInLinkSequence_VersionedChildStructure> points = journeyPattern
-                                                                           .getPointsInSequence()
-                                                                           .getPointInJourneyPatternOrStopPointInJourneyPatternOrTimingPointInJourneyPattern();
-        for (PointInLinkSequence_VersionedChildStructure point : points) {
-            if (point instanceof StopPointInJourneyPattern) {
-                stopPattern.bookingArrangements[i++]=mapBookingArrangement(((StopPointInJourneyPattern) point).getBookingArrangements());
-            }
-        }
-    }
-
-    private List<StopTime> mapToStopTimes(JourneyPattern journeyPattern, OtpTransitBuilder transitBuilder, NetexDao netexDao, Trip trip, List<TimetabledPassingTime> timetabledPassingTimes) {
-        List<StopTime> stopTimes = new ArrayList<>();
+    private List<StopTimeWithBookingArrangement> mapToStopTimes(JourneyPattern journeyPattern, OtpTransitBuilder transitBuilder, NetexDao netexDao, Trip trip, List<TimetabledPassingTime> timetabledPassingTimes) {
+        List<StopTimeWithBookingArrangement> stopTimes = new ArrayList<>();
 
         int stopSequence = 0;
 
@@ -163,12 +155,14 @@ public class TripPatternMapper {
                 StopPointInJourneyPattern stopPoint = findStopPoint(ref, journeyPattern);
 
                 StopTime stopTime = mapToStopTime(trip, stopPoint, quay, passingTime, stopSequence, netexDao);
-                if (stopTimes.size() > 0 && stopTimeNegative(stopTimes.get(stopTimes.size() - 1), stopTime)) {
+                if (stopTimes.size() > 0 && stopTimeNegative(stopTimes.get(stopTimes.size() - 1).stopTime, stopTime)) {
                     LOG.error("Stoptime increased by negative amount in serviceJourney " + trip.getId().getId());
                     return null;
                 }
 
-                stopTimes.add(stopTime);
+                BookingArrangement bookingArrangement = mapBookingArrangement(stopPoint.getBookingArrangements());
+
+                stopTimes.add(new StopTimeWithBookingArrangement(stopTime, bookingArrangement));
                 ++stopSequence;
             } else {
                 LOG.warn("Quay not found for timetabledPassingTimes: " + passingTime.getId());
@@ -312,5 +306,18 @@ public class TripPatternMapper {
 
     private boolean isFalse(Boolean value) {
         return value != null && !value;
+    }
+
+
+    private class StopTimeWithBookingArrangement {
+
+        StopTime stopTime;
+
+        BookingArrangement bookingArrangement;
+
+        public StopTimeWithBookingArrangement(StopTime stopTime, BookingArrangement bookingArrangement) {
+            this.stopTime = stopTime;
+            this.bookingArrangement = bookingArrangement;
+        }
     }
 }
