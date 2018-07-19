@@ -18,6 +18,7 @@ import java.util.Map;
 
 import org.opentripplanner.model.AgencyAndId;
 import org.opentripplanner.model.Route;
+import org.opentripplanner.model.Stop;
 import org.opentripplanner.model.calendar.ServiceDate;
 import org.opentripplanner.model.StopPattern;
 import org.opentripplanner.routing.edgetype.TripPattern;
@@ -51,7 +52,7 @@ public class TripPatternCache {
         // Create TripPattern if it doesn't exist yet
         if (tripPattern == null) {
             tripPattern = new TripPattern(route, stopPattern, serviceDate);
-            
+
             // Generate unique code for trip pattern
             tripPattern.code = generateUniqueTripPatternCode(tripPattern);
             
@@ -69,6 +70,13 @@ public class TripPatternCache {
             
             // Add pattern to cache
             cache.put(key, tripPattern);
+
+// TODO stunt fix to make these trip patterns visible for departureRow searches. Shouldn't really mix these with scheduled data. Will affect routes for stop as well, is this OK?
+            for (Stop stop: tripPattern.getStops()) {
+                if (!graph.index.patternsForStop.containsEntry(stop, tripPattern)) {
+                    graph.index.patternsForStop.put(stop, tripPattern);
+                }
+            }
         }
         
         return tripPattern;
