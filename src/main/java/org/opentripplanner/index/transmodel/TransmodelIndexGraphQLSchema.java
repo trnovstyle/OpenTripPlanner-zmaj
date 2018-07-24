@@ -3038,7 +3038,9 @@ public class TransmodelIndexGraphQLSchema {
                                                 environment.getArgument("minimumLatitude")),
                                         new Coordinate(environment.getArgument("maximumLongitude"),
                                                 environment.getArgument("maximumLatitude")))).stream()
-                                        .map(b -> b.getStation()).collect(Collectors.toList())
+                                        .map(b -> b.getStation())
+                                        .sorted((s1, s2) -> s1.getName().toString().compareTo(s2.getName().toString()))
+                                        .collect(Collectors.toList())
                                 )
                         .build())
                 .field(GraphQLFieldDefinition.newFieldDefinition()
