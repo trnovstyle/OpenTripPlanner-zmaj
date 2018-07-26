@@ -1,6 +1,5 @@
 package org.opentripplanner.netex.mapping;
 
-import com.google.common.collect.Iterables;
 import com.google.common.collect.ListMultimap;
 import org.opentripplanner.model.AgencyAndId;
 import org.opentripplanner.model.Stop;
@@ -19,11 +18,9 @@ import org.slf4j.LoggerFactory;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 public class StopMapper {
     private static final Logger LOG = LoggerFactory.getLogger(StopMapper.class);
@@ -34,65 +31,65 @@ public class StopMapper {
 
     private String DEFAULT_TIMEZONE = "Europe/Oslo";
 
-    public Collection<Stop> mapParentAndChildStops(Collection<StopPlace> stopPlaceAllVersions, OtpTransitBuilder transitBuilder, NetexDao netexDao){
+    public Collection<Stop> mapParentAndChildStops(Collection<StopPlace> stopPlaces, OtpTransitBuilder transitBuilder, NetexDao netexDao){
+        // Extract current stop based on validity and version
+        StopPlaceVersionAndValidityComparator comparator = new StopPlaceVersionAndValidityComparator();
+        List<StopPlace> stopPlaceList = new ArrayList<>(stopPlaces);
+        stopPlaceList.sort(comparator);
+        StopPlace currentStopPlace = stopPlaceList.get(0);
+
+        // List of current stop with quays
         ArrayList<Stop> stops = new ArrayList<>();
-
-        Stop multiModalStop = null;
         Stop stop = new Stop();
+        stops.add(stop);
+        // StopPlace maps to parent stop (location type 1)
         stop.setLocationType(1);
+        stop.setId(AgencyAndIdFactory.createAgencyAndId(currentStopPlace.getId()));
+        stop.setVehicleType(stopPlaceTypeMapper.getTransportMode(currentStopPlace));
+        stop.setTransportSubmode(transportModeMapper.getTransportSubmode(currentStopPlace));
+        stop.setTimezone(DEFAULT_TIMEZONE);
+        stop.setWeight(mapInterchange(currentStopPlace));
+        // Map coordinates
+        if(currentStopPlace.getCentroid() != null){
+            stop.setLat(currentStopPlace.getCentroid().getLocation().getLatitude().doubleValue());
+            stop.setLon(currentStopPlace.getCentroid().getLocation().getLongitude().doubleValue());
+        }else{
+            LOG.warn(currentStopPlace.getId() + " does not contain any coordinates.");
+        }
 
-        // Sort by versions, latest first
-        stopPlaceAllVersions = stopPlaceAllVersions.stream()
-                .sorted(Comparator.comparingInt(o -> Integer.parseInt(o.getVersion())))
-                .collect(Collectors.toList());
-
-        StopPlace stopPlaceLatest = Iterables.getLast(stopPlaceAllVersions);
-
-        if (stopPlaceLatest.getParentSiteRef() != null) {
-            AgencyAndId id = AgencyAndIdFactory.createAgencyAndId(stopPlaceLatest.getParentSiteRef().getRef());
+        // Find parent multimodal stop if it present
+        Stop multiModalStop = null;
+        if (currentStopPlace.getParentSiteRef() != null) {
+            AgencyAndId id = AgencyAndIdFactory.createAgencyAndId(currentStopPlace.getParentSiteRef().getRef());
             if (transitBuilder.getMultiModalStops().containsKey(id)) {
                 multiModalStop = transitBuilder.getMultiModalStops().get(id);
                 transitBuilder.getStationsByMultiModalStop().put(multiModalStop, stop);
             }
         }
+        if (multiModalStop != null) {
+            stop.setMultiModalStation(multiModalStop.getId().getId());
+        }
 
-        if (stopPlaceLatest.getName() != null) {
-            stop.setName(stopPlaceLatest.getName().getValue());
+        // Inherit name from multimodal stop if present
+        if (currentStopPlace.getName() != null) {
+            stop.setName(currentStopPlace.getName().getValue());
         } else if (multiModalStop != null) {
             String parentName = multiModalStop.getName();
             if (parentName != null) {
                 stop.setName(parentName);
             } else {
-                LOG.warn("No name found for stop " + stopPlaceLatest.getId() + " or in parent stop");
+                LOG.warn("No name found for stop " + currentStopPlace.getId() + " or in parent stop");
                 stop.setName("N/A");
             }
         } else {
             stop.setName("N/A");
         }
 
-        if(stopPlaceLatest.getCentroid() != null){
-            stop.setLat(stopPlaceLatest.getCentroid().getLocation().getLatitude().doubleValue());
-            stop.setLon(stopPlaceLatest.getCentroid().getLocation().getLongitude().doubleValue());
-        }else{
-            LOG.warn(stopPlaceLatest.getId() + " does not contain any coordinates.");
-        }
-
-        stop.setId(AgencyAndIdFactory.createAgencyAndId(stopPlaceLatest.getId()));
-
-        stop.setVehicleType(stopPlaceTypeMapper.getTransportMode(stopPlaceLatest));
-        stop.setTransportSubmode(transportModeMapper.getTransportSubmode(stopPlaceLatest));
-        stop.setTimezone(DEFAULT_TIMEZONE);
-
-        stop.setWeight(mapInterchange(stopPlaceLatest));
-        if (multiModalStop != null) {
-            stop.setMultiModalStation(multiModalStop.getId().getId());
-        }
-
-        if (stopPlaceLatest.getAccessibilityAssessment() != null
-                && stopPlaceLatest.getAccessibilityAssessment().getLimitations() != null
-                && stopPlaceLatest.getAccessibilityAssessment().getLimitations().getAccessibilityLimitation() != null &&
-                stopPlaceLatest.getAccessibilityAssessment().getLimitations().getAccessibilityLimitation().getWheelchairAccess() != null){
-            switch (stopPlaceLatest.getAccessibilityAssessment().getLimitations().getAccessibilityLimitation().getWheelchairAccess().value()) {
+        if (currentStopPlace.getAccessibilityAssessment() != null
+                && currentStopPlace.getAccessibilityAssessment().getLimitations() != null
+                && currentStopPlace.getAccessibilityAssessment().getLimitations().getAccessibilityLimitation() != null &&
+                currentStopPlace.getAccessibilityAssessment().getLimitations().getAccessibilityLimitation().getWheelchairAccess() != null){
+            switch (currentStopPlace.getAccessibilityAssessment().getLimitations().getAccessibilityLimitation().getWheelchairAccess().value()) {
                 case "true":
                     stop.setWheelchairBoarding(1);
                     break;
@@ -111,12 +108,12 @@ public class StopMapper {
             stop.setWheelchairBoarding(0);
         }
 
-        if (stopPlaceLatest.getDescription() != null) {
-            stop.setDesc(stopPlaceLatest.getDescription().getValue());
+        if (currentStopPlace.getDescription() != null) {
+            stop.setDesc(currentStopPlace.getDescription().getValue());
         }
 
-        if (stopPlaceLatest.getTariffZones() != null) {
-            for (TariffZoneRef tariffZoneRef : stopPlaceLatest.getTariffZones().getTariffZoneRef()) {
+        if (currentStopPlace.getTariffZones() != null) {
+            for (TariffZoneRef tariffZoneRef : currentStopPlace.getTariffZones().getTariffZoneRef()) {
                 AgencyAndId ref = AgencyAndIdFactory.createAgencyAndId(tariffZoneRef.getRef());
                 if (transitBuilder.getTariffZones().containsKey(ref)) {
                     stop.getTariffZones().add(transitBuilder.getTariffZones().get(ref));
@@ -124,12 +121,10 @@ public class StopMapper {
             }
         }
 
-        stops.add(stop);
-
         // Get quays from all versions of stop place
         Set<String> quaysSeen = new HashSet<>();
 
-        for (StopPlace stopPlace : stopPlaceAllVersions) {
+        for (StopPlace stopPlace : stopPlaces) {
             if (stopPlace.getQuays() != null) {
                 List<Object> quayRefOrQuay = stopPlace.getQuays().getQuayRefOrQuay();
                 for (Object quayObject : quayRefOrQuay) {
