@@ -34,8 +34,6 @@ import org.opentripplanner.model.FeedInfo;
 import org.opentripplanner.model.calendar.CalendarServiceData;
 import org.opentripplanner.model.calendar.ServiceDate;
 import org.opentripplanner.model.CalendarService;
-import org.opentripplanner.analyst.core.GeometryIndex;
-import org.opentripplanner.analyst.request.SampleFactory;
 import org.opentripplanner.common.MavenVersion;
 import org.opentripplanner.common.TurnRestriction;
 import org.opentripplanner.common.geometry.GraphUtils;
@@ -129,10 +127,6 @@ public class Graph implements Serializable, AddBuilderAnnotation {
     public transient StreetVertexIndexService streetIndex;
 
     public transient GraphIndex index;
-
-    private transient GeometryIndex geomIndex;
-
-    private transient SampleFactory sampleFactory;
 
     public final Deduplicator deduplicator = new Deduplicator();
 
@@ -982,23 +976,6 @@ public class Graph implements Serializable, AddBuilderAnnotation {
 
     public WorldEnvelope getEnvelope() {
         return this.envelope;
-    }
-
-    // lazy-init geom index on an as needed basis
-    public GeometryIndex getGeomIndex() {
-    	
-    	if(this.geomIndex == null)
-    		this.geomIndex = new GeometryIndex(this);
-    	
-    	return this.geomIndex;
-    }
-
-    // lazy-init sample factor on an as needed basis
-    public SampleFactory getSampleFactory() {
-        if(this.sampleFactory == null)
-            this.sampleFactory = new SampleFactory(this);
-
-        return this.sampleFactory;	
     }
 
     /**

@@ -584,7 +584,12 @@ public class IndexAPI {
         return Response.status(Status.OK).entity("NONE").build();
     }
 
-    /** Return all clusters of stops. */
+    /**
+     * Return all clusters of stops.
+     * A cluster is not the same thing as a GTFS parent station.
+     * Clusters are an unsupported experimental feature that was added to assist in "profile routing".
+     * As such the stop clustering method probably only works right with one or two GTFS data sets in the world.
+     */
     @GET
     @Path("/clusters")
     public Response getAllStopClusters () {
@@ -594,7 +599,12 @@ public class IndexAPI {
         return Response.status(Status.OK).entity(scl).build();
     }
 
-    /** Return a cluster of stops by its ID. */
+    /**
+     * Return a cluster of stops by its ID.
+     * A cluster is not the same thing as a GTFS parent station.
+     * Clusters are an unsupported experimental feature that was added to assist in "profile routing".
+     * As such the stop clustering method probably only works right with one or two GTFS data sets in the world.
+     */
     @GET
     @Path("/clusters/{clusterId}")
     public Response getStopCluster (@PathParam("clusterId") String clusterIdString) {

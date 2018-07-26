@@ -118,7 +118,7 @@ public class GraphBuilder implements Runnable {
     public void setPath (String path) {
         graphFile = new File(path.concat("/Graph.obj"));
     }
-    
+
     public void setPath (File path, String filename) {
         graphFile = new File(path, filename);
     }

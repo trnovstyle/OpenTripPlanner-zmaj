@@ -8,8 +8,8 @@ import com.vividsolutions.jts.geom.LineString;
 import com.vividsolutions.jts.index.SpatialIndex;
 import com.vividsolutions.jts.linearref.LinearLocation;
 import com.vividsolutions.jts.linearref.LocationIndexedLine;
-import gnu.trove.map.TIntDoubleMap;
-import gnu.trove.map.hash.TIntDoubleHashMap;
+import gnu.trove.map.TObjectDoubleMap;
+import gnu.trove.map.hash.TObjectDoubleHashMap;
 import jersey.repackaged.com.google.common.collect.Lists;
 import org.opentripplanner.common.geometry.GeometryUtils;
 import org.opentripplanner.common.geometry.HashGridSpatialIndex;
@@ -79,16 +79,17 @@ public class SimpleStreetSplitter {
 
     private static final Logger LOG = LoggerFactory.getLogger(SimpleStreetSplitter.class);
 
-    public static final int MAX_SEARCH_RADIUS_METERS = 500;
+    private static final int MAX_SEARCH_RADIUS_METERS = 500;
 
-    public static final int MIN_SNAP_DISTANCE_WARNING = 50;
+    private static final int MIN_SNAP_DISTANCE_WARNING = 50;
 
     private Boolean addExtraEdgesToAreas = false;
 
     private StreetEdgeFactory edgeFactory;
 
     /** if there are two ways and the distances to them differ by less than this value, we link to both of them */
-    public static final double DUPLICATE_WAY_EPSILON_METERS = 0.001;
+    private static final double DUPLICATE_WAY_EPSILON_METERS = 0.001;
+    private static final double DUPLICATE_WAY_EPSILON_DEGREES = SphericalDistanceLibrary.metersToDegrees(DUPLICATE_WAY_EPSILON_METERS);
 
     private Graph graph;
 
@@ -183,12 +184,11 @@ public class SimpleStreetSplitter {
 
         Envelope env = new Envelope(vertex.getCoordinate());
 
-        // local equirectangular projection
+        // Perform a simple local equirectangular projection, so distances are expressed in degrees latitude.
         final double xscale = Math.cos(vertex.getLat() * Math.PI / 180);
 
+        // Expand more in the longitude direction than the latitude direction to account for converging meridians.
         env.expandBy(radiusDeg / xscale, radiusDeg);
-
-        double duplicateDeg = SphericalDistanceLibrary.metersToDegrees(DUPLICATE_WAY_EPSILON_METERS);
 
         final TraverseModeSet traverseModeSet;
         if (traverseMode == TraverseMode.BICYCLE) {
@@ -210,16 +210,17 @@ public class SimpleStreetSplitter {
                 edge.getToVertex().getIncoming().contains(edge))
             .collect(Collectors.toList());
 
-        // make a map of distances
-        final TIntDoubleMap distances = new TIntDoubleHashMap();
+        // Make a map of distances to all edges.
+        final TObjectDoubleMap<Edge> distances = new TObjectDoubleHashMap<>();
 
         for (StreetEdge e : candidateEdges) {
-            distances.put(e.getId(), distance(vertex, e, xscale));
+            distances.put(e, distance(vertex, e, xscale));
         }
 
         // sort the list
         Collections.sort(candidateEdges, (o1, o2) -> {
-            double diff = distances.get(o1.getId()) - distances.get(o2.getId());
+            double diff = distances.get(o1) - distances.get(o2);
+            // A Comparator must return an integer but our distances are doubles.
             if (diff < 0)
                 return -1;
             if (diff > 0)
@@ -228,14 +229,14 @@ public class SimpleStreetSplitter {
         });
 
         if (!candidateEdges.isEmpty() && vertex instanceof TransitStop) {
-            int distance = (int)SphericalDistanceLibrary.degreesToMeters(distances.get(candidateEdges.get(0).getId()));
+            int distance = (int)SphericalDistanceLibrary.degreesToMeters(distances.get(candidateEdges.get(0)));
             if (distance > MIN_SNAP_DISTANCE_WARNING) {
                 LOG.info(String.format(graph.addBuilderAnnotation(new StopLinkedTooFar((TransitStop)vertex, distance))));
             }
         }
 
         // find the closest candidate edges
-        if (candidateEdges.isEmpty() || distances.get(candidateEdges.get(0).getId()) > radiusDeg) {
+        if (candidateEdges.isEmpty() || distances.get(candidateEdges.get(0)) > radiusDeg) {
             //We only link to stops if we are searching for origin/destination and for that we need transitStopIndex
             if (destructiveSplitting || transitStopIndex == null) {
                 return false;
@@ -244,18 +245,16 @@ public class SimpleStreetSplitter {
             //we search for closest stops (since this is only used in origin/destination linking if no edges were found)
             //in same way as closest edges are found
             List<TransitStop> candidateStops = new ArrayList<>();
-            transitStopIndex.query(env).forEach(candidateStop ->
-                candidateStops.add((TransitStop) candidateStop)
-            );
+            transitStopIndex.query(env).forEach(candidateStop -> candidateStops.add((TransitStop) candidateStop));
 
-            final TIntDoubleMap stopDistances = new TIntDoubleHashMap();
+            final TObjectDoubleMap<Vertex> stopDistances = new TObjectDoubleHashMap<>();
 
             for (TransitStop t : candidateStops) {
-                stopDistances.put(t.getIndex(), distance(vertex, t, xscale));
+                stopDistances.put(t, distance(vertex, t, xscale));
             }
 
             Collections.sort(candidateStops, (o1, o2) -> {
-                    double diff = stopDistances.get(o1.getIndex()) - stopDistances.get(o2.getIndex());
+                    double diff = stopDistances.get(o1) - stopDistances.get(o2);
                     if (diff < 0) {
                         return -1;
                     }
@@ -264,13 +263,12 @@ public class SimpleStreetSplitter {
                     }
                     return 0;
             });
-            if (candidateStops.isEmpty() || stopDistances.get(candidateStops.get(0).getIndex()) > radiusDeg) {
+            if (candidateStops.isEmpty() || stopDistances.get(candidateStops.get(0)) > radiusDeg) {
                 LOG.debug("Stops aren't close either!");
                 return false;
             } else {
                 List<TransitStop> bestStops = Lists.newArrayList();
-
-                // add stops until there is a break of epsilon meters.
+                // Add stops until there is a break of epsilon meters.
                 // we do this to enforce determinism. if there are a lot of stops that are all extremely close to each other,
                 // we want to be sure that we deterministically link to the same ones every time. Any hard cutoff means things can
                 // fall just inside or beyond the cutoff depending on floating-point operations.
@@ -278,8 +276,8 @@ public class SimpleStreetSplitter {
                 do {
                     bestStops.add(candidateStops.get(i++));
                 } while (i < candidateStops.size() &&
-                    stopDistances.get(candidateStops.get(i).getIndex()) - stopDistances
-                        .get(candidateStops.get(i - 1).getIndex()) < duplicateDeg);
+                    stopDistances.get(candidateStops.get(i)) - stopDistances
+                        .get(candidateStops.get(i - 1)) < DUPLICATE_WAY_EPSILON_DEGREES);
 
                 for (TransitStop stop: bestStops) {
                     LOG.debug("Linking vertex to stop: {}", stop.getName());
@@ -300,8 +298,8 @@ public class SimpleStreetSplitter {
             do {
                 bestEdges.add(candidateEdges.get(i++));
             } while (i < candidateEdges.size() &&
-                distances.get(candidateEdges.get(i).getId()) - distances
-                    .get(candidateEdges.get(i - 1).getId()) < duplicateDeg);
+                distances.get(candidateEdges.get(i)) - distances
+                    .get(candidateEdges.get(i - 1)) < DUPLICATE_WAY_EPSILON_DEGREES);
 
             for (StreetEdge edge : bestEdges) {
                 link(vertex, edge, xscale, options);
@@ -404,7 +402,7 @@ public class SimpleStreetSplitter {
         // every edge can be split exactly once, so this is a valid label
         SplitterVertex v;
         if (temporarySplit) {
-            v = new TemporarySplitterVertex("split from " + edge.getId(), splitPoint.x, splitPoint.y,
+            v = new TemporarySplitterVertex("split_" + Vertex.nextVertexIndex.addAndGet(1), splitPoint.x, splitPoint.y,
                 edge, endVertex);
             if (edge.isWheelchairAccessible()) {
                 ((TemporarySplitterVertex) v).setWheelchairAccessible(true);
@@ -412,8 +410,8 @@ public class SimpleStreetSplitter {
                 ((TemporarySplitterVertex) v).setWheelchairAccessible(false);
             }
         } else {
-            v = new SplitterVertex(graph, "split from " + edge.getId(), splitPoint.x, splitPoint.y,
-                edge);
+            v = new SplitterVertex(graph, "split_" + Vertex.nextVertexIndex.addAndGet(1),
+                    splitPoint.x, splitPoint.y, edge);
         }
 
         // make the edges

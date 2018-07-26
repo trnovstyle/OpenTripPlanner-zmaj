@@ -12,7 +12,6 @@ import org.glassfish.jersey.server.filter.RolesAllowedDynamicFeature;
 import org.opentripplanner.api.common.OTPExceptionMapper;
 import org.opentripplanner.api.model.JSONObjectMapperProvider;
 import org.opentripplanner.api.resource.*;
-import org.opentripplanner.index.GeocoderResource;
 import org.opentripplanner.index.IndexAPI;
 import org.opentripplanner.index.transmodel.TransmodelIndexAPI;
 import org.slf4j.bridge.SLF4JBridgeHandler;
@@ -74,29 +73,15 @@ public class OTPApplication extends Application {
             IndexAPI.class,
             TransmodelIndexAPI.class,
             ExternalGeocoderResource.class,
-            GeocoderResource.class,
-            SimpleIsochrone.class,
-            TileService.class,
             BikeRental.class,
-            LIsochrone.class,
             ExternalGeocoderResource.class,
-            TimeGridWs.class,
             AlertPatcher.class,
             PlannerResource.class,
-            SIsochrone.class,
             Routers.class,
             KartverketToken.class,
-            LegendResource.class,
-            ProfileResource.class,
-            SimpleIsochrone.class,
             ServerInfo.class,
-            SurfaceResource.class,
-            PointSetResource.class,
             GraphInspectorTileResource.class,
-            ScriptResource.class,
             UpdaterStatusResource.class,
-            ScenarioResource.class,
-            RepeatedRaptorTestResource.class,
             /* Features and Filters: extend Jersey, manipulate requests and responses. */
             CorsFilter.class,
             MultiPartFeature.class

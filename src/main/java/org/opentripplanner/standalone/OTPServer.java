@@ -4,12 +4,8 @@ import java.io.File;
 import java.util.Collection;
 
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
-import org.opentripplanner.analyst.DiskBackedPointSetCache;
-import org.opentripplanner.analyst.PointSetCache;
-import org.opentripplanner.analyst.SurfaceCache;
 import org.opentripplanner.routing.error.GraphNotFoundException;
 import org.opentripplanner.routing.services.GraphService;
-import org.opentripplanner.scripting.impl.ScriptingService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,11 +23,6 @@ public class OTPServer {
     /** The directory under which graphs, caches, etc. will be stored. */
     public File basePath = null;
 
-    // Optional Analyst global modules (caches)
-    public SurfaceCache surfaceCache;
-    public PointSetCache pointSetCache;
-    public ScriptingService scriptingService;
-
     public CommandLineParameters params;
 
     public OTPServer (CommandLineParameters params, GraphService gs) {
@@ -41,18 +32,6 @@ public class OTPServer {
 
         // Core OTP modules
         this.graphService = gs;
-
-        // Optional Analyst Modules.
-        if (params.analyst) {
-            surfaceCache = new SurfaceCache(30);
-            pointSetCache = new DiskBackedPointSetCache(100, params.pointSetDirectory);
-        }
-
-        scriptingService = new ScriptingService(this);
-        scriptingService.enableScriptingWebService = params.enableScriptingWebService;
-        if (params.enableScriptingWebService) {
-            LOG.warn("WARNING: scripting web-service is activated. For public-facing server this is a SERIOUS SECURITY RISK!");
-        }
     }
 
     /**

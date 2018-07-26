@@ -1,8 +1,6 @@
 package org.opentripplanner.routing.graph;
 
 import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
@@ -20,7 +18,6 @@ import org.opentripplanner.common.LuceneIndex;
 import org.opentripplanner.common.geometry.HashGridSpatialIndex;
 import org.opentripplanner.common.geometry.SphericalDistanceLibrary;
 import org.opentripplanner.common.model.GenericLocation;
-import org.opentripplanner.common.model.P2;
 import org.opentripplanner.gtfs.GtfsLibrary;
 import org.opentripplanner.index.IndexGraphQLSchema;
 import org.opentripplanner.index.model.StopTimesInPattern;
@@ -36,10 +33,8 @@ import org.opentripplanner.model.Route;
 import org.opentripplanner.model.Stop;
 import org.opentripplanner.model.Trip;
 import org.opentripplanner.model.calendar.ServiceDate;
-import org.opentripplanner.profile.ProfileTransfer;
 import org.opentripplanner.profile.StopCluster;
 import org.opentripplanner.profile.StopNameNormalizer;
-import org.opentripplanner.profile.StopTreeCache;
 import org.opentripplanner.routing.alertpatch.AlertPatch;
 import org.opentripplanner.routing.algorithm.AStar;
 import org.opentripplanner.routing.algorithm.ExtendedTraverseVisitor;
@@ -149,7 +144,6 @@ public class GraphIndex {
     public LuceneIndex luceneIndex;
 
     /* Separate transfers for profile routing */
-    public Multimap<StopCluster, ProfileTransfer> transfersFromStopCluster;
     private HashGridSpatialIndex<StopCluster> stopClusterSpatialIndex = null;
 
     /* This is a workaround, and should probably eventually be removed. */
@@ -158,10 +152,7 @@ public class GraphIndex {
     /** Used for finding first/last trip of the day. This is the time at which service ends for the day. */
     public final int overnightBreak = 60 * 60 * 2; // FIXME not being set, this was done in transitIndex
 
-    private final int NUMBER_OF_SECONDS_IN_DAY = 86400;
-
-    /** Store distances from each stop to all nearby street intersections. Useful in speeding up analyst requests. */
-    private transient StopTreeCache stopTreeCache = null;
+    private static final int NUMBER_OF_SECONDS_IN_DAY = 86400;
 
     final GraphQLSchema indexSchema;
 
@@ -277,14 +268,6 @@ public class GraphIndex {
         }
     }
 
-    private void analyzeServices() {
-        // This is a mess because CalendarService, CalendarServiceData, etc. are all in OBA.
-        // TODO catalog days of the week and exceptions for each service day.
-        // Make a table of which services are running on each calendar day.
-        // Really the calendarService should be entirely replaced with a set
-        // of simple indexes in GraphIndex.
-    }
-
     /** Get all trip patterns running through any stop in the given stop cluster. */
     private Set<TripPattern> patternsForStopCluster(StopCluster sc) {
         Set<TripPattern> tripPatterns = Sets.newHashSet();
@@ -292,73 +275,6 @@ public class GraphIndex {
         return tripPatterns;
     }
 
-    /**
-     * Initialize transfer data needed for profile routing.
-     * Find the best transfers between each pair of patterns that pass near one another.
-     */
-    public void initializeProfileTransfers() {
-        transfersFromStopCluster = HashMultimap.create();
-        final double TRANSFER_RADIUS = 500.0; // meters
-        Map<P2<TripPattern>, ProfileTransfer.GoodTransferList> transfers = Maps.newHashMap();
-        LOG.info("Finding transfers between clusters...");
-        for (StopCluster sc0 : stopClusterForId.values()) {
-            Set<TripPattern> tripPatterns0 = patternsForStopCluster(sc0);
-            // Accounts for area-like (rather than point-like) nature of clusters
-            Map<StopCluster, Double> nearbyStopClusters = findNearbyStopClusters(sc0, TRANSFER_RADIUS);
-            for (StopCluster sc1 : nearbyStopClusters.keySet()) {
-                double distance = nearbyStopClusters.get(sc1);
-                Set<TripPattern> tripPatterns1 = patternsForStopCluster(sc1);
-                for (TripPattern tp0 : tripPatterns0) {
-                    for (TripPattern tp1 : tripPatterns1) {
-                        if (tp0 == tp1) continue;
-                        P2<TripPattern> pair = new P2<TripPattern>(tp0, tp1);
-                        ProfileTransfer.GoodTransferList list = transfers.get(pair);
-                        if (list == null) {
-                            list = new ProfileTransfer.GoodTransferList();
-                            transfers.put(pair, list);
-                        }
-                        list.add(new ProfileTransfer(tp0, tp1, sc0, sc1, (int)distance));
-                    }
-                }
-            }
-        }
-        /* Now filter the transfers down to eliminate long series of transfers in shared trunks. */
-        LOG.info("Filtering out long series of transfers on trunks shared between patterns.");
-        for (P2<TripPattern> pair : transfers.keySet()) {
-            ProfileTransfer.GoodTransferList list = transfers.get(pair);
-            TripPattern fromPattern = pair.first; // TODO consider using second (think of express-local transfers in NYC)
-            Map<StopCluster, ProfileTransfer> transfersByFromCluster = Maps.newHashMap();
-            for (ProfileTransfer transfer : list.good) {
-                transfersByFromCluster.put(transfer.sc1, transfer);
-            }
-            List<ProfileTransfer> retainedTransfers = Lists.newArrayList();
-            boolean inSeries = false; // true whenever a transfer existed for the last stop in the stop pattern
-            for (Stop stop : fromPattern.stopPattern.stops) {
-                StopCluster cluster = this.stopClusterForStop.get(stop);
-                //LOG.info("stop {} cluster {}", stop, cluster.id);
-                ProfileTransfer transfer = transfersByFromCluster.get(cluster);
-                if (transfer == null) {
-                    inSeries = false;
-                    continue;
-                }
-                if (inSeries) continue;
-                // Keep this transfer: it's not preceded by another stop with a transfer in this stop pattern
-                retainedTransfers.add(transfer);
-                inSeries = true;
-            }
-            //LOG.info("patterns {}, {} transfers", pair, retainedTransfers.size());
-            for (ProfileTransfer tr : retainedTransfers) {
-                transfersFromStopCluster.put(tr.sc1, tr);
-                //LOG.info("   {}", tr);
-            }
-        }
-        /*
-         * for (Stop stop : transfersForStop.keys()) { System.out.println("STOP " + stop); for
-         * (Transfer transfer : transfersForStop.get(stop)) { System.out.println("    " +
-         * transfer.toString()); } }
-         */
-        LOG.info("Done finding transfers.");
-    }
 
     /**
      * Find transfer candidates for profile routing.
@@ -386,7 +302,6 @@ public class GraphIndex {
         rr.from = new GenericLocation(lat, lon);
         // FIXME requires destination to be set, not necessary for analyst
         rr.to = new GenericLocation(lat, lon);
-        rr.batch = true;
         rr.setRoutingContext(graph);
         rr.walkSpeed = 1;
         rr.dominanceFunction = new DominanceFunction.LeastWalk();
@@ -418,7 +333,6 @@ public class GraphIndex {
         //rr.parkAndRide = true;
         //rr.modes = new TraverseModeSet(TraverseMode.WALK, TraverseMode.BICYCLE, TraverseMode.CAR);
         rr.from = new GenericLocation(lat, lon);
-        rr.batch = true;
         rr.setRoutingContext(graph);
         rr.walkSpeed = 1;
         rr.dominanceFunction = new DominanceFunction.LeastWalk();
@@ -967,18 +881,6 @@ public class GraphIndex {
             ret.add(stopTimes);
         }
         return ret;
-    }
-
-    /** Fetch a cache of nearby intersection distances for every transit stop in this graph, lazy-building as needed. */
-    public StopTreeCache getStopTreeCache() {
-        if (stopTreeCache == null) {
-            synchronized (this) {
-                if (stopTreeCache == null) {
-                    stopTreeCache = new StopTreeCache(graph, MAX_WALK_METERS); // TODO make this max-distance variable
-                }
-            }
-        }
-        return stopTreeCache;
     }
 
     /**
