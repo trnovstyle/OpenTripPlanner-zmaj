@@ -42,6 +42,7 @@ import java.io.Serializable;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import static org.opentripplanner.model.StopPattern.PICKDROP_NONE;
 import static org.opentripplanner.model.StopPattern.PICKDROP_SCHEDULED;
@@ -66,7 +67,7 @@ public class Timetable implements Serializable {
      * Contains one TripTimes object for each scheduled trip (even cancelled ones) and possibly
      * additional TripTimes objects for unscheduled trips. Frequency entries are stored separately.
      */
-    public final List<TripTimes> tripTimes = Lists.newArrayList();
+    public final List<TripTimes> tripTimes = new CopyOnWriteArrayList();
 
     /**
      * Contains one FrequencyEntry object for each block of frequency-based trips.
@@ -88,18 +89,22 @@ public class Timetable implements Serializable {
      */
     private transient int minDwellTimes[];
 
-    /** 
-     * Helps determine whether a particular pattern is worth searching for departures at a given time. 
+    /**
+     * Helps determine whether a particular pattern is worth searching for departures at a given time.
      */
     private transient int minTime, maxTime;
-    
-    /** Construct an empty Timetable. */
+
+    /**
+     * Construct an empty Timetable.
+     */
     public Timetable(TripPattern pattern) {
         this.pattern = pattern;
         this.serviceDate = null;
     }
 
-    /** Construct an empty Timetable with a specified serviceDate. */
+    /**
+     * Construct an empty Timetable with a specified serviceDate.
+     */
     public Timetable(TripPattern pattern, ServiceDate serviceDate) {
         this.pattern = pattern;
         this.serviceDate = serviceDate;
@@ -108,7 +113,7 @@ public class Timetable implements Serializable {
     /**
      * Copy constructor: create an un-indexed Timetable with the same TripTimes as the specified timetable.
      */
-    Timetable (Timetable tt, ServiceDate serviceDate) {
+    Timetable(Timetable tt, ServiceDate serviceDate) {
         tripTimes.addAll(tt.tripTimes);
         this.serviceDate = serviceDate;
         this.pattern = tt.pattern;
@@ -126,7 +131,7 @@ public class Timetable implements Serializable {
      */
     public boolean temporallyViable(ServiceDay sd, long searchTime, int bestWait, boolean boarding) {
         // Check whether any services are running at all on this pattern.
-        if ( ! sd.anyServiceRunning(this.pattern.services)) return false;
+        if (!sd.anyServiceRunning(this.pattern.services)) return false;
         // Make the search time relative to the given service day.
         searchTime = sd.secondsSinceMidnight(searchTime);
         // Check whether any trip can be boarded at all, given the search time
@@ -142,6 +147,7 @@ public class Timetable implements Serializable {
     /**
      * Get the next (previous) trip that departs (arrives) from the specified stop at or after
      * (before) the specified time.
+     *
      * @return the TripTimes object representing the (possibly updated) best trip, or null if no
      * trip matches both the time and other criteria.
      */
@@ -170,16 +176,17 @@ public class Timetable implements Serializable {
         for (TripTimes tt : tripTimes) {
             if (tt.isCanceled()) continue;
             if ((tt.getNumStops() <= stopIndex)) continue;
-            if ( ! serviceDay.serviceRunning(tt.serviceCode)) continue; // TODO merge into call on next line
-            if ( ! tt.tripAcceptable(s0, stopIndex)) continue;
-            if ( s0.getOptions().tripIsBanned(tt.trip)) continue;
+            if (!serviceDay.serviceRunning(tt.serviceCode)) continue; // TODO merge into call on next line
+            if (!tt.tripAcceptable(s0, stopIndex)) continue;
+            if (s0.getOptions().tripIsBanned(tt.trip)) continue;
             int adjustedTime = adjustTimeForTransfer(s0, currentStop, tt.trip, boarding, serviceDay, time);
             if (adjustedTime == -1) continue;
             if (boarding) {
                 int depTime = tt.getDepartureTime(stopIndex);
-                if (depTime < 0) continue; // negative values were previously used for canceled trips/passed stops/skipped stops, but
-                                           // now its not sure if this check should be still in place because there is a boolean field
-                                           // for canceled trips
+                if (depTime < 0)
+                    continue; // negative values were previously used for canceled trips/passed stops/skipped stops, but
+                // now its not sure if this check should be still in place because there is a boolean field
+                // for canceled trips
                 if (depTime >= adjustedTime && depTime < bestTime) {
                     bestTrip = tt;
                     bestTime = depTime;
@@ -199,14 +206,14 @@ public class Timetable implements Serializable {
         for (FrequencyEntry freq : frequencyEntries) {
             TripTimes tt = freq.tripTimes;
             if (tt.isCanceled()) continue;
-            if ( ! serviceDay.serviceRunning(tt.serviceCode)) continue; // TODO merge into call on next line
-            if ( ! tt.tripAcceptable(s0, stopIndex)) continue;
+            if (!serviceDay.serviceRunning(tt.serviceCode)) continue; // TODO merge into call on next line
+            if (!tt.tripAcceptable(s0, stopIndex)) continue;
             int adjustedTime = adjustTimeForTransfer(s0, currentStop, tt.trip, boarding, serviceDay, time);
             if (adjustedTime == -1) continue;
             LOG.debug("  running freq {}", freq);
             if (boarding) {
                 int depTime = freq.nextDepartureTime(stopIndex, adjustedTime); // min transfer time included in search
-                if (depTime < 0) continue; 
+                if (depTime < 0) continue;
                 if (depTime >= adjustedTime && depTime < bestTime) {
                     bestFreq = freq;
                     bestTime = depTime;
@@ -230,10 +237,10 @@ public class Timetable implements Serializable {
 
     /**
      * Convert seconds since epoch to seconds since midnight for the relevant service date.
-     *
+     * <p>
      * if this timetable is only valid for a single date, this date will be used as baseline. If not, the provided
      * serviceDay will be used as baseline.
-     *
+     * <p>
      * Always using the provided serviceDay caused timetables with realtime updates valid for a single day to be matched with the wrong day.
      */
     private int getSecondsSinceStartOfRelevantDate(long secondsSinceEpoch, ServiceDay serviceDay) {
@@ -250,7 +257,7 @@ public class Timetable implements Serializable {
      * FIXME adjustedTime can legitimately be -1! But negative times might as well be zero.
      */
     private int adjustTimeForTransfer(State state, Stop currentStop, Trip trip, boolean boarding, ServiceDay serviceDay, int t0) {
-        if ( ! state.isEverBoarded()) {
+        if (!state.isEverBoarded()) {
             // This is the first boarding not a transfer.
             return t0;
         }
@@ -333,7 +340,9 @@ public class Timetable implements Serializable {
         }
     }
 
-    /** @return the index of TripTimes for this trip ID in this particular Timetable */
+    /**
+     * @return the index of TripTimes for this trip ID in this particular Timetable
+     */
     public int getTripIndex(AgencyAndId tripId) {
         int ret = 0;
         for (TripTimes tt : tripTimes) {
@@ -345,7 +354,9 @@ public class Timetable implements Serializable {
         return -1;
     }
 
-    /** @return the matching Trip in this particular Timetable */
+    /**
+     * @return the matching Trip in this particular Timetable
+     */
     public Trip getTrip(AgencyAndId tripId) {
         for (TripTimes tt : tripTimes) {
             if (tt.trip.getId().equals(tripId)) {
@@ -355,7 +366,9 @@ public class Timetable implements Serializable {
         return null;
     }
 
-    /** @return the index of TripTimes for this trip ID in this particular Timetable, ignoring AgencyIds. */
+    /**
+     * @return the index of TripTimes for this trip ID in this particular Timetable, ignoring AgencyIds.
+     */
     public int getTripIndex(String tripId) {
         int ret = 0;
         for (TripTimes tt : tripTimes) {
@@ -378,9 +391,9 @@ public class Timetable implements Serializable {
 
     /**
      * Set new trip times for trip given a trip index
-     * 
+     *
      * @param tripIndex trip index of trip
-     * @param tt new trip times for trip
+     * @param tt        new trip times for trip
      * @return old trip times of trip
      */
     public TripTimes setTripTimes(int tripIndex, TripTimes tt) {
@@ -396,19 +409,19 @@ public class Timetable implements Serializable {
      * assume here that all trips in a timetable are from the same feed, which should always be the
      * case.
      *
-     * @param tripUpdate GTFS-RT trip update
-     * @param timeZone time zone of trip update
+     * @param tripUpdate        GTFS-RT trip update
+     * @param timeZone          time zone of trip update
      * @param updateServiceDate service date of trip update
      * @return new copy of updated TripTimes after TripUpdate has been applied on TripTimes of trip
-     *         with the id specified in the trip descriptor of the TripUpdate; null if something
-     *         went wrong
+     * with the id specified in the trip descriptor of the TripUpdate; null if something
+     * went wrong
      */
     public TripTimes createUpdatedTripTimes(TripUpdate tripUpdate, TimeZone timeZone, ServiceDate updateServiceDate) {
         if (tripUpdate == null) {
             LOG.error("A null TripUpdate pointer was passed to the Timetable class update method.");
             return null;
         }
-        
+
         // Though all timetables have the same trip ordering, some may have extra trips due to
         // the dynamic addition of unscheduled trips.
         // However, we want to apply trip updates on top of *scheduled* times
@@ -434,7 +447,7 @@ public class Timetable implements Serializable {
         TripTimes newTimes = new TripTimes(getTripTimes(tripIndex));
 
         if (tripDescriptor.hasScheduleRelationship() && tripDescriptor.getScheduleRelationship()
-                == TripDescriptor.ScheduleRelationship.CANCELED) {
+                                                                == TripDescriptor.ScheduleRelationship.CANCELED) {
             newTimes.cancel();
         } else {
             // The GTFS-RT reference specifies that StopTimeUpdates are sorted by stop_sequence.
@@ -461,13 +474,13 @@ public class Timetable implements Serializable {
                 if (match) {
                     StopTimeUpdate.ScheduleRelationship scheduleRelationship =
                             update.hasScheduleRelationship() ? update.getScheduleRelationship()
-                            : StopTimeUpdate.ScheduleRelationship.SCHEDULED;
+                                    : StopTimeUpdate.ScheduleRelationship.SCHEDULED;
                     if (scheduleRelationship == StopTimeUpdate.ScheduleRelationship.SKIPPED) {
                         LOG.warn("Partially canceled trips are unsupported by this method." +
-                                " Skipping TripUpdate.");
+                                         " Skipping TripUpdate.");
                         return null;
                     } else if (scheduleRelationship ==
-                            StopTimeUpdate.ScheduleRelationship.NO_DATA) {
+                                       StopTimeUpdate.ScheduleRelationship.NO_DATA) {
                         newTimes.updateArrivalDelay(i, 0);
                         newTimes.updateDepartureDelay(i, 0);
                         delay = 0;
@@ -555,6 +568,7 @@ public class Timetable implements Serializable {
         LOG.debug("A valid TripUpdate object was applied to trip {} using the Timetable class update method.", tripId);
         return newTimes;
     }
+
     /**
      * Apply the TripUpdate to the appropriate TripTimes from this Timetable. The existing TripTimes
      * must not be modified directly because they may be shared with the underlying
@@ -564,12 +578,12 @@ public class Timetable implements Serializable {
      * assume here that all trips in a timetable are from the same feed, which should always be the
      * case.
      *
-     * @param journey SIRI-ET EstimatedVehicleJourney
+     * @param journey  SIRI-ET EstimatedVehicleJourney
      * @param timeZone time zone of trip update
      * @param tripId
      * @return new copy of updated TripTimes after TripUpdate has been applied on TripTimes of trip
-     *         with the id specified in the trip descriptor of the TripUpdate; null if something
-     *         went wrong
+     * with the id specified in the trip descriptor of the TripUpdate; null if something
+     * went wrong
      */
     public TripTimes createUpdatedTripTimes(final Graph graph, EstimatedVehicleJourney journey, TimeZone timeZone, AgencyAndId tripId) {
         if (journey == null) {
@@ -685,7 +699,7 @@ public class Timetable implements Serializable {
                     } else if (recordedCall.getAimedDepartureTime() != null) {
                         realtimeDepartureTime = calculateSecondsSinceMidnight(departureDate, recordedCall.getAimedDepartureTime());
                     }
-                    if (realtimeDepartureTime < realtimeArrivalTime){
+                    if (realtimeDepartureTime < realtimeArrivalTime) {
                         realtimeDepartureTime = realtimeArrivalTime;
                     }
                     int departureDelay = realtimeDepartureTime - departureTime;
@@ -774,7 +788,7 @@ public class Timetable implements Serializable {
             if (!foundMatch) {
 
                 if (pattern.stopPattern.pickups[callCounter] == PICKDROP_NONE &&
-                        pattern.stopPattern.dropoffs[callCounter] == PICKDROP_NONE) {
+                            pattern.stopPattern.dropoffs[callCounter] == PICKDROP_NONE) {
                     // When newTimes contains stops without pickup/dropoff - set both arrival/departure to previous stop's departure
                     // This necessary to accommodate the case when delay is reduced/eliminated between to stops with pickup/dropoff, and
                     // multiple non-pickup/dropoff stops are in between.
@@ -836,11 +850,11 @@ public class Timetable implements Serializable {
      * Apply the SIRI ET to the appropriate TripTimes from this Timetable.
      * Calculate new stoppattern based on single stop cancellations
      *
-     * @param journey SIRI-ET EstimatedVehicleJourney
+     * @param journey    SIRI-ET EstimatedVehicleJourney
      * @param graphIndex
      * @return new copy of updated TripTimes after TripUpdate has been applied on TripTimes of trip
-     *         with the id specified in the trip descriptor of the TripUpdate; null if something
-     *         went wrong
+     * with the id specified in the trip descriptor of the TripUpdate; null if something
+     * went wrong
      */
     public List<Stop> createModifiedStops(EstimatedVehicleJourney journey, GraphIndex graphIndex) {
         if (journey == null) {
@@ -926,14 +940,13 @@ public class Timetable implements Serializable {
      * Apply the SIRI ET to the appropriate TripTimes from this Timetable.
      * Calculate new stoppattern based on single stop cancellations
      *
-     *
      * @param oldTimes
-     * @param journey SIRI-ET EstimatedVehicleJourney
+     * @param journey    SIRI-ET EstimatedVehicleJourney
      * @param trip
      * @param graphIndex
      * @return new copy of updated TripTimes after TripUpdate has been applied on TripTimes of trip
-     *         with the id specified in the trip descriptor of the TripUpdate; null if something
-     *         went wrong
+     * with the id specified in the trip descriptor of the TripUpdate; null if something
+     * went wrong
      */
     public List<StopTime> createModifiedStopTimes(TripTimes oldTimes, EstimatedVehicleJourney journey, Trip trip, GraphIndex graphIndex) {
         if (journey == null) {
@@ -953,7 +966,7 @@ public class Timetable implements Serializable {
         List<StopTime> modifiedStops = new ArrayList<>();
 
         ZonedDateTime departureDate = null;
-        int numberOfRecordedCalls = (journey.getRecordedCalls() != null && journey.getRecordedCalls().getRecordedCalls() != null) ? journey.getRecordedCalls().getRecordedCalls().size():0;
+        int numberOfRecordedCalls = (journey.getRecordedCalls() != null && journey.getRecordedCalls().getRecordedCalls() != null) ? journey.getRecordedCalls().getRecordedCalls().size() : 0;
 
         if (estimatedCalls.size() + numberOfRecordedCalls > stops.size()) {
             return null;
@@ -1036,7 +1049,7 @@ public class Timetable implements Serializable {
             daysBetween = (int) ChronoUnit.DAYS.between(midnightOnDepartureDate, midnightOnCurrentStop);
         }
         // If first departure was 'yesterday' - add 24h
-        int daysSinceDeparture = daysBetween * (24*60*60);
+        int daysSinceDeparture = daysBetween * (24 * 60 * 60);
 
         return dateTime.toLocalTime().toSecondOfDay() + daysSinceDeparture;
     }
@@ -1054,8 +1067,8 @@ public class Timetable implements Serializable {
      * @param timeZone time zone of trip update
      * @param tripId
      * @return new copy of updated TripTimes after TripUpdate has been applied on TripTimes of trip
-     *         with the id specified in the trip descriptor of the TripUpdate; null if something
-     *         went wrong
+     * with the id specified in the trip descriptor of the TripUpdate; null if something
+     * went wrong
      */
     public TripTimes createUpdatedTripTimes(Graph graph, VehicleActivityStructure activity, TimeZone timeZone, AgencyAndId tripId) {
         if (activity == null) {
@@ -1173,12 +1186,16 @@ public class Timetable implements Serializable {
         return true;
     }
 
-    /** Returns the shortest possible running time for this stop */
+    /**
+     * Returns the shortest possible running time for this stop
+     */
     public int getBestRunningTime(int stopIndex) {
         return minRunningTimes[stopIndex];
     }
 
-    /** Returns the shortest possible dwell time at this stop */
+    /**
+     * Returns the shortest possible dwell time at this stop
+     */
     public int getBestDwellTime(int stopIndex) {
         if (minDwellTimes == null) {
             return 0;
@@ -1189,10 +1206,12 @@ public class Timetable implements Serializable {
     public boolean isValidFor(ServiceDate serviceDate) {
         return this.serviceDate == null || this.serviceDate.equals(serviceDate);
     }
-    
-    /** Find and cache service codes. Duplicates information in trip.getServiceId for optimization. */
+
+    /**
+     * Find and cache service codes. Duplicates information in trip.getServiceId for optimization.
+     */
     // TODO maybe put this is a more appropriate place
-    public void setServiceCodes (Map<AgencyAndId, Integer> serviceCodes) {
+    public void setServiceCodes(Map<AgencyAndId, Integer> serviceCodes) {
         for (TripTimes tt : this.tripTimes) {
             tt.serviceCode = serviceCodes.get(tt.trip.getServiceId());
         }
