@@ -1,13 +1,18 @@
 package org.opentripplanner.routing.graph;
 
-import com.google.common.collect.*;
-import com.google.common.util.concurrent.Service;
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Envelope;
 import graphql.ExceptionWhileDataFetching;
 import graphql.ExecutionResult;
 import graphql.GraphQL;
+import graphql.analysis.MaxQueryComplexityInstrumentation;
 import graphql.schema.GraphQLSchema;
 import org.apache.lucene.util.PriorityQueue;
 import org.joda.time.LocalDate;
@@ -18,10 +23,18 @@ import org.opentripplanner.common.model.GenericLocation;
 import org.opentripplanner.common.model.P2;
 import org.opentripplanner.gtfs.GtfsLibrary;
 import org.opentripplanner.index.IndexGraphQLSchema;
-import org.opentripplanner.index.ResourceConstrainedExecutorServiceExecutionStrategy;
 import org.opentripplanner.index.model.StopTimesInPattern;
 import org.opentripplanner.index.model.TripTimeShort;
-import org.opentripplanner.model.*;
+import org.opentripplanner.model.Agency;
+import org.opentripplanner.model.AgencyAndId;
+import org.opentripplanner.model.CalendarService;
+import org.opentripplanner.model.FeedInfo;
+import org.opentripplanner.model.IdentityBean;
+import org.opentripplanner.model.Notice;
+import org.opentripplanner.model.Operator;
+import org.opentripplanner.model.Route;
+import org.opentripplanner.model.Stop;
+import org.opentripplanner.model.Trip;
 import org.opentripplanner.model.calendar.ServiceDate;
 import org.opentripplanner.profile.ProfileTransfer;
 import org.opentripplanner.profile.StopCluster;
@@ -39,14 +52,23 @@ import org.opentripplanner.routing.core.RoutingRequest;
 import org.opentripplanner.routing.core.ServiceDay;
 import org.opentripplanner.routing.core.State;
 import org.opentripplanner.routing.core.TraverseMode;
-import org.opentripplanner.routing.edgetype.*;
+import org.opentripplanner.routing.edgetype.ParkAndRideLinkEdge;
+import org.opentripplanner.routing.edgetype.StreetBikeParkLink;
+import org.opentripplanner.routing.edgetype.TablePatternEdge;
+import org.opentripplanner.routing.edgetype.Timetable;
+import org.opentripplanner.routing.edgetype.TimetableSnapshot;
+import org.opentripplanner.routing.edgetype.TripPattern;
 import org.opentripplanner.routing.impl.AlertPatchServiceImpl;
 import org.opentripplanner.routing.services.AlertPatchService;
 import org.opentripplanner.routing.spt.DominanceFunction;
 import org.opentripplanner.routing.spt.ShortestPathTree;
 import org.opentripplanner.routing.trippattern.FrequencyEntry;
 import org.opentripplanner.routing.trippattern.TripTimes;
-import org.opentripplanner.routing.vertextype.*;
+import org.opentripplanner.routing.vertextype.BikeParkVertex;
+import org.opentripplanner.routing.vertextype.BikeRentalStationVertex;
+import org.opentripplanner.routing.vertextype.ParkAndRideVertex;
+import org.opentripplanner.routing.vertextype.TransitStation;
+import org.opentripplanner.routing.vertextype.TransitStop;
 import org.opentripplanner.standalone.Router;
 import org.opentripplanner.updater.alerts.GtfsRealtimeAlertsUpdater;
 import org.opentripplanner.updater.alerts.SiriSXUpdater;
@@ -58,10 +80,21 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.attribute.FileAttribute;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.BitSet;
+import java.util.Calendar;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -1027,11 +1060,9 @@ public class GraphIndex {
     }
 
     public HashMap<String, Object> getGraphQLExecutionResult(String query, Router router,
-        Map<String, Object> variables, String operationName, int timeout, long maxResolves) {
-        GraphQL graphQL = new GraphQL(
-            indexSchema,
-            new ResourceConstrainedExecutorServiceExecutionStrategy(threadPool, timeout, TimeUnit.MILLISECONDS, maxResolves)
-        );
+                                                                    Map<String, Object> variables, String operationName, int timeout, long maxResolves) {
+        MaxQueryComplexityInstrumentation instrumentation = new MaxQueryComplexityInstrumentation((int) maxResolves);
+        GraphQL graphQL = GraphQL.newGraphQL(indexSchema).instrumentation(instrumentation).build();
 
         if (variables == null) {
             variables = new HashMap<>();

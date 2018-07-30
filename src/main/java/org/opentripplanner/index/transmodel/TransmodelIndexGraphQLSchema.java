@@ -4,6 +4,10 @@ import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Envelope;
 import com.vividsolutions.jts.geom.LineString;
 import graphql.Scalars;
+import graphql.relay.ConnectionCursor;
+import graphql.relay.DefaultConnection;
+import graphql.relay.DefaultPageInfo;
+import graphql.relay.PageInfo;
 import graphql.relay.Relay;
 import graphql.relay.SimpleListConnection;
 import graphql.schema.*;
@@ -345,7 +349,8 @@ public class TransmodelIndexGraphQLSchema {
                     .name("longitude")
                     .type(Scalars.GraphQLFloat)
                     .build())
-            .typeResolver(o -> {
+            .typeResolver(typeResolutionEnvironment -> {
+                    Object o=typeResolutionEnvironment.getObject();
                     if (o instanceof Stop) {
                         if (((Stop)o).getLocationType()==1 ) {
                             return (GraphQLObjectType) stopPlaceType;
@@ -1154,19 +1159,8 @@ public class TransmodelIndexGraphQLSchema {
                 .field(GraphQLFieldDefinition.newFieldDefinition()
                         .name("id")
                         .type(new GraphQLNonNull(Scalars.GraphQLID))
-                        .dataFetcher(environment -> {
-                            Object place = ((GraphIndex.PlaceAndDistance) environment.getSource()).place;
-                            return relay.toGlobalId(placeAtDistanceType.getName(),
-                                    Integer.toString(((GraphIndex.PlaceAndDistance) environment.getSource()).distance) + ";" +
-                                            placeInterface.getTypeResolver()
-                                                    .getType(place)
-                                                    .getFieldDefinition("id")
-                                                    .getDataFetcher()
-                                                    .get(new DataFetchingEnvironmentImpl(place, null, null,
-                                                            null, null, placeAtDistanceType, null))
-
-                            );
-                        })
+                        .deprecate("Id is not referable or meaningful and will be removed")
+                        .dataFetcher(environment -> relay.toGlobalId(placeAtDistanceType.getName(), "N/A"))
                         .build())
                 .field(GraphQLFieldDefinition.newFieldDefinition()
                         .name("place")
@@ -2706,12 +2700,12 @@ public class TransmodelIndexGraphQLSchema {
                         .argument(GraphQLArgument.newArgument()
                                 .name("latitude")
                                 .description("Latitude of the location")
-                                .type(Scalars.GraphQLFloat)
+                                .type(new GraphQLNonNull(Scalars.GraphQLFloat))
                                 .build())
                         .argument(GraphQLArgument.newArgument()
                                 .name("longitude")
                                 .description("Longitude of the location")
-                                .type(Scalars.GraphQLFloat)
+                                .type(new GraphQLNonNull(Scalars.GraphQLFloat))
                                 .build())
                         .argument(GraphQLArgument.newArgument()
                                 .name("maximumDistance")
@@ -2795,7 +2789,9 @@ public class TransmodelIndexGraphQLSchema {
                             }
 
                             places = convertQuaysToStopPlaces(placeTypes, places,  environment.getArgument("multiModalMode")).stream().limit(orgMaxResults).collect(Collectors.toList());
-
+                            if (CollectionUtils.isEmpty(places)) {
+                                return new DefaultConnection<>(Collections.emptyList(), new DefaultPageInfo(null, null, false, false));
+                            }
                             return new SimpleListConnection(places).get(environment);
                         })
                         .build())

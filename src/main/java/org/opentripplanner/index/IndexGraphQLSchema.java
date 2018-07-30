@@ -5,9 +5,13 @@ import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Envelope;
 import com.vividsolutions.jts.geom.LineString;
 import graphql.Scalars;
+import graphql.TypeResolutionEnvironment;
+import graphql.relay.DefaultConnection;
+import graphql.relay.DefaultPageInfo;
 import graphql.relay.Relay;
 import graphql.relay.SimpleListConnection;
 import graphql.schema.*;
+import org.apache.commons.collections.CollectionUtils;
 import org.opentripplanner.api.common.Message;
 import org.opentripplanner.api.model.*;
 import org.opentripplanner.api.parameter.QualifiedModeSet;
@@ -203,7 +207,8 @@ public class IndexGraphQLSchema {
 
     private GraphQLInterfaceType nodeInterface = relay.nodeInterface(new TypeResolver() {
         @Override
-        public GraphQLObjectType getType(Object o) {
+        public GraphQLObjectType getType(TypeResolutionEnvironment typeResolutionEnvironment) {
+            Object o = typeResolutionEnvironment.getObject();
             if (o instanceof StopCluster) {
                 return (GraphQLObjectType) clusterType;
             }
@@ -270,7 +275,8 @@ public class IndexGraphQLSchema {
             .build())
         .typeResolver(new TypeResolver() {
             @Override
-            public GraphQLObjectType getType(Object o) {
+            public GraphQLObjectType getType(TypeResolutionEnvironment typeResolutionEnvironment) {
+                Object o = typeResolutionEnvironment.getObject();
                 if (o instanceof Stop) {
                     return (GraphQLObjectType) stopType;
                 }
@@ -964,19 +970,8 @@ public class IndexGraphQLSchema {
             .field(GraphQLFieldDefinition.newFieldDefinition()
                 .name("id")
                 .type(new GraphQLNonNull(Scalars.GraphQLID))
-                .dataFetcher(environment -> {
-                    Object place = ((PlaceAndDistance) environment.getSource()).place;
-                    return relay.toGlobalId(placeAtDistanceType.getName(),
-                        Integer.toString(((PlaceAndDistance) environment.getSource()).distance) + ";" +
-                            placeInterface.getTypeResolver()
-                                .getType(place)
-                                .getFieldDefinition("id")
-                                .getDataFetcher()
-                                .get(new DataFetchingEnvironmentImpl(place, null, null,
-                                    null, null, placeAtDistanceType, null))
-
-                    );
-                })
+                .deprecate("Id is not referable or meaningful and will be removed")
+                .dataFetcher(environment -> relay.toGlobalId(placeAtDistanceType.getName(), "N/A"))
                 .build())
             .field(GraphQLFieldDefinition.newFieldDefinition()
                 .name("place")
@@ -2133,69 +2128,71 @@ public class IndexGraphQLSchema {
             }
 
             private Object getObject(String idString) {
-                Relay.ResolvedGlobalId id = relay.fromGlobalId(idString);
-                if (id.type.equals(clusterType.getName())) {
-                    return index.stopClusterForId.get(id.id);
+                Relay.ResolvedGlobalId globalId = relay.fromGlobalId(idString);
+                String type = globalId.getType();
+                String id = globalId.getId();
+                if (type.equals(clusterType.getName())) {
+                    return index.stopClusterForId.get(id);
                 }
-                if (id.type.equals(stopAtDistanceType.getName())) {
-                    String[] parts = id.id.split(";", 2);
+                if (type.equals(stopAtDistanceType.getName())) {
+                    String[] parts = id.split(";", 2);
                     return new GraphIndex.StopAndDistance(
                         index.stopForId.get(GtfsLibrary.convertIdFromString(parts[1])),
                         Integer.parseInt(parts[0], 10));
                 }
-                if (id.type.equals(stopType.getName())) {
-                    return index.stopForId.get(GtfsLibrary.convertIdFromString(id.id));
+                if (type.equals(stopType.getName())) {
+                    return index.stopForId.get(GtfsLibrary.convertIdFromString(id));
                 }
-                if (id.type.equals(tripType.getName())) {
-                    return index.tripForId.get(GtfsLibrary.convertIdFromString(id.id));
+                if (type.equals(tripType.getName())) {
+                    return index.tripForId.get(GtfsLibrary.convertIdFromString(id));
                 }
-                if (id.type.equals(routeType.getName())) {
-                    return index.routeForId.get(GtfsLibrary.convertIdFromString(id.id));
+                if (type.equals(routeType.getName())) {
+                    return index.routeForId.get(GtfsLibrary.convertIdFromString(id));
                 }
-                if (id.type.equals(patternType.getName())) {
-                    return index.patternForId.get(id.id);
+                if (type.equals(patternType.getName())) {
+                    return index.patternForId.get(id);
                 }
-                if (id.type.equals(agencyType.getName())) {
-                    return index.getAgencyWithoutFeedId(id.id);
+                if (type.equals(agencyType.getName())) {
+                    return index.getAgencyWithoutFeedId(id);
                 }
-                if (id.type.equals(operatorType.getName())) {
-                    return index.operatorForId.get(GtfsLibrary.convertIdFromString(id.id));
+                if (type.equals(operatorType.getName())) {
+                    return index.operatorForId.get(GtfsLibrary.convertIdFromString(id));
                 }
-                if (id.type.equals(alertType.getName())) {
-                    return index.getAlertForId(id.id);
+                if (type.equals(alertType.getName())) {
+                    return index.getAlertForId(id);
                 }
-                if (id.type.equals(departureRowType.getName())) {
-                    return GraphIndex.DepartureRow.fromId(index, id.id);
+                if (type.equals(departureRowType.getName())) {
+                    return GraphIndex.DepartureRow.fromId(index, id);
                 }
-                if (id.type.equals(bikeRentalStationType.getName())) {
+                if (type.equals(bikeRentalStationType.getName())) {
                     // No index exists for bikeshare station ids
                     return index.graph.getService(BikeRentalStationService.class)
                         .getBikeRentalStations()
                         .stream()
-                        .filter(bikeRentalStation -> bikeRentalStation.id.equals(id.id))
+                        .filter(bikeRentalStation -> bikeRentalStation.id.equals(id))
                         .findFirst()
                         .orElse(null);
                 }
-                if (id.type.equals(bikeParkType.getName())) {
+                if (type.equals(bikeParkType.getName())) {
                     // No index exists for bike parking ids
                     return index.graph.getService(BikeRentalStationService.class)
                         .getBikeParks()
                         .stream()
-                        .filter(bikePark -> bikePark.id.equals(id.id))
+                        .filter(bikePark -> bikePark.id.equals(id))
                         .findFirst()
                         .orElse(null);
                 }
-                if (id.type.equals(carParkType.getName())) {
+                if (type.equals(carParkType.getName())) {
                     // No index exists for car parking ids
                     return index.graph.getService(CarParkService.class)
                         .getCarParks()
                         .stream()
-                        .filter(carPark -> carPark.id.equals(id.id))
+                        .filter(carPark -> carPark.id.equals(id))
                         .findFirst()
                         .orElse(null);
                 }
-                if (id.type.equals(placeAtDistanceType.getName())) {
-                    String[] parts = id.id.split(";", 2);
+                if (type.equals(placeAtDistanceType.getName())) {
+                    String[] parts = id.split(";", 2);
                     return new PlaceAndDistance(getObject(parts[1]), Integer.parseInt(parts[0], 10));
                 }
                 return null;
@@ -2361,7 +2358,9 @@ public class IndexGraphQLSchema {
                     } catch (VertexNotFoundException e) {
                         stops = Collections.emptyList();
                     }
-
+                    if (CollectionUtils.isEmpty(stops)) {
+                        return new DefaultConnection<>(Collections.emptyList(), new DefaultPageInfo(null, null, false, false));
+                    }
                     return new SimpleListConnection(stops).get(environment);
                 })
                 .build())
@@ -2449,7 +2448,9 @@ public class IndexGraphQLSchema {
                     } catch (VertexNotFoundException e) {
                         places = Collections.emptyList();
                     }
-
+                    if (CollectionUtils.isEmpty(places)) {
+                        return new DefaultConnection<>(Collections.emptyList(), new DefaultPageInfo(null, null, false, false));
+                    }
                     return new SimpleListConnection(places).get(environment);
                 })
                 .build())
