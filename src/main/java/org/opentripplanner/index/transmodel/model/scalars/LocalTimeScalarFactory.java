@@ -2,10 +2,12 @@ package org.opentripplanner.index.transmodel.model.scalars;
 
 import graphql.language.StringValue;
 import graphql.schema.Coercing;
+import graphql.schema.CoercingParseValueException;
 import graphql.schema.GraphQLScalarType;
 
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 
 public class LocalTimeScalarFactory {
 
@@ -33,7 +35,11 @@ public class LocalTimeScalarFactory {
 
             @Override
             public LocalTime parseValue(Object input) {
-                return LocalTime.from(FORMATTER.parse((CharSequence) input));
+                try {
+                    return LocalTime.from(FORMATTER.parse((CharSequence) input));
+                } catch (DateTimeParseException dtpe) {
+                    throw new CoercingParseValueException("Expected type 'LocalTime' but was '" + input + "'.");
+                }
             }
 
             @Override

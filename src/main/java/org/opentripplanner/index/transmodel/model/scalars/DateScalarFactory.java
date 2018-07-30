@@ -2,11 +2,13 @@ package org.opentripplanner.index.transmodel.model.scalars;
 
 import graphql.language.StringValue;
 import graphql.schema.Coercing;
+import graphql.schema.CoercingParseValueException;
 import graphql.schema.GraphQLScalarType;
 
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.TimeZone;
 
 public class DateScalarFactory {
@@ -37,9 +39,12 @@ public class DateScalarFactory {
 
             @Override
             public Long parseValue(Object input) {
-                return LocalDate.from(FORMATTER.parse((CharSequence) input)).atStartOfDay(timeZone.toZoneId()).toEpochSecond();
+                try {
+                    return LocalDate.from(FORMATTER.parse((CharSequence) input)).atStartOfDay(timeZone.toZoneId()).toEpochSecond();
+                } catch (DateTimeParseException dtpe) {
+                    throw new CoercingParseValueException("Expected type 'Date' but was '" + input + "'.");
+                }
             }
-
 
             @Override
             public Long parseLiteral(Object input) {

@@ -3,6 +3,7 @@ package org.opentripplanner.index.transmodel.model.scalars;
 import graphql.Scalars;
 import graphql.language.StringValue;
 import graphql.schema.Coercing;
+import graphql.schema.CoercingParseValueException;
 import graphql.schema.GraphQLFieldDefinition;
 import graphql.schema.GraphQLObjectType;
 import graphql.schema.GraphQLScalarType;
@@ -10,6 +11,7 @@ import graphql.schema.GraphQLScalarType;
 import java.time.Duration;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 
 public class TimeScalarFactory {
 
@@ -60,7 +62,11 @@ public class TimeScalarFactory {
 
             @Override
             public Integer parseValue(Object input) {
-                return LocalTime.from(FORMATTER.parse((CharSequence) input)).toSecondOfDay();
+                try {
+                    return LocalTime.from(FORMATTER.parse((CharSequence) input)).toSecondOfDay();
+                } catch (DateTimeParseException dtpe) {
+                    throw new CoercingParseValueException("Expected type 'Time' but was '" + input + "'.");
+                }
             }
 
             @Override

@@ -2,6 +2,7 @@ package org.opentripplanner.index.transmodel.model.scalars;
 
 import graphql.language.StringValue;
 import graphql.schema.Coercing;
+import graphql.schema.CoercingParseValueException;
 import graphql.schema.GraphQLScalarType;
 
 import java.time.Instant;
@@ -11,6 +12,7 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
+import java.time.format.DateTimeParseException;
 import java.time.temporal.TemporalAccessor;
 import java.util.TimeZone;
 
@@ -48,12 +50,19 @@ public class DateTimeScalarFactory {
             @Override
             public Long parseValue(Object input) {
                 Instant instant;
-                TemporalAccessor temporalAccessor = PARSER.parseBest((CharSequence) input, OffsetDateTime::from, ZonedDateTime::from, LocalDateTime::from);
+                try {
+                    TemporalAccessor temporalAccessor = PARSER.parseBest((CharSequence) input, OffsetDateTime::from, ZonedDateTime::from, LocalDateTime::from);
 
-                if (temporalAccessor instanceof LocalDateTime) {
-                    instant = ((LocalDateTime) temporalAccessor).atZone(ZoneId.systemDefault()).toInstant();
-                } else {
-                    instant = Instant.from(temporalAccessor);
+                    if (temporalAccessor instanceof LocalDateTime) {
+                        instant = ((LocalDateTime) temporalAccessor).atZone(ZoneId.systemDefault()).toInstant();
+                    } else {
+                        instant = Instant.from(temporalAccessor);
+                    }
+                } catch (DateTimeParseException dtpe) {
+                    instant = null;
+                }
+                if (instant == null) {
+                    throw new CoercingParseValueException("Expected type 'DateTime' but was '" + input + "'.");
                 }
 
                 return instant.toEpochMilli();

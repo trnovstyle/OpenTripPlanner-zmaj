@@ -1,21 +1,23 @@
 package org.opentripplanner.index.transmodel;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import graphql.ExceptionWhileDataFetching;
+import graphql.ExecutionInput;
 import graphql.ExecutionResult;
 import graphql.GraphQL;
+import graphql.GraphQLError;
 import graphql.analysis.MaxQueryComplexityInstrumentation;
 import graphql.schema.GraphQLSchema;
 import org.opentripplanner.standalone.Router;
 
 import javax.ws.rs.core.Response;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class TransmodelGraphIndex {
 
@@ -41,33 +43,48 @@ public class TransmodelGraphIndex {
             variables = new HashMap<>();
         }
 
-        ExecutionResult executionResult = graphQL.execute(query, operationName, router, variables);
+        ExecutionInput executionInput = ExecutionInput.newExecutionInput()
+                                                .query(query)
+                                                .operationName(operationName)
+                                                .context(router)
+                                                .root(router)
+                                                .variables(variables)
+                                                .build();
         HashMap<String, Object> content = new HashMap<>();
-        if (!executionResult.getErrors().isEmpty()) {
-            content.put("errors",
-                    executionResult
-                            .getErrors()
-                            .stream()
-                            .map(error -> {
-                                if (error instanceof ExceptionWhileDataFetching) {
-                                    HashMap<String, Object> response = new HashMap<String, Object>();
-                                    response.put("message", error.getMessage());
-                                    response.put("locations", error.getLocations());
-                                    response.put("errorType", error.getErrorType());
-                                    // Convert stack trace to propr format
-                                    Stream<StackTraceElement> stack = Arrays.stream(((ExceptionWhileDataFetching) error).getException().getStackTrace());
-                                    response.put("stack", stack.map(StackTraceElement::toString).collect(Collectors.toList()));
-                                    return response;
-                                } else {
-                                    return error;
-                                }
-                            })
-                            .collect(Collectors.toList()));
-        }
-        if (executionResult.getData() != null) {
-            content.put("data", executionResult.getData());
+        ExecutionResult executionResult;
+        try {
+            executionResult = graphQL.execute(executionInput);
+            if (!executionResult.getErrors().isEmpty()) {
+                content.put("errors", mapErrors(executionResult.getErrors()));
+            }
+            if (executionResult.getData() != null) {
+                content.put("data", executionResult.getData());
+            }
+        } catch (RuntimeException ge) {
+            content.put("errors", mapErrors(Arrays.asList(ge)));
         }
         return content;
+    }
+
+    private List<Map<String, Object>> mapErrors(Collection<?> errors) {
+        return errors.stream().map(e -> {
+            HashMap<String, Object> response = new HashMap<>();
+
+            if (e instanceof GraphQLError) {
+                GraphQLError graphQLError=(GraphQLError) e;
+                response.put("message", graphQLError.getMessage());
+                response.put("errorType", graphQLError.getErrorType());
+                response.put("locations", graphQLError.getLocations());
+                response.put("path", graphQLError.getPath());
+            } else {
+                if (e instanceof Exception) {
+                    response.put("message", ((Exception) e).getMessage());
+                }
+                response.put("errorType", e.getClass().getSimpleName());
+            }
+
+            return response;
+        }).collect(Collectors.toList());
     }
 
     public Response getGraphQLResponse(String query, Router router, Map<String, Object> variables, String operationName, int timeout, int maxResolves) {
