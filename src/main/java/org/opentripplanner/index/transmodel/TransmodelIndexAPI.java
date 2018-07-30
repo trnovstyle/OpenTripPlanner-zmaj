@@ -38,7 +38,6 @@ import java.util.stream.DoubleStream;
 public class TransmodelIndexAPI {
     @SuppressWarnings("unused")
     private static final Logger LOG = LoggerFactory.getLogger(TransmodelIndexAPI.class);
-    private static final String MSG_400 = "FOUR HUNDRED";
 
     private final TransmodelGraphIndex index;
     private final ObjectMapper deserializer = new ObjectMapper();
@@ -64,6 +63,11 @@ public class TransmodelIndexAPI {
     @Consumes(MediaType.APPLICATION_JSON)
     public Response getGraphQL(HashMap<String, Object> queryParameters, @HeaderParam("OTPTimeout") @DefaultValue("10000") int timeout, @HeaderParam("OTPMaxResolves") @DefaultValue("1000000") int maxResolves) {
         int finalTimeout = checkTimeout(timeout);
+        if (queryParameters==null || !queryParameters.containsKey("query")) {
+            LOG.debug("No query found in body");
+            return Response.status(Response.Status.BAD_REQUEST).type(MediaType.TEXT_PLAIN_TYPE).entity("No query found in body").build();
+        }
+
         String query = (String) queryParameters.get("query");
         Object queryVariables = queryParameters.getOrDefault("variables", null);
         String operationName = (String) queryParameters.getOrDefault("operationName", null);
@@ -74,8 +78,7 @@ public class TransmodelIndexAPI {
             try {
                 variables = deserializer.readValue((String) queryVariables, Map.class);
             } catch (IOException e) {
-                LOG.error("Variables must be a valid json object");
-                return Response.status(Response.Status.BAD_REQUEST).entity(MSG_400).build();
+                return Response.status(Response.Status.BAD_REQUEST).type(MediaType.TEXT_PLAIN_TYPE).entity("Variables must be a valid json object").build();
             }
         } else {
             variables = new HashMap<>();
@@ -107,8 +110,7 @@ public class TransmodelIndexAPI {
                 try {
                     variables = deserializer.readValue((String) query.get("variables"), Map.class);
                 } catch (IOException e) {
-                    LOG.error("Variables must be a valid json object");
-                    return Response.status(Response.Status.BAD_REQUEST).entity(MSG_400).build();
+                    return Response.status(Response.Status.BAD_REQUEST).type(MediaType.TEXT_PLAIN_TYPE).entity("Variables must be a valid json object").build();
                 }
             } else {
                 variables = null;
