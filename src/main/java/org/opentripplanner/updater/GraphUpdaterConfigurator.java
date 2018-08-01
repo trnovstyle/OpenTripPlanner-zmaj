@@ -153,6 +153,7 @@ public abstract class GraphUpdaterConfigurator {
                         ((JsonConfigurable) updater).configure(graph, configItem);
                     }
                     // Add graph updater to manager
+                    updaterManager.setupUpdater(updater);
                     updaterManager.addUpdater(updater);
                     LOG.info ("Configured GraphUpdater: {}", updater);
                 }
@@ -161,6 +162,9 @@ public abstract class GraphUpdaterConfigurator {
                 // Continue on to the next node
             }
         }
+
+        updaterManager.startUpdaters();
+
         return updaterManager;
     }
 

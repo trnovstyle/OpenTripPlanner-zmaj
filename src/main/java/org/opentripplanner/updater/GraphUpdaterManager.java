@@ -139,18 +139,31 @@ public class GraphUpdaterManager {
      */
     public void addUpdater(final GraphUpdater updater) {
         updaterList.add(updater);
+    }
+
+    public void setupUpdater(final GraphUpdater updater) {
+        try {
+            updater.setup();
+        }
+        catch (Exception e) {
+            LOG.error("Error while running updater setup {}:", updater.getClass().getName(), e);
+        }
+    }
+
+    public void startUpdaters() {
+        for (GraphUpdater updater : this.updaterList) {
+            startUpdater(updater);
+        }
+    }
+
+    private void startUpdater(final GraphUpdater updater) {
         updaterPool.execute(new Runnable() {
             @Override
             public void run() {
                 try {
-                    updater.setup();
-                    try {
-                        updater.run();
-                    } catch (Exception e) {
-                        LOG.error("Error while running updater {}:", updater.getClass().getName(), e);
-                    }
+                    updater.run();
                 } catch (Exception e) {
-                    LOG.error("Error while setting up updater {}:", updater.getClass().getName(), e);
+                    LOG.error("Error while running updater {}:", updater.getClass().getName(), e);
                 }
             }
         });
