@@ -145,7 +145,7 @@ public class GraphUpdaterManager {
                 try {
                     updater.setup();
                     try {
-                        //updater.run();
+                        updater.run();
                     } catch (Exception e) {
                         LOG.error("Error while running updater {}:", updater.getClass().getName(), e);
                     }
