@@ -378,7 +378,7 @@ public class AStar {
         final List<GraphPath> ret = new LinkedList<>();
         for (State s : runState.targetAcceptedStates) {
             if (s.isFinal()) {
-                ret.add(new GraphPath(s, true));
+                ret.add(new GraphPath(s, false));
             }
         }
         return ret;
