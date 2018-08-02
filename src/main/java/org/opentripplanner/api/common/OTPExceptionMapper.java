@@ -24,11 +24,14 @@ public class OTPExceptionMapper implements ExceptionMapper<Exception> {
     }
 
     public Response toResponse(Exception ex) {
-        // Show the exception in the server log
-        LOG.error("Unhandled exception", ex);
-
-
         int statusCode = getStatusForException(ex);
+
+        if (statusCode >= Response.Status.INTERNAL_SERVER_ERROR.getStatusCode()) {
+            // Show the exception in the server log
+            LOG.error("Unhandled exception", ex);
+        } else {
+            LOG.debug("Client exception", ex);
+        }
 
         // Return the short form message to the client
         return Response.status(statusCode)
