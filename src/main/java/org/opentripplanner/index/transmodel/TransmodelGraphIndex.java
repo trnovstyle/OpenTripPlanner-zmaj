@@ -8,6 +8,8 @@ import graphql.GraphQLError;
 import graphql.analysis.MaxQueryComplexityInstrumentation;
 import graphql.schema.GraphQLSchema;
 import org.opentripplanner.standalone.Router;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.core.Response;
 import java.util.Arrays;
@@ -20,6 +22,8 @@ import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 public class TransmodelGraphIndex {
+
+    static final Logger LOG = LoggerFactory.getLogger(TransmodelGraphIndex.class);
 
     public final GraphQLSchema indexSchema;
 
@@ -61,6 +65,7 @@ public class TransmodelGraphIndex {
                 content.put("data", executionResult.getData());
             }
         } catch (RuntimeException ge) {
+            LOG.warn("Exception during graphQL.execute: " + ge.getMessage(), ge);
             content.put("errors", mapErrors(Arrays.asList(ge)));
         }
         return content;
