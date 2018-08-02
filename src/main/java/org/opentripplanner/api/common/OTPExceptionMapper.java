@@ -35,7 +35,7 @@ public class OTPExceptionMapper implements ExceptionMapper<Exception> {
 
         // Return the short form message to the client
         return Response.status(statusCode)
-                       .entity(ex.toString() + " " + ex.getMessage())
+                       .entity(ex.getMessage())
                        .type("text/plain").build();
     }
 
