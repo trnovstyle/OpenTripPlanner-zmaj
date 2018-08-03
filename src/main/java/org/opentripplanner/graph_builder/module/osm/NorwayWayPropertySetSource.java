@@ -43,6 +43,9 @@ public class NorwayWayPropertySetSource implements WayPropertySetSource {
         // Do not walk on "Motortrafikkvei" ("motorvei klasse b")
         props.setProperties("motorroad=yes", StreetTraversalPermission.CAR, 7.47, 7.47);
 
+        // Allow bikes on sidewalks
+        props.setProperties("footway=sidewalk;highway=footway", StreetTraversalPermission.PEDESTRIAN_AND_BICYCLE);
+
         /*
          * Automobile speeds in Norway. General speed limit is 80kph unless signs says otherwise
          * 
