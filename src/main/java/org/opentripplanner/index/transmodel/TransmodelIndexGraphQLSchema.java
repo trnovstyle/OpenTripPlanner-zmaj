@@ -251,6 +251,7 @@ public class TransmodelIndexGraphQLSchema {
 
     private static GraphQLEnumType directionTypeEnum = GraphQLEnumType.newEnum()
             .name("DirectionType")
+            .value("unknown",-1)
             .value("outbound", 0)
             .value("inbound", 1)
             .value("clockwise", 2)
