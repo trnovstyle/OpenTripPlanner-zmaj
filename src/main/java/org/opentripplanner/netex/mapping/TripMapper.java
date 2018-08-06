@@ -94,24 +94,25 @@ public class TripMapper {
             mapFlexibleServicePropertiesProperties(serviceJourney.getFlexibleServiceProperties(), trip);
         }
 
-        Route route = netexDao.routeById.lookup(serviceJourney.getRouteRef().getRef());
-        if (route.getDirectionType() == null) {
-            trip.setDirectionId("-1");
-        }
-        else {
-            switch (route.getDirectionType()) {
-                case OUTBOUND:
-                    trip.setDirectionId("0");
-                    break;
-                case INBOUND:
-                    trip.setDirectionId("1");
-                    break;
-                case CLOCKWISE:
-                    trip.setDirectionId("2");
-                    break;
-                case ANTICLOCKWISE:
-                    trip.setDirectionId("3");
-                    break;
+        if (serviceJourney.getRouteRef() != null) {
+            Route route = netexDao.routeById.lookup(serviceJourney.getRouteRef().getRef());
+            if (route.getDirectionType() == null) {
+                trip.setDirectionId("-1");
+            } else {
+                switch (route.getDirectionType()) {
+                    case OUTBOUND:
+                        trip.setDirectionId("0");
+                        break;
+                    case INBOUND:
+                        trip.setDirectionId("1");
+                        break;
+                    case CLOCKWISE:
+                        trip.setDirectionId("2");
+                        break;
+                    case ANTICLOCKWISE:
+                        trip.setDirectionId("3");
+                        break;
+                }
             }
         }
 
