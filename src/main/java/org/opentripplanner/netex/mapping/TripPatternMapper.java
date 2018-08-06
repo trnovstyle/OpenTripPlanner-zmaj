@@ -136,6 +136,26 @@ public class TripPatternMapper {
             }
         }
 
+        if (route.getDirectionType() == null) {
+            tripPattern.directionId = -1;
+        }
+        else {
+            switch (route.getDirectionType()) {
+                case OUTBOUND:
+                    tripPattern.directionId = 0;
+                    break;
+                case INBOUND:
+                    tripPattern.directionId = 1;
+                    break;
+                case CLOCKWISE:
+                    tripPattern.directionId = 2;
+                    break;
+                case ANTICLOCKWISE:
+                    tripPattern.directionId = 3;
+                    break;
+            }
+        }
+
         transitBuilder.getTripPatterns().put(tripPattern.stopPattern, tripPattern);
     }
 

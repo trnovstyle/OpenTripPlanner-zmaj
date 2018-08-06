@@ -5,9 +5,11 @@ import org.opentripplanner.model.BookingArrangement;
 import org.opentripplanner.model.Trip;
 import org.opentripplanner.model.impl.OtpTransitBuilder;
 import org.opentripplanner.netex.loader.NetexDao;
+import org.rutebanken.netex.model.DirectionTypeEnumeration;
 import org.rutebanken.netex.model.FlexibleServiceProperties;
 import org.rutebanken.netex.model.JourneyPattern;
 import org.rutebanken.netex.model.LineRefStructure;
+import org.rutebanken.netex.model.Route;
 import org.rutebanken.netex.model.ServiceAlterationEnumeration;
 import org.rutebanken.netex.model.ServiceJourney;
 import org.slf4j.Logger;
@@ -90,6 +92,27 @@ public class TripMapper {
 
         if (serviceJourney.getFlexibleServiceProperties()!=null) {
             mapFlexibleServicePropertiesProperties(serviceJourney.getFlexibleServiceProperties(), trip);
+        }
+
+        Route route = netexDao.routeById.lookup(serviceJourney.getRouteRef().getRef());
+        if (route.getDirectionType() == null) {
+            trip.setDirectionId("-1");
+        }
+        else {
+            switch (route.getDirectionType()) {
+                case OUTBOUND:
+                    trip.setDirectionId("0");
+                    break;
+                case INBOUND:
+                    trip.setDirectionId("1");
+                    break;
+                case CLOCKWISE:
+                    trip.setDirectionId("2");
+                    break;
+                case ANTICLOCKWISE:
+                    trip.setDirectionId("3");
+                    break;
+            }
         }
 
         return trip;
