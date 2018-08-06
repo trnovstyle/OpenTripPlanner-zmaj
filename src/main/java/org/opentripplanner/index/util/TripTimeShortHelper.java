@@ -107,7 +107,7 @@ public class TripTimeShortHelper {
         Trip trip = index.tripForId.get(leg.tripId);
 
         if (trip == null) {
-            return null;
+            return new ArrayList<>();
         }
         ServiceDate serviceDate = parseServiceDate(leg.serviceDate);
 
