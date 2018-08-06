@@ -28,6 +28,7 @@ import org.opentripplanner.routing.services.AlertPatchService;
 import org.opentripplanner.updater.GtfsRealtimeFuzzyTripMatcher;
 import org.opentripplanner.updater.SiriFuzzyTripMatcher;
 import org.opentripplanner.util.I18NString;
+import org.opentripplanner.util.NonLocalizedString;
 import org.opentripplanner.util.TranslatedString;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -105,6 +106,8 @@ public class AlertsUpdateHandler {
         alert.alertDescriptionText = getTranslatedString(situation.getDescriptions());
         alert.alertDetailText = getTranslatedString(situation.getDetails());
         alert.alertHeaderText = getTranslatedString(situation.getSummaries());
+
+        alert.alertUrl = getInfoLinkAsString(situation.getInfoLinks());
 
         Set<String> idsToExpire = new HashSet<>();
         boolean expireSituation = (situation.getProgress() != null &&
@@ -487,6 +490,18 @@ public class AlertsUpdateHandler {
         }
 
         return Pair.of(idsToExpire, patches);
+    }
+
+    private I18NString getInfoLinkAsString(PtSituationElement.InfoLinks infoLinks) {
+        if (infoLinks != null) {
+            if (!isListNullOrEmpty(infoLinks.getInfoLinks())) {
+                InfoLinkStructure infoLinkStructure = infoLinks.getInfoLinks().get(0);
+                if (infoLinkStructure != null && infoLinkStructure.getUri() != null) {
+                    return new NonLocalizedString(infoLinkStructure.getUri());
+                }
+            }
+        }
+        return null;
     }
 
     private void updateStopConditions(AlertPatch alertPatch, List<RoutePointTypeEnumeration> stopConditions) {
