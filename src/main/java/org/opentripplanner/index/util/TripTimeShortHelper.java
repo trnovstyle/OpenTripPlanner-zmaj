@@ -11,6 +11,7 @@ import org.opentripplanner.routing.edgetype.Timetable;
 import org.opentripplanner.routing.edgetype.TimetableSnapshot;
 import org.opentripplanner.routing.edgetype.TripPattern;
 import org.opentripplanner.routing.graph.GraphIndex;
+import org.opentripplanner.routing.trippattern.TripTimes;
 import org.opentripplanner.updater.stoptime.TimetableSnapshotSource;
 
 import java.text.ParseException;
@@ -45,7 +46,15 @@ public class TripTimeShortHelper {
         if (timetable == null) {
             timetable = index.patternForTrip.get(trip).scheduledTimetable;
         }
-        return TripTimeShort.fromTripTimes(timetable, trip, serviceDay);
+
+        // This check is made here to avoid changing TripTimeShort.fromTripTimes
+        TripTimes times = timetable.getTripTimes(timetable.getTripIndex(trip.getId()));
+        if (!serviceDay.serviceRunning(times.serviceCode)) {
+            return new ArrayList<>();
+        }
+        else {
+            return TripTimeShort.fromTripTimes(timetable, trip, serviceDay);
+        }
     }
 
 
