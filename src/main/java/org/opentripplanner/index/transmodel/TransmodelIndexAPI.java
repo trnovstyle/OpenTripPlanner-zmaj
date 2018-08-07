@@ -54,8 +54,8 @@ public class TransmodelIndexAPI {
      */
     @GET
     @Path("/live")
-    public void isAlive() {
-
+    public Response isAlive() {
+        return Response.status(Response.Status.NO_CONTENT).build();
     }
 
     @POST
