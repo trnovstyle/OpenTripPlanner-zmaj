@@ -1396,8 +1396,7 @@ public class TransmodelIndexGraphQLSchema {
                         .name("lines")
                         .description("List of lines servicing this quay")
                         .type(new GraphQLNonNull(new GraphQLList(new GraphQLNonNull(lineType))))
-                        .dataFetcher(environment -> index.patternsForStop
-                                .get(environment.getSource())
+                        .dataFetcher(environment -> index.getPatternsForStop(environment.getSource(),true)
                                 .stream()
                                 .map(pattern -> pattern.route)
                                 .distinct()
@@ -1407,7 +1406,7 @@ public class TransmodelIndexGraphQLSchema {
                         .name("journeyPatterns")
                         .description("List of journey patterns servicing this quay")
                         .type(new GraphQLNonNull(new GraphQLList(journeyPatternType)))
-                        .dataFetcher(environment -> index.patternsForStop.get(environment.getSource()))
+                        .dataFetcher(environment -> index.getPatternsForStop(environment.getSource(), true))
                         .build())
                 .field(GraphQLFieldDefinition.newFieldDefinition()
                         .name("estimatedCalls")

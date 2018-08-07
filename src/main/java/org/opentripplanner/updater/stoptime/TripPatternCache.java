@@ -13,16 +13,20 @@
 
 package org.opentripplanner.updater.stoptime;
 
-import java.util.HashMap;
-import java.util.Map;
-
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.ListMultimap;
+import com.google.common.collect.Multimaps;
 import org.opentripplanner.model.AgencyAndId;
 import org.opentripplanner.model.Route;
 import org.opentripplanner.model.Stop;
-import org.opentripplanner.model.calendar.ServiceDate;
 import org.opentripplanner.model.StopPattern;
+import org.opentripplanner.model.calendar.ServiceDate;
 import org.opentripplanner.routing.edgetype.TripPattern;
 import org.opentripplanner.routing.graph.Graph;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * A synchronized cache of trip patterns that are added to the graph due to GTFS-realtime messages.
@@ -32,6 +36,8 @@ public class TripPatternCache {
     private int counter = 0;
 
     private final Map<StopPatternServiceDateKey, TripPattern> cache = new HashMap<>();
+
+    private final ListMultimap<Stop, TripPattern> patternsForStop = Multimaps.synchronizedListMultimap(ArrayListMultimap.create());
     
     /**
      * Get cached trip pattern or create one if it doesn't exist yet. If a trip pattern is created, vertices
@@ -71,10 +77,10 @@ public class TripPatternCache {
             // Add pattern to cache
             cache.put(key, tripPattern);
 
-// TODO stunt fix to make these trip patterns visible for departureRow searches. Shouldn't really mix these with scheduled data. Will affect routes for stop as well, is this OK?
+            // To make these trip patterns visible for departureRow searches.
             for (Stop stop: tripPattern.getStops()) {
-                if (!graph.index.patternsForStop.containsEntry(stop, tripPattern)) {
-                    graph.index.patternsForStop.put(stop, tripPattern);
+                if (!patternsForStop.containsEntry(stop, tripPattern)) {
+                    patternsForStop.put(stop, tripPattern);
                 }
             }
         }
@@ -101,6 +107,17 @@ public class TripPatternCache {
         String code = String.format("%s:%s:%s:rt#%d", routeId.getAgencyId(), routeId.getId(), direction, counter);
         return code;
     }
+
+    /**
+     * Returns any new TripPatterns added by real time information for a given stop.
+     *
+     * @param stop the stop
+     * @return list of TripPatterns created by real time sources for the stop.
+     */
+    public List<TripPattern> getAddedTripPatternsForStop(Stop stop) {
+        return patternsForStop.get(stop);
+    }
+
 
 }
 class StopPatternServiceDateKey {

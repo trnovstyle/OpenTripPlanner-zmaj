@@ -748,7 +748,8 @@ public class GraphIndex {
 
         final List<StopTimesInPattern> ret = new ArrayList<>();
 
-        for (final TripPattern pattern : patternsForStop.get(stop)) {
+
+        for (final TripPattern pattern : getPatternsForStop(stop, true)) {
 
             final List<TripTimeShort> stopTimesForStop = stopTimesForPattern(stop, pattern, startTime, timeRange, numberOfDepartures, omitNonPickups);
 
@@ -760,6 +761,15 @@ public class GraphIndex {
             }
         }
         return ret;
+    }
+
+    public Collection<TripPattern> getPatternsForStop(Stop stop, boolean includeRealtimeUpdates) {
+        List<TripPattern> tripPatterns = new ArrayList<>(patternsForStop.get(stop));
+
+        if (includeRealtimeUpdates && graph.timetableSnapshotSource != null) {
+            tripPatterns.addAll(graph.timetableSnapshotSource.getAddedTripPatternsForStop(stop));
+        }
+        return tripPatterns;
     }
 
     /**

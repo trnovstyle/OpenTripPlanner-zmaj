@@ -424,6 +424,16 @@ public class TimetableSnapshotSource {
         }
     }
 
+    /**
+     * Returns any new TripPatterns added by real time information for a given stop.
+     *
+     * @param stop the stop
+     * @return list of TripPatterns created by real time sources for the stop.
+     */
+    public List<TripPattern> getAddedTripPatternsForStop(Stop stop) {
+        return tripPatternCache.getAddedTripPatternsForStop(stop);
+    }
+
     private static boolean keepLogging = true;
 
     private boolean handleModifiedTrip(Graph graph, VehicleActivityStructure activity, ServiceDate serviceDate) {
