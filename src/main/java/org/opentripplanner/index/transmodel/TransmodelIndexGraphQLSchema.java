@@ -915,6 +915,12 @@ public class TransmodelIndexGraphQLSchema {
                         .type(Scalars.GraphQLBoolean)
                         .defaultValue(defaultRoutingRequest.compactLegsByReversedSearch)
                         .build())
+                .argument(GraphQLArgument.newArgument()
+                        .name("reverseOptimizeOnTheFly")
+                        .description("For debugging only.")
+                        .type(Scalars.GraphQLBoolean)
+                        .defaultValue(defaultRoutingRequest.reverseOptimizeOnTheFly)
+                        .build())
                 .dataFetcher(environment -> new TransmodelGraphQLPlanner(mappingUtil).plan(environment)
                 )
                 .build();
