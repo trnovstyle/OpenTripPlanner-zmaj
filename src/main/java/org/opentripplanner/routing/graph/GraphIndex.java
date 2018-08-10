@@ -444,7 +444,14 @@ public class GraphIndex {
                             furthestDistance = pad.distance;
                         }
                     }
-                    rr.worstTime = (rr.dateTime + furthestDistance);
+
+                    // Calculate an estimated worst time by assuming walking distance equals seconds of walk time.
+                    // Only updating the search worstTime if this estimate is actually better than the existing worstTime.
+                    // The distance = time assumption is obviously wrong, and in the case of elevation data being used more so than what is comfortable.
+                    long worstTimeEstimate = rr.dateTime + furthestDistance;
+                    if (worstTimeEstimate < rr.worstTime) {
+                        rr.worstTime = worstTimeEstimate;
+                    }
                 }
                 return false;
             }
