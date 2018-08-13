@@ -41,6 +41,8 @@ public class UIPBikeRentalDataSource extends GenericJsonBikeRentalDataSource {
         brstation.bikesAvailable = rentalStationNode.path("availability").path("bikes").asInt();
         brstation.spacesAvailable = rentalStationNode.path("availability").path("locks").asInt();
 
+        brstation.description = new NonLocalizedString(rentalStationNode.path("subtitle").asText("").trim());
+
         brstation.networks = this.networks;
         return brstation;
     }
