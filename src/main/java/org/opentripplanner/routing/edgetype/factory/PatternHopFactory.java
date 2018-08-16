@@ -611,6 +611,16 @@ public class PatternHopFactory {
                 //fall back to nearest segment
                 stopSegments.add(bestSegment);
                 minSegmentIndex = bestSegment.index;
+
+                LOG.info("Found no segment within maxStopToShapeSnapDistance(" + maxStopToShapeSnapDistance + ") from stop("
+                                 + stop.getId() + ") for shape(" + shapeId + "). Using segment with distance: " + bestSegment.distance(coord));
+
+                // Setting maxSegment if not set. Without this all possibleSegments are erased and thus the fall back
+                // never seem to work.
+                if (maxSegmentIndex == -1) {
+                    maxSegmentIndex = bestSegment.index;
+                }
+
             } else {
                 minSegmentIndex = minSegmentIndexForThisStop;
                 Collections.sort(stopSegments, new IndexedLineSegmentComparator(coord));
