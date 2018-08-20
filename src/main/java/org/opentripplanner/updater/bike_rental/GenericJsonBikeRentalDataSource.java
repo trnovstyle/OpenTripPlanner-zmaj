@@ -84,7 +84,7 @@ public abstract class GenericJsonBikeRentalDataSource implements BikeRentalDataS
             }
 
             if (data == null) {
-                log.warn("Failed to get data from url " + url);
+                log.info("Failed to get data from url " + url);
                 return false;
             }
             parseJSON(data);
