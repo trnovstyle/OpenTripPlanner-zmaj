@@ -56,7 +56,7 @@ public class QualifiedMode implements Serializable {
                 req.parkAndRide = true;
             } else if (this.qualifiers.contains(Qualifier.PICKUP)) {
                 req.rideAndKiss = true;
-            } else {
+            } else if (this.qualifiers.contains(Qualifier.DROPOFF)) {
                 req.kissAndRide = true;
             }
             req.modes.setWalk(true); // need to walk after dropping the car off
@@ -80,5 +80,5 @@ public class QualifiedMode implements Serializable {
 }
 
 enum Qualifier {
-    RENT, HAVE, PARK, KEEP, PICKUP
+    RENT, HAVE, PARK, KEEP, PICKUP, DROPOFF
 }

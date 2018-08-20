@@ -144,8 +144,9 @@ public class TransmodelIndexGraphQLSchema {
             .value("coach", TraverseMode.COACH)
             .value("transit", TraverseMode.TRANSIT, "Any for of public transportation")
             .value("foot", TraverseMode.WALK)
+            .value("car", TraverseMode.CAR)
             .value("car_park", TraverseMode.CAR_PARK, "Combine with foot and transit for park and ride.")
-            .value("car", TraverseMode.CAR, "Combine with foot and transit for kiss and ride.")
+            .value("car_dropoff", TraverseMode.CAR, "Combine with foot and transit for kiss and ride.")
             .value("car_pickup", TraverseMode.CAR_PICKUP, "Combine with foot and transit for ride and kiss.")
             .build();
 
