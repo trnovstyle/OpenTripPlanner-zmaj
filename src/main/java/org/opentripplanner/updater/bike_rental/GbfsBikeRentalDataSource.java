@@ -27,11 +27,16 @@ public class GbfsBikeRentalDataSource implements BikeRentalDataSource, JsonConfi
 
     private String baseUrl;
     private String apiKey;
+    private boolean containsFloatingBikes;
+    private Set<String> networks = null;
 
-    public GbfsBikeRentalDataSource () {
+    public GbfsBikeRentalDataSource (boolean containsFloatingBikes, String network) {
         stationSource = new GbfsStationDataSource();
         stationStatusSource = new GbfsStationStatusDataSource();
         floatingBikeSource = new GbfsFloatingBikeDataSource();
+        this.containsFloatingBikes = containsFloatingBikes;
+        this.networks = new HashSet<>();
+        this.networks.add(network);
     }
 
     //private boolean read
@@ -47,7 +52,8 @@ public class GbfsBikeRentalDataSource implements BikeRentalDataSource, JsonConfi
 
     @Override
     public boolean update() {
-        return stationSource.update() && stationStatusSource.update() && floatingBikeSource.update();
+        return stationSource.update() && stationStatusSource.update()
+                && (!containsFloatingBikes || floatingBikeSource.update());
     }
 
     @Override
@@ -63,6 +69,7 @@ public class GbfsBikeRentalDataSource implements BikeRentalDataSource, JsonConfi
             BikeRentalStation status = statusLookup.get(station.id);
             station.bikesAvailable = status.bikesAvailable;
             station.spacesAvailable = status.spacesAvailable;
+            station.networks = networks;
         }
 
         List<BikeRentalStation> stations = new LinkedList<>(stationSource.getStations());
@@ -138,6 +145,8 @@ public class GbfsBikeRentalDataSource implements BikeRentalDataSource, JsonConfi
             brstation.spacesAvailable = 0;
             brstation.allowDropoff = false;
             brstation.isFloatingBike = true;
+
+            brstation.networks = networks;
 
             return brstation;
         }

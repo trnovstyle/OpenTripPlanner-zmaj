@@ -2362,7 +2362,7 @@ public class TransmodelIndexGraphQLSchema {
                         .build())
                 .field(GraphQLFieldDefinition.newFieldDefinition()
                         .name("description")
-                        .type(new GraphQLNonNull(Scalars.GraphQLString))
+                        .type(Scalars.GraphQLString)
                         .dataFetcher(environment -> ((BikeRentalStation) environment.getSource()).description)
                         .build())
                 .field(GraphQLFieldDefinition.newFieldDefinition()
