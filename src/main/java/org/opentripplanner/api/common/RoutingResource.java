@@ -101,6 +101,9 @@ public abstract class RoutingResource {
     @QueryParam("maxPreTransitTime")
     protected Integer maxPreTransitTime;
 
+    @QueryParam("maxPreTransitReluctance")
+    protected Integer maxPreTransitReluctance;
+
     /**
      * A multiplier for how bad walking is, compared to being in transit for equal lengths of time.
      * Defaults to 2. Empirically, values between 10 and 20 seem to correspond well to the concept
@@ -426,6 +429,9 @@ public abstract class RoutingResource {
 
         if (maxPreTransitTime != null)
             request.setMaxPreTransitTime(maxPreTransitTime);
+
+        if (maxPreTransitReluctance != null)
+            request.setPreTransitReluctance(maxPreTransitReluctance);
 
         if (walkReluctance != null)
             request.setWalkReluctance(walkReluctance);

@@ -940,6 +940,12 @@ public class TransmodelIndexGraphQLSchema {
                         .type(Scalars.GraphQLFloat)
                         .defaultValue(defaultRoutingRequest.preTransitOverageRate)
                         .build())
+                .argument(GraphQLArgument.newArgument()
+                        .name("preTransitReluctance")
+                        .description("How much worse driving before and after transit is than riding on transit. Applies to ride and kiss, kiss and ride and park and ride.")
+                        .type(Scalars.GraphQLFloat)
+                        .defaultValue(defaultRoutingRequest.preTransitReluctance)
+                        .build())
                 .dataFetcher(environment -> new TransmodelGraphQLPlanner(mappingUtil).plan(environment)
                 )
                 .build();
@@ -4090,6 +4096,12 @@ public class TransmodelIndexGraphQLSchema {
                         .description("Whether to apply the ellipsoid->geoid offset to all elevations in the response.")
                         .type(Scalars.GraphQLInt)
                         .dataFetcher(environment -> ((RoutingRequest) environment.getSource()).noInterchangePenalty)
+                        .build())
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("preTransitReluctance")
+                        .description("How much worse driving before and after transit is than riding on transit. Applies to ride and kiss, kiss and ride and park and ride.")
+                        .type(Scalars.GraphQLFloat)
+                        .dataFetcher(environment -> ((RoutingRequest) environment.getSource()).preTransitReluctance)
                         .build())
                 .build();
 

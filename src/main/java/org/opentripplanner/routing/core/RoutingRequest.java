@@ -455,13 +455,15 @@ public class RoutingRequest implements Cloneable, Serializable {
     public boolean walkingBike;
 
     public boolean softWalkLimiting = true;
-    public boolean softPreTransitLimiting = true;
+    public boolean softPreTransitLimiting = false;
 
     public double softWalkPenalty = 60.0; // a jump in cost when stepping over the walking limit
     public double softWalkOverageRate = 5.0; // a jump in cost for every meter over the walking limit
 
     public double preTransitPenalty = 300.0; // a jump in cost when stepping over the pre-transit time limit
     public double preTransitOverageRate = 10.0; // a jump in cost for every second over the pre-transit time limit
+
+    public double preTransitReluctance = 4;
 
     /*
       Additional flags affecting mode transitions.
@@ -575,6 +577,7 @@ public class RoutingRequest implements Cloneable, Serializable {
             bikeWalkingOptions.setArriveBy(this.arriveBy);
             bikeWalkingOptions.maxWalkDistance = maxWalkDistance;
             bikeWalkingOptions.maxPreTransitTime = maxPreTransitTime;
+            bikeWalkingOptions.preTransitReluctance = preTransitReluctance;
             bikeWalkingOptions.walkSpeed = walkSpeed * 0.8; // walking bikes is slow
             bikeWalkingOptions.walkReluctance = walkReluctance * 2.7; // and painful
             bikeWalkingOptions.optimize = optimize;
@@ -590,6 +593,7 @@ public class RoutingRequest implements Cloneable, Serializable {
             bikeWalkingOptions.setArriveBy(this.arriveBy);
             bikeWalkingOptions.maxWalkDistance = maxWalkDistance;
             bikeWalkingOptions.maxPreTransitTime = maxPreTransitTime;
+            bikeWalkingOptions.preTransitReluctance = preTransitReluctance;
             bikeWalkingOptions.modes = modes.clone();
             bikeWalkingOptions.modes.setBicycle(false);
             bikeWalkingOptions.modes.setWalk(true);
@@ -996,6 +1000,7 @@ public class RoutingRequest implements Cloneable, Serializable {
                 && maxWalkDistance == other.maxWalkDistance
                 && maxTransferWalkDistance == other.maxTransferWalkDistance
                 && maxPreTransitTime == other.maxPreTransitTime
+                && preTransitReluctance == other.preTransitReluctance
                 && transferPenalty == other.transferPenalty
                 && maxSlope == other.maxSlope
                 && walkReluctance == other.walkReluctance
@@ -1192,6 +1197,13 @@ public class RoutingRequest implements Cloneable, Serializable {
         if (maxPreTransitTime > 0) {
             this.maxPreTransitTime = maxPreTransitTime;
             bikeWalkingOptions.maxPreTransitTime = maxPreTransitTime;
+        }
+    }
+
+    public void setPreTransitReluctance(double preTransitReluctance) {
+        if (preTransitReluctance > 0) {
+            this.preTransitReluctance = preTransitReluctance;
+            bikeWalkingOptions.preTransitReluctance = preTransitReluctance;
         }
     }
 
