@@ -188,6 +188,7 @@ public abstract class GraphPathToTripPlanConverter {
         removeStaySeatedTransferLegs(itinerary);
 
         itinerary.duration = lastState.getElapsedTimeSeconds();
+        itinerary.distance = itinerary.legs.stream().mapToDouble(l -> l.distance).sum();
         itinerary.startTime = makeCalendar(states[0]);
         itinerary.endTime = makeCalendar(lastState);
         itinerary.weight = lastState.weight;

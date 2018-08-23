@@ -67,6 +67,11 @@ public class Itinerary {
     public boolean walkLimitExceeded = false;
 
     /**
+     * Total distance for this trip pattern. In meters.
+     */
+    public Double distance = 0.0;
+
+    /**
      * How much elevation is lost, in total, over the course of the trip, in meters. As an example,
      * a trip that went from the top of Mount Everest straight down to sea level, then back up K2,
      * then back down again would have an elevationLost of Everest + K2.
