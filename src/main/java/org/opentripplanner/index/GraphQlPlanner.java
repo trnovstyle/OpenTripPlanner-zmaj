@@ -152,6 +152,7 @@ public class GraphQlPlanner {
         callWith.argument("numItineraries", request::setNumItineraries);
         callWith.argument("maxWalkDistance", request::setMaxWalkDistance);
         callWith.argument("maxPreTransitTime", request::setMaxPreTransitTime);
+        callWith.argument("preTransitReluctance", request::setPreTransitReluctance);
         callWith.argument("walkReluctance", request::setWalkReluctance);
         callWith.argument("walkOnStreetReluctance", request::setWalkOnStreetReluctance);
         callWith.argument("waitReluctance", request::setWaitReluctance);
@@ -160,6 +161,8 @@ public class GraphQlPlanner {
         callWith.argument("bikeSpeed", (Double v) -> request.bikeSpeed = v);
         callWith.argument("bikeSwitchTime", (Integer v) -> request.bikeSwitchTime = v);
         callWith.argument("bikeSwitchCost", (Integer v) -> request.bikeSwitchCost = v);
+        callWith.argument("maxPreTransitTime", (Integer v) -> request.maxPreTransitTime = v);
+        callWith.argument("preTransitReluctance", (Double v) -> request.setPreTransitReluctance(v));
 
         OptimizeType optimize = environment.getArgument("optimisationMethod");
 

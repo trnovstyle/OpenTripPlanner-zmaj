@@ -502,6 +502,7 @@ public class StreetEdge extends Edge implements Cloneable {
                                     options.preTransitOverageRate);
                 } else return null;
             }
+            weight *= options.preTransitReluctance;
         }
         
         /* Apply a strategy for avoiding walking too far, either soft (weight increases) or hard limiting (pruning). */

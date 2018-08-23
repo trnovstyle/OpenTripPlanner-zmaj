@@ -27,7 +27,7 @@ public enum TraverseMode {
     CABLE_CAR, GONDOLA, FUNICULAR,
     TRANSIT, LEG_SWITCH,
     AIRPLANE, CAR_PARK, CAR_PICKUP,
-    COACH;
+    CAR_DROPOFF, COACH;
 
     private static HashMap <Set<TraverseMode>, Set<TraverseMode>> setMap = 
             new HashMap <Set<TraverseMode>, Set<TraverseMode>>();

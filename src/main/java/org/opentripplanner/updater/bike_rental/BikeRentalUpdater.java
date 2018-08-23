@@ -82,6 +82,7 @@ public class BikeRentalUpdater extends PollingGraphUpdater {
         String sourceType = config.path("sourceType").asText();
         String apiKey = config.path("apiKey").asText();
         String networkName = config.path("network").asText();
+        Boolean containsFloatingBikes = config.path("containsFloatingBikes").asBoolean(false);
         BikeRentalDataSource source = null;
         if (sourceType != null) {
             if (sourceType.equals("jcdecaux")) {
@@ -113,7 +114,7 @@ public class BikeRentalUpdater extends PollingGraphUpdater {
             } else if (sourceType.equals("uip-bike")) {
                 source = new UIPBikeRentalDataSource(apiKey, networkName);
             } else if (sourceType.equals("gbfs")) {
-                source = new GbfsBikeRentalDataSource();
+                source = new GbfsBikeRentalDataSource(containsFloatingBikes, networkName);
             }
         }
 

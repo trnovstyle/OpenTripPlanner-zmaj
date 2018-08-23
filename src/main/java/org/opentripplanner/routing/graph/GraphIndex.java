@@ -93,6 +93,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
@@ -538,7 +539,7 @@ public class GraphIndex {
             return stop.getId().getAgencyId() + ";" + stop.getId().getId() + ";" + pattern.code;
         }
 
-        public List<TripTimeShort> getStoptimes(GraphIndex index, long startTime, int timeRange, int numberOfDepartures, boolean omitNonPickups) {
+        public Set<TripTimeShort> getStoptimes(GraphIndex index, long startTime, int timeRange, int numberOfDepartures, boolean omitNonPickups) {
             return index.stopTimesForPattern(stop, pattern, startTime, timeRange, numberOfDepartures, omitNonPickups);
         }
 
@@ -743,11 +744,15 @@ public class GraphIndex {
      * the next departures. The queue is shared between all dates, as services from the previous
      * service date can visit the stop later than the current service date's services. This happens
      * eg. with sleeper trains.
+     * <p>
+     * If the stop is visited more than once (a loop in the pattern), then
+     * trip times are collected for all visits. The {@code numberOfDepartures} is
+     * applied to each stop visit, not the total.
      *
      * @param stop Stop object to perform the search for
      * @param startTime Start time for the search. Seconds from UNIX epoch
      * @param timeRange Searches forward for timeRange seconds from startTime
-     * @param numberOfDepartures Number of departures to fetch per pattern
+     * @param numberOfDepartures Number of departures to fetch per stop visit in pattern
      * @param omitNonPickups If true, do not include vehicles that will not pick up passengers.
      * @return
      */
@@ -758,7 +763,7 @@ public class GraphIndex {
 
         for (final TripPattern pattern : getPatternsForStop(stop, true)) {
 
-            final List<TripTimeShort> stopTimesForStop = stopTimesForPattern(stop, pattern, startTime, timeRange, numberOfDepartures, omitNonPickups);
+            final Set<TripTimeShort> stopTimesForStop = stopTimesForPattern(stop, pattern, startTime, timeRange, numberOfDepartures, omitNonPickups);
 
 
             if (stopTimesForStop.size() >0) {
@@ -786,6 +791,10 @@ public class GraphIndex {
      * all dates, as services from the previous service date can visit the stop
      * later than the current service date's services. This happens eg. with
      * sleeper trains.
+     * <p>
+     * If the stop is visited more than once (a loop in the pattern), then
+     * trip times are collected for all visits. The {@code numberOfDepartures} is
+     * applied to each stop visit, not the total.
      *
      * @param stop
      *            Stop object to perform the search for
@@ -796,22 +805,23 @@ public class GraphIndex {
      * @param timeRange
      *            Searches forward for timeRange seconds from startTime
      * @param numberOfDepartures
-     *            Number of departures to fetch per pattern
+     *            Number of departures to fetch per stop visits in pattern
      * @param omitNonPickups If true, do not include vehicles that will not pick up passengers.
-     * @return
+     *
+     * @return a sorted set of trip times, sorted on depature time.
      */
-    public List<TripTimeShort> stopTimesForPattern(final Stop stop, final TripPattern pattern, long startTime, final int timeRange, int numberOfDepartures, boolean omitNonPickups) {
-
+    public Set<TripTimeShort> stopTimesForPattern(final Stop stop, final TripPattern pattern, long startTime, final int timeRange, int numberOfDepartures, boolean omitNonPickups) {
         if (pattern == null) {
-            return Collections.emptyList();
+            return Collections.emptySet();
         }
 
         if (startTime == 0) {
             startTime = System.currentTimeMillis() / 1000;
         }
 
-        final PriorityQueue<TripTimeShort> ret = new PriorityQueue<TripTimeShort>(numberOfDepartures) {
+        final Set<TripTimeShort> result = new TreeSet<>(TripTimeShort.compareByDeparture());
 
+        final PriorityQueue<TripTimeShort> tripTimesQueue = new PriorityQueue<TripTimeShort>(numberOfDepartures) {
             @Override
             protected boolean lessThan(final TripTimeShort t1, final TripTimeShort t2) {
                 return (t1.serviceDay + t1.realtimeDeparture) > (t2.serviceDay
@@ -869,7 +879,7 @@ public class GraphIndex {
                             continue;
                         int stopDepartureTime = triptimes.getDepartureTime(stopIndex);
                         if (stopDepartureTime != -1 && stopDepartureTime >= starttimeSecondsSinceMidnight && stopDepartureTime < starttimeSecondsSinceMidnight + timeRange) {
-                            ret.insertWithOverflow(new TripTimeShort(triptimes, stopIndex, currStop, sd));
+                            tripTimesQueue.insertWithOverflow(new TripTimeShort(triptimes, stopIndex, currStop, sd));
                         }
                     }
 
@@ -883,26 +893,21 @@ public class GraphIndex {
                         final int lastDeparture = freq.endTime + freq.tripTimes.getArrivalTime(stopIndex)
                                 - freq.tripTimes.getDepartureTime(0);
 
-                        while (departureTime <= lastDeparture && ret.size() < numberOfDepartures) {
-                            ret.insertWithOverflow(new TripTimeShort(freq.materialize(stopIndex, departureTime, true),
+                        while (departureTime <= lastDeparture && tripTimesQueue.size() < numberOfDepartures) {
+                            tripTimesQueue.insertWithOverflow(new TripTimeShort(freq.materialize(stopIndex, departureTime, true),
                                     stopIndex, currStop, sd));
                             departureTime += freq.headway;
                         }
                     }
+                    while(tripTimesQueue.size()>0) {
+                        result.add(tripTimesQueue.pop());
+                    }
+                    tripTimesQueue.clear();
                 }
 
                 stopIndex++;
             }
         }
-
-        final List<TripTimeShort> result = new ArrayList<>();
-        while(ret.size()>0) {
-            TripTimeShort tripTimeShort = ret.pop();
-            if (!result.contains(tripTimeShort)) {
-                result.add(0, tripTimeShort);
-            }
-        }
-
         return result;
     }
 

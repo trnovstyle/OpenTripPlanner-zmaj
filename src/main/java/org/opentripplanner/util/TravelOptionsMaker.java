@@ -82,7 +82,7 @@ public final class TravelOptionsMaker {
                 travelOptions.add(new TravelOption(String.join(",", "BICYCLE_PARK", TraverseMode.WALK.toString(), TraverseMode.TRANSIT.toString()),
                     "BIKERIDE"));
             }
-            travelOptions.add(new TravelOption(String.join(",", TraverseMode.CAR.toString(), TraverseMode.WALK.toString(), TraverseMode.TRANSIT.toString()),
+            travelOptions.add(new TravelOption(String.join(",", "CAR_DROPOFF", TraverseMode.WALK.toString(), TraverseMode.TRANSIT.toString()),
                 "KISSRIDE"));
             travelOptions.add(new TravelOption(String.join(",", "CAR_PICKUP", TraverseMode.WALK.toString(), TraverseMode.TRANSIT.toString()),
                 "RIDEKISS"));
