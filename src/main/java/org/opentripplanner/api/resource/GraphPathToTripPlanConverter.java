@@ -116,6 +116,16 @@ public abstract class GraphPathToTripPlanConverter {
                 firstLeg.from.orig = plan.from.orig;
                 Leg lastLeg = i.legs.get(i.legs.size() - 1);
                 lastLeg.to.orig = plan.to.orig;
+                if (!i.startTime.equals(firstLeg.startTime)) {
+                    i.startTime = firstLeg.startTime;
+                    LOG.info("Start time of itinerary did not correspond to first leg start time. This is likely because " +
+                            "compactLegsByReversedSearch has failed.");
+                }
+                if (!i.endTime.equals(lastLeg.endTime)) {
+                    i.endTime = lastLeg.endTime;
+                    LOG.info("End time of itinerary did not correspond to last leg end time. This is likely because " +
+                            "compactLegsByReversedSearch has failed.");
+                }
             }
         }
         request.rctx.debugOutput.finishedRendering();
