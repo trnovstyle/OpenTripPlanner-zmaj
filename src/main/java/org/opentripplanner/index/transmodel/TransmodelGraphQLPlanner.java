@@ -20,8 +20,13 @@ import org.opentripplanner.model.TransmodelTransportSubmode;
 import org.opentripplanner.routing.core.OptimizeType;
 import org.opentripplanner.routing.core.RoutingRequest;
 import org.opentripplanner.routing.core.TraverseMode;
+import org.opentripplanner.routing.edgetype.StationStopEdge;
+import org.opentripplanner.routing.graph.GraphIndex;
+import org.opentripplanner.routing.graph.Vertex;
 import org.opentripplanner.routing.impl.GraphPathFinder;
 import org.opentripplanner.routing.spt.GraphPath;
+import org.opentripplanner.routing.vertextype.TransitStation;
+import org.opentripplanner.routing.vertextype.TransitStop;
 import org.opentripplanner.standalone.Router;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -270,7 +275,29 @@ public class TransmodelGraphQLPlanner {
 
         callWith.argument("ignoreRealtimeUpdates", (Boolean v) -> request.ignoreRealtimeUpdates = v);
         callWith.argument("includePlannedCancellations", (Boolean v) -> request.includePlannedCancellations = v);
+
+        if (!request.modes.isTransit() && request.modes.getCar()) {
+            request.from.vertexId = getLocationOfFirstQuay(request.from.vertexId, ((Router)environment.getContext()).graph.index);
+            request.to.vertexId = getLocationOfFirstQuay(request.to.vertexId, ((Router)environment.getContext()).graph.index);
+        } else if (request.kissAndRide) {
+            request.from.vertexId = getLocationOfFirstQuay(request.from.vertexId, ((Router)environment.getContext()).graph.index);
+        } else if (request.rideAndKiss) {
+            request.to.vertexId = getLocationOfFirstQuay(request.to.vertexId, ((Router)environment.getContext()).graph.index);
+        } else if (request.parkAndRide) {
+            request.from.vertexId = getLocationOfFirstQuay(request.from.vertexId, ((Router)environment.getContext()).graph.index);
+        }
+
         return request;
+    }
+
+    private String getLocationOfFirstQuay(String vertexId, GraphIndex graphIndex) {
+        Vertex vertex = graphIndex.vertexForId.get(vertexId);
+        if (vertex instanceof TransitStation) {
+            return ((TransitStop)vertex.getOutgoing().stream()
+                    .filter(t -> t instanceof StationStopEdge).findFirst().get().getToVertex()).getStopId().toString();
+        } else {
+            return vertexId;
+        }
     }
 
     public static boolean hasArgument(DataFetchingEnvironment environment, String name) {
