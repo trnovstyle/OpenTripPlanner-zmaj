@@ -361,33 +361,34 @@ public class DefaultWayPropertySetSource implements WayPropertySetSource {
         /*
          * Automobile speeds in the United States: Based on my (mattwigway) personal experience, primarily in California
          */
-        props.setCarSpeed("highway=motorway", 29); // 29 m/s ~= 65 mph
-        props.setCarSpeed("highway=motorway_link", 15); // ~= 35 mph
-        props.setCarSpeed("highway=trunk", 24.6f); // ~= 55 mph
-        props.setCarSpeed("highway=trunk_link", 15); // ~= 35 mph
-        props.setCarSpeed("highway=primary", 20); // ~= 45 mph
-        props.setCarSpeed("highway=primary_link", 11.2f); // ~= 25 mph
-        props.setCarSpeed("highway=secondary", 15); // ~= 35 mph
-        props.setCarSpeed("highway=secondary_link", 11.2f); // ~= 25 mph
-        props.setCarSpeed("highway=tertiary", 11.2f); // ~= 25 mph
-        props.setCarSpeed("highway=tertiary_link", 11.2f); // ~= 25 mph
-        props.setCarSpeed("highway=living_street", 2.2f); // ~= 5 mph
+        // Commented out in order to not interfere with NorwayWayPropertySetSource
+        //props.setCarSpeed("highway=motorway", 29); // 29 m/s ~= 65 mph
+        //props.setCarSpeed("highway=motorway_link", 15); // ~= 35 mph
+        //props.setCarSpeed("highway=trunk", 24.6f); // ~= 55 mph
+        //props.setCarSpeed("highway=trunk_link", 15); // ~= 35 mph
+        //props.setCarSpeed("highway=primary", 20); // ~= 45 mph
+        //props.setCarSpeed("highway=primary_link", 11.2f); // ~= 25 mph
+        //props.setCarSpeed("highway=secondary", 15); // ~= 35 mph
+        //props.setCarSpeed("highway=secondary_link", 11.2f); // ~= 25 mph
+        //props.setCarSpeed("highway=tertiary", 11.2f); // ~= 25 mph
+        //props.setCarSpeed("highway=tertiary_link", 11.2f); // ~= 25 mph
+        //props.setCarSpeed("highway=living_street", 2.2f); // ~= 5 mph
 
         // generally, these will not allow cars at all, but the docs say
         // "For roads used mainly/exclusively for pedestrians . . . which may allow access by
         // motorised vehicles only for very limited periods of the day."
         // http://wiki.openstreetmap.org/wiki/Key:highway
         // This of course makes the street network time-dependent
-        props.setCarSpeed("highway=pedestrian", 2.2f); // ~= 5 mph
+        //props.setCarSpeed("highway=pedestrian", 2.2f); // ~= 5 mph
 
-        props.setCarSpeed("highway=residential", 11.2f); // ~= 25 mph
-        props.setCarSpeed("highway=unclassified", 11.2f); // ~= 25 mph
-        props.setCarSpeed("highway=service", 6.7f); // ~= 15 mph
-        props.setCarSpeed("highway=track", 4.5f); // ~= 10 mph
-        props.setCarSpeed("highway=road", 11.2f); // ~= 25 mph
+        //props.setCarSpeed("highway=residential", 11.2f); // ~= 25 mph
+        //props.setCarSpeed("highway=unclassified", 11.2f); // ~= 25 mph
+        //props.setCarSpeed("highway=service", 6.7f); // ~= 15 mph
+        //props.setCarSpeed("highway=track", 4.5f); // ~= 10 mph
+        //props.setCarSpeed("highway=road", 11.2f); // ~= 25 mph
 
         // default ~= 25 mph
-        props.defaultSpeed = 11.2f;
+        //props.defaultSpeed = 11.2f;
 
         /*** special situations ****/
 
