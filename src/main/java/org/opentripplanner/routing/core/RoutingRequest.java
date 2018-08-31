@@ -108,6 +108,11 @@ public class RoutingRequest implements Cloneable, Serializable {
     public double maxTransferWalkDistance = Double.MAX_VALUE;
 
     /**
+     * The maximum distance (in meters) the user is willing to walk for access/egress legs.
+     */
+    public double maxPreTransitWalkDistance = Double.MAX_VALUE;
+
+    /**
      * The maximum time (in seconds) of pre-transit travel when using drive-to-transit (park and
      * ride or kiss and ride). By default limited to 30 minutes driving, because if it's unlimited on
      * large graphs the search becomes very slow.
@@ -454,7 +459,7 @@ public class RoutingRequest implements Cloneable, Serializable {
 
     public boolean walkingBike;
 
-    public boolean softWalkLimiting = true;
+    public boolean softWalkLimiting = false;
     public boolean softPreTransitLimiting = false;
 
     public double softWalkPenalty = 60.0; // a jump in cost when stepping over the walking limit
@@ -999,6 +1004,7 @@ public class RoutingRequest implements Cloneable, Serializable {
                 && optimize.equals(other.optimize)
                 && maxWalkDistance == other.maxWalkDistance
                 && maxTransferWalkDistance == other.maxTransferWalkDistance
+                && maxPreTransitWalkDistance == other.maxPreTransitWalkDistance
                 && maxPreTransitTime == other.maxPreTransitTime
                 && preTransitReluctance == other.preTransitReluctance
                 && transferPenalty == other.transferPenalty
@@ -1057,6 +1063,7 @@ public class RoutingRequest implements Cloneable, Serializable {
                 + (arriveBy ? 8966786 : 0) + (wheelchairAccessible ? 731980 : 0)
                 + optimize.hashCode() + new Double(maxWalkDistance).hashCode()
                 + new Double(maxTransferWalkDistance).hashCode()
+                + new Double(maxPreTransitWalkDistance).hashCode()
                 + new Double(transferPenalty).hashCode() + new Double(maxSlope).hashCode()
                 + new Double(walkReluctance).hashCode() + new Double(waitReluctance).hashCode()
                 + new Double(walkOnStreetReluctance).hashCode()
@@ -1197,6 +1204,12 @@ public class RoutingRequest implements Cloneable, Serializable {
         if (maxPreTransitTime > 0) {
             this.maxPreTransitTime = maxPreTransitTime;
             bikeWalkingOptions.maxPreTransitTime = maxPreTransitTime;
+        }
+    }
+
+    public void setMaxPreTransitWalkDistance(double maxPreTransitWalkDistance) {
+        if (maxPreTransitWalkDistance > 0) {
+            this.maxPreTransitWalkDistance = maxPreTransitWalkDistance;
         }
     }
 

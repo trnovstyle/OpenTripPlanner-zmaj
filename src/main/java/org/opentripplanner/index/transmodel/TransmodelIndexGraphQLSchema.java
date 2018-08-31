@@ -946,6 +946,12 @@ public class TransmodelIndexGraphQLSchema {
                         .type(Scalars.GraphQLFloat)
                         .defaultValue(defaultRoutingRequest.preTransitReluctance)
                         .build())
+                .argument(GraphQLArgument.newArgument()
+                        .name("maxPreTransitWalkDistance")
+                        .description("Max walk distance for access/egress legs.")
+                        .type(Scalars.GraphQLFloat)
+                        .defaultValue(defaultRoutingRequest.maxPreTransitWalkDistance)
+                        .build())
                 .dataFetcher(environment -> new TransmodelGraphQLPlanner(mappingUtil).plan(environment)
                 )
                 .build();
