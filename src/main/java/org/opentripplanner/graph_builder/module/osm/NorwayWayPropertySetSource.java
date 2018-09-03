@@ -50,6 +50,7 @@ public class NorwayWayPropertySetSource implements WayPropertySetSource {
          * Automobile speeds in Norway. General speed limit is 80kph unless signs says otherwise
          * 
          */
+        /*
         props.setCarSpeed("highway=motorway", 22.22f); // 80 km/t
         props.setCarSpeed("highway=motorway_link", 22.22f); // 80 km/t
         props.setCarSpeed("highway=trunk", 22.22f); // 80 km/t
@@ -69,6 +70,7 @@ public class NorwayWayPropertySetSource implements WayPropertySetSource {
         props.setCarSpeed("highway=service", 13.89f); // 50 km/t
         props.setCarSpeed("highway=track", 22.22f); // 30 km/t
         props.setCarSpeed("highway=road", 13.89f); // 50 km/t
+        */
 
         props.defaultSpeed = 22.22f; // 80
 		
