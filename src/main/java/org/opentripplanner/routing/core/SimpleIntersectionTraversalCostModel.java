@@ -38,7 +38,7 @@ public class SimpleIntersectionTraversalCostModel extends AbstractIntersectionTr
     private Double expectedRightNoLightTimeSec = 8.0;
 
     /** Expected time it takes to continue straight without a stop light. */
-    private Double expectedStraightNoLightTimeSec = 5.0;
+    private Double expectedStraightNoLightTimeSec = 0.0;
 
     /** Expected time it takes to turn left without a stop light. */
     private Double expectedLeftNoLightTimeSec = 8.0;
