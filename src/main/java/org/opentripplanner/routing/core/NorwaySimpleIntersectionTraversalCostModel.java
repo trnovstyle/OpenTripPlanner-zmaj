@@ -13,12 +13,12 @@
 
 package org.opentripplanner.routing.core;
 
-import java.io.Serializable;
-
 import org.opentripplanner.routing.edgetype.StreetEdge;
 import org.opentripplanner.routing.vertextype.IntersectionVertex;
 
-public class SimpleIntersectionTraversalCostModel extends AbstractIntersectionTraversalCostModel implements Serializable {
+import java.io.Serializable;
+
+public class NorwaySimpleIntersectionTraversalCostModel extends AbstractIntersectionTraversalCostModel implements Serializable {
 
     // Model parameters are here. //
     // Constants for when there is a traffic light.
@@ -38,7 +38,7 @@ public class SimpleIntersectionTraversalCostModel extends AbstractIntersectionTr
     private Double expectedRightNoLightTimeSec = 8.0;
 
     /** Expected time it takes to continue straight without a stop light. */
-    private Double expectedStraightNoLightTimeSec = 5.0;
+    private Double expectedStraightNoLightTimeSec = 0.0;
 
     /** Expected time it takes to turn left without a stop light. */
     private Double expectedLeftNoLightTimeSec = 8.0;
