@@ -50,12 +50,24 @@ public class NorwayWayPropertySetSource implements WayPropertySetSource {
         props.setProperties("smoothness=very_bad", StreetTraversalPermission.NONE);
         props.setProperties("smoothness=bad", StreetTraversalPermission.NONE);
         props.setProperties("smoothness=rough", StreetTraversalPermission.NONE);
-        props.setProperties("smoothness=intermediate", StreetTraversalPermission.NONE);
+
         props.setProperties("trail_visibility=bad", StreetTraversalPermission.NONE);
         props.setProperties("trail_visibility=no", StreetTraversalPermission.NONE);
         props.setProperties("trail_visibility=low", StreetTraversalPermission.NONE);
         props.setProperties("trail_visibility=poor", StreetTraversalPermission.NONE);
         props.setProperties("trail_visibility=poor", StreetTraversalPermission.NONE);
+
+        props.setProperties("sac_scale=mountain_hiking", StreetTraversalPermission.NONE);
+        props.setProperties("sac_scale=demanding_mountain_hiking", StreetTraversalPermission.NONE);
+        props.setProperties("sac_scale=alpine_hiking", StreetTraversalPermission.NONE);
+        props.setProperties("sac_scale=demanding_alpine_hiking", StreetTraversalPermission.NONE);
+        props.setProperties("sac_scale=difficult_alpine_hiking", StreetTraversalPermission.NONE);
+
+        props.setProperties("mtb:scale=2", StreetTraversalPermission.NONE);
+        props.setProperties("mtb:scale=3", StreetTraversalPermission.NONE);
+        props.setProperties("mtb:scale=4", StreetTraversalPermission.NONE);
+        props.setProperties("mtb:scale=5", StreetTraversalPermission.NONE);
+        props.setProperties("mtb:scale=6", StreetTraversalPermission.NONE);
 
         // Allow bikes on sidewalks
         props.setProperties("footway=sidewalk;highway=footway", StreetTraversalPermission.PEDESTRIAN_AND_BICYCLE);
