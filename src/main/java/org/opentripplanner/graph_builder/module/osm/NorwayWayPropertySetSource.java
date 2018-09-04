@@ -43,6 +43,20 @@ public class NorwayWayPropertySetSource implements WayPropertySetSource {
         // Do not walk on "Motortrafikkvei" ("motorvei klasse b")
         props.setProperties("motorroad=yes", StreetTraversalPermission.CAR, 7.47, 7.47);
 
+        // Disallow paths that are not fit for walking
+        props.setProperties("smoothness=horrible", StreetTraversalPermission.NONE);
+        props.setProperties("smoothness=impassable", StreetTraversalPermission.NONE);
+        props.setProperties("smoothness=very_horrible", StreetTraversalPermission.NONE);
+        props.setProperties("smoothness=very_bad", StreetTraversalPermission.NONE);
+        props.setProperties("smoothness=bad", StreetTraversalPermission.NONE);
+        props.setProperties("smoothness=rough", StreetTraversalPermission.NONE);
+        props.setProperties("smoothness=intermediate", StreetTraversalPermission.NONE);
+        props.setProperties("trail_visibility=bad", StreetTraversalPermission.NONE);
+        props.setProperties("trail_visibility=no", StreetTraversalPermission.NONE);
+        props.setProperties("trail_visibility=low", StreetTraversalPermission.NONE);
+        props.setProperties("trail_visibility=poor", StreetTraversalPermission.NONE);
+        props.setProperties("trail_visibility=poor", StreetTraversalPermission.NONE);
+
         // Allow bikes on sidewalks
         props.setProperties("footway=sidewalk;highway=footway", StreetTraversalPermission.PEDESTRIAN_AND_BICYCLE);
 
