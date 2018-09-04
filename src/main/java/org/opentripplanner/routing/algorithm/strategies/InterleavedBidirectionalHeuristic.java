@@ -15,6 +15,7 @@ package org.opentripplanner.routing.algorithm.strategies;
 
 import gnu.trove.map.TObjectDoubleMap;
 import gnu.trove.map.hash.TObjectDoubleHashMap;
+import org.opentripplanner.common.geometry.PackedCoordinateSequence;
 import org.opentripplanner.common.pqueue.BinHeap;
 import org.opentripplanner.routing.core.RoutingRequest;
 import org.opentripplanner.routing.core.State;
@@ -281,8 +282,10 @@ public class InterleavedBidirectionalHeuristic implements RemainingWeightHeurist
     private TObjectDoubleMap<Vertex> streetSearch (RoutingRequest rr, boolean fromTarget, long abortTime) {
         LOG.debug("Heuristic street search around the {}.", fromTarget ? "target" : "origin");
         rr = rr.clone();
-        //rr.maxWalkDistance = rr.maxPreTransitWalkDistance;
-        //rr.softWalkLimiting = false;
+        if (rr.maxPreTransitWalkDistance != Double.MAX_VALUE) {
+            rr.maxWalkDistance = rr.maxPreTransitWalkDistance;
+            rr.softWalkLimiting = false;
+        }
         if (fromTarget) {
             rr.setArriveBy(!rr.arriveBy);
         }
@@ -316,13 +319,15 @@ public class InterleavedBidirectionalHeuristic implements RemainingWeightHeurist
                         maxWeightSeen = weight;
                     }
                 }
-                if (!stopReached) {
-                    stopReached = true;
-                    rr.softWalkLimiting = false;
-                    rr.softPreTransitLimiting = false;
-                    if (s.walkDistance > rr.maxWalkDistance) {
-                        // Add 300 meters in order to search for nearby stops
-                        rr.maxWalkDistance = s.walkDistance + 300;
+                if (rr.maxPreTransitWalkDistance == Double.MAX_VALUE) {
+                    if (!stopReached) {
+                        stopReached = true;
+                        rr.softWalkLimiting = false;
+                        rr.softPreTransitLimiting = false;
+                        if (s.walkDistance > rr.maxWalkDistance) {
+                            // Add 300 meters in order to search for nearby stops
+                            rr.maxWalkDistance = s.walkDistance + 300;
+                        }
                     }
                 }
                 if (!initialStop) continue;
