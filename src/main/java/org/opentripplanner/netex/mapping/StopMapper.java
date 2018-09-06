@@ -29,6 +29,8 @@ public class StopMapper {
 
     private TransportModeMapper transportModeMapper = new TransportModeMapper();
 
+    private AdjacentSitesMapper adjacentSitesMapper = new AdjacentSitesMapper();
+
     private String DEFAULT_TIMEZONE = "Europe/Oslo";
 
     public Collection<Stop> mapParentAndChildStops(Collection<StopPlace> stopPlaces, OtpTransitBuilder transitBuilder, NetexDao netexDao){
@@ -49,6 +51,8 @@ public class StopMapper {
         stop.setTransportSubmode(transportModeMapper.getTransportSubmode(currentStopPlace));
         stop.setTimezone(DEFAULT_TIMEZONE);
         stop.setWeight(mapInterchange(currentStopPlace));
+        stop.getAdjacentSites().addAll(adjacentSitesMapper.mapAdjacentSites(currentStopPlace.getAdjacentSites()));
+
         // Map coordinates
         if(currentStopPlace.getCentroid() != null){
             stop.setLat(currentStopPlace.getCentroid().getLocation().getLatitude().doubleValue());

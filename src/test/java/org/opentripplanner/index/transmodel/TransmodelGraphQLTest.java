@@ -167,4 +167,19 @@ public class TransmodelGraphQLTest extends GtfsTest {
         assertTrue(result.getErrors().isEmpty());
     }
 
+    /*
+    @Test
+    public void testStopWithAdjacentSites() {
+        String query = "{"
+                + "  stopPlace(id:\"FEED:A\") {"
+                + "    id"
+                + "    adjacentSites"
+                + "  }"
+                + "}";
+
+        HashMap<String, Object> result = graphIndex.getGraphQLExecutionResult(query, router, new HashMap<>(), null, 10000, 10000);
+        System.out.println(result);
+        Object stopObj = ((Map) result.get("data")).get("stopPlace");
+        assertNotNull(stopObj);
+    }*/
 }
