@@ -4,11 +4,16 @@ import graphql.ExecutionResult;
 import graphql.GraphQL;
 import graphql.execution.ExecutorServiceExecutionStrategy;
 import org.opentripplanner.GtfsTest;
+import org.opentripplanner.model.AgencyAndId;
+import org.opentripplanner.model.Stop;
 import org.opentripplanner.routing.core.RoutingRequest;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import static org.hamcrest.core.Is.is;
+import static org.junit.Assert.assertThat;
 
 public class TransmodelGraphQLTest extends GtfsTest {
 
@@ -167,19 +172,28 @@ public class TransmodelGraphQLTest extends GtfsTest {
         assertTrue(result.getErrors().isEmpty());
     }
 
-    /*
-    @Test
     public void testStopWithAdjacentSites() {
+        AgencyAndId id = new AgencyAndId("FEED", "V");
+        Stop stop = new Stop();
+        stop.getAdjacentSites().add("ANOTHER");
+        stop.setId(id);
+
+        router.graph.index.stationForId.put(id, stop);
+
         String query = "{"
-                + "  stopPlace(id:\"FEED:A\") {"
+                + "  stopPlace(id:\"FEED:V\") {"
                 + "    id"
                 + "    adjacentSites"
                 + "  }"
                 + "}";
 
         HashMap<String, Object> result = graphIndex.getGraphQLExecutionResult(query, router, new HashMap<>(), null, 10000, 10000);
-        System.out.println(result);
-        Object stopObj = ((Map) result.get("data")).get("stopPlace");
-        assertNotNull(stopObj);
-    }*/
+
+        Object stopObject = ((Map) result.get("data")).get("stopPlace");
+        assertNotNull(stopObject);
+        Map map = (Map) stopObject;
+        List actualAdjacentSites = (List) map.get("adjacentSites");
+        assertThat("Number of adjacent sites", actualAdjacentSites.size(), is(1));
+        assertThat("Value of first adjacent site", actualAdjacentSites.get(0), is("ANOTHER"));
+    }
 }
