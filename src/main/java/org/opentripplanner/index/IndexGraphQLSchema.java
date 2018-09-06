@@ -2441,7 +2441,8 @@ public class IndexGraphQLSchema {
                             filterByRoutes,
                             filterByBikeRentalStations,
                             filterByBikeParks,
-                            filterByCarParks
+                            filterByCarParks,
+                                false
                             )
                             .stream()
                             .collect(Collectors.toList());

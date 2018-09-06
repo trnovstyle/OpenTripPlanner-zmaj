@@ -410,7 +410,8 @@ public class GraphIndex {
             List<AgencyAndId> filterByRoutes,
             List<String> filterByBikeRentalStations,
             List<String> filterByBikeParks,
-            List<String> filterByCarParks) {
+            List<String> filterByCarParks,
+            boolean filterByInUse) {
         RoutingRequest rr = new RoutingRequest(TraverseMode.WALK);
         rr.allowBikeRental = true;
         //rr.bikeParkAndRide = true;
@@ -426,7 +427,9 @@ public class GraphIndex {
         rr.worstTime = (rr.dateTime + maxDistance);
         rr.setNumItineraries(1);
         //rr.arriveBy = true;
-        PlaceFinderTraverseVisitor visitor = new PlaceFinderTraverseVisitor(filterByModes, filterByPlaceTypes, filterByStops, filterByRoutes, filterByBikeRentalStations, filterByBikeParks, filterByCarParks);
+        PlaceFinderTraverseVisitor visitor = new PlaceFinderTraverseVisitor(filterByModes, filterByPlaceTypes, filterByStops,
+                                                                                   filterByRoutes, filterByBikeRentalStations,
+                                                                                   filterByBikeParks, filterByCarParks, filterByInUse);
         AStar astar = new AStar();
         astar.setTraverseVisitor(visitor);
         SearchTerminationStrategy strategy = new SearchTerminationStrategy() {
@@ -575,6 +578,7 @@ public class GraphIndex {
         private boolean includeBikeShares;
         private boolean includeBikeParks;
         private boolean includeCarParks;
+        private boolean filterByInUse;
 
         public PlaceFinderTraverseVisitor(
                 List<TraverseMode> filterByModes,
@@ -583,7 +587,8 @@ public class GraphIndex {
                 List<AgencyAndId> filterByRoutes,
                 List<String> filterByBikeRentalStations,
                 List<String> filterByBikeParks,
-                List<String> filterByCarParks) {
+                List<String> filterByCarParks,
+                boolean filterByInUse) {
             this.filterByModes = toSet(filterByModes);
             this.filterByPlaceTypes = toSet(filterByPlaceTypes);
             this.filterByStops = toSet(filterByStops);
@@ -591,6 +596,7 @@ public class GraphIndex {
             this.filterByBikeRentalStation = toSet(filterByBikeRentalStations);
             this.filterByBikeParks = toSet(filterByBikeParks);
             this.filterByCarParks = toSet(filterByCarParks);
+            this.filterByInUse = filterByInUse;
 
             includeStops = filterByPlaceTypes == null || filterByPlaceTypes.contains(PlaceType.STOP);
             includeDepartureRows = filterByPlaceTypes == null || filterByPlaceTypes.contains(PlaceType.DEPARTURE_ROW);
@@ -643,9 +649,15 @@ public class GraphIndex {
         private void handleStop(Stop stop, int distance) {
             if (filterByStops != null && !filterByStops.contains(stop.getId())) return;
             if (includeStops && !seenStops.contains(stop.getId()) && (filterByModes == null || stopHasRoutesWithMode(stop, filterByModes))) {
+
+                if (filterByInUse && getPatternsForStop(stop, true).isEmpty()) {
+                    // Stop is not in use
+                    return;
+                }
                 placesFound.add(new PlaceAndDistance(stop, distance));
                 seenStops.add(stop.getId());
             }
+
         }
 
         private void handleDepartureRows(Stop stop, int distance) {
@@ -981,9 +993,9 @@ public class GraphIndex {
     }
 
     /**
-     * Stop clusters can be built in one of two ways, either by geographical proximity, or 
+     * Stop clusters can be built in one of two ways, either by geographical proximity, or
      * according to a parent/child station topology, if it exists.
-     * 
+     *
      * Some challenges faced by DC and Trimet:
      * FIXME OBA parentStation field is a string, not an AgencyAndId, so it has no agency/feed scope
      * But the DC regional graph has no parent stations pre-defined, so no use dealing with them for now.
@@ -1012,7 +1024,7 @@ public class GraphIndex {
         }
     }
 
-    private void clusterByProximity() {	
+    private void clusterByProximity() {
     	int psIdx = 0; // unique index for next parent stop
 	    LOG.info("Clustering stops by geographic proximity and name...");
 	    // Each stop without a cluster will greedily claim other stops without clusters.

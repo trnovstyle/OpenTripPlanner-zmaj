@@ -3,6 +3,7 @@ package org.opentripplanner.index.transmodel;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Envelope;
 import com.vividsolutions.jts.geom.LineString;
+import graphql.GraphQL;
 import graphql.Scalars;
 import graphql.relay.DefaultConnection;
 import graphql.relay.DefaultPageInfo;
@@ -2594,6 +2595,12 @@ public class TransmodelIndexGraphQLSchema {
                                                      " Does not affect mono modal stop places that do not belong to a multi modal stop place.")
                                 .defaultValue("parent")
                                 .build())
+                        .argument(GraphQLArgument.newArgument()
+                                .name("filterByInUse")
+                                .description("If true only stop places with at least one visiting line are included.")
+                                .type(Scalars.GraphQLBoolean)
+                                .defaultValue(Boolean.FALSE)
+                                .build())
                         .dataFetcher(environment -> { Stream<Stop> stops= index.graph.streetIndex
                                 .getTransitStopForEnvelope(new Envelope(new Coordinate(environment.getArgument("minimumLongitude"),
                                         environment.getArgument("minimumLatitude")),
@@ -2609,6 +2616,10 @@ public class TransmodelIndexGraphQLSchema {
                                 .distinct()
                                 .filter(stop -> environment.getArgument("authority") == null || stop.getId()
                                         .getAgencyId().equalsIgnoreCase(environment.getArgument("authority")));
+
+                                if (Boolean.TRUE.equals(environment.getArgument("filterByInUse"))){
+                                    stops = stops.filter(this::isStopPlaceInUse);
+                                }
 
                                 String multiModalMode=environment.getArgument("multiModalMode");
                                 if ("parent".equals(multiModalMode)){
@@ -2693,6 +2704,12 @@ public class TransmodelIndexGraphQLSchema {
                                 .name("authority")
                                 .type(Scalars.GraphQLString)
                                 .build())
+                        .argument(GraphQLArgument.newArgument()
+                                .name("filterByInUse")
+                                .description("If true only quays with at least one visiting line are included.")
+                                .type(Scalars.GraphQLBoolean)
+                                .defaultValue(Boolean.FALSE)
+                                .build())
                         .dataFetcher(environment -> index.graph.streetIndex
                                 .getTransitStopForEnvelope(new Envelope(
                                         new Coordinate(environment.getArgument("minimumLongitude"),
@@ -2703,6 +2720,8 @@ public class TransmodelIndexGraphQLSchema {
                                 .map(TransitVertex::getStop)
                                 .filter(stop -> environment.getArgument("authority") == null ||
                                         stop.getId().getAgencyId().equalsIgnoreCase(environment.getArgument("authority")))
+                                .filter(stop -> !Boolean.TRUE.equals(environment.getArgument("filterByInUse"))
+                                                        || !index.getPatternsForStop(stop,true).isEmpty())
                                 .collect(Collectors.toList()))
                         .build())
                 .field(GraphQLFieldDefinition.newFieldDefinition()
@@ -2792,6 +2811,12 @@ public class TransmodelIndexGraphQLSchema {
                                 .type(new GraphQLList(modeEnum))
                                 .build())
                         .argument(GraphQLArgument.newArgument()
+                                .name("filterByInUse")
+                                .description("Only affects queries for quays and stop places. If true only quays and stop places with at least one visiting line are included.")
+                                .type(Scalars.GraphQLBoolean)
+                                .defaultValue(Boolean.FALSE)
+                                .build())
+                        .argument(GraphQLArgument.newArgument()
                                 .name("filterByIds")
                                 .description("Only include places that match one of the given ids.")
                                 .type(filterInputType)
@@ -2844,7 +2869,8 @@ public class TransmodelIndexGraphQLSchema {
                                         filterByRoutes,
                                         filterByBikeRentalStations,
                                         filterByBikeParks,
-                                        filterByCarParks
+                                        filterByCarParks,
+                                        environment.getArgument("filterByInUse")
                                 );
                             } catch (VertexNotFoundException e) {
                                 places = Collections.emptyList();
@@ -4289,4 +4315,13 @@ public class TransmodelIndexGraphQLSchema {
         return Optional.of(index.stationForId.get(mappingUtil.fromIdString(parentId)));
     }
 
+
+    private boolean isStopPlaceInUse(Stop stop) {
+        for (Stop quay: index.stopsForParentStation.get(stop.getId())) {
+            if (!index.getPatternsForStop(quay,true).isEmpty()) {
+                return true;
+            }
+        }
+        return false;
+    }
 }
