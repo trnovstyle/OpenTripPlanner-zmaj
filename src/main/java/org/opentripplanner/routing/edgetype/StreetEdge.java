@@ -392,7 +392,7 @@ public class StreetEdge extends Edge implements Cloneable {
 
         if (isStairs()) {
             weight *= options.stairsReluctance;
-        } else {
+        } else if (traverseMode.equals(TraverseMode.WALK)) {
             // TODO: this is being applied even when biking or driving.
             weight *= options.walkReluctance;
         }
