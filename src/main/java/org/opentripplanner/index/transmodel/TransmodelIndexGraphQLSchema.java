@@ -1296,7 +1296,19 @@ public class TransmodelIndexGraphQLSchema {
                         .name("quays")
                         .description("Returns all quays that are children of this stop place")
                         .type(new GraphQLList(quayType))
-                        .dataFetcher(environment -> index.stopsForParentStation.get(((Stop) environment.getSource()).getId()))
+                        .argument(GraphQLArgument.newArgument()
+                                .name("filterByInUse")
+                                .description("If true only quays with at least one visiting line are included.")
+                                .type(Scalars.GraphQLBoolean)
+                                .defaultValue(Boolean.FALSE)
+                                .build())
+                        .dataFetcher(environment -> {
+                            Collection<Stop> quays = index.stopsForParentStation.get(((Stop) environment.getSource()).getId());
+                            if (Boolean.TRUE.equals(environment.getArgument("filterByInUse"))) {
+                                quays=quays.stream().filter(stop ->  !index.getPatternsForStop(stop,true).isEmpty()).collect(Collectors.toList());
+                            }
+                            return quays;
+                        })
                         .build())
                 .field(GraphQLFieldDefinition.newFieldDefinition()
                         .name("parent")
