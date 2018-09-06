@@ -24,6 +24,7 @@ import org.opentripplanner.routing.algorithm.strategies.RemainingWeightHeuristic
 import org.opentripplanner.routing.algorithm.strategies.TrivialRemainingWeightHeuristic;
 import org.opentripplanner.routing.core.RoutingRequest;
 import org.opentripplanner.routing.core.State;
+import org.opentripplanner.routing.core.TraverseMode;
 import org.opentripplanner.routing.edgetype.LegSwitchingEdge;
 import org.opentripplanner.routing.edgetype.TransitBoardAlight;
 import org.opentripplanner.routing.error.PathNotFoundException;
@@ -144,6 +145,9 @@ public class GraphPathFinder {
                 timeoutIndex = router.timeouts.length - 1;
             }
             double timeout = searchBeginTime + (router.timeouts[timeoutIndex] * 1000);
+            if (timeoutIndex == 0 && (originalReq.modes.contains(TraverseMode.CAR_PICKUP) || originalReq.modes.contains(TraverseMode.CAR_DROPOFF))) {
+                timeout += 10000; // Add 10 seconds to timeout for car pickup and car dropoff
+            }
             timeout -= System.currentTimeMillis(); // Convert from absolute to relative time
             timeout /= 1000; // Convert milliseconds to seconds
             if (timeout <= 0) {
