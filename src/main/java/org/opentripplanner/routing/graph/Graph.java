@@ -123,7 +123,7 @@ public class Graph implements Serializable, AddBuilderAnnotation {
 
     private transient CalendarService calendarService;
 
-    private boolean debugData = true;
+    private boolean debugData = false;
 
     // TODO this would be more efficient if it was just an array.
     private transient Map<Integer, Vertex> vertexById;
