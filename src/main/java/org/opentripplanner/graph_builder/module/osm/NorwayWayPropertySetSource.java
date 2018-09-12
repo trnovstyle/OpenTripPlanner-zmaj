@@ -43,6 +43,10 @@ public class NorwayWayPropertySetSource implements WayPropertySetSource {
         // Do not walk on "Motortrafikkvei" ("motorvei klasse b")
         props.setProperties("motorroad=yes", StreetTraversalPermission.CAR, 7.47, 7.47);
 
+        // Do not drive on cycleWays
+        props.setProperties("highway=cycleway;bicycle=designated",
+                StreetTraversalPermission.PEDESTRIAN_AND_BICYCLE, 0.97, 0.97);
+
         // Disallow paths that are not fit for walking
         props.setProperties("smoothness=horrible", StreetTraversalPermission.NONE);
         props.setProperties("smoothness=impassable", StreetTraversalPermission.NONE);

@@ -17,6 +17,7 @@ import org.junit.Test;
 import org.opentripplanner.openstreetmap.model.OSMWithTags;
 
 import junit.framework.TestCase;
+import org.opentripplanner.routing.core.TraverseMode;
 
 /**
  * Test the WayPropertySet 
@@ -66,6 +67,9 @@ public class TestWayPropertySet extends TestCase {
        OSMWithTags way;
        
        float epsilon = 0.01f;
+
+
+
        
        way = new OSMWithTags();
        way.addTag("maxspeed", "60");
@@ -129,5 +133,29 @@ public class TestWayPropertySet extends TestCase {
        way.addTag("maxspeed", "0");
        assertTrue(within(kmhAsMs(25), wps.getCarSpeedForWay(way, false), epsilon));
        assertTrue(within(kmhAsMs(25), wps.getCarSpeedForWay(way, true), epsilon));
+    }
+
+    @Test
+    public void testTraversalPermissionsNorway() {
+        WayPropertySet wps = new WayPropertySet();
+        WayPropertySetSource source = new NorwayWayPropertySetSource();
+        source.populateProperties(wps);
+
+        OSMWithTags way;
+
+        way = new OSMWithTags();
+        way.addTag("bicycle", "designated");
+        way.addTag("foot", "designated");
+        way.addTag("highway", "cycleway");
+        way.addTag("lcn", "yes");
+        way.addTag("name", "Ljabrubakken");
+        way.addTag("segregated", "no");
+        way.addTag("surface", "asphalt");
+
+        WayProperties wayProperties = wps.getDataForWay(way);
+
+        assertTrue(wayProperties.getPermission().allows(TraverseMode.WALK));
+        assertTrue(wayProperties.getPermission().allows(TraverseMode.BICYCLE));
+        assertFalse(wayProperties.getPermission().allows(TraverseMode.CAR));
     }
 }
