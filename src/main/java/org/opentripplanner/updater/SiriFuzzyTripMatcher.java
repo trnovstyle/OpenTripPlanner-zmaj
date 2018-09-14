@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 import uk.org.siri.siri20.EstimatedCall;
 import uk.org.siri.siri20.EstimatedVehicleJourney;
 import uk.org.siri.siri20.VehicleActivityStructure;
+import uk.org.siri.siri20.VehicleModesEnumeration;
 
 import java.time.ZonedDateTime;
 import java.util.*;
@@ -30,6 +31,7 @@ public class SiriFuzzyTripMatcher {
     private GraphIndex index;
 
     private static Map<String, Set<Trip>> mappedTripsCache = new HashMap<>();
+    private static Map<String, Set<Trip>> mappedVehicleRefCache = new HashMap<>();
     private static Map<String, Set<Route>> mappedRoutesCache = new HashMap<>();
     private static Map<String, Set<Trip>> start_stop_tripCache = new HashMap<>();
 
@@ -87,19 +89,20 @@ public class SiriFuzzyTripMatcher {
      */
     public Set<Trip> match(EstimatedVehicleJourney journey) {
         Set<Trip> trips = null;
-        if (journey.getVehicleRef() != null) {
-            trips = getCachedTripsBySiriId(journey.getVehicleRef().getValue());
+        if (journey.getVehicleRef() != null &&
+                (journey.getVehicleModes() != null && journey.getVehicleModes().contains(VehicleModesEnumeration.RAIL))) {
+            trips = getCachedTripsByVehicleRef(journey.getVehicleRef().getValue());
         }
 
         if (trips == null || trips.isEmpty()) {
-            String datedVehicleRef = null;
+            String serviceJourneyId = null;
             if (journey.getDatedVehicleJourneyRef() != null) {
-                datedVehicleRef = journey.getDatedVehicleJourneyRef().getValue();
+                serviceJourneyId = journey.getDatedVehicleJourneyRef().getValue();
             } else if (journey.getFramedVehicleJourneyRef() != null) {
-                datedVehicleRef = journey.getFramedVehicleJourneyRef().getDatedVehicleJourneyRef();
+                serviceJourneyId = journey.getFramedVehicleJourneyRef().getDatedVehicleJourneyRef();
             }
-            if (datedVehicleRef != null) {
-                trips = mappedTripsCache.get(datedVehicleRef);
+            if (serviceJourneyId != null) {
+                trips = getCachedTripsBySiriId(serviceJourneyId);
             }
         }
         if (trips == null || trips.isEmpty()) {
@@ -141,6 +144,11 @@ public class SiriFuzzyTripMatcher {
         return trips;
     }
 
+    private Set<Trip> getCachedTripsByVehicleRef(String vehicleRef) {
+        if (vehicleRef == null) {return null;}
+        return mappedVehicleRefCache.getOrDefault(vehicleRef, new HashSet<>());
+    }
+
     private Set<Trip> getCachedTripsBySiriId(String tripId) {
         if (tripId == null) {return null;}
         return mappedTripsCache.getOrDefault(tripId, new HashSet<>());
@@ -167,12 +175,12 @@ public class SiriFuzzyTripMatcher {
                 if (tripPattern != null && tripPattern.mode.equals(TraverseMode.RAIL)) {
                     if (trip.getTripShortName() != null) {
                         String tripShortName = trip.getTripShortName();
-                        if (mappedTripsCache.containsKey(tripShortName)) {
-                            mappedTripsCache.get(tripShortName).add(trip);
+                        if (mappedVehicleRefCache.containsKey(tripShortName)) {
+                            mappedVehicleRefCache.get(tripShortName).add(trip);
                         } else {
                             Set<Trip> initialSet = new HashSet<>();
                             initialSet.add(trip);
-                            mappedTripsCache.put(tripShortName, initialSet);
+                            mappedVehicleRefCache.put(tripShortName, initialSet);
                         }
                     }
                 }
@@ -206,6 +214,7 @@ public class SiriFuzzyTripMatcher {
             }
 
             LOG.info("Built route-cache [{}].", mappedRoutesCache.size());
+            LOG.info("Built vehicleRef-cache [{}].", mappedVehicleRefCache.size());
             LOG.info("Built trips-cache [{}].", mappedTripsCache.size());
             LOG.info("Built start-stop-cache [{}].", start_stop_tripCache.size());
         }
