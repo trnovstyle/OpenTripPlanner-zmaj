@@ -56,9 +56,9 @@ public abstract class Vertex implements Serializable, Cloneable {
 
     private final double y;
     
-    private transient Edge[] incoming = new Edge[0];
+    public transient Edge[] incoming = new Edge[0];
 
-    private transient Edge[] outgoing = new Edge[0];
+    public transient Edge[] outgoing = new Edge[0];
 
     
     /* CONSTRUCTORS */

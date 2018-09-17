@@ -1,6 +1,7 @@
 package org.opentripplanner.routing.core;
 
 import java.io.Serializable;
+import java.util.Objects;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -179,5 +180,21 @@ public class SpecificTransfer implements Serializable {
         }
         return match;
     }
-    
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        SpecificTransfer that = (SpecificTransfer) o;
+        return transferTime == that.transferTime &&
+                Objects.equals(fromRouteId, that.fromRouteId) &&
+                Objects.equals(toRouteId, that.toRouteId) &&
+                Objects.equals(fromTripId, that.fromTripId) &&
+                Objects.equals(toTripId, that.toTripId);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(fromRouteId, toRouteId, fromTripId, toTripId, transferTime);
+    }
 }

@@ -27,6 +27,7 @@ import org.opentripplanner.routing.graph.Graph;
 import org.opentripplanner.routing.services.GraphService;
 import org.opentripplanner.routing.vertextype.IntersectionVertex;
 import org.opentripplanner.routing.vertextype.StreetVertex;
+import org.opentripplanner.serializer.GraphSerializerService;
 
 import java.io.*;
 
@@ -43,6 +44,8 @@ public class GraphServiceTest extends TestCase {
 
     byte[] smallGraphData;
 
+    private final GraphSerializerService graphSerializerService = new GraphSerializerService();
+
     @Override
     protected void setUp() throws IOException {
         // Ensure a dummy disk location exists
@@ -53,7 +56,7 @@ public class GraphServiceTest extends TestCase {
         // Create an empty graph and it's serialized form
         emptyGraph = new Graph();
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        emptyGraph.save(new ObjectOutputStream(baos));
+        graphSerializerService.serialize(emptyGraph, baos);
         emptyGraphData = baos.toByteArray();
 
         // Create a small graph with 2 vertices and one edge and it's serialized form
@@ -62,7 +65,7 @@ public class GraphServiceTest extends TestCase {
         StreetVertex v2 = new IntersectionVertex(smallGraph, "v2", 0, 0.1);
         new StreetEdge(v1, v2, null, "v1v2", 11000, StreetTraversalPermission.PEDESTRIAN, false);
         baos = new ByteArrayOutputStream();
-        smallGraph.save(new ObjectOutputStream(baos));
+        graphSerializerService.serialize(smallGraph, baos);
         smallGraphData = baos.toByteArray();
     }
 
