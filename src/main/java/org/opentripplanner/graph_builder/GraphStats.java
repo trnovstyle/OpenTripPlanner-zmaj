@@ -33,7 +33,6 @@ import org.opentripplanner.routing.graph.Graph;
 import org.opentripplanner.routing.graph.Vertex;
 import org.opentripplanner.routing.vertextype.StreetVertex;
 import org.opentripplanner.routing.vertextype.TransitStop;
-import org.opentripplanner.serializer.GraphSerializerService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -78,8 +77,6 @@ public class GraphStats {
     private Graph graph;
     
     private CsvWriter writer;
-
-    private GraphSerializerService graphDeserializerService = new GraphSerializerService();
     
     public static void main(String[] args) {
         GraphStats graphStats = new GraphStats(args);
@@ -111,7 +108,7 @@ public class GraphStats {
         /* open input graph (same for all commands) */
         File graphFile = new File(graphPath);
         try {
-            graph = graphDeserializerService.load(graphFile, Graph.LoadLevel.FULL);
+            graph = Graph.load(graphFile, Graph.LoadLevel.FULL);
         } catch (Exception e) {
             LOG.error("Exception while loading graph from " + graphFile);
             return;
