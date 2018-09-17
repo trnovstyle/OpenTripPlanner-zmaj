@@ -69,6 +69,7 @@ public class GraphSerializerService {
     public void serialize(Graph graph, File file) {
         GraphWrapper graphWrapper = new GraphWrapper();
         graphWrapper.graph = graph;
+        graphWrapper.edges = new ArrayList<>(graph.getEdges());
         serialize(graphWrapper, file);
     }
 
