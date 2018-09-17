@@ -34,7 +34,6 @@ import org.opentripplanner.graph_builder.services.DefaultStreetEdgeFactory;
 import org.opentripplanner.openstreetmap.impl.AnyFileBasedOpenStreetMapProviderImpl;
 import org.opentripplanner.openstreetmap.services.OpenStreetMapProvider;
 import org.opentripplanner.routing.algorithm.AStar;
-import org.opentripplanner.routing.graph.Edge;
 import org.opentripplanner.routing.graph.Graph;
 import org.opentripplanner.routing.impl.DefaultStreetVertexIndexFactory;
 import org.opentripplanner.routing.services.notes.StaticStreetNotesSource;
@@ -42,14 +41,11 @@ import org.opentripplanner.routing.spt.GraphPath;
 import org.opentripplanner.routing.spt.ShortestPathTree;
 import org.opentripplanner.serializer.GraphSerializerService;
 import org.opentripplanner.serializer.GraphWrapper;
-import org.opentripplanner.standalone.GraphBuilderParameters;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-
-import static org.mockito.Mockito.mock;
 
 public class ProtoStuffTest extends TestCase {
 
@@ -108,8 +104,8 @@ public class ProtoStuffTest extends TestCase {
     }
 
 
-    @Test
     @Ignore
+    @Test
     public void testKryo() throws IOException, IllegalAccessException {
         testSerializeDeserialize(GraphSerializerService.KRYO);
     }
@@ -141,34 +137,6 @@ public class ProtoStuffTest extends TestCase {
         assertNotNull("Graph object itself must not be empty", graphWrapperFromProtostuff.graph);
 
         System.out.println("Number of edges: " + graphWrapperFromProtostuff.edges.size());
-
-        // This instantiates some of the edges
-        // It is related to how protostuff deserializes field instantiated arrays?
-        for (Edge e : graphWrapperFromProtostuff.edges) {
-
-            if (e.fromv.incoming == null) {
-                e.fromv.incoming = new Edge[0];
-            }
-            if (e.fromv.outgoing == null) {
-                e.fromv.outgoing = new Edge[0];
-            }
-
-            if (e.tov.incoming == null) {
-                e.tov.incoming = new Edge[0];
-            }
-
-            if (e.tov.outgoing == null) {
-                e.tov.outgoing = new Edge[0];
-            }
-
-
-            e.fromv.addOutgoing(e);
-            e.tov.addIncoming(e);
-
-            graphWrapperFromProtostuff.graph.vertices.put(e.getFromVertex().getLabel(), e.getFromVertex());
-            graphWrapperFromProtostuff.graph.vertices.put(e.getToVertex().getLabel(), e.getToVertex());
-        }
-
 
         graphWrapperFromProtostuff.graph.index(new DefaultStreetVertexIndexFactory());
 

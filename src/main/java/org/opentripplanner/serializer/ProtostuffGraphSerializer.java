@@ -2,6 +2,7 @@ package org.opentripplanner.serializer;
 
 import io.protostuff.*;
 import io.protostuff.runtime.RuntimeSchema;
+import org.opentripplanner.routing.graph.Edge;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,6 +42,33 @@ public class ProtostuffGraphSerializer implements GraphSerializer {
             GraphCodedInput graphInput = new GraphCodedInput(input);
             schema.mergeFrom(graphInput, graphWrapperFromProtostuff);
             input.checkLastTagWas(0);
+
+            // This instantiates some of the edges
+            // It is related to how protostuff deserializes field instantiated arrays?
+            for (Edge e : graphWrapperFromProtostuff.edges) {
+
+                if (e.fromv.incoming == null) {
+                    e.fromv.incoming = new Edge[0];
+                }
+                if (e.fromv.outgoing == null) {
+                    e.fromv.outgoing = new Edge[0];
+                }
+
+                if (e.tov.incoming == null) {
+                    e.tov.incoming = new Edge[0];
+                }
+
+                if (e.tov.outgoing == null) {
+                    e.tov.outgoing = new Edge[0];
+                }
+
+
+                e.fromv.addOutgoing(e);
+                e.tov.addIncoming(e);
+
+                graphWrapperFromProtostuff.graph.vertices.put(e.getFromVertex().getLabel(), e.getFromVertex());
+                graphWrapperFromProtostuff.graph.vertices.put(e.getToVertex().getLabel(), e.getToVertex());
+            }
 
             LOG.debug("Returning wrapped graph object after {} ms", System.currentTimeMillis() - started);
             return graphWrapperFromProtostuff;
