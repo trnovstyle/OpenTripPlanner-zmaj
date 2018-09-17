@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
@@ -153,7 +154,7 @@ public class GraphSerializerService {
             graphSerializer = new KryoGraphSerializer();
         } else {
             LOG.debug("Defaulting to java graph deserializer");
-            graphSerializer = new JavaGraphSerializer();
+            graphSerializer = new ProtostuffGraphSerializer(); //TODO temp
         }
         LOG.debug("Using the following deserializer for graph loading: {}", graphSerializer.getClass().getSimpleName());
         return graphSerializer;
