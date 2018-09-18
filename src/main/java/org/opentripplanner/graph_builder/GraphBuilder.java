@@ -104,7 +104,7 @@ public class GraphBuilder implements Runnable {
     public void setBaseGraph(String baseGraph, File dir) {
         this._baseGraph = baseGraph;
         try {
-            graph = graphSerializerService.load(new File(baseGraph), LoadLevel.FULL);
+            graph = graphSerializerService.load(new File(dir, baseGraph), LoadLevel.FULL);
         } catch (Exception e) {
             throw new RuntimeException("error loading base graph: ", e);
         }
