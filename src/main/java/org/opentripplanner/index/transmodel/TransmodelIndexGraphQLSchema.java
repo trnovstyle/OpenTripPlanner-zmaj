@@ -1955,11 +1955,13 @@ public class TransmodelIndexGraphQLSchema {
                 .field(GraphQLFieldDefinition.newFieldDefinition()
                         .name("estimatedCalls")
                         .type(new GraphQLList(estimatedCallType))
-                        .description("Returns scheduled passingTimes updated with realtime-updates (if available)")
+                        .description("Returns scheduled passingTimes for this ServiceJourney for a given date, updated with realtime-updates (if available). " +
+                                             "NB! This takes a date as argument (default=today) and returns estimatedCalls for that date and should only be used if the date is " +
+                                             "known when creating the request. For fetching estimatedCalls for a given trip.leg, use leg.serviceJourneyEstimatedCalls instead.")
                         .argument(GraphQLArgument.newArgument()
                                 .name("date")
                                 .type(dateScalar)
-                                .description("Date to get estimated calls for.")
+                                .description("Date to get estimated calls for. Defaults to today.")
                                 .defaultValue(null)
                                 .build())
                         .dataFetcher(environment -> {
