@@ -155,7 +155,7 @@ public class GraphSerializerService {
             graphSerializer = new KryoGraphSerializer();
         } else {
             LOG.debug("Defaulting to java graph deserializer");
-            graphSerializer = new ProtostuffGraphSerializer(); //TODO temp
+            graphSerializer = new JavaGraphSerializer();
         }
         LOG.debug("Using the following deserializer for graph loading: {}", graphSerializer.getClass().getSimpleName());
         return graphSerializer;
