@@ -22,6 +22,7 @@ import org.opentripplanner.routing.graph.Graph;
 import org.opentripplanner.routing.graph.Graph.LoadLevel;
 import org.opentripplanner.routing.services.GraphSource;
 import org.opentripplanner.routing.services.StreetVertexIndexFactory;
+import org.opentripplanner.serializer.GraphSerializerService;
 import org.opentripplanner.standalone.Router;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,6 +56,8 @@ public class InputStreamGraphSource implements GraphSource {
     private LoadLevel loadLevel;
 
     private Object preEvictMutex = new Boolean(false);
+
+    private GraphSerializerService graphDeserializerService = new GraphSerializerService();
 
     /**
      * The current used input stream implementation for getting graph data source.
@@ -206,7 +209,7 @@ public class InputStreamGraphSource implements GraphSource {
         try (InputStream is = streams.getGraphInputStream()) {
             LOG.info("Loading graph...");
             try {
-                newGraph = Graph.load(new ObjectInputStream(new BufferedInputStream(is, 65536)), loadLevel,
+                newGraph = graphDeserializerService.load(is, loadLevel,
                         streetVertexIndexFactory);
             } catch (Exception ex) {
                 LOG.error("Exception while loading graph '{}'.", routerId, ex);

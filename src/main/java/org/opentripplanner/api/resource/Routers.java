@@ -24,6 +24,7 @@ import org.opentripplanner.routing.graph.Graph.LoadLevel;
 import org.opentripplanner.routing.impl.DefaultStreetVertexIndexFactory;
 import org.opentripplanner.routing.impl.MemoryGraphSource;
 import org.opentripplanner.routing.services.GraphService;
+import org.opentripplanner.serializer.GraphSerializerService;
 import org.opentripplanner.standalone.CommandLineParameters;
 import org.opentripplanner.standalone.OTPServer;
 import org.opentripplanner.standalone.Router;
@@ -94,6 +95,8 @@ import static org.opentripplanner.api.resource.ServerInfo.Q;
 public class Routers {
 
     private static final Logger LOG = LoggerFactory.getLogger(Routers.class);
+
+    private GraphSerializerService graphDeserializerService = new GraphSerializerService();
 
     @Context OTPServer otpServer;
 
@@ -250,7 +253,7 @@ public class Routers {
         LOG.debug("deserializing graph from POST data stream...");
         Graph graph;
         try {
-            graph = Graph.load(is, level);
+            graph = graphDeserializerService.load(is, level);
             GraphService graphService = otpServer.getGraphService();
             graphService.registerGraph(routerId, new MemoryGraphSource(routerId, graph));
             return Response.status(Status.CREATED).entity(graph.toString() + "\n").build();

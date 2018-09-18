@@ -55,6 +55,7 @@ import org.opentripplanner.routing.services.notes.StreetNotesService;
 import org.opentripplanner.routing.trippattern.Deduplicator;
 import org.opentripplanner.routing.vertextype.PatternArriveVertex;
 import org.opentripplanner.routing.vertextype.TransitStop;
+import org.opentripplanner.serializer.*;
 import org.opentripplanner.traffic.StreetSpeedSnapshotSource;
 import org.opentripplanner.updater.GraphUpdaterConfigurator;
 import org.opentripplanner.updater.GraphUpdaterManager;
@@ -119,7 +120,7 @@ public class Graph implements Serializable, AddBuilderAnnotation {
     private GraphBundle bundle;
 
     /* vertex index by name is reconstructed from edges */
-    private transient Map<String, Vertex> vertices;
+    public transient Map<String, Vertex> vertices;
 
     private transient CalendarService calendarService;
 
@@ -244,6 +245,7 @@ public class Graph implements Serializable, AddBuilderAnnotation {
     public Graph(Graph basedOn) {
         this();
         this.bundle = basedOn.getBundle();
+        this.transferTable = new TransferTable();
     }
 
     public Graph() {
@@ -337,6 +339,14 @@ public class Graph implements Serializable, AddBuilderAnnotation {
     }
 
     /**
+     * Exposed for JavaGraphSerializer
+     */
+    public Map<Integer, Vertex> getVertexById() {
+        return this.vertexById;
+    }
+
+
+    /**
      * Get all the vertices in the graph.
      * @return
      */
@@ -355,6 +365,10 @@ public class Graph implements Serializable, AddBuilderAnnotation {
      */
     public Edge getEdgeById(int id) {
         return edgeById.get(id);
+    }
+
+    public Map<Integer, Edge> getEdgeById() {
+        return edgeById;
     }
 
     /**
@@ -699,44 +713,11 @@ public class Graph implements Serializable, AddBuilderAnnotation {
         BASIC, FULL, DEBUG;
     }
 
-    public static Graph load(File file, LoadLevel level) throws IOException, ClassNotFoundException {
-        LOG.info("Reading graph " + file.getAbsolutePath() + " ...");
-        // cannot use getClassLoader() in static context
-        ObjectInputStream in = new ObjectInputStream(new FileInputStream(file));
-        return load(in, level);
-    }
-
-    public static Graph load(ClassLoader classLoader, File file, LoadLevel level)
-            throws IOException, ClassNotFoundException {
-        LOG.info("Reading graph " + file.getAbsolutePath() + " with alternate classloader ...");
-        ObjectInputStream in = new GraphObjectInputStream(new BufferedInputStream(
-                new FileInputStream(file)), classLoader);
-        return load(in, level);
-    }
-
-    public static Graph load(InputStream is, LoadLevel level) throws ClassNotFoundException,
-            IOException {
-        return load(new ObjectInputStream(is), level);
-    }
-
     /**
-     * Default load. Uses DefaultStreetVertexIndexFactory.
-     * @param in
-     * @param level
-     * @return
-     * @throws IOException
-     * @throws ClassNotFoundException
-     */
-    public static Graph load(ObjectInputStream in, LoadLevel level) throws IOException,
-            ClassNotFoundException {
-        return load(in, level, new DefaultStreetVertexIndexFactory());
-    }
-    
-    /** 
      * Perform indexing on vertices, edges, and timetables, and create transient data structures.
      * This used to be done in readObject methods upon deserialization, but stand-alone mode now
      * allows passing graphs from graphbuilder to server in memory, without a round trip through
-     * serialization. 
+     * serialization.
      * TODO: do we really need a factory for different street vertex indexes?
      */
     public void index(StreetVertexIndexFactory indexFactory) {
@@ -754,65 +735,15 @@ public class Graph implements Serializable, AddBuilderAnnotation {
         // TODO: Move this ^ stuff into the graph index
         this.index = new GraphIndex(this);
     }
-    
-    /**
-     * Loading which allows you to specify StreetVertexIndexFactory and inject other implementation.
-     * @param in
-     * @param level
-     * @param indexFactory
-     * @return
-     * @throws IOException
-     * @throws ClassNotFoundException
-     */
-    @SuppressWarnings("unchecked")
-    public static Graph load(ObjectInputStream in, LoadLevel level,
-            StreetVertexIndexFactory indexFactory) throws IOException, ClassNotFoundException {
-        try {
-            Graph graph = (Graph) in.readObject();
-            LOG.debug("Basic graph info read.");
-            if (graph.graphVersionMismatch())
-                throw new RuntimeException("Graph version mismatch detected.");
-            if (level == LoadLevel.BASIC)
-                return graph;
-            // vertex edge lists are transient to avoid excessive recursion depth
-            // vertex list is transient because it can be reconstructed from edges
-            LOG.debug("Loading edges...");
-            List<Edge> edges = (ArrayList<Edge>) in.readObject();
-            graph.vertices = new HashMap<String, Vertex>();
-            
-            for (Edge e : edges) {
-                graph.vertices.put(e.getFromVertex().getLabel(), e.getFromVertex());
-                graph.vertices.put(e.getToVertex().getLabel(), e.getToVertex());
-            }
-
-            LOG.info("Main graph read. |V|={} |E|={}", graph.countVertices(), graph.countEdges());
-            graph.index(indexFactory);
-
-            if (level == LoadLevel.FULL) {
-                return graph;
-            }
-            
-            if (graph.debugData) {
-                graph.graphBuilderAnnotations = (List<GraphBuilderAnnotation>) in.readObject();
-                LOG.debug("Debug info read.");
-            } else {
-                LOG.warn("Graph file does not contain debug data.");
-            }
-            return graph;
-        } catch (InvalidClassException ex) {
-            LOG.error("Stored graph is incompatible with this version of OTP, please rebuild it.");
-            throw new IllegalStateException("Stored Graph version error", ex);
-        }
-    }
 
     /**
      * Compares the OTP version number stored in the graph with that of the currently running instance. Logs warnings explaining that mismatched
      * versions can cause problems.
-     * 
+     *
      * @return false if Maven versions match (even if commit ids do not match), true if Maven version of graph does not match this version of OTP or
      *         graphs are otherwise obviously incompatible.
      */
-    private boolean graphVersionMismatch() {
+    public boolean graphVersionMismatch() {
         MavenVersion v = MavenVersion.VERSION;
         MavenVersion gv = this.mavenVersion;
         LOG.info("Graph version: {}", gv);
@@ -836,49 +767,6 @@ public class Graph implements Serializable, AddBuilderAnnotation {
             LOG.info("This graph was built with the currently running version and commit of OTP.");
             return false;
         }
-    }
-
-    public void save(File file) throws IOException {
-        LOG.info("Main graph size: |V|={} |E|={}", this.countVertices(), this.countEdges());
-        LOG.info("Writing graph " + file.getAbsolutePath() + " ...");
-        ObjectOutputStream out = new ObjectOutputStream(new BufferedOutputStream(
-                new FileOutputStream(file)));
-        try {
-            save(out);
-            out.close();
-        } catch (RuntimeException e) {
-            out.close();
-            file.delete(); // remove half-written file
-            throw e;
-        }
-    }
-
-    public void save(ObjectOutputStream out) throws IOException {
-        LOG.debug("Consolidating edges...");
-        // this is not space efficient
-        List<Edge> edges = new ArrayList<Edge>(this.countEdges());
-        for (Vertex v : getVertices()) {
-            // there are assumed to be no edges in an incoming list that are not
-            // in an outgoing list
-            edges.addAll(v.getOutgoing());
-            if (v.getDegreeOut() + v.getDegreeIn() == 0)
-                LOG.debug("vertex {} has no edges, it will not survive serialization.", v);
-        }
-        LOG.debug("Assigning vertex/edge ID numbers...");
-        this.rebuildVertexAndEdgeIndices();
-        LOG.debug("Writing edges...");
-        out.writeObject(this);
-        out.writeObject(edges);
-        if (debugData) {
-            // should we make debug info generation conditional?
-            LOG.debug("Writing debug data...");
-            out.writeObject(this.graphBuilderAnnotations);
-            out.writeObject(this.vertexById);
-            out.writeObject(this.edgeById);
-        } else {
-            LOG.debug("Skipping debug data.");
-        }
-        LOG.info("Graph written.");
     }
 
     /* deserialization for org.opentripplanner.customize */
@@ -1126,5 +1014,9 @@ public class Graph implements Serializable, AddBuilderAnnotation {
 
     public long getTransitServiceEnds() {
         return transitServiceEnds;
+    }
+
+    public List<GraphBuilderAnnotation> getGraphBuilderAnnotations() {
+        return graphBuilderAnnotations;
     }
 }
