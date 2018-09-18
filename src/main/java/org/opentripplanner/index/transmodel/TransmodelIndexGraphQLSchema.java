@@ -2354,7 +2354,7 @@ public class TransmodelIndexGraphQLSchema {
                         .name("id")
                         .description("Operator id")
                         .type(new GraphQLNonNull(Scalars.GraphQLID))
-                        .dataFetcher(environment -> ((Operator) environment.getSource()).getId())
+                        .dataFetcher(environment -> mappingUtil.toIdString(((Operator) environment.getSource()).getId()))
                         .build())
                 .field(GraphQLFieldDefinition.newFieldDefinition()
                         .name("name")
