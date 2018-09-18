@@ -46,11 +46,9 @@ public abstract class Edge implements Serializable {
      */
     private int id;
 
-    public Vertex fromv;
+    protected Vertex fromv;
 
-    public Vertex tov;
-
-    public Edge() {};
+    protected Vertex tov;
 
     protected Edge(Vertex v1, Vertex v2) {
         if (v1 == null || v2 == null) {
