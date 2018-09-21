@@ -2,10 +2,10 @@ package org.opentripplanner.netex.mapping;
 
 import org.opentripplanner.model.AgencyAndId;
 import org.opentripplanner.model.BookingArrangement;
+import org.opentripplanner.model.Operator;
 import org.opentripplanner.model.Trip;
 import org.opentripplanner.model.impl.OtpTransitBuilder;
 import org.opentripplanner.netex.loader.NetexDao;
-import org.rutebanken.netex.model.DirectionTypeEnumeration;
 import org.rutebanken.netex.model.FlexibleServiceProperties;
 import org.rutebanken.netex.model.JourneyPattern;
 import org.rutebanken.netex.model.LineRefStructure;
@@ -45,6 +45,10 @@ public class TripMapper {
         trip.setId(AgencyAndIdFactory.createAgencyAndId(serviceJourney.getId()));
 
         trip.setRoute(gtfsDao.getRoutes().get(AgencyAndIdFactory.createAgencyAndId(lineRef)));
+        if (serviceJourney.getOperatorRef() != null) {
+            Operator operator = gtfsDao.getOperatorsById().get(AgencyAndIdFactory.createAgencyAndId(serviceJourney.getOperatorRef().getRef()));
+            trip.setTripOperator(operator);
+        }
 
         String serviceId = ServiceIdMapper.mapToServiceId(serviceJourney.getDayTypes());
 
@@ -141,4 +145,5 @@ public class TripMapper {
         }
         return null;
     }
+
 }

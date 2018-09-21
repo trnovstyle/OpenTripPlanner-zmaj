@@ -40,6 +40,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -235,7 +236,7 @@ public class TransmodelGraphQLPlanner {
         if (hasArgument(environment, "modes")) {
             // Map modes to comma separated list in string first to be able to reuse logic in QualifiedModeSet
             // Remove CABLE_CAR from collection because QualifiedModeSet does not support mapping (splits on '_')
-            Collection<TraverseMode> modes = environment.getArgument("modes");
+            Set<TraverseMode> modes = new HashSet<>(environment.getArgument("modes"));
             boolean cableCar = modes.remove(TraverseMode.CABLE_CAR);
 
             String modesAsString = Joiner.on(",").join(modes);
