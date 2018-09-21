@@ -157,9 +157,11 @@ public class TransmodelGraphQLPlanner {
         callWith.argument("from", (Map<String, Object> v) -> request.from = toGenericLocation(v));
         callWith.argument("to", (Map<String, Object> v) -> request.to = toGenericLocation(v));
 
-
-        callWith.argument("dateTime", millisSinceEpoch -> request.setDateTime(new Date((long) millisSinceEpoch)));
-
+        if (hasArgument(environment, "dateTime")) {
+            callWith.argument("dateTime", millisSinceEpoch -> request.setDateTime(new Date((long) millisSinceEpoch)));
+        } else {
+            request.setDateTime(new Date());
+        }
         callWith.argument("wheelchair", request::setWheelchairAccessible);
         callWith.argument("numTripPatterns", request::setNumItineraries);
         callWith.argument("maximumWalkDistance", request::setMaxWalkDistance);
