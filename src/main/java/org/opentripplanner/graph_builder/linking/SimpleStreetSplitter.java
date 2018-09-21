@@ -81,7 +81,7 @@ public class SimpleStreetSplitter {
 
     public static final int MAX_SEARCH_RADIUS_METERS = 1000;
 
-    public static final int MIN_SNAP_DISTANCE_WARNING = 20;
+    public static final int MIN_SNAP_DISTANCE_WARNING = 50;
 
     private Boolean addExtraEdgesToAreas = false;
 
