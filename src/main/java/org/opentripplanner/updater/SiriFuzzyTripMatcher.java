@@ -290,6 +290,10 @@ public class SiriFuzzyTripMatcher {
 
         Set<Trip> cachedTripsBySiriId = getCachedTripsBySiriId(tripShortName);
 
+        if (cachedTripsBySiriId.isEmpty()) {
+            cachedTripsBySiriId = getCachedTripsByVehicleRef(tripShortName);
+        }
+
         for (Trip trip : cachedTripsBySiriId) {
             if (GtfsLibrary.getTraverseMode(trip.getRoute()).equals(traverseMode)) {
                 Set<ServiceDate> serviceDates = index.graph.getCalendarService().getServiceDatesForServiceId(trip.getServiceId());
