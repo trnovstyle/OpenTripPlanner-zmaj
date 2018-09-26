@@ -886,9 +886,14 @@ public class GraphIndex {
                 if (currStop.equals(stop)) {
 
                     if(omitNonPickups && pattern.stopPattern.pickups[stopIndex] == pattern.stopPattern.PICKDROP_NONE) continue;
+
                     for (final TripTimes triptimes : tt.tripTimes) {
                         if (!sd.serviceRunning(triptimes.serviceCode))
                             continue;
+
+                        // Check if pickup has been cancelled via realtime-data
+                        if(omitNonPickups && triptimes.getPickupType(stopIndex) == pattern.stopPattern.PICKDROP_NONE) continue;
+
                         int stopDepartureTime = triptimes.getDepartureTime(stopIndex);
                         if (stopDepartureTime != -1 && stopDepartureTime >= starttimeSecondsSinceMidnight && stopDepartureTime < starttimeSecondsSinceMidnight + timeRange) {
                             tripTimesQueue.insertWithOverflow(new TripTimeShort(triptimes, stopIndex, currStop, sd));
