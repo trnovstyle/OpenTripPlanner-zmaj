@@ -35,6 +35,7 @@ public class Router {
     public String id;
     public Graph graph;
     public double[] timeouts = {5, 4, 2};
+    public double totalTimeout = 15;
 
     /**
      *  Separate logger for incoming requests. This should be handled with a Logback logger rather than something
@@ -126,6 +127,15 @@ public class Router {
             }
         }
         LOG.info("Timeouts for router '{}': {}", this.id, this.timeouts);
+
+        JsonNode totalTimeout = config.get("totalTimeout");
+        if (totalTimeout != null) {
+            if (totalTimeout.isNumber()) {
+                this.totalTimeout = totalTimeout.doubleValue();
+            } else {
+                LOG.error("The 'totalTimeout' configuration option should be a number of seconds.");
+            }
+        }
 
         JsonNode requestLogFile = config.get("requestLogFile");
         if (requestLogFile != null) {

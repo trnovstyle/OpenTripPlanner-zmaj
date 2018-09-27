@@ -138,6 +138,7 @@ public class GraphPathFinder {
         long searchBeginTime = System.currentTimeMillis();
         LOG.debug("BEGIN SEARCH");
         List<GraphPath> paths = Lists.newArrayList();
+        double totalTimeout = searchBeginTime + router.totalTimeout * 1000;
         while (paths.size() < options.numItineraries) {
             // TODO pull all this timeout logic into a function near org.opentripplanner.util.DateUtils.absoluteTimeout()
             int timeoutIndex = paths.size();
@@ -149,6 +150,7 @@ public class GraphPathFinder {
                 timeout += 10000; // Add 10 seconds to timeout for car pickup and car dropoff
             }
             timeout -= System.currentTimeMillis(); // Convert from absolute to relative time
+            timeout = Double.min(timeout, totalTimeout - System.currentTimeMillis()); // Cap timeout to total timeout value
             timeout /= 1000; // Convert milliseconds to seconds
             if (timeout <= 0) {
                 // Catch the case where advancing to the next (lower) timeout value means the search is timed out
