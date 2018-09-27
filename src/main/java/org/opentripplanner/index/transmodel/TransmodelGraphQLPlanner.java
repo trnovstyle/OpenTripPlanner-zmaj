@@ -7,7 +7,6 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.opentripplanner.api.common.Message;
 import org.opentripplanner.api.common.ParameterException;
-import org.opentripplanner.api.common.RoutingResource;
 import org.opentripplanner.api.model.Place;
 import org.opentripplanner.api.model.TripPlan;
 import org.opentripplanner.api.model.error.PlannerError;
@@ -16,6 +15,7 @@ import org.opentripplanner.api.resource.DebugOutput;
 import org.opentripplanner.api.resource.GraphPathToTripPlanConverter;
 import org.opentripplanner.common.model.GenericLocation;
 import org.opentripplanner.index.transmodel.mapping.TransmodelMappingUtil;
+import org.opentripplanner.model.AgencyAndId;
 import org.opentripplanner.model.TransmodelTransportSubmode;
 import org.opentripplanner.routing.core.OptimizeType;
 import org.opentripplanner.routing.core.RoutingRequest;
@@ -24,6 +24,7 @@ import org.opentripplanner.routing.edgetype.StationStopEdge;
 import org.opentripplanner.routing.graph.GraphIndex;
 import org.opentripplanner.routing.graph.Vertex;
 import org.opentripplanner.routing.impl.GraphPathFinder;
+import org.opentripplanner.routing.request.BannedStopSet;
 import org.opentripplanner.routing.spt.GraphPath;
 import org.opentripplanner.routing.vertextype.TransitStation;
 import org.opentripplanner.routing.vertextype.TransitStop;
@@ -42,6 +43,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class TransmodelGraphQLPlanner {
@@ -208,7 +210,7 @@ public class TransmodelGraphQLPlanner {
         callWith.argument("banned.lines", lines -> request.setBannedRoutes(mappingUtil.prepareListOfAgencyAndId((List<String>) lines, "__")));
         callWith.argument("banned.organisations", organisations -> request.setBannedAgencies(mappingUtil.mapCollectionOfValues((Collection<String>) organisations, in -> in)));
         callWith.argument("banned.authorities", authorities -> request.setBannedAgencies(mappingUtil.mapCollectionOfValues((Collection<String>) authorities, in -> in)));
-        callWith.argument("banned.serviceJourneys", serviceJourneys -> request.bannedTrips = RoutingResource.makeBannedTripMap(mappingUtil.prepareListOfAgencyAndId((List<String>) serviceJourneys)));
+        callWith.argument("banned.serviceJourneys", serviceJourneys -> request.bannedTrips = toBannedTrips((Collection<String>) serviceJourneys));
 
         callWith.argument("banned.quays", quays -> request.setBannedStops(mappingUtil.prepareListOfAgencyAndId((List<String>) quays)));
         callWith.argument("banned.quaysHard", quaysHard -> request.setBannedStopsHard(mappingUtil.prepareListOfAgencyAndId((List<String>) quaysHard)));
@@ -294,6 +296,11 @@ public class TransmodelGraphQLPlanner {
         }
 
         return request;
+    }
+
+    private HashMap<AgencyAndId, BannedStopSet> toBannedTrips(Collection<String> serviceJourneyIds) {
+        Map<AgencyAndId, BannedStopSet> bannedTrips = serviceJourneyIds.stream().map(mappingUtil::fromIdString).collect(Collectors.toMap(Function.identity(), id -> BannedStopSet.ALL));
+        return new HashMap<>(bannedTrips);
     }
 
     private String getLocationOfFirstQuay(String vertexId, GraphIndex graphIndex) {

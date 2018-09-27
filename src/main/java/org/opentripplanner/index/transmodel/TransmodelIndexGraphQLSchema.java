@@ -726,6 +726,12 @@ public class TransmodelIndexGraphQLSchema {
                         .type(new GraphQLList(Scalars.GraphQLString))
                         .defaultValue(new ArrayList<>())
                         .build())
+                .field(GraphQLInputObjectField.newInputObjectField()
+                        .name("serviceJourneys")
+                        .description("Set of ids of service journeys that should not be used.")
+                        .type(new GraphQLList(Scalars.GraphQLString))
+                        .defaultValue(new ArrayList<>())
+                        .build())
                 .build();
 
         GraphQLInputObjectType whiteListedInputType = GraphQLInputObjectType.newInputObject()
