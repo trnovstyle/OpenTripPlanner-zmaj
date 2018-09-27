@@ -1008,6 +1008,13 @@ public abstract class GraphPathToTripPlanConverter {
                 place.stopSequence = tripTimes.getStopSequence(place.stopIndex);
             }
             place.vertexType = VertexType.TRANSIT;
+        }
+        else if (vertex instanceof TransitVertex && edge instanceof SimpleTransfer) {
+            place.stopId = stop.getId();
+            place.stopCode = stop.getCode();
+            place.platformCode = stop.getPlatformCode();
+            place.zoneId = stop.getZoneId();
+            place.vertexType = VertexType.TRANSIT;
         } else if (vertex instanceof BikeRentalStationVertex) {
             place.bikeShareId = ((BikeRentalStationVertex) vertex).getId();
             LOG.trace("Added bike share Id {} to place", place.bikeShareId);
