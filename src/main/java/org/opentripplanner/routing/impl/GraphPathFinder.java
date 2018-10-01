@@ -423,9 +423,6 @@ public class GraphPathFinder {
             List <GraphPath> completePaths = new ArrayList<>();
             DebugOutput debugOutput = null;
 
-            request.setRoutingContext(router.graph);
-            request.rctx.debugOutput = debugOutput;
-
             Vertex[] fromVertices = new Vertex[places.size()];
             Vertex[] toVertices = new Vertex[places.size()];
 
@@ -491,6 +488,8 @@ public class GraphPathFinder {
                 completePaths.add(joinedPath);
 
             }
+            request.setRoutingContext(router.graph);
+            request.rctx.debugOutput = debugOutput;
             return completePaths;
         } else {
             return getPaths(request);

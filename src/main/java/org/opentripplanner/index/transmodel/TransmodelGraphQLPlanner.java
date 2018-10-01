@@ -78,7 +78,7 @@ public class TransmodelGraphQLPlanner {
             messages.add(error.message);
         } finally {
             if (request != null) {
-                if (request.rctx != null && request.rctx.debugOutput != null) {
+                if (request.rctx != null) {
                     debugOutput = request.rctx.debugOutput;
                 }
                 request.cleanup(); // TODO verify that this cleanup step is being done on Analyst web services
