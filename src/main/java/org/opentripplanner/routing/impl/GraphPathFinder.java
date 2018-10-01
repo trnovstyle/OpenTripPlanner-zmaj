@@ -466,6 +466,8 @@ public class GraphPathFinder {
                     List<GraphPath> partialPaths = getPaths(intermediateRequest);
                     if (partialPaths.size() == 0) {
                         if (completePaths.size() == 0) {
+                            request.setRoutingContext(router.graph);
+                            request.rctx.debugOutput = debugOutput;
                             return partialPaths;
                         }
                         break OUTER;
