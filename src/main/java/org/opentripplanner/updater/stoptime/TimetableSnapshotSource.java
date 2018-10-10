@@ -1524,6 +1524,7 @@ public class TimetableSnapshotSource {
         }
         ServiceDate serviceDate = new ServiceDate(date.getYear(), date.getMonthValue(), date.getDayOfMonth());
 
+        List<Trip> results = new ArrayList<>();
         for (Iterator<Trip> iterator = trips.iterator(); iterator.hasNext(); ) {
 
             Trip trip = iterator.next();
@@ -1532,9 +1533,27 @@ public class TimetableSnapshotSource {
             for (Iterator<ServiceDate> serviceDateIterator = serviceDatesForServiceId.iterator(); serviceDateIterator.hasNext(); ) {
                 ServiceDate next = serviceDateIterator.next();
                 if (next.equals(serviceDate)) {
-                    return trip;
+                    results.add(trip);
                 }
             }
+        }
+
+        if (results.size() == 1) {
+            return results.get(0);
+        } else if (results.size() > 1) {
+            // Multiple possible matches - check if lineRef/routeId matches
+            if (monitoredVehicleJourney.getLineRef() != null && monitoredVehicleJourney.getLineRef().getValue() != null) {
+                String lineRef = monitoredVehicleJourney.getLineRef().getValue();
+                for (Trip trip : results) {
+                    if (lineRef.equals(trip.getRoute().getId().getId())) {
+                        // Return first trip where the lineRef matches routeId
+                        return trip;
+                    }
+                }
+            }
+
+            // Line does not match any routeId - return first result.
+            return results.get(0);
         }
 
         return null;

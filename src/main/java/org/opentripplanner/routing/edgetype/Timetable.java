@@ -1136,8 +1136,12 @@ public class Timetable implements Serializable {
                         if (matchFound) {
                             arrivalDelay = departureDelay = updatedDelay;
                         } else {
-                            arrivalDelay = existingTripTimes.getArrivalDelay(index);
-                            departureDelay = existingTripTimes.getDepartureDelay(index);
+                            /*
+                             * If updated delay is less than previously set delay, the existing delay needs to be adjusted to avoid
+                             * non-increasing times causing updates to be rejected. Will only affect historical data.
+                             */
+                            arrivalDelay = Math.min(existingTripTimes.getArrivalDelay(index), updatedDelay);
+                            departureDelay =  Math.min(existingTripTimes.getDepartureDelay(index), updatedDelay);
                         }
                     }
                     newTimes.updateArrivalDelay(index, arrivalDelay);
