@@ -23,7 +23,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import com.fasterxml.jackson.databind.JsonNode;
-import org.opentripplanner.graph_builder.linking.SimpleStreetSplitter;
+import org.opentripplanner.graph_builder.linking.SynchronisedSimpleStreetSplitter;
 import org.opentripplanner.routing.bike_rental.BikeRentalStation;
 import org.opentripplanner.routing.bike_rental.BikeRentalStationService;
 import org.opentripplanner.routing.edgetype.RentABikeOffEdge;
@@ -64,7 +64,7 @@ public class BikeRentalUpdater extends PollingGraphUpdater {
 
     private Graph graph;
 
-    private SimpleStreetSplitter linker;
+    private SynchronisedSimpleStreetSplitter linker;
 
     private BikeRentalStationService service;
 
@@ -134,8 +134,7 @@ public class BikeRentalUpdater extends PollingGraphUpdater {
 
     @Override
     public void setup() throws InterruptedException, ExecutionException {
-        // Creation of network linker library will not modify the graph
-        linker = new SimpleStreetSplitter(graph);
+        linker = graph.getSynchronisedSimpleStreetSplitter();
 
         // Adding a bike rental station service needs a graph writer runnable
         updaterManager.executeBlocking(new GraphWriterRunnable() {

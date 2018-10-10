@@ -24,6 +24,7 @@ import gnu.trove.list.linked.TDoubleLinkedList;
 import org.apache.commons.math3.stat.descriptive.rank.Median;
 import org.joda.time.DateTime;
 import org.opentripplanner.calendar.impl.CalendarServiceImpl;
+import org.opentripplanner.graph_builder.linking.SynchronisedSimpleStreetSplitter;
 import org.opentripplanner.model.Agency;
 import org.opentripplanner.model.AgencyAndId;
 import org.opentripplanner.model.Notice;
@@ -240,6 +241,8 @@ public class Graph implements Serializable, AddBuilderAnnotation {
 
     /** Multimodal stops **/
     public Map<AgencyAndId, Stop> multiModalStopById = new HashMap<>();
+
+    private SynchronisedSimpleStreetSplitter synchronisedSimpleStreetSplitter;
 
     public Graph(Graph basedOn) {
         this();
@@ -1126,5 +1129,12 @@ public class Graph implements Serializable, AddBuilderAnnotation {
 
     public long getTransitServiceEnds() {
         return transitServiceEnds;
+    }
+
+    public synchronized SynchronisedSimpleStreetSplitter getSynchronisedSimpleStreetSplitter() {
+        if (synchronisedSimpleStreetSplitter == null) {
+            synchronisedSimpleStreetSplitter = new SynchronisedSimpleStreetSplitter(this);
+        }
+        return synchronisedSimpleStreetSplitter;
     }
 }
