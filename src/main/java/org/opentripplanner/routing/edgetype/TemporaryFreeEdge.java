@@ -42,9 +42,19 @@ public class TemporaryFreeEdge extends FreeEdge implements TemporaryEdge {
     @Override
     public void dispose() {
         if (endEdge) {
-            fromv.removeOutgoing(this);
+            if(fromv instanceof TemporaryVertex) {
+                ((TemporaryVertex) fromv).dispose();
+            }
+            else {
+                fromv.removeOutgoing(this);
+            }
         } else {
-            tov.removeIncoming(this);
+            if(tov instanceof TemporaryVertex) {
+                ((TemporaryVertex) tov).dispose();
+            }
+            else {
+                tov.removeIncoming(this);
+            }
         }
     }
 
