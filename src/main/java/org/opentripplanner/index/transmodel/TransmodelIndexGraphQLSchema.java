@@ -1674,11 +1674,8 @@ public class TransmodelIndexGraphQLSchema {
                                .dataFetcher(
                                        environment -> {
                                            TripTimeShort tripTimeShort = environment.getSource();
-                                           if (! tripTimeShort.isRecordedStop) {
-                                               return 1000 * (tripTimeShort.serviceDay +
-                                                       tripTimeShort.realtimeArrival);
-                                           }
-                                           return null;
+                                           return 1000 * (tripTimeShort.serviceDay +
+                                                                  tripTimeShort.realtimeArrival);
                                        })
                                .build())
                 .field(GraphQLFieldDefinition.newFieldDefinition()
@@ -1709,12 +1706,9 @@ public class TransmodelIndexGraphQLSchema {
                                .description("Expected time of departure from quay. Updated with real time information if available. Will be null if an actualDepartureTime exists")
                                .dataFetcher(
                                        environment -> {
-                                           TripTimeShort tripTimeShort = (TripTimeShort) environment.getSource();
-                                           if (!tripTimeShort.isRecordedStop) {
-                                               return 1000 * (tripTimeShort.serviceDay +
-                                                       tripTimeShort.realtimeDeparture);
-                                           }
-                                           return null;
+                                           TripTimeShort tripTimeShort = environment.getSource();
+                                           return 1000 * (tripTimeShort.serviceDay +
+                                                                  tripTimeShort.realtimeDeparture);
                                        })
                                .build())
                 .field(GraphQLFieldDefinition.newFieldDefinition()
@@ -1723,7 +1717,7 @@ public class TransmodelIndexGraphQLSchema {
                                .description("Actual time of departure from quay. Updated with real time information if available")
                                .dataFetcher(
                                        environment -> {
-                                           TripTimeShort tripTimeShort = (TripTimeShort) environment.getSource();
+                                           TripTimeShort tripTimeShort = environment.getSource();
                                            if (tripTimeShort.isRecordedStop) {
                                                return 1000 * (tripTimeShort.serviceDay +
                                                        tripTimeShort.realtimeDeparture);
