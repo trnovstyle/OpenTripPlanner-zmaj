@@ -48,6 +48,9 @@ workflows:
     jobs:
     - test:
         context: org-carbon
+        filters:
+          branches:
+            only: rutebanken_develop
     - deploy-nexus:
         context: org-carbon
         requires:
