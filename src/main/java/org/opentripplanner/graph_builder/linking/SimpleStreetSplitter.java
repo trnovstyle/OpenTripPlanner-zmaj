@@ -79,7 +79,7 @@ public class SimpleStreetSplitter {
 
     private static final Logger LOG = LoggerFactory.getLogger(SimpleStreetSplitter.class);
 
-    public static final int MAX_SEARCH_RADIUS_METERS = 1000;
+    public static final int MAX_SEARCH_RADIUS_METERS = 500;
 
     public static final int MIN_SNAP_DISTANCE_WARNING = 50;
 
