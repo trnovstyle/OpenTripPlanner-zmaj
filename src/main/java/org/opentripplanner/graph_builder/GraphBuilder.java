@@ -50,6 +50,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -219,6 +220,9 @@ public class GraphBuilder implements Runnable {
                     break;
                 case OSM:
                     LOG.info("Found OSM file {}", file);
+                    LOG.info("OSM file size is {}", file.length());
+                    SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss");
+                    LOG.info("OSM file date is {}", sdf.format(file.lastModified()));
                     osmFiles.add(file);
                     break;
                 case DEM:
