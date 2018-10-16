@@ -480,6 +480,9 @@ public class AlertsUpdateHandler {
                 if (patch.getAlert() == null) {
                     patch.setAlert(alert);
                 }
+                if (patch.getStopConditions().isEmpty()) {
+                    updateStopConditions(patch, null);
+                }
                 patch.getAlert().alertType = situation.getReportType();
                 patch.setSituationNumber(situationNumber);
             }
@@ -505,8 +508,8 @@ public class AlertsUpdateHandler {
     }
 
     private void updateStopConditions(AlertPatch alertPatch, List<RoutePointTypeEnumeration> stopConditions) {
+        Set<StopCondition> alertStopConditions = new HashSet<>();
         if (stopConditions != null) {
-            Set<StopCondition> alertStopConditions = new HashSet<>();
             for (RoutePointTypeEnumeration stopCondition : stopConditions) {
                 switch (stopCondition) {
                     case EXCEPTIONAL_STOP:
@@ -526,8 +529,14 @@ public class AlertsUpdateHandler {
                         break;
                 }
             }
-            alertPatch.getStopConditions().addAll(alertStopConditions);
         }
+        if (alertStopConditions.isEmpty()) {
+            //No StopConditions are set - set default
+            alertStopConditions.add(StopCondition.START_POINT);
+            alertStopConditions.add(StopCondition.DESTINATION);
+
+        }
+        alertPatch.getStopConditions().addAll(alertStopConditions);
     }
 
     private boolean isListNullOrEmpty(List list) {
