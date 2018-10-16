@@ -42,6 +42,20 @@ jobs:
         key: dep-cache-{{ checksum "pom.xml" }}
     # Cannot use -o because of snapshot dependencies.
     - run: mvn deploy -s .circleci/settings.xml -DskipTests
+  notify-build:
+    docker:
+      - image: eu.gcr.io/carbon-1287/circleci-toolbox-image
+        auth:
+          username: _json_key
+          password: $GCLOUD_SERVICE_KEY
+    steps:
+    - run:
+        name: Notify about build and nexus updated
+        command: |
+            echo 'export CIRCLE_PROJECT_REPONAME="$CIRCLE_PROJECT_REPONAME"' >> $BASH_ENV
+            echo 'export CIRCLE_SHA1="$CIRCLE_SHA1"' >> $BASH_ENV
+            echo 'export BUILD_STATUS_API_KEY="$BUILD_STATUS_API_KEY"' >> $BASH_ENV
+            /tools/build_notify.sh
 workflows:
   version: 2
   build_test_deploy:
@@ -55,6 +69,13 @@ workflows:
         context: org-carbon
         requires:
         - test
+        filters:
+          branches:
+            only: rutebanken_develop
+    - notify-build:
+        context: org-carbon
+        requires:
+        - deploy-nexus
         filters:
           branches:
             only: rutebanken_develop
