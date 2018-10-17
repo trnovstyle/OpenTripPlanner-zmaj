@@ -24,7 +24,7 @@ aliases:
       /tools/build_notify.sh
     environment:
       CIRCLE_PROJECT_REPONAME: otp
-  - &trigger-other
+  - &trigger-downstream
     name: "Trigger dependant jobs"
     command: |
       echo 'export CIRCLE_API_TOKEN="$CIRCLE_API_TOKEN"' >> $BASH_ENV
@@ -116,6 +116,7 @@ jobs:
       - run: *docker-login
       - run: *docker-build-and-push
       - run: *post-hook
+      - run: *trigger-downstream
 workflows:
   version: 2
   build_test_deploy:
