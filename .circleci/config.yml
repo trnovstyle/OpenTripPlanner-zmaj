@@ -23,7 +23,7 @@ aliases:
       echo 'export BUILD_STATUS_API_KEY="$BUILD_STATUS_API_KEY"' >> $BASH_ENV
       /tools/build_notify.sh
     environment:
-      CIRCLE_PROJECT_REPONAME: marduk
+      CIRCLE_PROJECT_REPONAME: otp
 jobs:
   test:
     docker:
