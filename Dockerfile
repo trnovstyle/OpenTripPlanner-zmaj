@@ -16,15 +16,15 @@ RUN easy_install --quiet -U pip \
 WORKDIR /code
 
 # From https://cloud.google.com/sdk/downloads
-RUN wget https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-170.0.1-linux-x86_64.tar.gz \
+RUN wget -nv https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-170.0.1-linux-x86_64.tar.gz \
   && echo "a09ff738ea9b3c9af906ee42e8ded48b84388574944d11406ba0cec6b2acdc89 google-cloud-sdk-170.0.1-linux-x86_64.tar.gz" | sha256sum --quiet -c - \
   && tar xzf google-cloud-sdk-170.0.1-linux-x86_64.tar.gz
 
 # Download logback logstash
-RUN wget "http://central.maven.org/maven2/net/logstash/logback/logstash-logback-encoder/4.7/logstash-logback-encoder-4.7.jar" --directory-prefix /code/
+RUN wget -nv "http://central.maven.org/maven2/net/logstash/logback/logstash-logback-encoder/4.7/logstash-logback-encoder-4.7.jar" --directory-prefix /code/
 
 # Download pbf
-RUN wget https://storage.googleapis.com/marduk-production/osm/norway-latest.osm.pbf --directory-prefix /otpdata/norway -O norway.osm.pbf
+RUN wget -nv https://storage.googleapis.com/marduk-production/osm/norway-latest.osm.pbf --directory-prefix /otpdata/norway -O norway.osm.pbf
 
 # Copy OTP jar file from target
 COPY target/otp-1.3.1.RB-SNAPSHOT-shaded.jar /code/otp-shaded.jar
@@ -32,7 +32,7 @@ COPY target/otp-1.3.1.RB-SNAPSHOT-shaded.jar /code/otp-shaded.jar
 # Copy the logback xml file (which could have been mounted as a config map instead)
 COPY docker/files/logback.xml /code/logback.xml
 
-RUN jar xf logstash-logback-encoder-4.7.jar \
+RUN jar xf /code/logstash-logback-encoder-4.7.jar \
  && jar -uf /code/otp-shaded.jar logback.xml net/
 
 RUN mkdir -p /opt/agent-bond \
