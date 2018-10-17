@@ -2,7 +2,6 @@
 
 : ${GRAPH_FILE_TARGET_PATH="/code/otpdata/norway/Graph.obj"}
 : ${FILE_TMP_PATH="/tmp/graph_obj_from_gcs"}
-: ${ROUTER_CONFIG="router-config.json"}
 : ${ETCD_GRAPH_URL_ENDPOINT="http://etcd-client:2379/v2/keys/prod/otp/marduk.file?quorum=false&recursive=false&sorted=false"}
 # Notice ending slash here, it is correct
 : ${MARDUK_GCP_BASE="gs://marduk/"}
