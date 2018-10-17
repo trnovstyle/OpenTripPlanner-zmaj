@@ -268,6 +268,8 @@ public class GraphPathFinder {
             Vertex toTransVertex = options.arriveBy ? options.rctx.toVertex: transitStop;
             RoutingRequest reversedMainRequest = createReversedMainRequest(originalReq, options, fromTransVertex,
                     toTransVertex, transitStopTime, remainingWeightHeuristic);
+            reversedMainRequest.maxPreTransitWalkDistance = 0;
+            reversedMainRequest.maxPreTransitTime = 0;
             aStar.getShortestPathTree(reversedMainRequest, timeout);
 
             List<GraphPath> newRevPaths = aStar.getPathsToTarget();
