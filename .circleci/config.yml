@@ -24,6 +24,13 @@ aliases:
       /tools/build_notify.sh
     environment:
       CIRCLE_PROJECT_REPONAME: otp
+  - &trigger-other
+    name: "Trigger dependant jobs"
+    command: |
+      echo 'export CIRCLE_API_TOKEN="$CIRCLE_API_TOKEN"' >> $BASH_ENV
+      /tools/downstream_trigger.sh
+    environment:
+      GITHUB_PROJECTS: "marduk"
 jobs:
   test:
     docker:
