@@ -1,5 +1,8 @@
 FROM relateiq/oracle-java8
 
+ARG NEXUS_USER
+ARG NEXUS_PASS
+
 RUN apt-get update \
   && apt-get install -y \
      unzip \
