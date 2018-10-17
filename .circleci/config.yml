@@ -17,15 +17,15 @@ aliases:
       /tools/docker_build_push.sh
     environment:
       CIRCLE_PROJECT_REPONAME: otp
-  - &post-hook
-    name: Notify about build and docker image pushed
+  - &build-notify
+    name: Notify babylon about build and docker image pushed
     command: |
       echo 'export CIRCLE_SHA1="$CIRCLE_SHA1"' >> $BASH_ENV
       echo 'export BUILD_STATUS_API_KEY="$BUILD_STATUS_API_KEY"' >> $BASH_ENV
       /tools/build_notify.sh
     environment:
       CIRCLE_PROJECT_REPONAME: otp
-  - &trigger-downstream
+  - &trigger-dependants
     name: "Trigger dependant jobs"
     command: |
       echo 'export CIRCLE_API_TOKEN="$CIRCLE_API_TOKEN"' >> $BASH_ENV
@@ -90,14 +90,7 @@ jobs:
           username: _json_key
           password: $GCLOUD_SERVICE_KEY
     steps:
-    - run:
-        name: Notify about build and nexus updated
-        command: |
-            echo 'export CIRCLE_SHA1="$CIRCLE_SHA1"' >> $BASH_ENV
-            echo 'export BUILD_STATUS_API_KEY="$BUILD_STATUS_API_KEY"' >> $BASH_ENV
-            /tools/build_notify.sh
-        environment:
-          CIRCLE_PROJECT_REPONAME: otp
+    - run: *build-notify
   deploy-docker:
     docker:
       - image: eu.gcr.io/carbon-1287/circleci-toolbox-image
@@ -116,17 +109,20 @@ jobs:
       - run: *GCP-auth
       - run: *docker-login
       - run: *docker-build-and-push
-      - run: *post-hook
-      - run: *trigger-downstream
+  trigger-dependants:
+    docker:
+      - image: eu.gcr.io/carbon-1287/circleci-toolbox-image
+        auth:
+          username: _json_key
+          password: $GCLOUD_SERVICE_KEY
+    steps:
+    - run: *trigger-dependants
 workflows:
   version: 2
   build_test_deploy:
     jobs:
     - test:
         context: org-carbon
-        filters:
-          branches:
-            only: rutebanken_develop
     - deploy-nexus:
         context: org-carbon
         requires:
@@ -134,17 +130,15 @@ workflows:
         filters:
           branches:
             only: rutebanken_develop
-    - notify-build:
-        context: org-carbon
-        requires:
-        - deploy-nexus
-        filters:
-          branches:
-            only: rutebanken_develop
     - deploy-docker:
         context: org-carbon
         requires:
         - deploy-nexus
-        filters:
-          branches:
-            only: rutebanken_develop
+    - notify-build:
+        context: org-carbon
+        requires:
+        - deploy-docker
+    - trigger-dependants:
+        context: org-carbon
+        requires:
+        - deploy-nexus
