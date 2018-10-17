@@ -1,23 +1,44 @@
-FROM openjdk:8-jre-alpine
-MAINTAINER Reittiopas version: 0.1
+FROM relateiq/oracle-java8
 
-RUN apk add --update curl bash ttf-dejavu && \
-    rm -rf /var/cache/apk/*
-VOLUME /opt/opentripplanner/graphs
+RUN apt-get update \
+  && apt-get install -y \
+     unzip \
+     python-dateutil \
+     jq \
+     curl \
+     gcc \
+     python-dev \
+     python-setuptools
 
-ENV OTP_ROOT="/opt/opentripplanner"
-ENV ROUTER_DATA_CONTAINER_URL="https://api.digitransit.fi/routing-data/v2/finland"
+RUN easy_install --quiet -U pip \
+  && pip install -U crcmod
 
-WORKDIR ${OTP_ROOT}
+WORKDIR /code
 
-ADD run.sh ${OTP_ROOT}/run.sh
-ADD target/*-shaded.jar ${OTP_ROOT}/otp-shaded.jar
+# From https://cloud.google.com/sdk/downloads
+RUN wget https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-170.0.1-linux-x86_64.tar.gz \
+  && echo "a09ff738ea9b3c9af906ee42e8ded48b84388574944d11406ba0cec6b2acdc89 google-cloud-sdk-170.0.1-linux-x86_64.tar.gz" | sha256sum --quiet -c - \
+  && tar xzf google-cloud-sdk-170.0.1-linux-x86_64.tar.gz
 
-ENV PORT=8080
-EXPOSE ${PORT}
-ENV SECURE_PORT=8081
-EXPOSE ${SECURE_PORT}
-ENV ROUTER_NAME=finland
-ENV JAVA_OPTS="-Xms8G -Xmx8G"
+COPY logstash-logback-encoder-4.7.jar /code/logstash-logback-encoder-4.7.jar
+COPY {{opt_jar_with_version}}  /code/otp-shaded.jar
+COPY logback.xml /code/logback.xml
+COPY otpdata/* /code/otpdata/norway/
 
-ENTRYPOINT exec ./run.sh
+RUN jar xf logstash-logback-encoder-4.7.jar \
+ && jar -uf /code/otp-shaded.jar logback.xml net/
+
+RUN mkdir -p /opt/agent-bond \
+  && curl http://central.maven.org/maven2/io/fabric8/agent-bond-agent/1.0.2/agent-bond-agent-1.0.2.jar \
+         -o /opt/agent-bond/agent-bond.jar \
+ && chmod 444 /opt/agent-bond/agent-bond.jar
+ADD jmx_exporter_config.yml /opt/agent-bond/
+
+COPY docker-entrypoint.sh /docker-entrypoint.sh
+RUN chmod a+x /docker-entrypoint.sh
+ENTRYPOINT ["/docker-entrypoint.sh"]
+
+EXPOSE 8080
+CMD ["java", "-Dtransmodel.graphql.api.agency.id=RB","-Dfile.encoding=UTF-8", "-Xms256m", "-Xmx6144m", "-Xincgc", "-server", "-javaagent:/opt/agent-bond/agent-bond.jar=jolokia{{'{{' }}host=0.0.0.0{{ '}}' }},jmx_exporter{{ '{{' }}9779:/opt/agent-bond/jmx_exporter_config.yml{{ '}}' }}", "-jar", "code/otp-shaded.jar", "--server", "--graphs","/code/otpdata", "--router", "norway"]
+
+# For debug, add parameter "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005"
