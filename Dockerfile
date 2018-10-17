@@ -39,7 +39,7 @@ RUN mkdir -p /opt/agent-bond \
   && curl http://central.maven.org/maven2/io/fabric8/agent-bond-agent/1.0.2/agent-bond-agent-1.0.2.jar \
          -o /opt/agent-bond/agent-bond.jar \
  && chmod 444 /opt/agent-bond/agent-bond.jar
-ADD jmx_exporter_config.yml /opt/agent-bond/
+ADD docker/jmx_exporter_config.yml /opt/agent-bond/
 
 COPY docker/docker-entrypoint.sh /docker-entrypoint.sh
 RUN chmod a+x /docker-entrypoint.sh
