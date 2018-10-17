@@ -30,7 +30,7 @@ RUN wget -nv https://storage.googleapis.com/marduk-production/osm/norway-latest.
 COPY target/otp-1.3.1.RB-SNAPSHOT-shaded.jar /code/otp-shaded.jar
 
 # Copy the logback xml file (which could have been mounted as a config map instead)
-COPY docker/files/logback.xml /code/logback.xml
+COPY docker/logback.xml /code/logback.xml
 
 RUN jar xf /code/logstash-logback-encoder-4.7.jar \
  && jar -uf /code/otp-shaded.jar logback.xml net/
