@@ -1,8 +1,5 @@
 FROM relateiq/oracle-java8
 
-ARG NEXUS_USER
-ARG NEXUS_PASS
-
 RUN apt-get update \
   && apt-get install -y \
      unzip \
@@ -24,7 +21,7 @@ RUN wget https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud
   && tar xzf google-cloud-sdk-170.0.1-linux-x86_64.tar.gz
 
 # Download logback logstash
-RUN wget --http-user=${NEXUS_USER} --http-password=${NEXUS_PASS} "https://nexus.rutebanken.org/service/local/artifact/maven/redirect?r=central&g=net.logstash.logback&a=logstash-logback-encoder&v=4.7" --directory-prefix /code/
+RUN wget "http://central.maven.org/maven2/net/logstash/logback/logstash-logback-encoder/4.7/logstash-logback-encoder-4.7.jar" --directory-prefix /code/
 
 # Download pbf
 RUN wget https://storage.googleapis.com/marduk-production/osm/norway-latest.osm.pbf --directory-prefix /otpdata/norway -O norway.osm.pbf
