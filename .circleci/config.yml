@@ -33,7 +33,7 @@ jobs:
     - checkout
     - restore_cache:
         key: dep-cache-{{ checksum "pom.xml" }}
-    - run: mvn org.apache.maven.plugins:maven-dependency-plugin:3.1.0:go-offline -s .circleci/settings.xml
+    - run: mvn org.apache.maven.plugins:maven-dependency-plugin:3.1.0:go-offline -B -q -s .circleci/settings.xml
     - save_cache:
         paths:
         - ~/.m2
@@ -59,7 +59,7 @@ jobs:
     - checkout
     - restore_cache:
         key: dep-cache-{{ checksum "pom.xml" }}
-    - run: mvn org.apache.maven.plugins:maven-dependency-plugin:3.1.0:go-offline -s .circleci/settings.xml
+    - run: mvn org.apache.maven.plugins:maven-dependency-plugin:3.1.0:go-offline -B -q -s .circleci/settings.xml
     - save_cache:
         paths:
         - ~/.m2
