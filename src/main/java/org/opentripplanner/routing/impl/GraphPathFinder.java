@@ -303,36 +303,29 @@ public class GraphPathFinder {
 
 
     private RoutingRequest createReversedTransitRequest(RoutingRequest originalReq, RoutingRequest options, Vertex fromVertex,
-                                                 Vertex toVertex, long arrDepTime, RemainingWeightHeuristic remainingWeightHeuristic){
+                                                               Vertex toVertex, long arrDepTime, RemainingWeightHeuristic remainingWeightHeuristic) {
+        boolean containsEgress = !originalReq.arriveBy;
 
         RoutingRequest request = createReversedRequest(originalReq, options, fromVertex, toVertex,
-                arrDepTime, new EuclideanRemainingWeightHeuristic());
-        if((originalReq.parkAndRide || originalReq.kissAndRide || originalReq.rideAndKiss) && !originalReq.arriveBy){
-            request.parkAndRide = false;
-            request.kissAndRide = false;
-            request.rideAndKiss = false;
-            request.modes.setCar(false);
-        }
+                arrDepTime, new EuclideanRemainingWeightHeuristic(), containsEgress);
+
         request.maxWalkDistance = CLAMP_MAX_WALK;
+
         return request;
     }
 
     private RoutingRequest createReversedMainRequest(RoutingRequest originalReq, RoutingRequest options, Vertex fromVertex,
                                                         Vertex toVertex, long dateTime, RemainingWeightHeuristic remainingWeightHeuristic){
+        boolean containsEgress = originalReq.arriveBy;
+
         RoutingRequest request = createReversedRequest(originalReq, options, fromVertex,
-                toVertex, dateTime, remainingWeightHeuristic);
-        if((originalReq.parkAndRide || originalReq.kissAndRide) && originalReq.arriveBy){
-            request.parkAndRide = false;
-            request.kissAndRide = false;
-            request.modes.setCar(false);
-        } else if(originalReq.rideAndKiss && !originalReq.arriveBy) {
-            request.rideAndKiss = false;
-        }
+                toVertex, dateTime, remainingWeightHeuristic, containsEgress);
         return request;
     }
 
     private RoutingRequest createReversedRequest(RoutingRequest originalReq, RoutingRequest options, Vertex fromVertex,
-                                                 Vertex toVertex, long dateTime, RemainingWeightHeuristic remainingWeightHeuristic){
+                                                 Vertex toVertex, long dateTime, RemainingWeightHeuristic remainingWeightHeuristic,
+                                                        boolean containsEgress){
         RoutingRequest reversedOptions = originalReq.clone();
         reversedOptions.dateTime = dateTime;
         reversedOptions.setArriveBy(!originalReq.arriveBy);
@@ -341,6 +334,19 @@ public class GraphPathFinder {
         reversedOptions.rctx.remainingWeightHeuristic = remainingWeightHeuristic;
         reversedOptions.longDistance = true;
         reversedOptions.bannedTrips = options.bannedTrips;
+
+
+        if (containsEgress) {
+            // Remove car options not relevant for search without egress leg
+            reversedOptions.parkAndRide = false;
+            reversedOptions.kissAndRide = false;
+            reversedOptions.modes.setCar(reversedOptions.rideAndKiss);
+        } else {
+            // Remove car options not relevant for search without access leg
+            reversedOptions.rideAndKiss = false;
+            reversedOptions.modes.setCar(reversedOptions.parkAndRide || reversedOptions.kissAndRide);
+        }
+
         return reversedOptions;
     }
 
