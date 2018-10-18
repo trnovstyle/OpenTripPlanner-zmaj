@@ -516,7 +516,7 @@ public class StreetEdge extends Edge implements Cloneable {
                                 options.softWalkOverageRate);
             } else {
                 // else, it's a hard limit; bail
-                LOG.debug("Too much walking. Bailing.");
+                LOG.trace("Too much walking. Bailing.");
                 return null;
             }
         }
