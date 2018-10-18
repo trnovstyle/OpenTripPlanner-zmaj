@@ -327,7 +327,6 @@ public class GraphPathFinder {
             request.modes.setCar(false);
         } else if(originalReq.rideAndKiss && !originalReq.arriveBy) {
             request.rideAndKiss = false;
-            request.modes.setCar(true);
         }
         return request;
     }
