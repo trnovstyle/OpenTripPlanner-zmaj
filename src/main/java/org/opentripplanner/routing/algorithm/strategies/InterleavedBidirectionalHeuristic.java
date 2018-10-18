@@ -15,7 +15,6 @@ package org.opentripplanner.routing.algorithm.strategies;
 
 import gnu.trove.map.TObjectDoubleMap;
 import gnu.trove.map.hash.TObjectDoubleHashMap;
-import org.opentripplanner.common.geometry.PackedCoordinateSequence;
 import org.opentripplanner.common.pqueue.BinHeap;
 import org.opentripplanner.routing.core.RoutingRequest;
 import org.opentripplanner.routing.core.State;
@@ -27,13 +26,11 @@ import org.opentripplanner.routing.graph.Vertex;
 import org.opentripplanner.routing.location.StreetLocation;
 import org.opentripplanner.routing.spt.DominanceFunction;
 import org.opentripplanner.routing.spt.ShortestPathTree;
-import org.opentripplanner.routing.vertextype.SplitterVertex;
 import org.opentripplanner.routing.vertextype.StreetVertex;
 import org.opentripplanner.routing.vertextype.TransitStop;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collection;
 import java.util.Set;
 
 /**
@@ -282,7 +279,9 @@ public class InterleavedBidirectionalHeuristic implements RemainingWeightHeurist
     private TObjectDoubleMap<Vertex> streetSearch (RoutingRequest rr, boolean fromTarget, long abortTime) {
         LOG.debug("Heuristic street search around the {}.", fromTarget ? "target" : "origin");
         rr = rr.clone();
-        if (rr.maxPreTransitWalkDistance != Double.MAX_VALUE) {
+
+        boolean respectMaxPreTransitWalkDistance = respectMaxPreTransitWalkDistance(rr, fromTarget);
+        if (respectMaxPreTransitWalkDistance) {
             rr.maxWalkDistance = rr.maxPreTransitWalkDistance;
             rr.softWalkLimiting = false;
         }
@@ -319,7 +318,7 @@ public class InterleavedBidirectionalHeuristic implements RemainingWeightHeurist
                         maxWeightSeen = weight;
                     }
                 }
-                if (rr.maxPreTransitWalkDistance == Double.MAX_VALUE) {
+                if (!respectMaxPreTransitWalkDistance) {
                     if (!stopReached) {
                         stopReached = true;
                         rr.softWalkLimiting = false;
@@ -356,5 +355,20 @@ public class InterleavedBidirectionalHeuristic implements RemainingWeightHeurist
         LOG.debug("Heuristric street search hit {} vertices.", vertices.size());
         LOG.debug("Heuristric street search hit {} transit stops.", transitQueue.size());
         return vertices;
+    }
+
+    /**
+     * maxPreTransitWalkDistance should be respected unless the street search is actually searching for
+     * kissAndRide / rideAndKiss, in which case it makes no sense.
+     */
+    private boolean respectMaxPreTransitWalkDistance(RoutingRequest rr, boolean fromTarget) {
+        if (rr.maxPreTransitWalkDistance != Double.MAX_VALUE) {
+            if (fromTarget) {
+                return !(rr.modes.getCar() && rr.rideAndKiss);
+            } else {
+                return !(rr.modes.getCar() && (rr.kissAndRide || rr.parkAndRide));
+            }
+        }
+        return false;
     }
 }
