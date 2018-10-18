@@ -129,7 +129,9 @@ workflows:
         - test
         filters:
           branches:
-            only: rutebanken_develop
+            only:
+              - entur_raptor
+              - rutebanken_develop
     - deploy-docker:
         context: org-carbon
         requires:
