@@ -22,7 +22,7 @@
                   <pattern>
                       {
                       "serviceContext": {
-                          "service": "otp"
+                          "service": "otp-raptor"
                       },
                       "message": "%message\n%ex{full}",
                       "severity": "%level",
