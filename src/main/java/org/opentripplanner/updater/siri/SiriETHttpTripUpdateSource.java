@@ -50,6 +50,8 @@ public class SiriETHttpTripUpdateSource implements EstimatedTimetableSource, Jso
 
     private int timeout;
 
+    private int previewIntervalMillis = -1;
+
     @Override
     public void configure(Graph graph, JsonNode config) throws Exception {
         String url = config.path("url").asText();
@@ -68,6 +70,11 @@ public class SiriETHttpTripUpdateSource implements EstimatedTimetableSource, Jso
         if (timeoutSec > 0) {
             this.timeout = 1000*timeoutSec;
         }
+
+        int previewIntervalMinutes = config.path("previewIntervalMinutes").asInt();
+        if (previewIntervalMinutes > 0) {
+            this.previewIntervalMillis = 1000*60*previewIntervalMinutes;
+        }
     }
 
     @Override
@@ -78,7 +85,7 @@ public class SiriETHttpTripUpdateSource implements EstimatedTimetableSource, Jso
         long unmarshalling = 0;
         try {
 
-            String etServiceRequest = SiriHelper.createETServiceRequestAsXml(requestorRef);
+            String etServiceRequest = SiriHelper.createETServiceRequestAsXml(requestorRef, previewIntervalMillis);
             creating =  System.currentTimeMillis()-t1;
             t1 = System.currentTimeMillis();
 

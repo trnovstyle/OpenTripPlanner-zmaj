@@ -5,7 +5,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.org.siri.siri20.*;
 
+import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
+import javax.xml.datatype.DatatypeConfigurationException;
+import javax.xml.datatype.DatatypeFactory;
 import javax.xml.stream.XMLStreamException;
 import java.io.InputStream;
 import java.time.ZonedDateTime;
@@ -14,6 +17,16 @@ import java.util.UUID;
 public class SiriHelper {
     private static final Logger LOG =
             LoggerFactory.getLogger(SiriHelper.class);
+
+    private static DatatypeFactory datatypeFactory;
+
+    static {
+        try {
+            datatypeFactory = DatatypeFactory.newInstance();
+        } catch (DatatypeConfigurationException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
     private static Siri createSiriObject() {
         Siri request = new Siri();
@@ -38,7 +51,12 @@ public class SiriHelper {
     }
 
     public static String createETServiceRequestAsXml(String requestorRef) throws JAXBException {
-        Siri request = createETServiceRequest(requestorRef);
+        Siri request = createETServiceRequest(requestorRef, -1);
+        return SiriXml.toXml(request);
+    }
+
+    public static String createETServiceRequestAsXml(String requestorRef, int previewIntervalMillis) throws JAXBException {
+        Siri request = createETServiceRequest(requestorRef, previewIntervalMillis);
         return SiriXml.toXml(request);
     }
 
@@ -67,7 +85,7 @@ public class SiriHelper {
         return request;
     }
 
-    private static Siri createETServiceRequest(String requestorRefValue) {
+    private static Siri createETServiceRequest(String requestorRefValue, int previewIntervalMillis) {
         Siri request = createSiriObject();
 
         ServiceRequest serviceRequest = new ServiceRequest();
@@ -80,6 +98,10 @@ public class SiriHelper {
         EstimatedTimetableRequestStructure etRequest = new EstimatedTimetableRequestStructure();
         etRequest.setRequestTimestamp(ZonedDateTime.now());
         etRequest.setVersion("2.0");
+
+        if (previewIntervalMillis > 0) {
+            etRequest.setPreviewInterval(datatypeFactory.newDuration(previewIntervalMillis));
+        }
 
         MessageQualifierStructure messageIdentifier = new MessageQualifierStructure();
         messageIdentifier.setValue(UUID.randomUUID().toString());
