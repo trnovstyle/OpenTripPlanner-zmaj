@@ -363,7 +363,8 @@ public class InterleavedBidirectionalHeuristic implements RemainingWeightHeurist
      */
     private boolean respectMaxPreTransitWalkDistance(RoutingRequest rr, boolean fromTarget) {
         if (rr.maxPreTransitWalkDistance != Double.MAX_VALUE) {
-            if (fromTarget) {
+            boolean isEgress = fromTarget ^ rr.arriveBy;
+            if (isEgress) {
                 return !(rr.modes.getCar() && rr.rideAndKiss);
             } else {
                 return !(rr.modes.getCar() && (rr.kissAndRide || rr.parkAndRide));
