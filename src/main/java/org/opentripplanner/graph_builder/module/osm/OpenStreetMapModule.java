@@ -559,6 +559,7 @@ public class OpenStreetMapModule implements GraphBuilderModule {
             /* build the street segment graph from OSM ways */
             long wayIndex = 0;
             long wayCount = osmdb.getWays().size();
+            LOG.info("{} ways found", wayCount);
 
             WAY:
             for (OSMWay way : osmdb.getWays()) {
