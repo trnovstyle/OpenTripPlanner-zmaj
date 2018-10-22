@@ -23,9 +23,6 @@ RUN wget -nv https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-c
 # Download logback logstash
 RUN wget -nv "http://central.maven.org/maven2/net/logstash/logback/logstash-logback-encoder/4.7/logstash-logback-encoder-4.7.jar" --directory-prefix /code/
 
-# Download pbf
-RUN wget -nv https://storage.googleapis.com/marduk-production/osm/norway-latest.osm.pbf --directory-prefix /otpdata/norway -O norway.osm.pbf
-
 # Copy OTP jar file from target
 COPY target/otp-*-shaded.jar /code/otp-shaded.jar
 
