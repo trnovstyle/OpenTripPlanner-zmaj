@@ -27,7 +27,11 @@ import org.opentripplanner.util.model.EncodedPolylineBean;
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.List;
+import java.util.Locale;
+import java.util.TimeZone;
 
  /**
  * One leg of a trip -- that is, a temporally continuous piece of the journey that takes place on a
@@ -281,13 +285,14 @@ public class Leg {
      * Whether this leg is a transit leg or not.
      * @return Boolean true if the leg is a transit leg
      */
-    public Boolean isTransitLeg() {
-        if (mode == null) return null;
-        else if (mode.equals(TraverseMode.WALK.toString())) return false;
-        else if (mode.equals(TraverseMode.CAR.toString())) return false;
-        else if (mode.equals(TraverseMode.BICYCLE.toString())) return false;
-        else return true;
-    }
+     public Boolean isTransitLeg() {
+         if (mode == null) return null;
+         try {
+             return TraverseMode.valueOf(mode).isTransit();
+         } catch (IllegalArgumentException iae) {
+             return null;
+         }
+     }
 
     /**
      * The leg's duration in seconds
