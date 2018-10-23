@@ -11,7 +11,6 @@ public class StateMerger {
     public static StateData merge(StateData firstState, StateData nextState) {
 
         StateData merged = nextState.clone();
-
         if (firstState.everBoarded) {
             merged.tripTimes = firstState.tripTimes;
             merged.tripId = firstState.tripId;
@@ -25,6 +24,7 @@ public class StateMerger {
             merged.previousStop = firstState.previousStop;
             merged.routeSequence = firstState.routeSequence;
             merged.serviceDay = firstState.serviceDay;
+            merged.backMode = firstState.backMode;
         }
         return merged;
     }
