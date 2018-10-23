@@ -8,22 +8,24 @@ package org.opentripplanner.routing.core;
 public class StateMerger {
 
 
-    public static StateData merge(StateData transitState, StateData nonTransitState) {
+    public static StateData merge(StateData firstState, StateData nextState) {
 
-        StateData merged = nonTransitState.clone();
+        StateData merged = nextState.clone();
 
-        merged.tripTimes = transitState.tripTimes;
-        merged.tripId = transitState.tripId;
-        merged.everBoarded = transitState.everBoarded;
-        merged.numBoardings = transitState.numBoardings;
-        merged.previousTrip = transitState.previousTrip;
-        merged.lastAlightedTime = transitState.lastAlightedTime;
-        merged.lastPattern = transitState.lastPattern;
-        merged.zone = transitState.zone;
-        merged.route = transitState.route;
-        merged.previousStop = transitState.previousStop;
-        merged.routeSequence = transitState.routeSequence;
-        merged.serviceDay = transitState.serviceDay;
+        if (firstState.everBoarded) {
+            merged.tripTimes = firstState.tripTimes;
+            merged.tripId = firstState.tripId;
+            merged.everBoarded = firstState.everBoarded;
+            merged.numBoardings = firstState.numBoardings;
+            merged.previousTrip = firstState.previousTrip;
+            merged.lastAlightedTime = firstState.lastAlightedTime;
+            merged.lastPattern = firstState.lastPattern;
+            merged.zone = firstState.zone;
+            merged.route = firstState.route;
+            merged.previousStop = firstState.previousStop;
+            merged.routeSequence = firstState.routeSequence;
+            merged.serviceDay = firstState.serviceDay;
+        }
         return merged;
     }
 

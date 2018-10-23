@@ -284,13 +284,12 @@ public class GraphPathFinder {
                         Collections.reverse(concatenatedPaths);
                     }
 
-
                     // Joining two paths require compatible stateData between last state in first path and first state in last path.
                     // kissAndRide / rideAndKiss searches are typically not compatible at this stage as only one of the parts allow car at this point
                     // Copy data from first state in last path to last state in first path, but adjusting for the fact that the first path has boarded while the last path has not
-                    StateData startOfWalkStateData = walkPath.states.getFirst().stateData;
-                    newRevPath.states.getLast().stateData = StateMerger.merge(newPath.states.getLast().stateData, startOfWalkStateData);
-
+                    StateData startStateOfSecondPathData = concatenatedPaths.get(1).states.getFirst().stateData;
+                    State endStateOfFirstPath = concatenatedPaths.get(0).states.getLast();
+                    endStateOfFirstPath.stateData = StateMerger.merge(endStateOfFirstPath.stateData, startStateOfSecondPathData);
 
                     GraphPath joinedPath = joinPaths(concatenatedPaths, false);
 
