@@ -974,10 +974,6 @@ public class Timetable implements Serializable {
         ZonedDateTime departureDate = null;
         int numberOfRecordedCalls = (journey.getRecordedCalls() != null && journey.getRecordedCalls().getRecordedCalls() != null) ? journey.getRecordedCalls().getRecordedCalls().size() : 0;
 
-        if (estimatedCalls.size() + numberOfRecordedCalls > stops.size()) {
-            return null;
-        }
-
         // modify updated stop-times
         for (int i = 0; i < stops.size(); i++) {
             Stop stop = stops.get(i);

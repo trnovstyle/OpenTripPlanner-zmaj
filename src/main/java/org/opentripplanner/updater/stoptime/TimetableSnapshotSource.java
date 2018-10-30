@@ -392,15 +392,20 @@ public class TimetableSnapshotSource {
                         LOG.info("Handling {} EstimatedVehicleJourneys.", journeys.size());
                         int handledCounter = 0;
                         int skippedCounter = 0;
+                        int notMonitoredCounter = 0;
                         for (EstimatedVehicleJourney journey : journeys) {
                             boolean handled = handleModifiedTrip(graph, journey);
                             if (handled) {
                                 handledCounter++;
                             } else {
-                                skippedCounter++;
+                                if (journey.isMonitored() != null && !journey.isMonitored()) {
+                                    notMonitoredCounter++;
+                                } else {
+                                    skippedCounter++;
+                                }
                             }
                         }
-                        LOG.info("Applied {} EstimatedVehicleJourneys, skipped {}.", handledCounter, skippedCounter);
+                        LOG.info("Applied {} EstimatedVehicleJourneys, skipped {}, not monitored {}.", handledCounter, skippedCounter, notMonitoredCounter);
                     }
                 }
             }
@@ -568,7 +573,7 @@ public class TimetableSnapshotSource {
             if (pattern != null) {
                 ServiceDate serviceDate = getServiceDateForEstimatedVehicleJourney(estimatedVehicleJourney);
                 TripTimes updatedTripTimes = getCurrentTimetable(pattern, serviceDate).createUpdatedTripTimes(graph, estimatedVehicleJourney, timeZone, matchingTrip.getId());
-                if (updatedTripTimes != null && pattern.stopPattern.size == updatedTripTimes.getNumStops()) {
+                if (updatedTripTimes != null) {
                     patterns.add(pattern);
                     times.add(updatedTripTimes);
                 }
