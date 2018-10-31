@@ -528,21 +528,13 @@ public class TimetableSnapshotSource {
 
     private boolean handleModifiedTrip(Graph graph, EstimatedVehicleJourney estimatedVehicleJourney) {
 
+        //Check if EstimatedVehicleJourney is reported as NOT monitored
         if (estimatedVehicleJourney.isMonitored() != null && !estimatedVehicleJourney.isMonitored()) {
-            //EstimatedVehicleJourney is reported as NOT monitored
-            return false;
+            //Ignore the notMonitored-flag if the journey is NOT monitored because it has been cancelled
+            if (estimatedVehicleJourney.isCancellation() != null && !estimatedVehicleJourney.isCancellation()) {
+                return false;
+            }
         }
-
-        EstimatedVehicleJourney.EstimatedCalls estimatedCalls = estimatedVehicleJourney.getEstimatedCalls();
-        if (estimatedCalls == null) {
-            //No estimated calls
-            return false;
-        }
-        if (estimatedVehicleJourney.getLineRef() == null) {
-            //No linereference
-            return false;
-        }
-
 
         Set<Trip> trips = siriFuzzyTripMatcher.match(estimatedVehicleJourney);
 
