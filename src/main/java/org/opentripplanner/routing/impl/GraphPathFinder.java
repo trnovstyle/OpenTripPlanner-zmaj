@@ -148,7 +148,7 @@ public class GraphPathFinder {
             }
             double timeout = searchBeginTime + (router.timeouts[timeoutIndex] * 1000);
             if (timeoutIndex == 0 && (originalReq.kissAndRide || originalReq.rideAndKiss)) {
-                timeout += 10000; // Add 10 seconds to timeout for car pickup and car dropoff
+                timeout = 14000; // Set timeout to 14 seconds for car pickup and car dropoff
             }
             timeout -= System.currentTimeMillis(); // Convert from absolute to relative time
             timeout = Double.min(timeout, totalTimeout - System.currentTimeMillis()); // Cap timeout to total timeout value
