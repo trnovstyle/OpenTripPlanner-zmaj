@@ -50,7 +50,7 @@ jobs:
         paths:
         - ~/.m2
         key: dep-cache-{{ checksum "pom.xml" }}
-    - run: mvn org.apache.maven.plugins:maven-surefire-plugin:2.22.0:test -s /tools/m2/settings.xml
+    - run: mvn test -s /tools/m2/settings.xml
     - run:
         name: Save test results
         command: |
