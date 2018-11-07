@@ -241,7 +241,7 @@ public class TransmodelGraphQLPlanner {
             Set<TraverseMode> modes = new HashSet<>(environment.getArgument("modes"));
             boolean cableCar = modes.remove(TraverseMode.CABLE_CAR);
 
-            String modesAsString = Joiner.on(",").join(modes);
+            String modesAsString = modes.isEmpty() ? "" : Joiner.on(",").join(modes);
             if (!StringUtils.isEmpty(modesAsString)) {
                 new QualifiedModeSet(modesAsString).applyToRoutingRequest(request);
                 request.setModes(request.modes);
