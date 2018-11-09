@@ -13,6 +13,8 @@
 
 package org.opentripplanner.util;
 
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+
 import java.io.Serializable;
 import java.util.Locale;
 
@@ -24,6 +26,8 @@ import java.util.Locale;
  * @author mabu
  */
 public class NonLocalizedString implements I18NString, Serializable {
+
+    @JsonSerialize
     private String name;
 
     public NonLocalizedString(String name) {
