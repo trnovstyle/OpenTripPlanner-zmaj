@@ -88,17 +88,12 @@
     </properties>
 
     <distributionManagement>
-      <repository>
-          <id>rutebanken-repository</id>
-          <name>Rutebanken Repository</name>
-          <url>scpexe://localhost:2223/usr/share/nginx/html</url>
-      </repository>
-      <snapshotRepository>
-          <id>Nexus</id>
-          <url>https://nexus.rutebanken.org/content/repositories/snapshots</url>
-      </snapshotRepository>
+        <snapshotRepository>
+            <id>snapshots</id>
+            <name>entur2-snapshots</name>
+            <url>https://entur2.jfrog.io/entur2/libs-snapshot-local</url>
+        </snapshotRepository>
     </distributionManagement>
-
     <build>
 
         <!-- "Wagon" necessary for uploading/deploying artifacts to the Conveyal Maven repo on Amazon S3. -->
