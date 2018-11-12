@@ -71,7 +71,7 @@ public class SiriSXUpdater extends PollingGraphUpdater {
 
         this.requestorRef = config.path("requestorRef").asText();
         if (requestorRef == null || requestorRef.isEmpty()) {
-            requestorRef = UUID.randomUUID().toString();
+            requestorRef = "otp-"+UUID.randomUUID().toString();
         }
 
         this.url = url;// + uniquenessParameter;

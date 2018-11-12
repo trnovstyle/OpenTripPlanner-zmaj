@@ -62,7 +62,7 @@ public class SiriETHttpTripUpdateSource implements EstimatedTimetableSource, Jso
 
         this.requestorRef = config.path("requestorRef").asText();
         if (requestorRef == null || requestorRef.isEmpty()) {
-            requestorRef = UUID.randomUUID().toString();
+            requestorRef = "otp-"+UUID.randomUUID().toString();
         }
         this.feedId = config.path("feedId").asText();
 

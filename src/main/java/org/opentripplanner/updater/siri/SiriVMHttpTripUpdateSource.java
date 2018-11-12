@@ -58,7 +58,7 @@ public class SiriVMHttpTripUpdateSource implements VehicleMonitoringSource, Json
 
         this.requestorRef = config.path("requestorRef").asText();
         if (requestorRef == null || requestorRef.isEmpty()) {
-            requestorRef = UUID.randomUUID().toString();
+            requestorRef = "otp-"+UUID.randomUUID().toString();
         }
         this.feedId = config.path("feedId").asText();
 
