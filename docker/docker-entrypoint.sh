@@ -10,7 +10,7 @@ echo "GRAPH_FILE_TARGET_PATH: $GRAPH_FILE_TARGET_PATH"
 echo "Activating marduk blobstore service account"
 /code/google-cloud-sdk/bin/gcloud auth activate-service-account --key-file /etc/marduk/marduk-blobstore-credentials.json
 
-FILENAME=$(gsutil cat ${MARDUK_GCP_BASE}graphs/current)
+FILENAME=$(/code/google-cloud-sdk/bin/gsutil cat ${MARDUK_GCP_BASE}graphs/current)
 
 DOWNLOAD="${MARDUK_GCP_BASE}${FILENAME}"
 echo "Downloading $DOWNLOAD"
