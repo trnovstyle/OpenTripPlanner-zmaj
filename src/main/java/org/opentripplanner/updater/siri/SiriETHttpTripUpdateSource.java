@@ -116,7 +116,7 @@ public class SiriETHttpTripUpdateSource implements EstimatedTimetableSource, Jso
             LOG.info("Failed after {} ms", (System.currentTimeMillis()-t1));
             LOG.warn("Failed to parse SIRI-ET feed from " + url + ":", e);
         } finally {
-            LOG.info("Updating ET: Create req: {}, Fetching data: {}, Unmarshalling: {}", creating, fetching, unmarshalling);
+            LOG.info("Updating ET [{}]: Create req: {}, Fetching data: {}, Unmarshalling: {}", requestorRef, creating, fetching, unmarshalling);
         }
         return null;
     }

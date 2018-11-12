@@ -162,7 +162,7 @@ public class SiriSXUpdater extends PollingGraphUpdater {
             LOG.info("Failed after {} ms", (System.currentTimeMillis()-t1));
             LOG.error("Error reading SIRI feed from " + url, e);
         } finally {
-            LOG.info("Updating SX: Create req: {}, Fetching data: {}, Unmarshalling: {}", creating, fetching, unmarshalling);
+            LOG.info("Updating SX [{}]: Create req: {}, Fetching data: {}, Unmarshalling: {}", requestorRef, creating, fetching, unmarshalling);
         }
         return null;
     }
