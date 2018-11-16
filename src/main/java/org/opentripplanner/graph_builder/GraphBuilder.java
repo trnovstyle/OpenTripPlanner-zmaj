@@ -38,6 +38,7 @@ import org.opentripplanner.openstreetmap.services.OpenStreetMapProvider;
 import org.opentripplanner.reflect.ReflectionLibrary;
 import org.opentripplanner.routing.core.RoutingRequest;
 import org.opentripplanner.routing.graph.Graph;
+import org.opentripplanner.routing.graph.Graph.LoadLevel;
 import org.opentripplanner.routing.impl.DefaultStreetVertexIndexFactory;
 import org.opentripplanner.standalone.CommandLineParameters;
 import org.opentripplanner.standalone.GraphBuilderParameters;
@@ -100,7 +101,7 @@ public class GraphBuilder implements Runnable {
     public void setBaseGraph(String baseGraph, File dir) {
         this._baseGraph = baseGraph;
         try {
-            graph = Graph.load(new File(baseGraph));
+            graph = Graph.load(new File(dir, baseGraph), LoadLevel.FULL);
         } catch (Exception e) {
             throw new RuntimeException("error loading base graph: ", e);
         }
@@ -113,11 +114,11 @@ public class GraphBuilder implements Runnable {
     public void setModes(List<RoutingRequest> modeList) {
         _modeList = modeList;
     }
-
+    
     public void setPath (String path) {
         graphFile = new File(path.concat("/Graph.obj"));
     }
-
+    
     public void setPath (File path, String filename) {
         graphFile = new File(path, filename);
     }
