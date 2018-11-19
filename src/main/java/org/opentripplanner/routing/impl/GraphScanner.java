@@ -24,6 +24,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import org.opentripplanner.routing.error.GraphNotFoundException;
+import org.opentripplanner.routing.graph.Graph.LoadLevel;
 import org.opentripplanner.routing.services.GraphService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,6 +47,9 @@ public class GraphScanner {
 
     /** The default router, none by default */
     public String defaultRouterId = null;
+
+    /** Load level */
+    public LoadLevel loadLevel = LoadLevel.FULL;
 
     /** The GraphService where register graphs to */
     private GraphService graphService;
@@ -78,7 +82,7 @@ public class GraphScanner {
             LOG.info("Graph files will be sought in paths relative to {}", basePath);
             for (String routerId : routerIds) {
                 InputStreamGraphSource graphSource = InputStreamGraphSource.newFileGraphSource(
-                        routerId, getBasePath(routerId));
+                        routerId, getBasePath(routerId), loadLevel);
                 graphService.registerGraph(routerId, graphSource);
             }
         } else {
@@ -128,7 +132,7 @@ public class GraphScanner {
                     Arrays.toString(graphToRegister.toArray()));
             for (String routerId : graphToRegister) {
                 InputStreamGraphSource graphSource = InputStreamGraphSource.newFileGraphSource(
-                        routerId, getBasePath(routerId));
+                        routerId, getBasePath(routerId), loadLevel);
                 // Can be null here if the file has been removed in the meantime.
                 graphService.registerGraph(routerId, graphSource);
             }
