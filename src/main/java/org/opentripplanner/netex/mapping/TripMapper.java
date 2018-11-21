@@ -98,8 +98,8 @@ public class TripMapper {
             mapFlexibleServicePropertiesProperties(serviceJourney.getFlexibleServiceProperties(), trip);
         }
 
-        if (serviceJourney.getRouteRef() != null) {
-            Route route = netexDao.routeById.lookup(serviceJourney.getRouteRef().getRef());
+        if (journeyPattern.getRouteRef() != null) {
+            Route route = netexDao.routeById.lookup(journeyPattern.getRouteRef().getRef());
             if (route.getDirectionType() == null) {
                 trip.setDirectionId("-1");
             } else {
