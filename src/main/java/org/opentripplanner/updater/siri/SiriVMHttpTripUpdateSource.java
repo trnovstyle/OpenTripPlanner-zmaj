@@ -58,7 +58,7 @@ public class SiriVMHttpTripUpdateSource implements VehicleMonitoringSource, Json
 
         this.requestorRef = config.path("requestorRef").asText();
         if (requestorRef == null || requestorRef.isEmpty()) {
-            requestorRef = UUID.randomUUID().toString();
+            requestorRef = "otp-"+UUID.randomUUID().toString();
         }
         this.feedId = config.path("feedId").asText();
 
@@ -103,7 +103,7 @@ public class SiriVMHttpTripUpdateSource implements VehicleMonitoringSource, Json
             LOG.info("Failed after {} ms", (System.currentTimeMillis()-t1));
             LOG.warn("Failed to parse SIRI-VM feed from " + url + ":", e);
         } finally {
-            LOG.info("Updating VM: Create req: {}, Fetching data: {}, Unmarshalling: {}", creating, fetching, unmarshalling);
+            LOG.info("Updating VM [{}]: Create req: {}, Fetching data: {}, Unmarshalling: {}", requestorRef, creating, fetching, unmarshalling);
         }
         return null;
     }

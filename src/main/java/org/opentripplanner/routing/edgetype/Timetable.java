@@ -760,15 +760,12 @@ public class Timetable implements Serializable {
                         newTimes.setPickupType(callCounter, pickupType);
 
                         int arrivalTime = newTimes.getArrivalTime(callCounter);
-                        int realtimeArrivalTime = arrivalTime;
+                        int realtimeArrivalTime = -1;
                         if (estimatedCall.getExpectedArrivalTime() != null) {
                             realtimeArrivalTime = calculateSecondsSinceMidnight(departureDate, estimatedCall.getExpectedArrivalTime());
                         } else if (estimatedCall.getAimedArrivalTime() != null) {
                             realtimeArrivalTime = calculateSecondsSinceMidnight(departureDate, estimatedCall.getAimedArrivalTime());
                         }
-                        int arrivalDelay = realtimeArrivalTime - arrivalTime;
-                        newTimes.updateArrivalDelay(callCounter, arrivalDelay);
-                        lastArrivalDelay = arrivalDelay;
 
                         int departureTime = newTimes.getDepartureTime(callCounter);
                         int realtimeDepartureTime = departureTime;
@@ -777,13 +774,22 @@ public class Timetable implements Serializable {
                         } else if (estimatedCall.getAimedDepartureTime() != null) {
                             realtimeDepartureTime = calculateSecondsSinceMidnight(departureDate, estimatedCall.getAimedDepartureTime());
                         }
+
+                        if (realtimeArrivalTime == -1) {
+                            realtimeArrivalTime = realtimeDepartureTime;
+                        }
                         if (realtimeDepartureTime < realtimeArrivalTime) {
                             realtimeDepartureTime = realtimeArrivalTime;
                         }
-                        int departureDelay = realtimeDepartureTime - departureTime;
 
+                        int arrivalDelay = realtimeArrivalTime - arrivalTime;
+                        newTimes.updateArrivalDelay(callCounter, arrivalDelay);
+                        lastArrivalDelay = arrivalDelay;
+
+                        int departureDelay = realtimeDepartureTime - departureTime;
                         newTimes.updateDepartureDelay(callCounter, departureDelay);
                         lastDepartureDelay = departureDelay;
+
                         departureFromPreviousStop = newTimes.getDepartureTime(callCounter);
 
                         alreadyVisited.add(estimatedCall);

@@ -62,7 +62,7 @@ public class SiriETHttpTripUpdateSource implements EstimatedTimetableSource, Jso
 
         this.requestorRef = config.path("requestorRef").asText();
         if (requestorRef == null || requestorRef.isEmpty()) {
-            requestorRef = UUID.randomUUID().toString();
+            requestorRef = "otp-"+UUID.randomUUID().toString();
         }
         this.feedId = config.path("feedId").asText();
 
@@ -116,7 +116,7 @@ public class SiriETHttpTripUpdateSource implements EstimatedTimetableSource, Jso
             LOG.info("Failed after {} ms", (System.currentTimeMillis()-t1));
             LOG.warn("Failed to parse SIRI-ET feed from " + url + ":", e);
         } finally {
-            LOG.info("Updating ET: Create req: {}, Fetching data: {}, Unmarshalling: {}", creating, fetching, unmarshalling);
+            LOG.info("Updating ET [{}]: Create req: {}, Fetching data: {}, Unmarshalling: {}", requestorRef, creating, fetching, unmarshalling);
         }
         return null;
     }
