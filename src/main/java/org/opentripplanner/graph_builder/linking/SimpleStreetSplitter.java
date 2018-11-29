@@ -58,6 +58,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 /**
@@ -82,6 +83,9 @@ public class SimpleStreetSplitter {
     private static final int MAX_SEARCH_RADIUS_METERS = 500;
 
     private static final int MIN_SNAP_DISTANCE_WARNING = 50;
+
+    private static final AtomicInteger TEMP_VERTEX_ID_GENERATOR = new AtomicInteger(0);
+
 
     private Boolean addExtraEdgesToAreas = false;
 
@@ -402,7 +406,7 @@ public class SimpleStreetSplitter {
         // every edge can be split exactly once, so this is a valid label
         SplitterVertex v;
         if (temporarySplit) {
-            v = new TemporarySplitterVertex("split_" + Vertex.nextVertexIndex.addAndGet(1), splitPoint.x, splitPoint.y,
+            v = new TemporarySplitterVertex(tempSplitterVertexLabel(), splitPoint.x, splitPoint.y,
                 edge, endVertex);
             if (edge.isWheelchairAccessible()) {
                 ((TemporarySplitterVertex) v).setWheelchairAccessible(true);
@@ -410,7 +414,7 @@ public class SimpleStreetSplitter {
                 ((TemporarySplitterVertex) v).setWheelchairAccessible(false);
             }
         } else {
-            v = new SplitterVertex(graph, "split_" + Vertex.nextVertexIndex.addAndGet(1),
+            v = new SplitterVertex(graph, tempSplitterVertexLabel(),
                     splitPoint.x, splitPoint.y, edge);
         }
 
@@ -621,5 +625,18 @@ public class SimpleStreetSplitter {
 
     public void setAddExtraEdgesToAreas(Boolean addExtraEdgesToAreas) {
         this.addExtraEdgesToAreas = addExtraEdgesToAreas;
+    }
+
+    /**
+     * We generate temporary unique labels for splitter vertexes,
+     * because it is convenient for debugging and so on.
+     */
+    private String tempSplitterVertexLabel() {
+        int value = TEMP_VERTEX_ID_GENERATOR.getAndAdd(1);
+        // Reset id to zero for a very big number
+        if(value == 2_000_000_000) {
+            TEMP_VERTEX_ID_GENERATOR.set(0);
+        }
+        return "split_" + value;
     }
 }

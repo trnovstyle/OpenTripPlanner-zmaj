@@ -19,7 +19,6 @@ import com.google.transit.realtime.GtfsRealtime.TripUpdate;
 import com.google.transit.realtime.GtfsRealtime.TripUpdate.StopTimeUpdate;
 import org.opentripplanner.model.*;
 import org.opentripplanner.model.calendar.ServiceDate;
-import org.opentripplanner.routing.core.ServiceDay;
 import org.opentripplanner.routing.edgetype.Timetable;
 import org.opentripplanner.routing.edgetype.TimetableSnapshot;
 import org.opentripplanner.routing.edgetype.TripPattern;
@@ -37,6 +36,9 @@ import java.text.ParseException;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
+
+import static org.opentripplanner.model.StopPattern.PICKDROP_NONE;
+import static org.opentripplanner.model.StopPattern.PICKDROP_SCHEDULED;
 
 /**
  * This class should be used to create snapshots of lookup tables of realtime data. This is
@@ -392,20 +394,36 @@ public class TimetableSnapshotSource {
                         LOG.info("Handling {} EstimatedVehicleJourneys.", journeys.size());
                         int handledCounter = 0;
                         int skippedCounter = 0;
+                        int addedCounter = 0;
                         int notMonitoredCounter = 0;
                         for (EstimatedVehicleJourney journey : journeys) {
-                            boolean handled = handleModifiedTrip(graph, journey);
-                            if (handled) {
-                                handledCounter++;
-                            } else {
-                                if (journey.isMonitored() != null && !journey.isMonitored()) {
-                                    notMonitoredCounter++;
-                                } else {
+                            if (journey.isExtraJourney() != null && journey.isExtraJourney()) {
+                                // Added trip
+                                try {
+                                    if (handleAddedTrip(graph, journey)) {
+                                        addedCounter++;
+                                    } else {
+                                        skippedCounter++;
+                                    }
+                                } catch (Throwable t) {
+                                    // Since this is work in progress - catch everything to continue processing updates
+                                    LOG.warn("Adding ExtraJourney with id='{}' failed with '{}'.", journey.getEstimatedVehicleJourneyCode(), t.getMessage());
                                     skippedCounter++;
+                                }
+                            } else {
+                                // Updated trip
+                                if (handleModifiedTrip(graph, journey)) {
+                                    handledCounter++;
+                                } else {
+                                    if (journey.isMonitored() != null && !journey.isMonitored()) {
+                                        notMonitoredCounter++;
+                                    } else {
+                                        skippedCounter++;
+                                    }
                                 }
                             }
                         }
-                        LOG.info("Applied {} EstimatedVehicleJourneys, skipped {}, not monitored {}.", handledCounter, skippedCounter, notMonitoredCounter);
+                        LOG.info("Processed EstimatedVehicleJourneys: updated {}, added {}, skipped {}, not monitored {}.", handledCounter, addedCounter, skippedCounter, notMonitoredCounter);
                     }
                 }
             }
@@ -524,6 +542,213 @@ public class TimetableSnapshotSource {
             return getTimetableSnapshot().resolve(tripPattern, serviceDate);
         }
         return tripPattern.scheduledTimetable;
+    }
+
+    private boolean handleAddedTrip(Graph graph, EstimatedVehicleJourney estimatedVehicleJourney) {
+
+        // Verifying values required in SIRI Profile
+
+        // Added ServiceJourneyId
+        String newServiceJourneyRef = estimatedVehicleJourney.getEstimatedVehicleJourneyCode();
+        Preconditions.checkNotNull(newServiceJourneyRef, "EstimatedVehicleJourneyCode is required");
+
+        // Replaced/duplicated ServiceJourneyId
+        VehicleJourneyRef existingServiceJourneyRef = estimatedVehicleJourney.getVehicleJourneyRef();
+        Preconditions.checkNotNull(existingServiceJourneyRef, "VehicleJourneyRef is required");
+
+        // LineRef of added trip
+        Preconditions.checkNotNull(estimatedVehicleJourney.getLineRef(), "LineRef is required");
+        String lineRef = estimatedVehicleJourney.getLineRef().getValue();
+
+        //OperatorRef of added trip
+        Preconditions.checkNotNull(estimatedVehicleJourney.getOperatorRef(), "OperatorRef is required");
+        String operatorRef = estimatedVehicleJourney.getOperatorRef().getValue();
+
+        //Required in SIRI, but currently not in use by OTP
+//        Preconditions.checkNotNull(estimatedVehicleJourney.getRouteRef(), "RouteRef is required");
+//        Preconditions.checkNotNull(estimatedVehicleJourney.getGroupOfLinesRef(), "GroupOfLinesRef is required");
+//        Preconditions.checkNotNull(estimatedVehicleJourney.getExternalLineRef(), "ExternalLineRef is required");
+
+        //Required in SIRI, but currently not in use by OTP
+//        String routeRef = estimatedVehicleJourney.getRouteRef().getValue();
+//        String groupOfLines = estimatedVehicleJourney.getGroupOfLinesRef().getValue();
+//        String externalLineRef = estimatedVehicleJourney.getExternalLineRef().getValue();
+
+        Operator operator = graphIndex.operatorForId.get(new AgencyAndId(SIRI_FEED_ID, operatorRef));
+        Preconditions.checkNotNull(operator, "Operator + " + operatorRef + " is unknown");
+
+        Trip replacedTrip = graph.index.tripForId.get(new AgencyAndId(SIRI_FEED_ID, existingServiceJourneyRef.getValue()));
+
+        if (replacedTrip == null) {
+            // TODO: Handle completely new trip
+            return false;
+        }
+
+        // Existing trip has an extra journey
+        Trip trip = new Trip(replacedTrip);
+        Route existingRoute = trip.getRoute();
+
+        Route route = new Route();
+        route.setAgency(existingRoute.getAgency());
+
+        trip.setId(new AgencyAndId(SIRI_FEED_ID, newServiceJourneyRef));
+
+        route.setId(new AgencyAndId(SIRI_FEED_ID, lineRef));
+        route.setOperator(operator);
+
+        // TODO: PublishedLineName not defined in SIRI-profile
+        if (estimatedVehicleJourney.getPublishedLineNames() != null && !estimatedVehicleJourney.getPublishedLineNames().isEmpty()) {
+            route.setShortName("" + estimatedVehicleJourney.getPublishedLineNames().get(0).getValue());
+        }
+        route.setType(getRouteType(estimatedVehicleJourney.getVehicleModes()));
+
+        route.setTransportSubmode(null);
+
+        trip.setRoute(route);
+        trip.setTransportSubmode(null); // SIRI only specifies main mode, subMode is set to null
+        trip.setTripOperator(operator);
+        trip.setShapeId(null);  // Replacement-trip has different shape
+
+        // TODO: Populate or reset these?
+//        trip.setTripShortName(null);
+//        trip.setTripPrivateCode(null);
+//        trip.setTripHeadsign(null);
+//        trip.setTripPublicCode(null);
+//        trip.setBlockId(null);
+//        trip.setRouteShortName(null);
+//        trip.setServiceId(null);
+//
+//        trip.setTransportSubmode(null);
+//        trip.setKeyValues(null);
+
+        List<Stop> addedStops = new ArrayList<>();
+        List<StopTime> aimedStopTimes = new ArrayList<>();
+
+        List<EstimatedCall> estimatedCalls = estimatedVehicleJourney.getEstimatedCalls().getEstimatedCalls();
+        for (int i = 0; i < estimatedCalls.size(); i++) {
+            EstimatedCall estimatedCall = estimatedCalls.get(i);
+
+            Stop stop = getStopForStopId(SIRI_FEED_ID,estimatedCall.getStopPointRef().getValue());
+
+            StopTime stopTime = new StopTime();
+            stopTime.setStop(stop);
+            stopTime.setStopSequence(i);
+            stopTime.setTrip(trip);
+
+            ZonedDateTime aimedArrivalTime = estimatedCall.getAimedArrivalTime();
+            ZonedDateTime aimedDepartureTime = estimatedCall.getAimedDepartureTime();
+
+            if (aimedArrivalTime != null) {
+                stopTime.setArrivalTime(calculateSecondsSinceMidnight(aimedArrivalTime));
+            }
+            if (aimedDepartureTime != null) {
+                stopTime.setDepartureTime(calculateSecondsSinceMidnight(aimedDepartureTime));
+            }
+
+            if (estimatedCall.getArrivalBoardingActivity() == ArrivalBoardingActivityEnumeration.ALIGHTING) {
+                stopTime.setDropOffType(PICKDROP_SCHEDULED);
+            } else {
+                stopTime.setDropOffType(PICKDROP_NONE);
+            }
+
+            if (estimatedCall.getDepartureBoardingActivity() == DepartureBoardingActivityEnumeration.BOARDING) {
+                stopTime.setPickupType(PICKDROP_SCHEDULED);
+            } else {
+                stopTime.setPickupType(PICKDROP_NONE);
+            }
+
+            addedStops.add(stop);
+            aimedStopTimes.add(stopTime);
+        }
+
+        StopPattern stopPattern = new StopPattern(aimedStopTimes);
+        TripPattern pattern = new TripPattern(trip.getRoute(), stopPattern);
+
+        TripTimes tripTimes = new TripTimes(trip, aimedStopTimes, graph.deduplicator);
+
+        // If added trip is updated with realtime - loop through and add delays
+        for (int i = 0; i < estimatedCalls.size(); i++) {
+            EstimatedCall estimatedCall = estimatedCalls.get(i);
+            ZonedDateTime expectedArrival = estimatedCall.getExpectedArrivalTime();
+            ZonedDateTime expectedDeparture = estimatedCall.getExpectedDepartureTime();
+
+            int aimedArrivalTime = aimedStopTimes.get(i).getArrivalTime();
+            int aimedDepartureTime = aimedStopTimes.get(i).getDepartureTime();
+
+            if (expectedArrival != null) {
+                int expectedArrivalTime = calculateSecondsSinceMidnight(expectedArrival);
+                tripTimes.updateArrivalDelay(i, expectedArrivalTime - aimedArrivalTime);
+            }
+            if (expectedDeparture != null) {
+                int expectedDepartureTime = calculateSecondsSinceMidnight(expectedDeparture);
+                tripTimes.updateDepartureDelay(i, expectedDepartureTime - aimedDepartureTime);
+            }
+
+            if (estimatedCall.isCancellation() != null) {
+                tripTimes.setCancelledStop(i,  estimatedCall.isCancellation());
+            }
+
+            if (i == 0) {
+                // Fake arrival on first stop
+                tripTimes.updateArrivalTime(i,tripTimes.getDepartureTime(i));
+            }
+            if (i == (estimatedCalls.size() - 1)) {
+                // Fake departure from last stop
+                tripTimes.updateDepartureTime(i,tripTimes.getArrivalTime(i));
+            }
+        }
+
+        if (!tripTimes.timesIncreasing()) {
+            LOG.info("Non-increasing triptimes");
+            return false;
+        }
+
+        // Adding trip to index necessary to include values in graphql-queries
+        // TODO: should more data be added to index?
+        graph.index.tripForId.put(trip.getId(), trip);
+        graph.index.patternForTrip.put(trip, pattern);
+        graph.index.routeForId.put(route.getId(), route);
+
+        if (estimatedVehicleJourney.isCancellation() != null && estimatedVehicleJourney.isCancellation()) {
+            tripTimes.setRealTimeState(RealTimeState.CANCELED);
+        } else {
+            tripTimes.setRealTimeState(RealTimeState.ADDED);
+        }
+
+        //TODO: Generate new ServiceId/ServiceCode? - this causes original "activeDates" to be applied to added journey
+        tripTimes.serviceCode = graph.serviceCodes.get(trip.getServiceId());
+
+        pattern.add(tripTimes);
+
+        ServiceDate serviceDate = getServiceDateForEstimatedVehicleJourney(estimatedVehicleJourney);
+
+        return addTripToGraphAndBuffer(SIRI_FEED_ID, graph, trip, aimedStopTimes, addedStops, tripTimes, serviceDate);
+    }
+
+    /*
+     * Resolves TransportMode from SIRI VehicleMode
+     */
+    private int getRouteType(List<VehicleModesEnumeration> vehicleModes) {
+        if (vehicleModes != null && !vehicleModes.isEmpty()) {
+            VehicleModesEnumeration vehicleModesEnumeration = vehicleModes.get(0);
+            switch (vehicleModesEnumeration) {
+                case RAIL:
+                    return 100;
+                case COACH:
+                    return 200;
+                case BUS:
+                    return 700;
+                case METRO:
+                    return 701;
+                case TRAM:
+                    return 900;
+                case FERRY:
+                    return 1000;
+                case AIR:
+                    return 1100;
+            }
+        }
+        return 700;
     }
 
     private boolean handleModifiedTrip(Graph graph, EstimatedVehicleJourney estimatedVehicleJourney) {

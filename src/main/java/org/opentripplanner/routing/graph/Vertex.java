@@ -47,7 +47,7 @@ public abstract class Vertex implements Serializable, Cloneable {
 
     // Some tests count the number of vertices by looking at the label -> vertex map, which requires unique labels
     // This number is used only for making unique labels for this reason.
-    public static final AtomicInteger nextVertexIndex = new AtomicInteger();
+    //public static final AtomicInteger nextVertexIndex = new AtomicInteger();
 
     /* Short debugging name */
     private final String label;
@@ -93,6 +93,17 @@ public abstract class Vertex implements Serializable, Cloneable {
         }
         sb.append(">");
         return sb.toString();
+    }
+
+    // Stupid method for deserialization, initialize transient fields.
+    // Stopgap until old serialization methods are completely replaced.
+    public void initEdgeListsIfNeeded () {
+        if (this.outgoing == null) {
+            this.outgoing = new Edge[0];
+        }
+        if (this.incoming == null) {
+            this.incoming = new Edge[0];
+        }
     }
 
     /* EDGE UTILITY METHODS (use arrays to eliminate copy-on-write set objects) */
