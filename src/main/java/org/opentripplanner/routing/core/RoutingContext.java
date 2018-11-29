@@ -13,7 +13,6 @@
 
 package org.opentripplanner.routing.core;
 
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 import com.vividsolutions.jts.geom.LineString;
 import org.opentripplanner.api.resource.DebugOutput;
@@ -25,7 +24,6 @@ import org.opentripplanner.model.Stop;
 import org.opentripplanner.model.calendar.ServiceDate;
 import org.opentripplanner.routing.algorithm.strategies.EuclideanRemainingWeightHeuristic;
 import org.opentripplanner.routing.algorithm.strategies.RemainingWeightHeuristic;
-import org.opentripplanner.routing.algorithm.strategies.TrivialRemainingWeightHeuristic;
 import org.opentripplanner.routing.edgetype.StreetEdge;
 import org.opentripplanner.routing.edgetype.TemporaryPartialStreetEdge;
 import org.opentripplanner.routing.edgetype.TimetableSnapshot;
@@ -52,10 +50,10 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.TimeZone;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * A RoutingContext holds information needed to carry out a search for a particular TraverseOptions, on a specific graph.
@@ -152,14 +150,25 @@ public class RoutingContext implements Cloneable {
 
     /**
      * Returns the StreetEdges that overlap between two vertices' edge sets.
+     * It does not look at the TemporaryPartialStreetEdges, but the real parents
+     * of these edges.
      */
-    private Set<StreetEdge> overlappingStreetEdges(Vertex u, Vertex v) {
-        Set<Edge> vEdges = Sets.newHashSet(Iterables.concat(v.getIncoming(), v.getOutgoing()));
-        Set<Edge> uEdges = Sets.newHashSet(Iterables.concat(u.getIncoming(), u.getOutgoing()));
-        return Sets.intersection(uEdges, vEdges).stream()
-                .filter(Objects::nonNull)
-                .filter(e -> e instanceof StreetEdge)
-                .map(e -> (StreetEdge)e)
+    private Set<StreetEdge> overlappingParentStreetEdges(TemporaryStreetLocation u, TemporaryStreetLocation v) {
+        // Fetch the parent edges so we aren't stuck with temporary edges.
+        Set<StreetEdge> vEdges = getConnectedParentEdges(v);
+        Set<StreetEdge> uEdges = getConnectedParentEdges(u);
+        return Sets.intersection(uEdges, vEdges);
+    }
+
+    /**
+     * Find all parent edges ({@link TemporaryPartialStreetEdge#getParentEdge()}) for
+     * {@link TemporaryStreetLocation#getIncoming()} and
+     * {@link TemporaryStreetLocation#getIncoming()} edges. Edges of other types are ignored.
+     */
+    private static Set<StreetEdge> getConnectedParentEdges(TemporaryStreetLocation loc) {
+        return Stream.concat(loc.getIncoming().stream(), loc.getOutgoing().stream())
+                .filter(it -> it instanceof TemporaryPartialStreetEdge)
+                .map(it -> ((TemporaryPartialStreetEdge)it).getParentEdge())
                 .collect(Collectors.toSet());
     }
 
@@ -261,7 +270,7 @@ public class RoutingContext implements Cloneable {
         if (fromVertex instanceof TemporaryStreetLocation && toVertex instanceof TemporaryStreetLocation) {
             TemporaryStreetLocation fromStreetVertex = (TemporaryStreetLocation) fromVertex;
             TemporaryStreetLocation toStreetVertex = (TemporaryStreetLocation) toVertex;
-            Set<StreetEdge> overlap = overlappingStreetEdges(fromStreetVertex, toStreetVertex);
+            Set<StreetEdge> overlap = overlappingParentStreetEdges(fromStreetVertex, toStreetVertex);
             for (StreetEdge pse : overlap) {
                 makePartialEdgeAlong(pse, fromStreetVertex, toStreetVertex);
             }
