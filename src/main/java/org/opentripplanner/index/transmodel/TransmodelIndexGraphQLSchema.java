@@ -2692,7 +2692,7 @@ public class TransmodelIndexGraphQLSchema {
                             if (environment.getArgument("name") == null) {
                                 stream = index.stopForId.values().stream();
                             } else {
-                                stream = index.getLuceneIndex().query(environment.getArgument("name"), true, true, false, false)
+                                stream = index.getLuceneIndex().query(environment.getArgument("name"), true, true, false)
                                         .stream()
                                         .map(result -> index.stopForId.get(mappingUtil.fromIdString(result.id)));
                             }

@@ -21,7 +21,6 @@ import org.opentripplanner.index.model.TripTimeShort;
 import org.opentripplanner.index.util.TripTimeShortHelper;
 import org.opentripplanner.model.*;
 import org.opentripplanner.model.calendar.ServiceDate;
-import org.opentripplanner.profile.StopCluster;
 import org.opentripplanner.routing.alertpatch.Alert;
 import org.opentripplanner.routing.alertpatch.AlertPatch;
 import org.opentripplanner.routing.bike_park.BikePark;
@@ -171,8 +170,6 @@ public class IndexGraphQLSchema {
 
     public GraphQLOutputType coordinateType = new GraphQLTypeReference("Coordinates");
 
-    public GraphQLOutputType clusterType = new GraphQLTypeReference("Cluster");
-
     public GraphQLOutputType patternType = new GraphQLTypeReference("Pattern");
 
     public GraphQLOutputType noticeType = new GraphQLTypeReference("Notice");
@@ -209,9 +206,6 @@ public class IndexGraphQLSchema {
         @Override
         public GraphQLObjectType getType(TypeResolutionEnvironment typeResolutionEnvironment) {
             Object o = typeResolutionEnvironment.getObject();
-            if (o instanceof StopCluster) {
-                return (GraphQLObjectType) clusterType;
-            }
             if (o instanceof GraphIndex.StopAndDistance) {
                 return (GraphQLObjectType) stopAtDistanceType;
             }
@@ -655,7 +649,6 @@ public class IndexGraphQLSchema {
             .build();
 
         fuzzyTripMatcher = new GtfsRealtimeFuzzyTripMatcher(index);
-        index.clusterStopsAsNeeded();
 
         noticeType = GraphQLObjectType.newObject()
                 .name("Notice")
@@ -1000,42 +993,6 @@ public class IndexGraphQLSchema {
                 .build())
             .build();
 
-        clusterType = GraphQLObjectType.newObject()
-            .name("Cluster")
-            .withInterface(nodeInterface)
-            .field(GraphQLFieldDefinition.newFieldDefinition()
-                .name("id")
-                .type(new GraphQLNonNull(Scalars.GraphQLID))
-                .dataFetcher(environment -> relay
-                    .toGlobalId(clusterType.getName(), ((StopCluster) environment.getSource()).id))
-                .build())
-            .field(GraphQLFieldDefinition.newFieldDefinition()
-                .name("gtfsId")
-                .type(new GraphQLNonNull(Scalars.GraphQLString))
-                .dataFetcher(environment -> ((StopCluster) environment.getSource()).id)
-                .build())
-            .field(GraphQLFieldDefinition.newFieldDefinition()
-                .name("name")
-                .type(new GraphQLNonNull(Scalars.GraphQLString))
-                .dataFetcher(environment -> ((StopCluster) environment.getSource()).name)
-                .build())
-            .field(GraphQLFieldDefinition.newFieldDefinition()
-                .name("lat")
-                .type(new GraphQLNonNull(Scalars.GraphQLFloat))
-                .dataFetcher(environment -> (((StopCluster) environment.getSource()).lat))
-                .build())
-            .field(GraphQLFieldDefinition.newFieldDefinition()
-                .name("lon")
-                .type(new GraphQLNonNull(Scalars.GraphQLFloat))
-                .dataFetcher(environment -> (((StopCluster) environment.getSource()).lon))
-                .build())
-            .field(GraphQLFieldDefinition.newFieldDefinition()
-                .name("stops")
-                .type(new GraphQLList(new GraphQLNonNull(stopType)))
-                .dataFetcher(environment -> ((StopCluster) environment.getSource()).children)
-                .build())
-            .build();
-
         stopType = GraphQLObjectType.newObject()
             .name("Stop")
             .withInterface(nodeInterface)
@@ -1149,11 +1106,6 @@ public class IndexGraphQLSchema {
             .field(GraphQLFieldDefinition.newFieldDefinition()
                 .name("platformCode")
                 .type(Scalars.GraphQLString)
-                .build())
-            .field(GraphQLFieldDefinition.newFieldDefinition()
-                .name("cluster")
-                .type(clusterType)
-                .dataFetcher(environment -> index.stopClusterForStop.get(environment.getSource()))
                 .build())
             .field(GraphQLFieldDefinition.newFieldDefinition()
                 .name("stops")
@@ -2131,9 +2083,6 @@ public class IndexGraphQLSchema {
                 Relay.ResolvedGlobalId globalId = relay.fromGlobalId(idString);
                 String type = globalId.getType();
                 String id = globalId.getId();
-                if (type.equals(clusterType.getName())) {
-                    return index.stopClusterForId.get(id);
-                }
                 if (type.equals(stopAtDistanceType.getName())) {
                     String[] parts = id.split(";", 2);
                     return new GraphIndex.StopAndDistance(
@@ -2272,7 +2221,7 @@ public class IndexGraphQLSchema {
                         stream = index.stopForId.values().stream();
                     }
                     else {
-                        stream = index.getLuceneIndex().query(environment.getArgument("name"), true, true, false, false)
+                        stream = index.getLuceneIndex().query(environment.getArgument("name"), true, true, false)
                             .stream()
                             .map(result -> index.stopForId.get(GtfsLibrary.convertIdFromString(result.id)));
                     }
@@ -2633,23 +2582,6 @@ public class IndexGraphQLSchema {
                     .type(new GraphQLNonNull(Scalars.GraphQLString))
                     .build())
                 .dataFetcher(environment -> index.patternForId.get(environment.getArgument("id")))
-                .build())
-            .field(GraphQLFieldDefinition.newFieldDefinition()
-                .name("clusters")
-                .description("Get all clusters for the specified graph")
-                .type(new GraphQLList(clusterType))
-                .dataFetcher(environment -> new ArrayList<>(index.stopClusterForId.values()))
-                .build())
-            .field(GraphQLFieldDefinition.newFieldDefinition()
-                .name("cluster")
-                .description("Get a single cluster based on its id")
-                .type(clusterType)
-                .argument(GraphQLArgument.newArgument()
-                    .name("id")
-                    .type(new GraphQLNonNull(Scalars.GraphQLString))
-                    .build())
-                .dataFetcher(
-                    environment -> index.stopClusterForId.get(environment.getArgument("id")))
                 .build())
             .field(GraphQLFieldDefinition.newFieldDefinition()
                 .name("alerts")

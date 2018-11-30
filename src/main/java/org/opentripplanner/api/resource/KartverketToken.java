@@ -38,7 +38,7 @@ import java.net.URLConnection;
 @Path("/kartverket_token")
 public class KartverketToken extends RoutingResource {
 
-    private static final Logger LOG = LoggerFactory.getLogger(TileService.class);
+    private static final Logger LOG = LoggerFactory.getLogger(KartverketToken.class);
 
     private static JSONObject token = new JSONObject();
 

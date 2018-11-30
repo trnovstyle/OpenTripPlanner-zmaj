@@ -113,8 +113,6 @@ public class GenericLocationTest {
         String s = "40.75542978896869,-73.97618338000376 heading=29.028895183287617 edgeId=2767";
         GenericLocation loc = GenericLocation.fromOldStyleString(s);
         assertEquals(29.028895183287617, loc.heading, 0.00001);
-        assertEquals(2767, loc.edgeId.intValue());
-        
         assertEquals(40.75542978896869, loc.lat, 0.00001);
         assertEquals(-73.97618338000376, loc.lng, 0.00001);
     }
@@ -243,55 +241,55 @@ public class GenericLocationTest {
         ParsingTestCase[] testCases = {
                 new ParsingTestCase(
                         "",
-                        "::null (null, null) h=null e=null"
+                        "::null (null, null) h=null"
                 ),
                 new ParsingTestCase(
                         "F::",
-                        "F::null (null, null) h=null e=null"
+                        "F::null (null, null) h=null"
                 ),
                 new ParsingTestCase(
                         "FF::123",
-                        "FF::123 (null, null) h=null e=null"
+                        "FF::123 (null, null) h=null"
                 ),
                 new ParsingTestCase(
                         "Alf",
-                        "::Alf (null, null) h=null e=null"
+                        "::Alf (null, null) h=null"
                 ),
                 new ParsingTestCase(
                         "ID 123.1,1.2",
-                        "::ID (123.1, 1.2) h=null e=null"
+                        "::ID (123.1, 1.2) h=null"
                 ),
                 new ParsingTestCase(
                         "ID:: -123.1,-1.2",
-                        "ID::null (-123.1, -1.2) h=null e=null"
+                        "ID::null (-123.1, -1.2) h=null"
                 ),
                 new ParsingTestCase(
                         "AD::123 edgeId=2",
-                        "AD::123 (null, null) h=null e=2"
+                        "AD::123 (null, null) h=null"
                 ),
                 new ParsingTestCase(
                         "Alf edgeId=2",
-                        "::Alf (null, null) h=null e=2"
+                        "::Alf (null, null) h=null"
                 ),
                 new ParsingTestCase(
                         "Hei::pa:deg 123.1 1.2 edgeId=2",
-                        "Hei::pa:deg (123.1, 1.2) h=null e=2"
+                        "Hei::pa:deg (123.1, 1.2) h=null"
                 ),
                 new ParsingTestCase(
                         "RB::Hei:pa:deg:2.2 12.1, -1.2  edgeId=2",
-                        "RB::Hei:pa:deg:2.2 (12.1, -1.2) h=null e=2"
+                        "RB::Hei:pa:deg:2.2 (12.1, -1.2) h=null"
                 ),
                 new ParsingTestCase(
                         "Hei:pa:deg ,-123.1 ,1.2  edgeId=2 heading=7.2",
-                        "::Hei:pa:deg (-123.1, 1.2) h=7.2 e=2"
+                        "::Hei:pa:deg (-123.1, 1.2) h=7.2"
                 ),
                 new ParsingTestCase(
                         "AA::X:2,2.2,1.1edgeId=2heading=15.1",
-                        "AA::X:2 (2.2, 1.1) h=15.1 e=2"
+                        "AA::X:2 (2.2, 1.1) h=15.1"
                 ),
                 new ParsingTestCase(
                         "AA  (RB:StopPlace:0001)::2.5,1.7",
-                        "AA  (RB:StopPlace:0001)::RB:StopPlace:0001 (2.5, 1.7) h=null e=null"
+                        "AA  (RB:StopPlace:0001)::RB:StopPlace:0001 (2.5, 1.7) h=null"
                 )
         };
 
@@ -343,8 +341,8 @@ public class GenericLocationTest {
         /** @see #expected */
         private String formatToExpectedString(GenericLocation loc) {
             return String.format(
-                    "%s::%s (%s, %s) h=%s e=%s",
-                    loc.name, loc.vertexId, loc.lat, loc.lng, loc.heading, loc.edgeId
+                    "%s::%s (%s, %s) h=%s",
+                    loc.name, loc.vertexId, loc.lat, loc.lng, loc.heading
             );
         }
     }

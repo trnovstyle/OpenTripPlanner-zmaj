@@ -1,7 +1,6 @@
 package org.opentripplanner.netex.mapping;
 
 import com.google.common.base.Optional;
-import org.opentripplanner.profile.Option;
 import org.rutebanken.netex.model.Parking;
 
 public class ParkingMapper {
