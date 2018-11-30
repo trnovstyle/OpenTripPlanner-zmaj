@@ -156,13 +156,6 @@ public class Router {
             }
         }
 
-        JsonNode stopClusterMode = config.get("stopClusterMode");
-        if (stopClusterMode != null) {
-            graph.stopClusterMode = stopClusterMode.asText();
-        } else {
-            graph.stopClusterMode = "proximity";
-        }
-
         JsonNode tokenUrl = config.get("kartverketTokenUrl");
         if (tokenUrl != null && tokenUrl.has("url")) {
             this.kartverketToken = tokenUrl.get("url").asText();

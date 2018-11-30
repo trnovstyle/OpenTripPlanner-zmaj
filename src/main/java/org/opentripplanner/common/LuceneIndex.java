@@ -20,7 +20,6 @@ import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.util.Version;
 import org.opentripplanner.model.Stop;
-import org.opentripplanner.profile.StopCluster;
 import org.opentripplanner.routing.edgetype.StreetEdge;
 import org.opentripplanner.routing.graph.GraphIndex;
 import org.opentripplanner.routing.vertextype.StreetVertex;
@@ -81,10 +80,6 @@ public class LuceneIndex {
             for (Stop stop : graphIndex.stationForId.values()) {
                 addStop(writer, stop);
             }
-            graphIndex.clusterStopsAsNeeded();
-            for (StopCluster stopCluster : graphIndex.stopClusterForId.values()) {
-                addCluster(writer, stopCluster);
-            }
             writer.close();
             long elapsedTime = System.currentTimeMillis() - startTime;
             LOG.info("Built Lucene index in {} msec", elapsedTime);
@@ -108,16 +103,6 @@ public class LuceneIndex {
         doc.add(new DoubleField("lon", stop.getLon(), Field.Store.YES));
         doc.add(new StringField("id", convertIdToString(stop.getId()), Field.Store.YES));
         doc.add(new StringField("category", Category.STOP.name(), Field.Store.YES));
-        iwriter.addDocument(doc);
-    }
-
-    private void addCluster(IndexWriter iwriter, StopCluster stopCluster) throws IOException {
-        Document doc = new Document();
-        doc.add(new TextField("name", stopCluster.name, Field.Store.YES));
-        doc.add(new DoubleField("lat", stopCluster.lat, Field.Store.YES));
-        doc.add(new DoubleField("lon", stopCluster.lon, Field.Store.YES));
-        doc.add(new StringField("id", stopCluster.id, Field.Store.YES));
-        doc.add(new StringField("category", Category.CLUSTER.name(), Field.Store.YES));
         iwriter.addDocument(doc);
     }
 
@@ -147,17 +132,15 @@ public class LuceneIndex {
         }
     }
 
-    /** Fetch results for the geocoder using the OTP graph for stops, clusters and street names
+    /** Fetch results for the geocoder using the OTP graph for stops and street names
      *
      * @param queryString
      * @param autocomplete Whether we should use the query string to do a prefix match
      * @param stops Search for stops, either by name or stop code
-     * @param clusters Search for clusters by their name
      * @param corners Search for street corners using at least one of the street names
      * @return list of results in in the format expected by GeocoderBuiltin.js in the OTP Leaflet client
      */
-    public List<LuceneResult> query (String queryString, boolean autocomplete,
-                                     boolean stops, boolean clusters, boolean corners) {
+    public List<LuceneResult> query (String queryString, boolean autocomplete, boolean stops, boolean corners) {
         /* Turn the query string into a Lucene query.*/
         BooleanQuery query = new BooleanQuery();
         BooleanQuery termQuery = new BooleanQuery();
@@ -196,13 +179,10 @@ public class LuceneIndex {
 
         query.add(termQuery, BooleanClause.Occur.MUST);
 
-        if (stops || clusters || corners) {
+        if (stops || corners) {
             BooleanQuery typeQuery = new BooleanQuery();
             if (stops) {
                 typeQuery.add(new TermQuery(new Term("category", Category.STOP.name())), BooleanClause.Occur.SHOULD);
-            }
-            if (clusters) {
-                typeQuery.add(new TermQuery(new Term("category", Category.CLUSTER.name())), BooleanClause.Occur.SHOULD);
             }
             if (corners) {
                 typeQuery.add(new TermQuery(new Term("category", Category.CORNER.name())), BooleanClause.Occur.SHOULD);
@@ -226,8 +206,7 @@ public class LuceneIndex {
                 } else {
                     platformCode = "";
                 }
-                if (doc.getField("category").stringValue().equals(Category.STOP.name()) ||
-                        doc.getField("category").stringValue().equals(Category.CLUSTER.name())) {
+                if (doc.getField("category").stringValue().equals(Category.STOP.name())) {
                     lr.id = doc.getField("id").stringValue();
                 }
                 String name = doc.getField("name").stringValue();
@@ -253,6 +232,6 @@ public class LuceneIndex {
         public String id;
     }
 
-    public static enum Category { STOP, CORNER, CLUSTER; }
+    public static enum Category { STOP, CORNER; }
 }
 
