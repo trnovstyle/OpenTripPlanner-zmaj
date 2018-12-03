@@ -16,6 +16,7 @@ package org.opentripplanner.model;
 
 import org.opentripplanner.model.calendar.ServiceDate;
 
+import java.util.List;
 import java.util.Set;
 import java.util.TimeZone;
 
@@ -32,6 +33,13 @@ public interface CalendarService {
      *         active
      */
     Set<ServiceDate> getServiceDatesForServiceId(AgencyAndId serviceId);
+
+    /**
+     * Add serviceId and dates to CalendarService in runtime - to be used when adding trips from realtime data
+     * @param serviceId
+     * @param serviceDates
+     */
+    void addServiceIdAndServiceDates(AgencyAndId serviceId, List<ServiceDate> serviceDates);
 
     /**
      * Determine the set of service ids that are active on the specified service
