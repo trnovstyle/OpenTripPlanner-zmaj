@@ -34,6 +34,7 @@ public class EdgeTest {
 
         assertEquals(head, e.getFromVertex());
         assertEquals(tail, e.getToVertex());
+        assertTrue(e.getId() >= 0);
     }
 
     @Test

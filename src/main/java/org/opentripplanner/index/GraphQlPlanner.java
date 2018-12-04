@@ -201,7 +201,7 @@ public class GraphQlPlanner {
             request.transferPenalty += 1800;
         }
 
-        callWith.argument("batch", (Boolean v) -> {});
+        callWith.argument("batch", (Boolean v) -> request.batch = v);
 
         if (optimize != null) {
             request.optimize = optimize;

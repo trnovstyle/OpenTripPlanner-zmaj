@@ -7,7 +7,7 @@ import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.geom.LineString;
 
 import org.opentripplanner.api.resource.CoordinateArrayListSequence;
-import org.opentripplanner.common.MinMap;
+import org.opentripplanner.api.resource.SimpleIsochrone;
 import org.opentripplanner.common.geometry.GeometryUtils;
 import org.opentripplanner.common.geometry.PackedCoordinateSequence;
 import org.opentripplanner.common.geometry.SphericalDistanceLibrary;
@@ -88,7 +88,8 @@ public class NearbyStopFinder {
     public Set<StopAtDistance> findNearbyStopsConsideringPatterns (Vertex vertex) {
 
         /* Track the closest stop on each pattern passing nearby. */
-        MinMap<TripPattern, StopAtDistance> closestStopForPattern = new MinMap<TripPattern, StopAtDistance>();
+        SimpleIsochrone.MinMap<TripPattern, StopAtDistance> closestStopForPattern =
+                new SimpleIsochrone.MinMap<TripPattern, StopAtDistance>();
 
         /* Iterate over nearby stops via the street network or using straight-line distance, depending on the graph. */
         for (NearbyStopFinder.StopAtDistance stopAtDistance : findNearbyStops(vertex)) {

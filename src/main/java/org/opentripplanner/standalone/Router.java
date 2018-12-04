@@ -1,12 +1,14 @@
 package org.opentripplanner.standalone;
 
-import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.encoder.PatternLayoutEncoder;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.FileAppender;
 import com.fasterxml.jackson.databind.JsonNode;
+import org.opentripplanner.analyst.request.*;
+import org.opentripplanner.analyst.scenario.ScenarioStore;
 import org.opentripplanner.inspector.TileRendererManager;
 import org.opentripplanner.reflect.ReflectiveInitializer;
 import org.opentripplanner.routing.core.RoutingRequest;
@@ -46,11 +48,20 @@ public class Router {
     // Inspector/debug services
     public TileRendererManager tileRendererManager;
 
+    // Analyst services
+    public TileCache tileCache;
+    public Renderer renderer;
+    public IsoChroneSPTRenderer isoChroneSPTRenderer;
+    public SampleGridRenderer sampleGridRenderer;
+
     // A RoutingRequest containing default parameters that will be cloned when handling each request
     public RoutingRequest defaultRoutingRequest;
 
     /** A graphical window that is used for visualizing search progress (debugging). */
     public GraphVisualizer graphVisualizer = null;
+
+    /** Storage for non-destructive alternatives analysis scenarios. */
+    public ScenarioStore scenarioStore = new ScenarioStore();
 
     public String kartverketToken;
 
@@ -72,6 +83,14 @@ public class Router {
     public void startup(JsonNode config) {
 
         this.tileRendererManager = new TileRendererManager(this.graph);
+
+        // Analyst Modules FIXME make these optional based on JSON?
+        {
+            this.tileCache = new TileCache(this.graph);
+            this.renderer = new Renderer(this.tileCache);
+            this.sampleGridRenderer = new SampleGridRenderer(this.graph);
+            this.isoChroneSPTRenderer = new IsoChroneSPTRendererAccSampling(this.sampleGridRenderer);
+        }
 
         /* Create the default router parameters from the JSON router config. */
         JsonNode routingDefaultsNode = config.get("routingDefaults");
@@ -139,13 +158,13 @@ public class Router {
         final JsonNode modeWeights = config.get("modeWeight");
         if (modeWeights != null && modeWeights.isObject()) {
             graph.modeWeights = new EnumMap<>(TraverseMode.class);
-            for (TraverseMode mode : TraverseMode.values()) {
+            for (TraverseMode mode : TraverseMode.values()) {   
                 if(modeWeights.has(mode.name())) {
                     graph.modeWeights.put(mode, modeWeights.get(mode.name()).asDouble(1d));
                 }
             }
         }
-
+  
         JsonNode alightTimes = config.get("alightTimes");
         if (alightTimes != null && alightTimes.isObject()) {
             graph.alightTimes = new EnumMap<>(TraverseMode.class);
@@ -155,12 +174,19 @@ public class Router {
                 }
             }
         }
+        
+        JsonNode stopClusterMode = config.get("stopClusterMode");
+        if (stopClusterMode != null) {
+            graph.stopClusterMode = stopClusterMode.asText();    
+        } else {
+            graph.stopClusterMode = "proximity";
+        }
 
         JsonNode tokenUrl = config.get("kartverketTokenUrl");
         if (tokenUrl != null && tokenUrl.has("url")) {
             this.kartverketToken = tokenUrl.get("url").asText();
         }
-
+        
         /* Create Graph updater modules from JSON config. */
         GraphUpdaterConfigurator.setupGraph(this.graph, config);
 

@@ -22,6 +22,7 @@ import org.opentripplanner.common.geometry.GeometryUtils;
 import org.opentripplanner.common.geometry.PackedCoordinateSequence;
 import org.opentripplanner.common.model.P2;
 import org.opentripplanner.model.*;
+import org.opentripplanner.profile.BikeRentalStationInfo;
 import org.opentripplanner.routing.alertpatch.Alert;
 import org.opentripplanner.routing.alertpatch.AlertPatch;
 import org.opentripplanner.routing.alertpatch.StopCondition;
