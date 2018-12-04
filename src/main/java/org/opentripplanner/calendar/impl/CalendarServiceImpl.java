@@ -21,7 +21,10 @@ import org.opentripplanner.model.calendar.CalendarServiceData;
 import org.opentripplanner.model.calendar.ServiceDate;
 import org.opentripplanner.model.CalendarService;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.TimeZone;
 
 /**
  * An implementation of {@link CalendarService}. Requires a pre-computed
@@ -32,7 +35,7 @@ import java.util.*;
  */
 public class CalendarServiceImpl implements CalendarService {
 
-    public final CalendarServiceData data;
+    private final CalendarServiceData data;
 
     public CalendarServiceImpl(CalendarServiceData data) {
         this.data = data;
@@ -51,26 +54,6 @@ public class CalendarServiceImpl implements CalendarService {
         if (serviceDates != null)
             dates.addAll(serviceDates);
         return dates;
-    }
-
-    @Override
-    public void addServiceIdAndServiceDates(AgencyAndId serviceId, List<ServiceDate> serviceDates) {
-        List<ServiceDate> serviceDatesForServiceId = data.getServiceDatesForServiceId(serviceId);
-
-        if (serviceDatesForServiceId == null) {
-            serviceDatesForServiceId = new ArrayList<>();
-        }
-
-        boolean dataAdded = false;
-        for (ServiceDate serviceDate : serviceDates) {
-            if (!serviceDatesForServiceId.contains(serviceDate)) {
-                dataAdded = true;
-                serviceDatesForServiceId.add(serviceDate);
-            }
-        }
-        if (dataAdded) {
-            data.putServiceDatesForServiceId(serviceId, serviceDatesForServiceId);
-        }
     }
 
     @Override
