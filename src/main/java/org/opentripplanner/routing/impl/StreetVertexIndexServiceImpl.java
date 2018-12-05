@@ -13,14 +13,11 @@
 
 package org.opentripplanner.routing.impl;
 
-
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Envelope;
 import com.vividsolutions.jts.geom.LineString;
 import com.vividsolutions.jts.index.SpatialIndex;
 import com.vividsolutions.jts.index.strtree.STRtree;
-import org.opentripplanner.analyst.core.Sample;
-import org.opentripplanner.analyst.request.SampleFactory;
 import org.opentripplanner.common.geometry.GeometryUtils;
 import org.opentripplanner.common.geometry.HashGridSpatialIndex;
 import org.opentripplanner.common.geometry.SphericalDistanceLibrary;
@@ -28,7 +25,11 @@ import org.opentripplanner.common.model.GenericLocation;
 import org.opentripplanner.common.model.P2;
 import org.opentripplanner.graph_builder.linking.SimpleStreetSplitter;
 import org.opentripplanner.routing.core.RoutingRequest;
-import org.opentripplanner.routing.edgetype.*;
+import org.opentripplanner.routing.edgetype.PatternEdge;
+import org.opentripplanner.routing.edgetype.SimpleTransfer;
+import org.opentripplanner.routing.edgetype.StreetEdge;
+import org.opentripplanner.routing.edgetype.TemporaryFreeEdge;
+import org.opentripplanner.routing.edgetype.TemporaryPartialStreetEdge;
 import org.opentripplanner.routing.graph.Edge;
 import org.opentripplanner.routing.graph.Graph;
 import org.opentripplanner.routing.graph.Vertex;
@@ -36,14 +37,16 @@ import org.opentripplanner.routing.location.TemporaryStreetLocation;
 import org.opentripplanner.routing.services.StreetVertexIndexService;
 import org.opentripplanner.routing.util.ElevationUtils;
 import org.opentripplanner.routing.vertextype.BikeRentalStationVertex;
-import org.opentripplanner.routing.vertextype.SampleVertex;
 import org.opentripplanner.routing.vertextype.StreetVertex;
 import org.opentripplanner.routing.vertextype.TransitStop;
 import org.opentripplanner.util.I18NString;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * Indexes all edges and transit vertices of the graph spatially. Has a variety of query methods
@@ -65,22 +68,8 @@ public class StreetVertexIndexServiceImpl implements StreetVertexIndexService {
     private SpatialIndex verticesTree;
     private SpatialIndex bikeRentalStationTree;
 
-    // private static final double SEARCH_RADIUS_M = 100; // meters
-    // private static final double SEARCH_RADIUS_DEG = DistanceLibrary.metersToDegrees(SEARCH_RADIUS_M);
-
-    // Maximum difference in distance for two geometries to be considered coincident, plate-carée Euclidean
-    // 0.001 ~= 100m at equator
-    public static final double DISTANCE_ERROR = 0.000001;
-
     // If a point is within MAX_CORNER_DISTANCE, it is treated as at the corner.
     private static final double MAX_CORNER_DISTANCE_METERS = 10;
-    
-    // Edges will only be found if they are closer than this distance
-    // TODO: this default may be too large?
-    public static final double MAX_DISTANCE_FROM_STREET_METERS = 1000;
-    
-    private static final double MAX_DISTANCE_FROM_STREET_DEGREES =
-            MAX_DISTANCE_FROM_STREET_METERS * 180 / Math.PI / SphericalDistanceLibrary.RADIUS_OF_EARTH_IN_M;
 
     static final Logger LOG = LoggerFactory.getLogger(StreetVertexIndexServiceImpl.class);
 
@@ -380,34 +369,4 @@ public class StreetVertexIndexServiceImpl implements StreetVertexIndexService {
         return getClass().getName() + " -- edgeTree: " + edgeTree.toString() + " -- verticesTree: " + verticesTree.toString();
     }
 
-    @Override
-    public Vertex getSampleVertexAt(Coordinate coordinate, boolean dest) {
-        SampleFactory sfac = graph.getSampleFactory();
-
-        Sample s = sfac.getSample(coordinate.x, coordinate.y);
-
-        if (s == null)
-            return null;
-
-        // create temp vertex
-        SampleVertex v = new SampleVertex(graph, coordinate);
-
-        // create edges
-        if (dest) {
-            if (s.v0 != null)
-                new SampleEdge(s.v0, v, s.d0);
-
-            if (s.v1 != null)
-                new SampleEdge(s.v1, v, s.d1);
-        }
-        else {
-            if (s.v0 != null)
-                new SampleEdge(v, s.v0, s.d0);
-
-            if (s.v1 != null)
-                new SampleEdge(v, s.v1, s.d1);
-        }
-
-        return v;
-    }
 }

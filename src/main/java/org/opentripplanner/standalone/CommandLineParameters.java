@@ -72,10 +72,6 @@ public class CommandLineParameters implements Cloneable {
 
     /* Options for the server sub-task. */
 
-    @Parameter(names = {"--analyst"},
-            description = "Enable OTP Analyst extensions.")
-    public boolean analyst;
-
     @Parameter(names = {"--bindAddress"},
             description = "Specify which network interface to bind to by address. 0.0.0.0 means all interfaces.")
     public String bindAddress = "0.0.0.0";
@@ -132,9 +128,6 @@ public class CommandLineParameters implements Cloneable {
 
     @Parameter(names = { "--script" }, description = "run the specified OTP script (groovy, python)")
     public File scriptFile = null;
-
-    @Parameter(names = { "--enableScriptingWebService" }, description = "enable scripting through a web-service (Warning! Very unsafe for public facing servers)")
-    boolean enableScriptingWebService = false;
 
     @Parameter(names = { "--skipTransit" }, description = "Only build graph from OSM data and elevation module. All transit data is skipped.")
     public boolean skipTransit = false;
