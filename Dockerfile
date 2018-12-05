@@ -1,4 +1,4 @@
-FROM relateiq/oracle-java8
+FROM openjdk:11.0.1-jdk
 
 RUN apt-get update \
   && apt-get install -y \
@@ -8,14 +8,13 @@ RUN apt-get update \
      curl \
      gcc \
      python-dev \
-     python-setuptools
-
-RUN easy_install --quiet -U pip \
-  && pip install -U crcmod
-
-WORKDIR /code
+     python-pip \
+     python-setuptools \
+     python3-setuptools
 
 RUN mkdir -p /code/otpdata/norway
+
+WORKDIR /code
 
 # From https://cloud.google.com/sdk/downloads
 RUN wget -nv https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-170.0.1-linux-x86_64.tar.gz \

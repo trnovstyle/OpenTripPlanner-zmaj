@@ -1,6 +1,6 @@
 package org.opentripplanner.netex.mapping;
 
-import com.vividsolutions.jts.geom.Coordinate;
+import org.locationtech.jts.geom.Coordinate;
 import org.apache.commons.lang3.mutable.MutableDouble;
 import org.apache.commons.lang3.mutable.MutableInt;
 import org.opentripplanner.common.geometry.SphericalDistanceLibrary;

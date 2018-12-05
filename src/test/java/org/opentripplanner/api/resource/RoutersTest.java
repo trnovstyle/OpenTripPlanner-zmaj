@@ -56,7 +56,7 @@ public class RoutersTest {
         assertEquals("A", otherRouter.routerId);
         assertTrue(otherRouter.polygon.getArea() > 0);
     }
-    
+
     @Test
     public void getRouterInfoReturnsFirstAndLastValidDateForGraph() {
 

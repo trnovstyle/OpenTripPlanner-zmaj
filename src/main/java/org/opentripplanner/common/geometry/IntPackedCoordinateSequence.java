@@ -15,9 +15,9 @@ package org.opentripplanner.common.geometry;
 
 import java.io.Serializable;
 
-import com.vividsolutions.jts.geom.Coordinate;
-import com.vividsolutions.jts.geom.CoordinateSequence;
-import com.vividsolutions.jts.geom.Envelope;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.CoordinateSequence;
+import org.locationtech.jts.geom.Envelope;
 
 /**
  * 2D, supports only coordinates in range +/- 180.
@@ -120,5 +120,10 @@ public class IntPackedCoordinateSequence implements CoordinateSequence, Cloneabl
         } catch (CloneNotSupportedException e) {
             throw new RuntimeException("programming error.", e);
         }
+    }
+
+    @Override
+    public CoordinateSequence copy() {
+        return clone();
     }
 }

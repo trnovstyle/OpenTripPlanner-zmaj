@@ -1,7 +1,7 @@
 package org.opentripplanner.updater.bike_park;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.vividsolutions.jts.geom.*;
+import org.locationtech.jts.geom.*;
 import org.opentripplanner.routing.bike_park.BikePark;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

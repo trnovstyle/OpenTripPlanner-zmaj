@@ -10,7 +10,7 @@
 
     <groupId>org.opentripplanner</groupId>
     <artifactId>otp</artifactId>
-    <version>1.3.3.RB-SNAPSHOT</version>
+    <version>1.3.4.RB-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <licenses>
@@ -80,7 +80,7 @@
   </scm>
 
     <properties>
-        <geotools.version>10.5</geotools.version>
+        <geotools.version>20.1</geotools.version>
         <jackson.version>2.8.7</jackson.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <aws.version>1.9.39</aws.version>
@@ -182,11 +182,11 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.1</version>
+                <version>3.8.0</version>
                 <configuration>
                     <!-- Target Java versions -->
-                    <source>1.8</source>
-                    <target>1.8</target>
+                    <source>11</source>
+                    <target>11</target>
                 </configuration>
             </plugin>
             <plugin>
@@ -466,6 +466,21 @@
     </repositories>
 
     <dependencies>
+        <dependency>
+            <groupId>com.sun.activation</groupId>
+            <artifactId>javax.activation</artifactId>
+            <version>1.2.0</version>
+        </dependency>
+        <dependency>
+            <groupId>javax.xml.bind</groupId>
+            <artifactId>jaxb-api</artifactId>
+            <version>2.3.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish.jaxb</groupId>
+            <artifactId>jaxb-runtime</artifactId>
+            <version>2.3.0.1</version>
+        </dependency>
         <!-- Amazon AWS client libraries -->
         <dependency>
             <groupId>com.amazonaws</groupId>
@@ -577,7 +592,7 @@
         <dependency>
             <groupId>org.geotools</groupId>
             <artifactId>gt-wfs</artifactId>
-            <version>${geotools.version}</version>
+            <version>16.5</version>
         </dependency>
         <!-- provides EPSG database for projections (shapefile loading) -->
         <dependency>
@@ -885,6 +900,12 @@
             </exclusions>
         </dependency>
 
+        <dependency>
+            <groupId>org.geotools</groupId>
+            <artifactId>gt-opengis</artifactId>
+            <version>${geotools.version}</version>
+        </dependency>
+
         <!-- gtfs-lib is a transitive dependency to r5, which also is a snapshot dependency -->
         <dependency>
             <groupId>com.conveyal</groupId>
@@ -892,24 +913,8 @@
             <!--version>0.2</version-->
             <!--classifier>20160307.194541-8</classifier-->
             <version>0.2-SNAPSHOT</version>
+            <scope>test</scope>
         </dependency>
-
-        <!-- Transitive dependency to com.conveyal:r5 needed to be manually
-            included as r5 is a snapshot  -->
-        <dependency>
-            <groupId>org.geotools</groupId>
-            <artifactId>gt-opengis</artifactId>
-            <version>14.0</version>
-        </dependency>
-
-        <!-- Transitive dependency to com.conveyal:r5 needed to be manually
-            included as r5 is a snapshot  -->
-        <dependency>
-            <groupId>com.sparkjava</groupId>
-            <artifactId>spark-core</artifactId>
-            <version>2.3</version>
-        </dependency>
-
     </dependencies>
 
     <!--

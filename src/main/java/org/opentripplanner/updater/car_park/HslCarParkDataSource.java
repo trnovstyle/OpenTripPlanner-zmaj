@@ -3,7 +3,7 @@ package org.opentripplanner.updater.car_park;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.vividsolutions.jts.geom.*;
+import org.locationtech.jts.geom.*;
 import org.opentripplanner.routing.car_park.CarPark;
 import org.opentripplanner.routing.graph.Graph;
 import org.opentripplanner.util.HttpUtils;

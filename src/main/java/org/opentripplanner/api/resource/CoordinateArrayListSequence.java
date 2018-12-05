@@ -16,9 +16,9 @@ package org.opentripplanner.api.resource;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-import com.vividsolutions.jts.geom.Coordinate;
-import com.vividsolutions.jts.geom.CoordinateSequence;
-import com.vividsolutions.jts.geom.Envelope;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.CoordinateSequence;
+import org.locationtech.jts.geom.Envelope;
 
 /** An instance of CoordinateSequence that can be efficiently extended */
 public class CoordinateArrayListSequence implements CoordinateSequence, Cloneable {
@@ -136,5 +136,10 @@ public class CoordinateArrayListSequence implements CoordinateSequence, Cloneabl
 
     public void clear() {
     	coordinates = new ArrayList<Coordinate>();
+    }
+
+    @Override
+    public CoordinateSequence copy() {
+        return clone();
     }
 }

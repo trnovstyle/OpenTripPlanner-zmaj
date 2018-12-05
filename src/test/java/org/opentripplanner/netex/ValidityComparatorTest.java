@@ -1,6 +1,6 @@
 package org.opentripplanner.netex;
 
-import com.vividsolutions.jts.util.Assert;
+import org.locationtech.jts.util.Assert;
 import org.junit.Test;
 import org.opentripplanner.netex.mapping.ValidityComparator;
 import org.rutebanken.netex.model.ValidBetween;

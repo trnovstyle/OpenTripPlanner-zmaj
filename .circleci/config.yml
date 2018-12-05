@@ -35,7 +35,7 @@ aliases:
 jobs:
   test:
     docker:
-    - image: eu.gcr.io/carbon-1287/circleci-toolbox-image
+    - image: eu.gcr.io/carbon-1287/circleci-toolbox-image-java11
       auth:
         username: _json_key
         password: $GCLOUD_SERVICE_KEY
@@ -63,7 +63,7 @@ jobs:
         path: ~/junit
   deploy-nexus:
     docker:
-    - image: eu.gcr.io/carbon-1287/circleci-toolbox-image
+    - image: eu.gcr.io/carbon-1287/circleci-toolbox-image-java11
       auth:
         username: _json_key
         password: $GCLOUD_SERVICE_KEY
@@ -89,7 +89,7 @@ jobs:
           - docker
   notify-build:
     docker:
-      - image: eu.gcr.io/carbon-1287/circleci-toolbox-image
+      - image: eu.gcr.io/carbon-1287/circleci-toolbox-image-java11
         auth:
           username: _json_key
           password: $GCLOUD_SERVICE_KEY
@@ -97,7 +97,7 @@ jobs:
     - run: *build-notify
   deploy-docker:
     docker:
-      - image: eu.gcr.io/carbon-1287/circleci-toolbox-image
+      - image: eu.gcr.io/carbon-1287/circleci-toolbox-image-java11
         auth:
           username: _json_key
           password: $GCLOUD_SERVICE_KEY
@@ -115,7 +115,7 @@ jobs:
       - run: *docker-build-and-push
   trigger-dependants:
     docker:
-      - image: eu.gcr.io/carbon-1287/circleci-toolbox-image
+      - image: eu.gcr.io/carbon-1287/circleci-toolbox-image-java11
         auth:
           username: _json_key
           password: $GCLOUD_SERVICE_KEY
