@@ -8,9 +8,10 @@ RUN apt-get update \
      curl \
      gcc \
      python-dev \
-     python-pip \
-     python-setuptools \
-     python3-setuptools
+     python-setuptools
+
+RUN python /usr/lib/python2.7/dist-packages/easy_install.py --quiet -U pip \
+  && pip install -U crcmod
 
 RUN mkdir -p /code/otpdata/norway
 
