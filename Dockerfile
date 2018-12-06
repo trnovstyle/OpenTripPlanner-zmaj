@@ -18,9 +18,9 @@ RUN mkdir -p /code/otpdata/norway
 WORKDIR /code
 
 # From https://cloud.google.com/sdk/downloads
-RUN wget -nv https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-170.0.1-linux-x86_64.tar.gz \
-  && echo "a09ff738ea9b3c9af906ee42e8ded48b84388574944d11406ba0cec6b2acdc89 google-cloud-sdk-170.0.1-linux-x86_64.tar.gz" | sha256sum --quiet -c - \
-  && tar xzf google-cloud-sdk-170.0.1-linux-x86_64.tar.gz
+RUN wget -nv https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-226.0.0-linux-x86_64.tar.gz \
+     && echo "1ca10545778f50a8435f3002618ca19b8fbb145bbc550f36fcd0fdb9773466e5 google-cloud-sdk-226.0.0-linux-x86_64.tar.gz" | sha256sum --quiet -c - \
+     && tar xzf google-cloud-sdk-226.0.0-linux-x86_64.tar.gz
 
 # Download logback logstash
 RUN wget -nv "http://central.maven.org/maven2/net/logstash/logback/logstash-logback-encoder/4.7/logstash-logback-encoder-4.7.jar" --directory-prefix /code/
