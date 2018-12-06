@@ -45,6 +45,6 @@ RUN chmod a+x /docker-entrypoint.sh
 ENTRYPOINT ["/docker-entrypoint.sh"]
 
 EXPOSE 8080
-CMD ["java", "-Dtransmodel.graphql.api.agency.id=RB","-Dfile.encoding=UTF-8", "-Xms256m", "-Xmx6144m", "-Xincgc", "-server", "-javaagent:/opt/agent-bond/agent-bond.jar=jolokia{{'{{' }}host=0.0.0.0{{ '}}' }},jmx_exporter{{ '{{' }}9779:/opt/agent-bond/jmx_exporter_config.yml{{ '}}' }}", "-jar", "code/otp-shaded.jar", "--server", "--graphs","/code/otpdata", "--router", "norway"]
+CMD ["java", "-Dtransmodel.graphql.api.agency.id=RB","-Dfile.encoding=UTF-8", "-Xms256m", "-Xmx6144m", "-server", "-javaagent:/opt/agent-bond/agent-bond.jar=jolokia{{'{{' }}host=0.0.0.0{{ '}}' }},jmx_exporter{{ '{{' }}9779:/opt/agent-bond/jmx_exporter_config.yml{{ '}}' }}", "-jar", "code/otp-shaded.jar", "--server", "--graphs","/code/otpdata", "--router", "norway"]
 
 # For debug, add parameter "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005"
