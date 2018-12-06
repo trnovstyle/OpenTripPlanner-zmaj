@@ -2892,6 +2892,7 @@ public class TransmodelIndexGraphQLSchema {
                                         environment.getArgument("filterByInUse")
                                 );
                             } catch (VertexNotFoundException e) {
+                                LOG.warn("findClosestPlacesByWalking failed with exception, returning empty list of places. " , e);
                                 places = Collections.emptyList();
                             }
 
