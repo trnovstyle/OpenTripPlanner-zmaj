@@ -92,7 +92,7 @@ public class NetexMapper {
 
         for (StopPlace stopPlace : netexDao.multimodalStopPlaceById.values()) {
             if (stopPlace != null) {
-                Stop stop = stopMapper.mapMultiModalStop(stopPlace);
+                Stop stop = stopMapper.mapMultiModalStop(stopPlace, transitBuilder);
                 transitBuilder.getMultiModalStops().add(stop);
                 transitBuilder.getStops().add(stop);
             }

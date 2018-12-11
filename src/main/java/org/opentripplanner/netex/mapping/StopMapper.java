@@ -116,14 +116,7 @@ public class StopMapper {
             stop.setDesc(currentStopPlace.getDescription().getValue());
         }
 
-        if (currentStopPlace.getTariffZones() != null) {
-            for (TariffZoneRef tariffZoneRef : currentStopPlace.getTariffZones().getTariffZoneRef()) {
-                AgencyAndId ref = AgencyAndIdFactory.createAgencyAndId(tariffZoneRef.getRef());
-                if (transitBuilder.getTariffZones().containsKey(ref)) {
-                    stop.getTariffZones().add(transitBuilder.getTariffZones().get(ref));
-                }
-            }
-        }
+        mapTariffZonesForStopPlace(transitBuilder, currentStopPlace, stop);
 
         // Get quays from all versions of stop place
         Set<String> quaysSeen = new HashSet<>();
@@ -204,8 +197,19 @@ public class StopMapper {
         return stops;
     }
 
+    private void mapTariffZonesForStopPlace(OtpTransitBuilder transitBuilder, StopPlace currentStopPlace, Stop stop) {
+        if (currentStopPlace.getTariffZones() != null) {
+            for (TariffZoneRef tariffZoneRef : currentStopPlace.getTariffZones().getTariffZoneRef()) {
+                AgencyAndId ref = AgencyAndIdFactory.createAgencyAndId(tariffZoneRef.getRef());
+                if (transitBuilder.getTariffZones().containsKey(ref)) {
+                    stop.getTariffZones().add(transitBuilder.getTariffZones().get(ref));
+                }
+            }
+        }
+    }
+
     // Mapped same way as parent stops for now
-    Stop mapMultiModalStop(StopPlace stopPlace) {
+    Stop mapMultiModalStop(StopPlace stopPlace, OtpTransitBuilder transitBuilder) {
         Stop stop = new Stop();
         stop.setId(AgencyAndIdFactory.createAgencyAndId(stopPlace.getId()));
         stop.setLocationType(1); // Set same as parent stop for now
@@ -223,6 +227,7 @@ public class StopMapper {
         }
 
         stop.setWeight(mapInterchange(stopPlace));
+        mapTariffZonesForStopPlace(transitBuilder, stopPlace, stop);
 
         return stop;
     }
