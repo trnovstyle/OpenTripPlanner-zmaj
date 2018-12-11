@@ -250,9 +250,18 @@ public class Graph implements Serializable, AddBuilderAnnotation {
     }
 
     /**
-     * Add the given vertex to the graph. Ideally, only vertices should add themselves to the graph, when they are constructed or deserialized.
+     * Add the given vertex to the graph. Ideally, only vertices should add themselves to the
+     * graph, when they are constructed or deserialized.
      */
     public void addVertex(Vertex v) {
+        if(this instanceof TemporaryVertex) {
+            throw new IllegalStateException(
+                    "Don't add TemporaryVertex to the graph vertex index. " +
+                    "A temporary vertex is only valid in the request scope, adding it "
+                            + "here risk creating a memory leak."
+            );
+        }
+
         Vertex old = vertices.put(v.getLabel(), v);
         if (old != null) {
             if (old == v)
