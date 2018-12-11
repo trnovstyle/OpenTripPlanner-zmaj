@@ -44,7 +44,4 @@ public class TileRequest {
     public String toString() {
         return String.format("<tile request, bbox=%s width=%d height=%d>", bbox, width, height);
     }
-    
-    // implement iterable to iterate over pixels?
-
 }

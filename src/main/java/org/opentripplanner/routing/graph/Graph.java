@@ -34,6 +34,7 @@ import gnu.trove.map.hash.TIntIntHashMap;
 import org.apache.commons.math3.stat.descriptive.rank.Median;
 import org.joda.time.DateTime;
 import org.objenesis.strategy.SerializingInstantiatorStrategy;
+import org.opentripplanner.analyst.request.SampleFactory;
 import org.opentripplanner.calendar.impl.CalendarServiceImpl;
 import org.opentripplanner.graph_builder.linking.SynchronisedSimpleStreetSplitter;
 import org.opentripplanner.model.Agency;
@@ -64,6 +65,7 @@ import org.opentripplanner.routing.services.StreetVertexIndexService;
 import org.opentripplanner.routing.services.notes.StreetNotesService;
 import org.opentripplanner.routing.trippattern.Deduplicator;
 import org.opentripplanner.routing.vertextype.PatternArriveVertex;
+import org.opentripplanner.routing.vertextype.TemporaryVertex;
 import org.opentripplanner.routing.vertextype.TransitStop;
 import org.opentripplanner.traffic.StreetSpeedSnapshotSource;
 import org.opentripplanner.updater.GraphUpdaterConfigurator;
@@ -138,6 +140,8 @@ public class Graph implements Serializable, AddBuilderAnnotation {
     public transient StreetVertexIndexService streetIndex;
 
     public transient GraphIndex index;
+
+    private transient SampleFactory sampleFactory;
 
     public final transient Deduplicator deduplicator = new Deduplicator();
 
@@ -952,6 +956,13 @@ public class Graph implements Serializable, AddBuilderAnnotation {
         return this.envelope;
     }
 
+    // lazy-init sample factor on an as needed basis
+    public SampleFactory getSampleFactory() {
+        if(this.sampleFactory == null)
+            this.sampleFactory = new SampleFactory(this);
+
+        return this.sampleFactory;
+    }
     /**
      * Calculates Transit center from median of coordinates of all transitStops if graph
      * has transit. If it doesn't it isn't calculated. (mean walue of min, max latitude and longitudes are used)

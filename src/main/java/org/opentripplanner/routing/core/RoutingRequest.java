@@ -465,6 +465,9 @@ public class RoutingRequest implements Cloneable, Serializable {
      */
     public boolean reverseOptimizing = false;
 
+    /** when true, do not use goal direction or stop at the target, build a full SPT */
+    public boolean batch = false;
+
     /**
      * Whether or not bike rental availability information will be used to plan bike rental trips
      */
@@ -1106,8 +1109,19 @@ public class RoutingRequest implements Cloneable, Serializable {
         if (!(o instanceof RoutingRequest))
             return false;
         RoutingRequest other = (RoutingRequest) o;
-        boolean endpointsMatch = ((from == null && other.from == null) || from.equals(other.from))
-                                         && ((to == null && other.to == null) || to.equals(other.to));
+        if (this.batch != other.batch)
+            return false;
+        boolean endpointsMatch;
+        if (this.batch) {
+            if (this.arriveBy) {
+                endpointsMatch = to.equals(other.to);
+            } else {
+                endpointsMatch = from.equals(other.from);
+            }
+        } else {
+            endpointsMatch = ((from == null && other.from == null) || from.equals(other.from))
+                    && ((to == null && other.to == null) || to.equals(other.to));
+        }
         return endpointsMatch
                        && dateTime == other.dateTime
                        && arriveBy == other.arriveBy
@@ -1200,9 +1214,20 @@ public class RoutingRequest implements Cloneable, Serializable {
                                + new Boolean(ignoreRealtimeUpdates).hashCode() * 154329
                                + new Boolean(disableRemainingWeightHeuristic).hashCode() * 193939
                                + new Boolean(useTraffic).hashCode() * 10169;
-        // non-batch, both endpoints matter
-        hashCode += from.hashCode() * 524287;
-        hashCode += to.hashCode() * 1327144003;
+        if (batch) {
+            hashCode *= -1;
+            // batch mode, only one of two endpoints matters
+            if (arriveBy) {
+                hashCode += to.hashCode() * 1327144003;
+            } else {
+                hashCode += from.hashCode() * 524287;
+            }
+            hashCode += numItineraries; // why is this only present here?
+        } else {
+            // non-batch, both endpoints matter
+            hashCode += from.hashCode() * 524287;
+            hashCode += to.hashCode() * 1327144003;
+        }
         return hashCode;
     }
 

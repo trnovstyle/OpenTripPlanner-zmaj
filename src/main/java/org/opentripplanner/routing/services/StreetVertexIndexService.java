@@ -33,7 +33,7 @@ public interface StreetVertexIndexService {
      * @param envelope
      * @return
      */
-    public Collection<Vertex> getVerticesForEnvelope(Envelope envelope);
+    Collection<Vertex> getVerticesForEnvelope(Envelope envelope);
 
     /**
      * Return the edges whose geometry intersect with the specified envelope. Warning: edges w/o
@@ -42,28 +42,28 @@ public interface StreetVertexIndexService {
      * @param envelope
      * @return
      */
-    public Collection<Edge> getEdgesForEnvelope(Envelope envelope);
+    Collection<Edge> getEdgesForEnvelope(Envelope envelope);
 
     /**
      * @param coordinate
      * @param radiusMeters
      * @return The transit stops within a certain radius of the given location.
      */
-    public List<TransitStop> getNearbyTransitStops(Coordinate coordinate, double radiusMeters);
+    List<TransitStop> getNearbyTransitStops(Coordinate coordinate, double radiusMeters);
 
     /**
      * @param envelope
      * @return The transit stops within an envelope.
      */
-    public List<TransitStop> getTransitStopForEnvelope(Envelope envelope);
+    List<TransitStop> getTransitStopForEnvelope(Envelope envelope);
 
     /**
      * @param envelope
      * @return The bike parks within an envelope.
      */
-    public List<BikeRentalStationVertex> getBikeRentalStationForEnvelope(Envelope envelope);
+    List<BikeRentalStationVertex> getBikeRentalStationForEnvelope(Envelope envelope);
 
-    public void addToSpatialIndex(Vertex v);
+    void addToSpatialIndex(Vertex v);
 
     /**
      * Finds the appropriate vertex for this location.
@@ -73,7 +73,13 @@ public interface StreetVertexIndexService {
      * @param endVertex: whether this is a start vertex (if it's false) or end vertex (if it's true)
      * @return
      */
-    public Vertex getVertexForLocation(GenericLocation place, RoutingRequest options,
+    Vertex getVertexForLocation(GenericLocation place, RoutingRequest options,
                                        boolean endVertex);
 
+	/**
+     * Get a vertex at a given coordinate, using the same logic as in Samples. Used in Analyst
+	 * so that origins and destinations are linked the same way.
+     * TODO - Should this be replaced by the using the same logic as a regular search by location?
+     */
+	Vertex getSampleVertexAt(Coordinate coordinate, boolean dest);
 }

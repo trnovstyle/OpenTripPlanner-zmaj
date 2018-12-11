@@ -24,6 +24,7 @@ import org.opentripplanner.model.Stop;
 import org.opentripplanner.model.calendar.ServiceDate;
 import org.opentripplanner.routing.algorithm.strategies.EuclideanRemainingWeightHeuristic;
 import org.opentripplanner.routing.algorithm.strategies.RemainingWeightHeuristic;
+import org.opentripplanner.routing.algorithm.strategies.TrivialRemainingWeightHeuristic;
 import org.opentripplanner.routing.edgetype.StreetEdge;
 import org.opentripplanner.routing.edgetype.TemporaryPartialStreetEdge;
 import org.opentripplanner.routing.edgetype.TimetableSnapshot;
@@ -246,16 +247,33 @@ public class RoutingContext implements Cloneable {
         Edge fromBackEdge = null;
         Edge toBackEdge = null;
         if (findPlaces) {
-            // normal mode, search for vertices based RoutingRequest and split streets
-            toVertex = graph.streetIndex.getVertexForLocation(opt.to, opt, true);
-            if (opt.startingTransitTripId != null && !opt.arriveBy) {
-                // Depart on-board mode: set the from vertex to "on-board" state
-                OnBoardDepartService onBoardDepartService = graph.getService(OnBoardDepartService.class);
-                if (onBoardDepartService == null)
-                    throw new UnsupportedOperationException("Missing OnBoardDepartService");
-                fromVertex = onBoardDepartService.setupDepartOnBoard(this);
-            } else {
-                fromVertex = graph.streetIndex.getVertexForLocation(opt.from, opt, false);
+            if (opt.batch) {
+                // batch mode: find an OSM vertex, don't split
+                // We do this so that we are always linking to the same thing in analyst mode
+                // even if the transit network has changed.
+                // TODO offset time by distance to nearest OSM node?
+                if (opt.arriveBy) {
+                    // TODO what if there is no coordinate but instead a named place?
+                    toVertex = graph.streetIndex.getSampleVertexAt(opt.to.getCoordinate(), true);
+                    fromVertex = null;
+                }
+                else {
+                    fromVertex = graph.streetIndex.getSampleVertexAt(opt.from.getCoordinate(), false);
+                    toVertex = null;
+                }
+            }
+            else {
+                // normal mode, search for vertices based RoutingRequest and split streets
+                toVertex = graph.streetIndex.getVertexForLocation(opt.to, opt, true);
+                if (opt.startingTransitTripId != null && !opt.arriveBy) {
+                    // Depart on-board mode: set the from vertex to "on-board" state
+                    OnBoardDepartService onBoardDepartService = graph.getService(OnBoardDepartService.class);
+                    if (onBoardDepartService == null)
+                        throw new UnsupportedOperationException("Missing OnBoardDepartService");
+                    fromVertex = onBoardDepartService.setupDepartOnBoard(this);
+                } else {
+                    fromVertex = graph.streetIndex.getVertexForLocation(opt.from, opt, false);
+                }
             }
         } else {
             // debug mode, force endpoint vertices to those specified rather than searching
@@ -285,7 +303,10 @@ public class RoutingContext implements Cloneable {
         originBackEdge = opt.arriveBy ? toBackEdge : fromBackEdge;
         target = opt.arriveBy ? fromVertex : toVertex;
         transferTable = graph.getTransferTable();
-        remainingWeightHeuristic = new EuclideanRemainingWeightHeuristic();
+        if (opt.batch)
+            remainingWeightHeuristic = new TrivialRemainingWeightHeuristic();
+        else
+            remainingWeightHeuristic = new EuclideanRemainingWeightHeuristic();
 
         if (this.origin != null) {
             LOG.debug("Origin vertex inbound edges {}", this.origin.getIncoming());
@@ -304,14 +325,16 @@ public class RoutingContext implements Cloneable {
     public void check() {
         ArrayList<String> notFound = new ArrayList<String>();
 
-        // check origin present
-        if (fromVertex == null) {
-            notFound.add("from");
-        }
+        // check origin present when not doing an arrive-by batch search
+        if (!(opt.batch && opt.arriveBy))
+            if (fromVertex == null)
+                notFound.add("from");
 
-        // check destination present
-        if (toVertex == null) {
-            notFound.add("to");
+        // check destination present when not doing a depart-after batch search
+        if (!opt.batch || opt.arriveBy) {
+            if (toVertex == null) {
+                notFound.add("to");
+            }
         }
         if (notFound.size() > 0) {
             throw new VertexNotFoundException(notFound);

@@ -18,6 +18,8 @@ import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.LineString;
 import org.locationtech.jts.index.SpatialIndex;
 import org.locationtech.jts.index.strtree.STRtree;
+import org.opentripplanner.analyst.core.Sample;
+import org.opentripplanner.analyst.request.SampleFactory;
 import org.opentripplanner.common.geometry.GeometryUtils;
 import org.opentripplanner.common.geometry.HashGridSpatialIndex;
 import org.opentripplanner.common.geometry.SphericalDistanceLibrary;
@@ -26,6 +28,7 @@ import org.opentripplanner.common.model.P2;
 import org.opentripplanner.graph_builder.linking.SimpleStreetSplitter;
 import org.opentripplanner.routing.core.RoutingRequest;
 import org.opentripplanner.routing.edgetype.PatternEdge;
+import org.opentripplanner.routing.edgetype.SampleEdge;
 import org.opentripplanner.routing.edgetype.SimpleTransfer;
 import org.opentripplanner.routing.edgetype.StreetEdge;
 import org.opentripplanner.routing.edgetype.TemporaryFreeEdge;
@@ -37,6 +40,7 @@ import org.opentripplanner.routing.location.TemporaryStreetLocation;
 import org.opentripplanner.routing.services.StreetVertexIndexService;
 import org.opentripplanner.routing.util.ElevationUtils;
 import org.opentripplanner.routing.vertextype.BikeRentalStationVertex;
+import org.opentripplanner.routing.vertextype.SampleVertex;
 import org.opentripplanner.routing.vertextype.StreetVertex;
 import org.opentripplanner.routing.vertextype.TransitStop;
 import org.opentripplanner.util.I18NString;
@@ -369,4 +373,34 @@ public class StreetVertexIndexServiceImpl implements StreetVertexIndexService {
         return getClass().getName() + " -- edgeTree: " + edgeTree.toString() + " -- verticesTree: " + verticesTree.toString();
     }
 
+    @Override
+    public Vertex getSampleVertexAt(Coordinate coordinate, boolean dest) {
+        SampleFactory sfac = graph.getSampleFactory();
+
+        Sample s = sfac.getSample(coordinate.x, coordinate.y);
+
+        if (s == null)
+            return null;
+
+        // create temp vertex
+        SampleVertex v = new SampleVertex(coordinate);
+
+        // create edges
+        if (dest) {
+            if (s.v0 != null)
+                new SampleEdge(s.v0, v, s.d0);
+
+            if (s.v1 != null)
+                new SampleEdge(s.v1, v, s.d1);
+        }
+        else {
+            if (s.v0 != null)
+                new SampleEdge(v, s.v0, s.d0);
+
+            if (s.v1 != null)
+                new SampleEdge(v, s.v1, s.d1);
+        }
+
+        return v;
+    }
 }

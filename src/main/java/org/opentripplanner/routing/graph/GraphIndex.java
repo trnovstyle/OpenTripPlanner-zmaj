@@ -246,6 +246,7 @@ public class GraphIndex {
         rr.from = new GenericLocation(lat, lon);
         // FIXME requires destination to be set, not necessary for analyst
         rr.to = new GenericLocation(lat, lon);
+        rr.batch = true;
         rr.setRoutingContext(graph);
         rr.walkSpeed = 1;
         rr.dominanceFunction = new DominanceFunction.LeastWalk();
@@ -277,6 +278,7 @@ public class GraphIndex {
         //rr.parkAndRide = true;
         //rr.modes = new TraverseModeSet(TraverseMode.WALK, TraverseMode.BICYCLE, TraverseMode.CAR);
         rr.from = new GenericLocation(lat, lon);
+        rr.batch = true;
         rr.setRoutingContext(graph);
         rr.walkSpeed = 1;
         rr.dominanceFunction = new DominanceFunction.LeastWalk();

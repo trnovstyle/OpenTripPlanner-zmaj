@@ -97,7 +97,7 @@ public class AStar {
     public ShortestPathTree getShortestPathTree(RoutingRequest req, double relTimeoutSeconds) {
         return this.getShortestPathTree(req, relTimeoutSeconds, null);
     }
-    
+
     /** set up a single-origin search */
     public void startSearch(RoutingRequest options,
             SearchTerminationStrategy terminationStrategy, long abortTime) {
@@ -113,7 +113,10 @@ public class AStar {
         runState.spt = options.getNewShortestPathTree();
 
         // We want to reuse the heuristic instance in a series of requests for the same target to avoid repeated work.
-        runState.heuristic = runState.rctx.remainingWeightHeuristic;
+        // "Batch" means one-to-many mode, where there is no goal to reach so we use a trivial heuristic.
+        runState.heuristic = options.batch ?
+                new TrivialRemainingWeightHeuristic() :
+                runState.rctx.remainingWeightHeuristic;
 
         // Since initial states can be multiple, heuristic cannot depend on the initial state.
         // Initializing the bidirectional heuristic is a pretty complicated operation that involves searching through
@@ -281,7 +284,7 @@ public class AStar {
                     runState.rctx.origin, runState.rctx.target, runState.u, runState.spt, runState.options)) {
                     break;
                 }
-            }  else if (runState.u_vertex == runState.rctx.target && runState.u.isFinal()) {
+            }  else if (!runState.options.batch && runState.u_vertex == runState.rctx.target && runState.u.isFinal()) {
                 if (runState.options.onlyTransitTrips && !runState.u.isEverBoarded()) {
                     continue;
                 }

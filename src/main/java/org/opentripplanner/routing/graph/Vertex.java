@@ -18,7 +18,6 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.*;
-import java.util.concurrent.CopyOnWriteArraySet;
 
 import javax.xml.bind.annotation.XmlTransient;
 
@@ -30,7 +29,6 @@ import org.slf4j.LoggerFactory;
 
 import org.locationtech.jts.geom.Coordinate;
 import java.util.Locale;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import org.opentripplanner.util.I18NString;
 import org.opentripplanner.util.NonLocalizedString;
@@ -45,11 +43,7 @@ public abstract class Vertex implements Serializable, Cloneable {
 
     private static final Logger LOG = LoggerFactory.getLogger(Vertex.class);
 
-    // Some tests count the number of vertices by looking at the label -> vertex map, which requires unique labels
-    // This number is used only for making unique labels for this reason.
-    //public static final AtomicInteger nextVertexIndex = new AtomicInteger();
-
-    /* Short debugging name */
+    /** @see #getLabel */
     private final String label;
     
     /* Longer human-readable name for the client */
@@ -62,6 +56,7 @@ public abstract class Vertex implements Serializable, Cloneable {
     private transient Edge[] incoming = new Edge[0];
 
     private transient Edge[] outgoing = new Edge[0];
+
 
     /* CONSTRUCTORS */
 
@@ -240,10 +235,15 @@ public abstract class Vertex implements Serializable, Cloneable {
         return this.name.toString(locale);
     }
 
+
     /* FIELD ACCESSOR METHODS : READ ONLY */
 
-    /** Every vertex has a label which is globally unique. */
-    public String getLabel() {
+    /**
+     * Every vertex has a label which is globally unique.
+     * Implementation detail: The method must be <b>final</b>, because it is used indirectly by
+     * the constructor in the {@link Graph#addVertex(Vertex)} method.
+     */
+    public final String getLabel() {
         return label;
     }
 
@@ -261,6 +261,7 @@ public abstract class Vertex implements Serializable, Cloneable {
     public double azimuthTo(Vertex other) {
         return azimuthTo(other.getCoordinate());
     }
+
 
     /* SERIALIZATION METHODS */
 
