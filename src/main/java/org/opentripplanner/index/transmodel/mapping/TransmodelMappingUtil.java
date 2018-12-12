@@ -133,9 +133,7 @@ public class TransmodelMappingUtil {
                 case QUAY:
                 case STOP_PLACE:
                     return GraphIndex.PlaceType.STOP;
-                case DEPARTURE:
-                    return GraphIndex.PlaceType.DEPARTURE_ROW;
-                case BICYLCE_RENT:
+                case BICYCLE_RENT:
                     return GraphIndex.PlaceType.BICYCLE_RENT;
                 case BIKE_PARK:
                     return GraphIndex.PlaceType.BIKE_PARK;

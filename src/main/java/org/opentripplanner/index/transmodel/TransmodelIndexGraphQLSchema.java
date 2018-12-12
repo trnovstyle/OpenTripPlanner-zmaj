@@ -3,7 +3,6 @@ package org.opentripplanner.index.transmodel;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.LineString;
-import graphql.GraphQL;
 import graphql.Scalars;
 import graphql.relay.DefaultConnection;
 import graphql.relay.DefaultPageInfo;
@@ -235,8 +234,7 @@ public class TransmodelIndexGraphQLSchema {
             .name("FilterPlaceType")
             .value("quay", TransmodelPlaceType.QUAY, "Quay")
             .value("stopPlace", TransmodelPlaceType.STOP_PLACE, "StopPlace")
-            .value("departure", TransmodelPlaceType.DEPARTURE, "Departure")
-            .value("bicycleRent", TransmodelPlaceType.BICYLCE_RENT, "Bicycle rent stations")
+            .value("bicycleRent", TransmodelPlaceType.BICYCLE_RENT, "Bicycle rent stations")
             .value("bikePark",TransmodelPlaceType.BIKE_PARK, "Bike parks")
             .value("carPark", TransmodelPlaceType.CAR_PARK, "Car parks")
             .build();
@@ -2821,7 +2819,8 @@ public class TransmodelIndexGraphQLSchema {
                                 .build())
                         .argument(GraphQLArgument.newArgument()
                                 .name("filterByPlaceTypes")
-                                .description("Only include places that imply this type. i.e. mode for quay, stop place etc. Also BICYCLE_RENT for bike rental stations.")
+                                .description("Only include places of given types if set. Default accepts all types")
+                                .defaultValue(Arrays.asList(TransmodelPlaceType.values()))
                                 .type(new GraphQLList(filterPlaceTypeEnum))
                                 .build())
                         .argument(GraphQLArgument.newArgument()
@@ -2866,6 +2865,9 @@ public class TransmodelIndexGraphQLSchema {
 
                             List<TraverseMode> filterByTransportModes = environment.getArgument("filterByModes");
                             List<TransmodelPlaceType> placeTypes = environment.getArgument("filterByPlaceTypes");
+                            if (CollectionUtils.isEmpty(placeTypes)) {
+                                placeTypes = Arrays.asList(TransmodelPlaceType.values());
+                            }
                             List<GraphIndex.PlaceType> filterByPlaceTypes = mappingUtil.mapPlaceTypes(placeTypes);
 
                             // Need to fetch more than requested no of places if stopPlaces are allowed, as this requires fetching potentially multiple quays for the same stop place and mapping them to unique stop places.
