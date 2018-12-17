@@ -1,19 +1,16 @@
 package org.opentripplanner.index.transmodel;
 
+import com.jayway.jsonpath.JsonPath;
 import graphql.ExecutionResult;
 import graphql.GraphQL;
 import graphql.execution.ExecutorServiceExecutionStrategy;
 import org.opentripplanner.GtfsTest;
-import org.opentripplanner.model.AgencyAndId;
-import org.opentripplanner.model.Stop;
 import org.opentripplanner.routing.core.RoutingRequest;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertThat;
 
 public class TransmodelGraphQLTest extends GtfsTest {
 
@@ -22,8 +19,7 @@ public class TransmodelGraphQLTest extends GtfsTest {
         return "testagency.zip";
     }
 
-    private TransmodelIndexGraphQLSchema transmodelIndexGraphQLSchema;
-
+    private GraphQL graphQL;
     private TransmodelGraphIndex graphIndex;
 
     @Override
@@ -31,7 +27,9 @@ public class TransmodelGraphQLTest extends GtfsTest {
         super.setUp();
         router.defaultRoutingRequest = new RoutingRequest();
         graphIndex = TransmodelGraphIndexFactory.getTransmodelGraphIndexForRouter(router);
-        transmodelIndexGraphQLSchema = new TransmodelIndexGraphQLSchema(router);
+        TransmodelIndexGraphQLSchema transmodelIndexGraphQLSchema = new TransmodelIndexGraphQLSchema(router);
+        graphQL = GraphQL.newGraphQL(
+                transmodelIndexGraphQLSchema.indexSchema).queryExecutionStrategy(new ExecutorServiceExecutionStrategy(graph.index.threadPool)).build();
     }
 
     public void testGraphQLAuthority() {
@@ -39,15 +37,64 @@ public class TransmodelGraphQLTest extends GtfsTest {
                 "query Authority {" +
                         "    authority(id: \"agency\"){" +
                         "        name" +
+                        "  lines {id}" +
                         "    }" +
                         "}";
 
-        ExecutionResult result = new GraphQL(transmodelIndexGraphQLSchema.indexSchema, new ExecutorServiceExecutionStrategy(graph.index.threadPool)
-        ).execute(query);
+        ExecutionResult result = graphQL.execute(query);
         assertTrue(result.getErrors().isEmpty());
         Map<String, Object> data = result.getData();
-        assertEquals("Fake Agency", ((Map) data.get("authority")).get("name"));
+        assertEquals("Fake Agency", JsonPath.read(data, "authority.name"));
+
+        assertFalse("Expected at least one line", ((Collection) JsonPath.read(data, "authority.lines")).isEmpty());
     }
+
+    public void testGetQuay() {
+        String quayId = "FEED:T";
+        String query =
+                "query Quay {" +
+                        "    quay(id: \"" + quayId + "\") {" +
+                        "        id" +
+                        "        latitude" +
+                        "        longitude" +
+                        " estimatedCalls(startTime: \"2018-12-17T11:05:00+0100\") { " +
+                        "aimedDepartureTime" +
+                        "} } " +
+                        "}";
+
+        ExecutionResult result = graphQL.execute(query);
+        assertTrue(result.getErrors().isEmpty());
+        Map<String, Object> data = result.getData();
+        assertEquals(quayId, JsonPath.read(data, "quay.id"));
+        List estimatedCalls = JsonPath.read(data, "quay.estimatedCalls");
+        assertFalse("Expected at least one estimated call for quay", estimatedCalls.isEmpty());
+    }
+
+    public void testGetQuaysByBBox() {
+        String query =
+                " { quaysByBbox(minimumLatitude:39, minimumLongitude:-75, maximumLatitude:42, maximumLongitude:-70 ) {id}} ";
+
+        ExecutionResult result = graphQL.execute(query);
+        assertTrue(result.getErrors().isEmpty());
+        Map<String, Object> data = result.getData();
+        List quaysByBbox = JsonPath.read(data, "quaysByBbox");
+        assertFalse("Expected to find at least one quay by bBox", quaysByBbox.isEmpty());
+    }
+
+
+    public void testGetLineById() {
+        String lineId = "FEED:1";
+        String query =
+                " { line(id:\""+lineId+"\" ) {id serviceJourneys {activeDates}}} ";
+
+        ExecutionResult result = graphQL.execute(query);
+        assertTrue(result.getErrors().isEmpty());
+        Map<String, Object> data = result.getData();
+        assertEquals(lineId, JsonPath.read(data, "line.id"));
+        List serviceJourney = JsonPath.read(data, "line.serviceJourneys");
+        assertFalse("Expected at least one service journey for line", serviceJourney.isEmpty());
+    }
+
 
     public void testTravelsearchSimple() {
         String query =
@@ -166,9 +213,10 @@ public class TransmodelGraphQLTest extends GtfsTest {
                                + "    }"
                                + "  }";
 
-        ExecutionResult result = new GraphQL(
-                                                    transmodelIndexGraphQLSchema.indexSchema, new ExecutorServiceExecutionStrategy(graph.index.threadPool)
-        ).execute(query);
+        ExecutionResult result = graphQL
+                                         .execute(query);
         assertTrue(result.getErrors().isEmpty());
     }
+
+
 }
