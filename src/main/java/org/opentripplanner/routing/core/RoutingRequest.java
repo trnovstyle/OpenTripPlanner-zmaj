@@ -618,9 +618,9 @@ public class RoutingRequest implements Cloneable, Serializable {
     public boolean geoidElevation = false;
 
     /**
-     * Whether or not the same trip should be allowed for multiple itineraries.
+     * How many trips used in a itineraries should be banned from inclusion in successive itineraries. Counting from start of itinerary.
      */
-    public boolean allowTripReUse = false;
+    public int banFirstTripsFromReuseNo = Integer.MAX_VALUE;
 
     /**
      * Saves split edge which can be split on origin/destination search

@@ -180,11 +180,13 @@ public class GraphPathFinder {
             for (GraphPath path : newPaths) {
                 // path.dump();
                 List<AgencyAndId> tripIds = path.getTrips();
-                if (!originalReq.allowTripReUse) {
+                    int i=1;
                     for (AgencyAndId tripId : tripIds) {
-                        options.banTrip(tripId);
+                        if (i++ <= options.banFirstTripsFromReuseNo) {
+                            options.banTrip(tripId);
+                        }
                     }
-                }
+
                 if (tripIds.isEmpty()) {
                     // This path does not use transit (is entirely on-street). Do not repeatedly find the same one.
                     options.onlyTransitTrips = true;
@@ -295,9 +297,12 @@ public class GraphPathFinder {
                     if((!options.arriveBy && joinedPath.states.getFirst().getTimeInMillis() >= options.dateTime * 1000) ||
                             (options.arriveBy && joinedPath.states.getLast().getTimeInMillis() <= options.dateTime * 1000)){
                         joinedPaths.add(joinedPath);
-                        if(newPaths.size() > 1 && !options.allowTripReUse){
+                        if(newPaths.size() > 1){
+                            int i=1;
                             for (AgencyAndId tripId : joinedPath.getTrips()) {
-                                options.banTrip(tripId);
+                                if (i++<= options.banFirstTripsFromReuseNo) {
+                                    options.banTrip(tripId);
+                                }
                             }
                         }
                     }
