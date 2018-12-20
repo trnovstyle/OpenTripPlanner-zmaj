@@ -180,8 +180,10 @@ public class GraphPathFinder {
             for (GraphPath path : newPaths) {
                 // path.dump();
                 List<AgencyAndId> tripIds = path.getTrips();
-                for (AgencyAndId tripId : tripIds) {
-                    options.banTrip(tripId);
+                if (!originalReq.allowTripReUse) {
+                    for (AgencyAndId tripId : tripIds) {
+                        options.banTrip(tripId);
+                    }
                 }
                 if (tripIds.isEmpty()) {
                     // This path does not use transit (is entirely on-street). Do not repeatedly find the same one.
@@ -293,7 +295,7 @@ public class GraphPathFinder {
                     if((!options.arriveBy && joinedPath.states.getFirst().getTimeInMillis() >= options.dateTime * 1000) ||
                             (options.arriveBy && joinedPath.states.getLast().getTimeInMillis() <= options.dateTime * 1000)){
                         joinedPaths.add(joinedPath);
-                        if(newPaths.size() > 1){
+                        if(newPaths.size() > 1 && !options.allowTripReUse){
                             for (AgencyAndId tripId : joinedPath.getTrips()) {
                                 options.banTrip(tripId);
                             }

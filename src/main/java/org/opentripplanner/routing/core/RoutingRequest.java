@@ -618,6 +618,11 @@ public class RoutingRequest implements Cloneable, Serializable {
     public boolean geoidElevation = false;
 
     /**
+     * Whether or not the same trip should be allowed for multiple itineraries.
+     */
+    public boolean allowTripReUse = false;
+
+    /**
      * Saves split edge which can be split on origin/destination search
      * <p>
      * This is used so that TrivialPathException is thrown if origin and destination search would split the same edge
