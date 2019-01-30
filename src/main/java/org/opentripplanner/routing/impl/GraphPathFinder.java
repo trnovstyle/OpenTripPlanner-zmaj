@@ -283,6 +283,11 @@ public class GraphPathFinder {
             aStar.getShortestPathTree(reversedMainRequest, timeout);
 
             List<GraphPath> newRevPaths = aStar.getPathsToTarget();
+
+            // We only want to use the compacted paths if the weight is not higher than the original paths
+            newRevPaths = newRevPaths.stream().filter(p -> p.getWeight() <= newPath.getWeight())
+                    .collect(Collectors.toList());
+
             if (newRevPaths.isEmpty()) {
                 reversedPaths.add(newPath);
             }else{
