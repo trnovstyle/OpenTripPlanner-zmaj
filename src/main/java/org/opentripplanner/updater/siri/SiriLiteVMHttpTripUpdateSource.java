@@ -17,7 +17,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import org.opentripplanner.routing.graph.Graph;
 import org.opentripplanner.updater.JsonConfigurable;
 import org.opentripplanner.util.HttpUtils;
-import org.rutebanken.siri20.util.SiriJson;
 import org.rutebanken.siri20.util.SiriXml;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,8 +44,6 @@ public class SiriLiteVMHttpTripUpdateSource implements VehicleMonitoringSource, 
 
     private ZonedDateTime lastTimestamp = ZonedDateTime.now().minusMonths(1);
 
-    private String contentType;
-
     @Override
     public void configure(Graph graph, JsonNode config) throws Exception {
         String url = config.path("url").asText();
@@ -56,16 +53,6 @@ public class SiriLiteVMHttpTripUpdateSource implements VehicleMonitoringSource, 
         this.url = url;
 
         this.feedId = config.path("feedId").asText();
-
-        this.contentType = "json";
-        String type = config.path("contentType").asText();
-        if (type != null) {
-            if (type.equalsIgnoreCase("xml") | type.equalsIgnoreCase("json")) {
-                contentType = type.toLowerCase();
-            } else {
-                throw new IllegalArgumentException("Parameter 'contentType' must be set to either 'xml' or 'json'");
-            }
-        }
     }
 
     @Override
@@ -73,18 +60,14 @@ public class SiriLiteVMHttpTripUpdateSource implements VehicleMonitoringSource, 
         long t1 = System.currentTimeMillis();
         try {
 
-            InputStream is = HttpUtils.getData(url, "Accept", "application/" + contentType);
+            InputStream is = HttpUtils.getData(url);
             if (is != null) {
                 // Decode message
                 LOG.info("Fetching VM-data took {} ms", (System.currentTimeMillis()-t1));
                 t1 = System.currentTimeMillis();
 
-                Siri siri;
-                if (contentType.equalsIgnoreCase("xml")) {
-                    siri = SiriXml.parseXml(is);
-                } else {
-                    siri = SiriJson.parseJson(is);
-                }
+                Siri siri = SiriXml.parseXml(is);
+
                 LOG.info("Unmarshalling ET-data took {} ms", (System.currentTimeMillis()-t1));
 
                 if (siri.getServiceDelivery().getResponseTimestamp().isBefore(lastTimestamp)) {
