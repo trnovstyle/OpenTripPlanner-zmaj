@@ -781,38 +781,66 @@ public class TimetableSnapshotSource {
             }
         }
 
-        Set<Trip> trips = siriFuzzyTripMatcher.match(estimatedVehicleJourney);
-
         //Values used in logging
-        String operatorRef = (estimatedVehicleJourney.getOperatorRef() != null ? estimatedVehicleJourney.getOperatorRef().getValue():null);
-        String vehicleModes = ""+estimatedVehicleJourney.getVehicleModes();
+        String operatorRef = (estimatedVehicleJourney.getOperatorRef() != null ? estimatedVehicleJourney.getOperatorRef().getValue() : null);
+        String vehicleModes = "" + estimatedVehicleJourney.getVehicleModes();
         String lineRef = estimatedVehicleJourney.getLineRef().getValue();
-        String vehicleRef = (estimatedVehicleJourney.getVehicleRef() != null ? estimatedVehicleJourney.getVehicleRef().getValue():null);
+        String vehicleRef = (estimatedVehicleJourney.getVehicleRef() != null ? estimatedVehicleJourney.getVehicleRef().getValue() : null);
 
-        if (trips == null || trips.isEmpty()) {
-            LOG.debug("No trips found for EstimatedVehicleJourney. [operator={}, vehicleModes={}, lineRef={}, vehicleRef={}]", operatorRef, vehicleModes, lineRef, vehicleRef);
-            return false;
-        }
+        ServiceDate serviceDate = getServiceDateForEstimatedVehicleJourney(estimatedVehicleJourney);
 
-        //Find the trips that best corresponds to EstimatedVehicleJourney
-        Set<Trip> matchingTrips = getTripForJourney(trips, estimatedVehicleJourney);
-
-        if (matchingTrips == null || matchingTrips.isEmpty()) {
-            LOG.debug("Found no matching trip for SIRI ET (serviceDate, departureTime). [operator={}, vehicleModes={}, lineRef={}, vehicleJourneyRef={}]", operatorRef, vehicleModes, lineRef, vehicleRef);
+        if (serviceDate == null) {
             return false;
         }
 
         Set<TripTimes> times = new HashSet<>();
-
         Set<TripPattern> patterns = new HashSet<>();
-        for (Trip matchingTrip : matchingTrips) {
-            TripPattern pattern = getPatternForTrip(matchingTrip, estimatedVehicleJourney);
-            if (pattern != null) {
-                ServiceDate serviceDate = getServiceDateForEstimatedVehicleJourney(estimatedVehicleJourney);
-                TripTimes updatedTripTimes = getCurrentTimetable(pattern, serviceDate).createUpdatedTripTimes(graph, estimatedVehicleJourney, timeZone, matchingTrip.getId());
-                if (updatedTripTimes != null) {
-                    patterns.add(pattern);
-                    times.add(updatedTripTimes);
+
+        Trip tripMatchedByServiceJourneyId = siriFuzzyTripMatcher.findTripByDatedVehicleJourneyRef(estimatedVehicleJourney);
+
+        if (tripMatchedByServiceJourneyId != null) {
+            /*
+              Found exact match
+             */
+            TripPattern exactPattern = graphIndex.patternForTrip.get(tripMatchedByServiceJourneyId);
+
+            if (exactPattern != null) {
+                TripTimes exactUpdatedTripTimes = getCurrentTimetable(exactPattern, serviceDate).createUpdatedTripTimes(graph, estimatedVehicleJourney, timeZone, tripMatchedByServiceJourneyId.getId());
+                if (exactUpdatedTripTimes != null) {
+                    times.add(exactUpdatedTripTimes);
+                    patterns.add(exactPattern);
+                } else {
+                    LOG.info("Failed to update TripTimes for trip found by exact match {}", tripMatchedByServiceJourneyId.getId());
+                    return false;
+                }
+            }
+        } else {
+            /*
+                No exact match found - search for trips based on arrival-times/stop-patterns
+             */
+            Set<Trip> trips = siriFuzzyTripMatcher.match(estimatedVehicleJourney);
+
+            if (trips == null || trips.isEmpty()) {
+                LOG.debug("No trips found for EstimatedVehicleJourney. [operator={}, vehicleModes={}, lineRef={}, vehicleRef={}]", operatorRef, vehicleModes, lineRef, vehicleRef);
+                return false;
+            }
+
+            //Find the trips that best corresponds to EstimatedVehicleJourney
+            Set<Trip> matchingTrips = getTripForJourney(trips, estimatedVehicleJourney);
+
+            if (matchingTrips == null || matchingTrips.isEmpty()) {
+                LOG.debug("Found no matching trip for SIRI ET (serviceDate, departureTime). [operator={}, vehicleModes={}, lineRef={}, vehicleJourneyRef={}]", operatorRef, vehicleModes, lineRef, vehicleRef);
+                return false;
+            }
+
+            for (Trip matchingTrip : matchingTrips) {
+                TripPattern pattern = getPatternForTrip(matchingTrip, estimatedVehicleJourney);
+                if (pattern != null) {
+                    TripTimes updatedTripTimes = getCurrentTimetable(pattern, serviceDate).createUpdatedTripTimes(graph, estimatedVehicleJourney, timeZone, matchingTrip.getId());
+                    if (updatedTripTimes != null) {
+                        patterns.add(pattern);
+                        times.add(updatedTripTimes);
+                    }
                 }
             }
         }
@@ -823,12 +851,6 @@ public class TimetableSnapshotSource {
         }
 
         if (times.isEmpty()) {
-            return false;
-        }
-
-        ServiceDate serviceDate = getServiceDateForEstimatedVehicleJourney(estimatedVehicleJourney);
-
-        if (serviceDate == null) {
             return false;
         }
 

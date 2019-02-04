@@ -84,6 +84,30 @@ public class SiriFuzzyTripMatcher {
         return trips;
     }
 
+    public Trip findTripByDatedVehicleJourneyRef(EstimatedVehicleJourney journey) {
+        String serviceJourneyId = resolveDatedVehicleJourneyRef(journey);
+        if (serviceJourneyId != null) {
+            for (String feedId : index.agenciesForFeedId.keySet()) {
+                Trip trip = index.tripForId.get(new AgencyAndId(feedId, serviceJourneyId));
+                if (trip != null) {
+                    return trip;
+                }
+            }
+        }
+        return null;
+    }
+
+    private String resolveDatedVehicleJourneyRef(EstimatedVehicleJourney journey) {
+
+        if (journey.getFramedVehicleJourneyRef() != null) {
+            return journey.getFramedVehicleJourneyRef().getDatedVehicleJourneyRef();
+        } else if (journey.getDatedVehicleJourneyRef() != null) {
+            return journey.getDatedVehicleJourneyRef().getValue();
+        }
+
+        return null;
+    }
+
     /**
      * Matches EstimatedVehicleJourney to a set of possible Trips based on tripId
      */
@@ -95,12 +119,7 @@ public class SiriFuzzyTripMatcher {
         }
 
         if (trips == null || trips.isEmpty()) {
-            String serviceJourneyId = null;
-            if (journey.getDatedVehicleJourneyRef() != null) {
-                serviceJourneyId = journey.getDatedVehicleJourneyRef().getValue();
-            } else if (journey.getFramedVehicleJourneyRef() != null) {
-                serviceJourneyId = journey.getFramedVehicleJourneyRef().getDatedVehicleJourneyRef();
-            }
+            String serviceJourneyId = resolveDatedVehicleJourneyRef(journey);
             if (serviceJourneyId != null) {
                 trips = getCachedTripsBySiriId(serviceJourneyId);
             }
