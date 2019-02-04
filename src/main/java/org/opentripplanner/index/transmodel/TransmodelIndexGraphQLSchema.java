@@ -975,6 +975,12 @@ public class TransmodelIndexGraphQLSchema {
                         .type(Scalars.GraphQLFloat)
                         .defaultValue(defaultRoutingRequest.walkReluctance)
                         .build())
+                .argument(GraphQLArgument.newArgument()
+                        .name("useFlex")
+                        .description("Not implemented.")
+                        .type(Scalars.GraphQLBoolean)
+                        .defaultValue(false)
+                        .build())
                 .dataFetcher(environment -> new TransmodelGraphQLPlanner(mappingUtil).plan(environment)
                 )
                 .build();
