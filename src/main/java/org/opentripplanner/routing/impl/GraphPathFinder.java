@@ -266,6 +266,7 @@ public class GraphPathFinder {
                     arrDepTime, new EuclideanRemainingWeightHeuristic());
             // Set boardCost to max value instead of only allowing traverseMode walk. This is so we are able to use station
             // to stop links that are not allowed when using walk only.
+            int originalWalkBoardCost = reversedTransitRequest.walkBoardCost;
             reversedTransitRequest.walkBoardCost = Integer.MAX_VALUE;
             aStar.getShortestPathTree(reversedTransitRequest, timeout);
             List<GraphPath> pathsToTarget = aStar.getPathsToTarget();
@@ -273,6 +274,12 @@ public class GraphPathFinder {
                 reversedPaths.add(newPath);
                 continue;
             }
+            for (GraphPath path : pathsToTarget) {
+                for (State state : path.states) {
+                    state.getOptions().walkBoardCost = originalWalkBoardCost;
+                }
+            }
+
             GraphPath walkPath = pathsToTarget.get(0);
 
             // do the reversed search to/from transitStop
