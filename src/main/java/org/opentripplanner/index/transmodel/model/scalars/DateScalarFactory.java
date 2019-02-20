@@ -32,7 +32,9 @@ public class DateScalarFactory {
             @Override
             public String serialize(Object input) {
                 if (input instanceof Long) {
-                    return ((Instant.ofEpochSecond((Long) input))).atZone(timeZone.toZoneId()).toLocalDate().format(FORMATTER);
+                    // Input time might be one hour before midnight the previous day due to daylight savings, so we add
+                    // one hour before getting the date
+                    return ((Instant.ofEpochSecond((Long) input))).atZone(timeZone.toZoneId()).plusHours(1).toLocalDate().format(FORMATTER);
                 }
                 return null;
             }
