@@ -391,7 +391,7 @@ public class TransmodelIndexGraphQLSchema {
                     "'. All AgencyAndIds in API will be assumed to belong to this agency.");
         }
 
-        mappingUtil = new TransmodelMappingUtil(fixedAgencyId);
+        mappingUtil = new TransmodelMappingUtil(fixedAgencyId, index.graph.getTimeZone());
         tripTimeShortHelper = new TripTimeShortHelper(index);
         dateTimeScalar = DateTimeScalarFactory.createMillisecondsSinceEpochAsDateTimeStringScalar(index.graph.getTimeZone());
         timeType = TimeScalarFactory.createSecondsSinceMidnightAsTimeObject();

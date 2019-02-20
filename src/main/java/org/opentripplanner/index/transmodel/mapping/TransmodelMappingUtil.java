@@ -10,9 +10,11 @@ import org.opentripplanner.model.Route;
 import org.opentripplanner.model.calendar.ServiceDate;
 import org.opentripplanner.routing.graph.GraphIndex;
 
+import java.time.LocalDate;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
+import java.util.TimeZone;
 import java.util.stream.Collectors;
 
 /**
@@ -26,8 +28,11 @@ public class TransmodelMappingUtil {
 
     private String fixedAgencyId;
 
-    public TransmodelMappingUtil(String fixedAgencyId) {
+    private TimeZone timeZone;
+
+    public TransmodelMappingUtil(String fixedAgencyId, TimeZone timeZone) {
         this.fixedAgencyId = fixedAgencyId;
+        this.timeZone = timeZone;
     }
 
 
@@ -108,7 +113,9 @@ public class TransmodelMappingUtil {
         if (serviceDate == null) {
             return null;
         }
-        return serviceDate.getAsDate().getTime() / 1000;
+
+        return LocalDate.of(serviceDate.getYear(), serviceDate.getMonth(), serviceDate.getDay())
+                .atStartOfDay(timeZone.toZoneId()).toInstant().toEpochMilli() / 1000;
     }
 
     public ServiceDate secondsSinceEpochToServiceDate(Long secondsSinceEpoch) {
