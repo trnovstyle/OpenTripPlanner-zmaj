@@ -61,7 +61,7 @@ public class SimpleTransfer extends Edge {
         if (s0.backEdge instanceof StreetTransitLink) {
             return null;
         }
-        if(distance > s0.getOptions().maxTransferWalkDistance) {
+        if(distance > s0.getOptions().getMaxTransferWalkDistance()) {
             return null;
         }
         // Only transfer right after riding a vehicle.

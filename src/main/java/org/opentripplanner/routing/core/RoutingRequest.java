@@ -791,6 +791,14 @@ public class RoutingRequest implements Cloneable, Serializable {
         }
     }
 
+    public double getMaxTransferWalkDistance() {
+        return maxTransferWalkDistance;
+    }
+
+    public void setMaxTransferWalkDistance(double maxTransferWalkDistance) {
+        this.maxTransferWalkDistance = maxTransferWalkDistance;
+    }
+
     public void setWalkBoardCost(int walkBoardCost) {
         if (walkBoardCost < 0) {
             this.walkBoardCost = 0;
