@@ -622,7 +622,8 @@ public class TransmodelIndexGraphQLSchema {
                         .build())
                 .field(GraphQLFieldDefinition.newFieldDefinition()
                         .name("points")
-                        .description("The encoded points of the polyline.")
+                        .description("The encoded points of the polyline. Be aware that the string could contain escape characters that need to be accounted for. " +
+                                "(https://www.freeformatter.com/javascript-escape.html)")
                         .type(Scalars.GraphQLString)
                         .dataFetcher(environment -> ((EncodedPolylineBean) environment.getSource()).getPoints())
                         .build())
