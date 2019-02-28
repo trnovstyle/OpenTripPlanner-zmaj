@@ -740,24 +740,16 @@ public class Timetable implements Serializable {
                             newTimes.setCancelledStop(callCounter, estimatedCall.isCancellation());
                         }
 
-                        int dropoffType;
-                        int pickupType;
+                        // Update dropoff-/pickuptype only if status is cancelled
                         CallStatusEnumeration arrivalStatus = estimatedCall.getArrivalStatus();
                         if (arrivalStatus == CallStatusEnumeration.CANCELLED) {
-                            dropoffType = PICKDROP_NONE;
-                        } else {
-                            dropoffType = pattern.stopPattern.dropoffs[callCounter];
+                            newTimes.setDropoffType(callCounter, PICKDROP_NONE);
                         }
 
                         CallStatusEnumeration departureStatus = estimatedCall.getDepartureStatus();
                         if (departureStatus == CallStatusEnumeration.CANCELLED) {
-                            pickupType = PICKDROP_NONE;
-                        } else {
-                            pickupType = pattern.stopPattern.pickups[callCounter];
+                            newTimes.setPickupType(callCounter, PICKDROP_NONE);
                         }
-
-                        newTimes.setDropoffType(callCounter, dropoffType);
-                        newTimes.setPickupType(callCounter, pickupType);
 
                         int arrivalTime = newTimes.getArrivalTime(callCounter);
                         int realtimeArrivalTime = -1;
@@ -826,14 +818,9 @@ public class Timetable implements Serializable {
             callCounter++;
         }
 
-        RealTimeState existingRealTimeState = existingTripTimes.getRealTimeState();
-
         if (stopPatternChanged) {
             // This update modified stopPattern
             newTimes.setRealTimeState(RealTimeState.MODIFIED);
-        } else if (existingRealTimeState != RealTimeState.SCHEDULED) {
-            // StopPattern has already been modified/updated - keep previous state
-            newTimes.setRealTimeState(existingRealTimeState);
         } else {
             // This is the first update, and StopPattern has not been changed
             newTimes.setRealTimeState(RealTimeState.UPDATED);

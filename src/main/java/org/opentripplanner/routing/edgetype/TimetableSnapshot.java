@@ -274,15 +274,16 @@ public class TimetableSnapshot {
         if (tripIndex == -1) {
             // Trip not found, add it
             tt.addTripTimes(updatedTripTimes);
-            // Remember this pattern for the added trip id and service date
-            String tripId = updatedTripTimes.trip.getId().getId();
-            TripIdAndServiceDate tripIdAndServiceDate = new TripIdAndServiceDate(feedId, tripId, serviceDate);
-            lastAddedTripPattern.put(tripIdAndServiceDate, pattern);
         } else {
             // Set updated trip times of trip
             tt.setTripTimes(tripIndex, updatedTripTimes);
         }
-        
+
+        // Remember this pattern for the added/updated trip id and service date
+        String tripId = updatedTripTimes.trip.getId().getId();
+        TripIdAndServiceDate tripIdAndServiceDate = new TripIdAndServiceDate(feedId, tripId, serviceDate);
+        lastAddedTripPattern.put(tripIdAndServiceDate, pattern);
+
         // The time tables are finished during the commit
         
         return true;

@@ -859,7 +859,11 @@ public class TimetableSnapshotSource {
             Trip trip = tripTimes.trip;
             for (TripPattern pattern : patterns) {
                 if (tripTimes.getNumStops() == pattern.stopPattern.stops.length) {
-                    if (!tripTimes.isCanceled() && tripTimes.getRealTimeState() == RealTimeState.MODIFIED) {
+                    if (!tripTimes.isCanceled()) {
+                        /*
+                          UPDATED and MODIFIED tripTimes should be handled the same way to always allow latest realtime-update
+                          to replace previous update regardless of realtimestate
+                         */
 
                         cancelScheduledTrip(SIRI_FEED_ID, trip.getId().getId(), serviceDate);
 
@@ -877,10 +881,10 @@ public class TimetableSnapshotSource {
                         } else {
                             // Add new trip
                             result = result | addTripToGraphAndBuffer(SIRI_FEED_ID, graph, trip, modifiedStopTimes, modifiedStops, tripTimes, serviceDate);
-                            continue;
                         }
+                    } else {
+                        result = result | buffer.update(SIRI_FEED_ID, pattern, tripTimes, serviceDate);
                     }
-                    result = result | buffer.update(SIRI_FEED_ID, pattern, tripTimes, serviceDate);
 
                     LOG.debug("Applied realtime data for trip {}", trip.getId().getId());
                 } else {
