@@ -2813,6 +2813,9 @@ public class TransmodelIndexGraphQLSchema {
                                 stops = Collections.emptyList();
                             }
 
+                            if (CollectionUtils.isEmpty(stops)) {
+                                return new DefaultConnection<>(Collections.emptyList(), new DefaultPageInfo(null, null, false, false));
+                            }
                             return new SimpleListConnection(stops).get(environment);
                         })
                         .build())
