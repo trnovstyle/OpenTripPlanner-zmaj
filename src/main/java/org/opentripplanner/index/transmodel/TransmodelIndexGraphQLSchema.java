@@ -95,6 +95,14 @@ public class TransmodelIndexGraphQLSchema {
             .value("incident", "incident", "Indicates an incident that may affect trip.")
             .build();
 
+    private static GraphQLEnumType severityEnum = GraphQLEnumType.newEnum()
+            .name("Severity") //SIRI - SeverityEnumeration
+            .value("noImpact", "noImpact", "Situation has no impact on trips.")
+            .value("slight", "slight", "Situation has a small impact on trips.")
+            .value("normal", "normal", "Situation has an impact on trips (default).")
+            .value("severe", "severe", "Situation has a severe impact on trips.")
+            .build();
+
     private static GraphQLEnumType stopConditionEnum = GraphQLEnumType.newEnum()
             .name("StopCondition") //SIRI - RoutePointTypeEnumeration
             .value("destination", StopCondition.DESTINATION, "Situation applies when stop is the destination of the leg.")
@@ -1209,6 +1217,12 @@ public class TransmodelIndexGraphQLSchema {
                         .type(Scalars.GraphQLString)
                         .description("Operator's internal id for this situation")
                         .dataFetcher(environment -> ((AlertPatch) environment.getSource()).getSituationNumber())
+                        .build())
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("severity")
+                        .type(severityEnum)
+                        .description("Severity of this situation ")
+                        .dataFetcher(environment -> ((AlertPatch) environment.getSource()).getAlert().severity)
                         .build())
                 .build();
 

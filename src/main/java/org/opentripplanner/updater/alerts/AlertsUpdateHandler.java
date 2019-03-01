@@ -499,6 +499,14 @@ public class AlertsUpdateHandler {
                     updateStopConditions(patch, null);
                 }
                 patch.getAlert().alertType = situation.getReportType();
+
+                if (situation.getSeverity() != null) {
+                    patch.getAlert().severity = situation.getSeverity().value();
+                } else {
+                    // When severity is not set - use default
+                    patch.getAlert().severity = SeverityEnumeration.NORMAL.value();
+                }
+
                 patch.setSituationNumber(situationNumber);
             }
         } else if (expireSituation) {
