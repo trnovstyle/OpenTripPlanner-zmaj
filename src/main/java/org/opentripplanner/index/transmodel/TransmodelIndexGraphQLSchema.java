@@ -1096,6 +1096,7 @@ public class TransmodelIndexGraphQLSchema {
                 .field(GraphQLFieldDefinition.newFieldDefinition()
                         .name("authority")
                         .type(authorityType)
+                        .description("Get affected authority for this situation element")
                         .dataFetcher(environment -> getAgency(((AlertPatch) environment.getSource()).getAgency()))
                         .build())
                 .field(GraphQLFieldDefinition.newFieldDefinition()
@@ -1208,7 +1209,7 @@ public class TransmodelIndexGraphQLSchema {
                 .field(GraphQLFieldDefinition.newFieldDefinition()
                         .name("stopConditions")
                         .type(new GraphQLNonNull(new GraphQLList(stopConditionEnum)))
-                        .deprecate("Temorary attribute used for data-verification.")
+                        .deprecate("Temporary attribute used for data-verification.")
                         .description("StopConditions of this situation")
                         .dataFetcher(environment -> ((AlertPatch) environment.getSource()).getStopConditions())
                         .build())
@@ -1223,6 +1224,13 @@ public class TransmodelIndexGraphQLSchema {
                         .type(severityEnum)
                         .description("Severity of this situation ")
                         .dataFetcher(environment -> ((AlertPatch) environment.getSource()).getAlert().severity)
+                        .build())
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("reportAuthority")
+                        .type(authorityType)
+                        .description("Authority that reported this situation")
+                        .deprecate("Not yet officially supported. May be removed or renamed.")
+                        .dataFetcher(environment -> getAgency(((AlertPatch) environment.getSource()).getFeedId()))
                         .build())
                 .build();
 
@@ -3265,7 +3273,28 @@ public class TransmodelIndexGraphQLSchema {
                         .name("situations")
                         .description("Get all active situations")
                         .type(new GraphQLNonNull(new GraphQLList(ptSituationElementType)))
-                        .dataFetcher(dataFetchingEnvironment -> index.getAlerts())
+                        .argument(GraphQLArgument.newArgument()
+                                .name("authorities")
+                                .description("Filter by reporting authorities.")
+                                .type(new GraphQLList(Scalars.GraphQLString))
+                                .build())
+                        .argument(GraphQLArgument.newArgument()
+                                .name("severities")
+                                .description("Filter by severity.")
+                                .type(new GraphQLList(severityEnum))
+                                .build())
+                        .dataFetcher(environment -> {
+                            Collection<AlertPatch> alerts = index.getAlerts();
+                            if ((environment.getArgument("authorities") instanceof List)) {
+                                List<String> authorities = environment.getArgument("authorities");
+                                alerts = alerts.stream().filter(alertPatch -> authorities.contains(alertPatch.getFeedId())).collect(Collectors.toSet());
+                            }
+                            if ((environment.getArgument("severities") instanceof List)) {
+                                List<String> severities = environment.getArgument("severities");
+                                alerts = alerts.stream().filter(alertPatch -> severities.contains(alertPatch.getAlert().severity)).collect(Collectors.toSet());
+                            }
+                            return alerts;
+                        })
                         .build())
                 .build();
 
