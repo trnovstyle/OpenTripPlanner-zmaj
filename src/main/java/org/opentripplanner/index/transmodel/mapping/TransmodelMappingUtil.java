@@ -115,7 +115,7 @@ public class TransmodelMappingUtil {
         }
 
         return LocalDate.of(serviceDate.getYear(), serviceDate.getMonth(), serviceDate.getDay())
-                .atStartOfDay(timeZone.toZoneId()).toInstant().toEpochMilli() / 1000;
+                .atStartOfDay(timeZone.toZoneId()).toEpochSecond();
     }
 
     public ServiceDate secondsSinceEpochToServiceDate(Long secondsSinceEpoch) {
