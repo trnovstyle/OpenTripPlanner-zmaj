@@ -970,7 +970,7 @@ public class Timetable implements Serializable {
 
         ZonedDateTime departureDate = null;
         int numberOfRecordedCalls = (journey.getRecordedCalls() != null && journey.getRecordedCalls().getRecordedCalls() != null) ? journey.getRecordedCalls().getRecordedCalls().size() : 0;
-
+        Set<Object> alreadyVisited = new HashSet<>();
         // modify updated stop-times
         for (int i = 0; i < stops.size(); i++) {
             Stop stop = stops.get(i);
@@ -987,7 +987,9 @@ public class Timetable implements Serializable {
             boolean foundMatch = false;
             if (i >= numberOfRecordedCalls) {
                 for (EstimatedCall estimatedCall : estimatedCalls) {
-
+                    if (alreadyVisited.contains(estimatedCall)) {
+                        continue;
+                    }
                     if (departureDate == null) {
                         departureDate = (estimatedCall.getAimedDepartureTime() != null ? estimatedCall.getAimedDepartureTime() : estimatedCall.getAimedArrivalTime());
                     }
@@ -1014,6 +1016,9 @@ public class Timetable implements Serializable {
                             stopTime.setDropOffType(PICKDROP_SCHEDULED);
                         } else if (estimatedCall.getArrivalBoardingActivity() == ArrivalBoardingActivityEnumeration.NO_ALIGHTING) {
                             stopTime.setDropOffType(PICKDROP_NONE);
+                        } else if (estimatedCall.getArrivalBoardingActivity() == null && i == 0) {
+                            //First stop - default no pickup
+                            stopTime.setDropOffType(PICKDROP_NONE);
                         }
 
                         CallStatusEnumeration departureStatus = estimatedCall.getDepartureStatus();
@@ -1023,9 +1028,13 @@ public class Timetable implements Serializable {
                             stopTime.setPickupType(PICKDROP_SCHEDULED);
                         } else if (estimatedCall.getDepartureBoardingActivity() == DepartureBoardingActivityEnumeration.NO_BOARDING) {
                             stopTime.setPickupType(PICKDROP_NONE);
+                        } else if (estimatedCall.getDepartureBoardingActivity() == null && i == (stops.size()-1)) {
+                            //Last stop - default no dropoff
+                            stopTime.setPickupType(PICKDROP_NONE);
                         }
 
                         modifiedStops.add(stopTime);
+                        alreadyVisited.add(estimatedCall);
                         break;
                     }
                 }
