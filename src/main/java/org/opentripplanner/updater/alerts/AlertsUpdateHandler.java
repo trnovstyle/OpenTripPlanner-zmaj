@@ -18,6 +18,7 @@ import com.google.transit.realtime.GtfsRealtime.*;
 import org.apache.commons.lang3.tuple.Pair;
 import org.opentripplanner.model.AgencyAndId;
 import org.opentripplanner.model.Route;
+import org.opentripplanner.model.TransmodelTransportSubmode;
 import org.opentripplanner.model.calendar.ServiceDate;
 import org.opentripplanner.routing.alertpatch.Alert;
 import org.opentripplanner.routing.alertpatch.AlertPatch;
@@ -387,13 +388,17 @@ public class AlertsUpdateHandler {
                         if (serviceDate.compareTo(yesterday) >= 0 ) {
                             for (VehicleJourneyRef vehicleJourneyRef : vehicleJourneyReves) {
 
-                                AgencyAndId tripId = siriFuzzyTripMatcher.getTripId(vehicleJourneyRef.getValue());
-                                if (tripId == null) {
-                                    tripId = siriFuzzyTripMatcher.getTripIdForTripShortNameServiceDateAndMode(vehicleJourneyRef.getValue(),
-                                            serviceDate,
-                                            TraverseMode.RAIL);
+                                List<AgencyAndId> tripIds = new ArrayList<>();
+
+                                AgencyAndId tripIdFromVehicleJourney = siriFuzzyTripMatcher.getTripId(vehicleJourneyRef.getValue());
+
+                                if (tripIdFromVehicleJourney != null) {
+                                    tripIds.add(tripIdFromVehicleJourney);
+                                } else {
+                                    tripIds = siriFuzzyTripMatcher.getTripIdForTripShortNameServiceDateAndMode(vehicleJourneyRef.getValue(),
+                                            serviceDate, TraverseMode.RAIL, TransmodelTransportSubmode.RAIL_REPLACEMENT_BUS);
                                 }
-                                if (tripId != null) {
+                                for (AgencyAndId tripId : tripIds) {
                                     if (! affectedStops.isEmpty()) {
                                         for (AffectedStopPointStructure affectedStop : affectedStops) {
                                             AgencyAndId stop = siriFuzzyTripMatcher.getStop(affectedStop.getStopPointRef().getValue());
