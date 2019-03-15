@@ -284,6 +284,7 @@ public class TransmodelGraphQLPlanner {
 
         callWith.argument("ignoreRealtimeUpdates", (Boolean v) -> request.ignoreRealtimeUpdates = v);
         callWith.argument("includePlannedCancellations", (Boolean v) -> request.includePlannedCancellations = v);
+        callWith.argument("ignoreInterchanges", (Boolean v) -> request.ignoreInterchanges = v);
 
         if (!request.modes.isTransit() && request.modes.getCar()) {
             request.from.vertexId = getLocationOfFirstQuay(request.from.vertexId, ((Router)environment.getContext()).graph.index);

@@ -523,6 +523,11 @@ public class RoutingRequest implements Cloneable, Serializable {
     public boolean includePlannedCancellations = false;
 
     /**
+     * When true, interchanges / timed transfers are ignored for this search.
+     */
+    public boolean ignoreInterchanges = false;
+
+    /**
      * If true, the remaining weight heuristic is disabled. Currently only implemented for the long
      * distance path service.
      */
@@ -1190,6 +1195,7 @@ public class RoutingRequest implements Cloneable, Serializable {
                        && clampInitialWait == other.clampInitialWait
                        && reverseOptimizeOnTheFly == other.reverseOptimizeOnTheFly
                        && ignoreRealtimeUpdates == other.ignoreRealtimeUpdates
+                       && ignoreInterchanges == other.ignoreInterchanges
                        && disableRemainingWeightHeuristic == other.disableRemainingWeightHeuristic
                        && Objects.equal(startingTransitTripId, other.startingTransitTripId)
                        && useTraffic == other.useTraffic
