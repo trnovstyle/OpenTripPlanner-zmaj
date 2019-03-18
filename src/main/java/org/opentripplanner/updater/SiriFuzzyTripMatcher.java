@@ -1,7 +1,10 @@
 package org.opentripplanner.updater;
 
 import org.opentripplanner.gtfs.GtfsLibrary;
-import org.opentripplanner.model.*;
+import org.opentripplanner.model.AgencyAndId;
+import org.opentripplanner.model.Route;
+import org.opentripplanner.model.Stop;
+import org.opentripplanner.model.Trip;
 import org.opentripplanner.model.calendar.ServiceDate;
 import org.opentripplanner.routing.core.TraverseMode;
 import org.opentripplanner.routing.edgetype.TripPattern;
@@ -194,9 +197,7 @@ public class SiriFuzzyTripMatcher {
                         mappedTripsCache.put(currentTripId, initialSet);
                     }
 
-                if (tripPattern != null && (tripPattern.mode.equals(TraverseMode.RAIL) ||
-                                                    (trip.getTransportSubmode() != null &&
-                                                            trip.getTransportSubmode().equals(TransmodelTransportSubmode.RAIL_REPLACEMENT_BUS))) ){
+                if (tripPattern != null && tripPattern.mode.equals(TraverseMode.RAIL)) {
                     if (trip.getTripShortName() != null) {
                         String tripShortName = trip.getTripShortName();
                         if (mappedVehicleRefCache.containsKey(tripShortName)) {
@@ -310,7 +311,7 @@ public class SiriFuzzyTripMatcher {
         return null;
     }
 
-    public List<AgencyAndId> getTripIdForTripShortNameServiceDateAndMode(String tripShortName, ServiceDate serviceDate, TraverseMode traverseMode, TransmodelTransportSubmode transportSubmode) {
+    public AgencyAndId getTripIdForTripShortNameServiceDateAndMode(String tripShortName, ServiceDate serviceDate, TraverseMode traverseMode) {
 
         Set<Trip> cachedTripsBySiriId = getCachedTripsBySiriId(tripShortName);
 
@@ -318,21 +319,17 @@ public class SiriFuzzyTripMatcher {
             cachedTripsBySiriId = getCachedTripsByVehicleRef(tripShortName);
         }
 
-        List<AgencyAndId> matches = new ArrayList<>();
         for (Trip trip : cachedTripsBySiriId) {
-            if (GtfsLibrary.getTraverseMode(trip.getRoute()).equals(traverseMode) ||
-                    trip.getTransportSubmode().equals(transportSubmode)) {
+            if (GtfsLibrary.getTraverseMode(trip.getRoute()).equals(traverseMode)) {
                 Set<ServiceDate> serviceDates = index.graph.getCalendarService().getServiceDatesForServiceId(trip.getServiceId());
 
                 if (serviceDates.contains(serviceDate) &&
                         trip.getTripShortName() != null &&
                         trip.getTripShortName().equals(tripShortName)) {
-                    matches.add(trip.getId());
+                    return trip.getId();
                 }
             }
         }
-
-
-        return matches;
+        return null;
     }
 }
