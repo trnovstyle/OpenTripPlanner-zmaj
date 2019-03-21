@@ -32,7 +32,10 @@ public class DateScalarFactory {
             @Override
             public String serialize(Object input) {
                 if (input instanceof Long) {
-                    return ((Instant.ofEpochSecond((Long) input))).atZone(timeZone.toZoneId()).toLocalDate().format(FORMATTER);
+                    // Add 1 hour before converting to date, to account for daylight savings time. This is done because
+                    // in for example TripTimeShort, only epoch time 12 hours before noon is stored instead of
+                    // the original service date.
+                    return ((Instant.ofEpochSecond((Long) input))).atZone(timeZone.toZoneId()).toLocalDateTime().plusHours(1).toLocalDate().format(FORMATTER);
                 }
                 return null;
             }
