@@ -994,7 +994,6 @@ public class TransmodelIndexGraphQLSchema {
                         .build())
                 .argument(GraphQLArgument.newArgument()
                         .name("walkReluctance")
-                        .description("DEPRECATED - ONLY FOR TESTING. Walk cost is multiplied by this value.")
                         .type(Scalars.GraphQLFloat)
                         .defaultValue(defaultRoutingRequest.walkReluctance)
                         .build())
