@@ -994,6 +994,7 @@ public class TransmodelIndexGraphQLSchema {
                         .build())
                 .argument(GraphQLArgument.newArgument()
                         .name("walkReluctance")
+                        .description("Walk cost is multiplied by this value. This is the main parameter to use for limiting walking.")
                         .type(Scalars.GraphQLFloat)
                         .defaultValue(defaultRoutingRequest.walkReluctance)
                         .build())
