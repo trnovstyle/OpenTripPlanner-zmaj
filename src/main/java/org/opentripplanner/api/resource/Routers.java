@@ -132,10 +132,12 @@ public class Routers {
                 Graph graph = router.graph;
 
                 isRouterReady = true;
-                for (GraphUpdater updater : graph.updaterManager.getUpdaterList()) {
-                    if (updater instanceof PollingGraphUpdater) {
-                        if (! ((PollingGraphUpdater) updater).isReady()) {
-                            waitingUpdaters.add(((PollingGraphUpdater) updater).getType());
+                if (graph.updaterManager != null && graph.updaterManager.getUpdaterList() != null) {
+                    for (GraphUpdater updater : graph.updaterManager.getUpdaterList()) {
+                        if (updater instanceof PollingGraphUpdater) {
+                            if (!((PollingGraphUpdater) updater).isReady()) {
+                                waitingUpdaters.add(((PollingGraphUpdater) updater).getType());
+                            }
                         }
                     }
                 }
