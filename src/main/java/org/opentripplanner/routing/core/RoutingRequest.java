@@ -330,6 +330,14 @@ public class RoutingRequest implements Cloneable, Serializable {
     public double waitReluctance = 1.0;
 
     /**
+     * The extra cost per meter that is travelled by transit. This is a cost point peter meter, so it should in most
+     * cases be a very small fraction. The purpose of assigning a cost to distance is often because it correlates with
+     * fare prices and you want to avoid situations where you take detours or travel back again even if it is
+     * technically faster. Setting this value to 0 turns off the feature altogether.
+     */
+    public double transitDistanceReluctance = 0;
+
+    /**
      * How much less bad is waiting at the beginning of the trip (replaces waitReluctance on the first boarding)
      */
     public double waitAtBeginningFactor = 0.4;

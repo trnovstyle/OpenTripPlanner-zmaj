@@ -183,6 +183,7 @@ public class TransmodelGraphQLPlanner {
         callWith.argument("bikeSpeed", (Double v) -> request.bikeSpeed = v);
         callWith.argument("bikeSwitchTime", (Integer v) -> request.bikeSwitchTime = v);
         callWith.argument("bikeSwitchCost", (Integer v) -> request.bikeSwitchCost = v);
+        callWith.argument("transitDistanceReluctance", (Double v) -> request.transitDistanceReluctance = v);
 
         OptimizeType optimize = environment.getArgument("optimize");
 
