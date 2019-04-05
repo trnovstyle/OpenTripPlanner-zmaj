@@ -41,17 +41,20 @@ public class PatternHop extends TablePatternEdge implements OnboardEdge, HopEdge
 
     private LineString geometry = null;
 
+    private double distance;
+
     public PatternHop(PatternStopVertex from, PatternStopVertex to, Stop begin, Stop end, int stopIndex) {
         super(from, to);
         this.begin = begin;
         this.end = end;
         this.stopIndex = stopIndex;
         getPattern().setPatternHop(stopIndex, this);
+        this.distance = SphericalDistanceLibrary.distance(begin.getLat(), begin.getLon(), end.getLat(),
+                end.getLon());
     }
 
     public double getDistance() {
-        return SphericalDistanceLibrary.distance(begin.getLat(), begin.getLon(), end.getLat(),
-                end.getLon());
+        return distance;
     }
 
     public TraverseMode getMode() {
