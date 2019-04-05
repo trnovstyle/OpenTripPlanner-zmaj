@@ -983,6 +983,10 @@ public class Timetable implements Serializable {
             stopTime.setPickupType(pattern.stopPattern.pickups[i]);
             stopTime.setArrivalTime(oldTimes.getScheduledArrivalTime(i));
             stopTime.setDepartureTime(oldTimes.getScheduledDepartureTime(i));
+            stopTime.setStopHeadsign(oldTimes.getHeadsign(i));
+
+            // TODO: Do we need to set the StopTime.id?
+            //stopTime.setId(oldTimes.getStopTimeIdByIndex(i));
 
             boolean foundMatch = false;
             if (i >= numberOfRecordedCalls) {
@@ -1031,6 +1035,11 @@ public class Timetable implements Serializable {
                         } else if (estimatedCall.getDepartureBoardingActivity() == null && i == (stops.size()-1)) {
                             //Last stop - default no dropoff
                             stopTime.setPickupType(PICKDROP_NONE);
+                        }
+
+                        if (estimatedCall.getDestinationDisplaies() != null && !estimatedCall.getDestinationDisplaies().isEmpty()) {
+                            NaturalLanguageStringStructure destinationDisplay = estimatedCall.getDestinationDisplaies().get(0);
+                            stopTime.setStopHeadsign(destinationDisplay.getValue());
                         }
 
                         modifiedStops.add(stopTime);

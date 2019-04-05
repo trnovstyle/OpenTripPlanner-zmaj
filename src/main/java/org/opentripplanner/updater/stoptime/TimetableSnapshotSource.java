@@ -664,6 +664,11 @@ public class TimetableSnapshotSource {
                 stopTime.setPickupType(PICKDROP_NONE);
             }
 
+            if (estimatedCall.getDestinationDisplaies() != null && !estimatedCall.getDestinationDisplaies().isEmpty()) {
+                NaturalLanguageStringStructure destinationDisplay = estimatedCall.getDestinationDisplaies().get(0);
+                stopTime.setStopHeadsign(destinationDisplay.getValue());
+            }
+
             if (i == 0) {
                 // Fake arrival on first stop
                 stopTime.setArrivalTime(stopTime.getDepartureTime());
