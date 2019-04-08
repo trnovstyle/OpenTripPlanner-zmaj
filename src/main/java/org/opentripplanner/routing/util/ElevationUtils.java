@@ -119,7 +119,7 @@ public class ElevationUtils {
          * length of the street edge which is the flat one.
          */
         return new SlopeCosts(slopeSpeedEffectiveLength / flatLength, slopeWorkCost / flatLength,
-                slopeSafetyCost, maxSlope, lengthMultiplier, flattened, slopeWalkEffectiveLength * walkParA / flatLength);
+                slopeSafetyCost, maxSlope, lengthMultiplier, flattened, slopeWalkEffectiveLength / flatLength);
     }
 
     /** constants for slope computation */
