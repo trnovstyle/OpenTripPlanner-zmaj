@@ -86,7 +86,7 @@ public class BikeRentalUpdater extends PollingGraphUpdater {
         BikeRentalDataSource source = null;
         if (sourceType != null) {
             if (sourceType.equals("jcdecaux")) {
-                source = new JCDecauxBikeRentalDataSource();
+                source = new JCDecauxBikeRentalDataSource(networkName);
             } else if (sourceType.equals("b-cycle")) {
                 source = new BCycleBikeRentalDataSource(apiKey, networkName);
             } else if (sourceType.equals("bixi")) {

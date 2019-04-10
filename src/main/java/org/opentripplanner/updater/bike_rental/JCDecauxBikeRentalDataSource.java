@@ -18,6 +18,9 @@ import org.opentripplanner.util.NonLocalizedString;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
+import java.util.HashSet;
+import java.util.Set;
+
 /**
  * Implementation of a BikeRentalDataSource for the generic JCDecaux Open-Data API.
  * 
@@ -26,8 +29,12 @@ import com.fasterxml.jackson.databind.JsonNode;
  */
 public class JCDecauxBikeRentalDataSource extends GenericJsonBikeRentalDataSource {
 
-    public JCDecauxBikeRentalDataSource() {
+    private Set<String> networks = null;
+
+    public JCDecauxBikeRentalDataSource(String network) {
         super("");
+        this.networks = new HashSet<>();
+        this.networks.add(network);
     }
 
     /**
@@ -64,6 +71,7 @@ public class JCDecauxBikeRentalDataSource extends GenericJsonBikeRentalDataSourc
         station.name = new NonLocalizedString(node.path("name").asText());
         station.bikesAvailable = node.path("available_bikes").asInt();
         station.spacesAvailable = node.path("available_bike_stands").asInt();
+        station.networks = networks;
         return station;
     }
 }
