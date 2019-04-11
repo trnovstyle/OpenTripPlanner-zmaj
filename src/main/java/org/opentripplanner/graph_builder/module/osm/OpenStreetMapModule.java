@@ -248,7 +248,7 @@ public class OpenStreetMapModule implements GraphBuilderModule {
             initIntersectionNodes();
 
             buildBasicGraph();
-            buildWalkableAreas(skipVisibility, platformEntriesLinking);
+            buildWalkableAreas(skipVisibility, true);
 
             if(platformEntriesLinking){
                 linkPlatformEntries(edgeFactory, customNamer);
