@@ -36,6 +36,9 @@ public class Alert implements Serializable {
     public I18NString alertDetailText;
 
     @XmlElement
+    public I18NString alertAdviceText;
+
+    @XmlElement
     public I18NString alertUrl;
 
     //null means unknown
@@ -90,6 +93,15 @@ public class Alert implements Serializable {
                 return false;
             }
         }
+        if (alertAdviceText == null) {
+            if (ao.alertAdviceText != null) {
+                return false;
+            }
+        } else {
+            if (!alertAdviceText.equals(ao.alertAdviceText)) {
+                return false;
+            }
+        }
         if (alertHeaderText == null) {
             if (ao.alertHeaderText != null) {
                 return false;
@@ -109,6 +121,7 @@ public class Alert implements Serializable {
     public int hashCode() {
         return (alertDescriptionText == null ? 0 : alertDescriptionText.hashCode())
                 + (alertDetailText == null ? 0 : alertDetailText.hashCode())
+                + (alertAdviceText == null ? 0 : alertAdviceText.hashCode())
                 + (alertHeaderText == null ? 0 : alertHeaderText.hashCode())
                 + (alertUrl == null ? 0 : alertUrl.hashCode());
     }
@@ -119,6 +132,7 @@ public class Alert implements Serializable {
                 + (alertHeaderText != null ? alertHeaderText.toString()
                         : alertDescriptionText != null ? alertDescriptionText.toString()
                         : alertDetailText != null ? alertDetailText.toString()
+                        : alertAdviceText != null ? alertAdviceText.toString()
                                 : "?") + "')";
     }
 }

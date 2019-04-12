@@ -787,7 +787,8 @@ public class IndexGraphQLSchema {
             .field(GraphQLFieldDefinition.newFieldDefinition()
                 .name("alertDetailText")
                 .type(new GraphQLNonNull(Scalars.GraphQLString))
-                .description("Additional details of alert notnull")
+                .description("Additional details of alert")
+                .deprecate("Not allowed according to profile. Use ´alertAdviceText´ instead.")
                 .dataFetcher(environment -> {
 
                     I18NString alertDetailText = ((AlertPatch) environment.getSource()).getAlert().alertDetailText;
@@ -798,14 +799,42 @@ public class IndexGraphQLSchema {
                 })
                 .build())
             .field(GraphQLFieldDefinition.newFieldDefinition()
+                .name("alertAdviceText")
+                .type(new GraphQLNonNull(Scalars.GraphQLString))
+                .description("Advice of alert")
+                .dataFetcher(environment -> {
+
+                    I18NString alertAdviceText = ((AlertPatch) environment.getSource()).getAlert().alertAdviceText;
+                    if (alertAdviceText != null) {
+                        return alertAdviceText.toString();
+                    }
+                    return null;
+                })
+                .build())
+            .field(GraphQLFieldDefinition.newFieldDefinition()
                 .name("alertDetailTextTranslations")
                 .type(new GraphQLNonNull(new GraphQLList(new GraphQLNonNull(translatedStringType))))
                 .description("Additional details of alert in all different translations available notnull")
+                    .deprecate("Not allowed according to profile. Use ´alertAdviceTextTranslations´ instead.")
                 .dataFetcher(environment -> {
                     AlertPatch alertPatch = environment.getSource();
                     Alert alert = alertPatch.getAlert();
                     if (alert.alertDetailText instanceof TranslatedString) {
                         return ((TranslatedString) alert.alertDetailText).getTranslations();
+                    } else {
+                        return emptyList();
+                    }
+                })
+                .build())
+            .field(GraphQLFieldDefinition.newFieldDefinition()
+                .name("alertAdviceTextTranslations")
+                .type(new GraphQLNonNull(new GraphQLList(new GraphQLNonNull(translatedStringType))))
+                .description("Advice of alert in all different translations available notnull")
+                .dataFetcher(environment -> {
+                    AlertPatch alertPatch = environment.getSource();
+                    Alert alert = alertPatch.getAlert();
+                    if (alert.alertAdviceText instanceof TranslatedString) {
+                        return ((TranslatedString) alert.alertAdviceText).getTranslations();
                     } else {
                         return emptyList();
                     }

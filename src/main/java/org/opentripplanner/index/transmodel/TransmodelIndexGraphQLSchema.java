@@ -1186,6 +1186,7 @@ public class TransmodelIndexGraphQLSchema {
                         .name("detail")
                         .type(new GraphQLNonNull(new GraphQLList(new GraphQLNonNull(multilingualStringType))))
                         .description("Details of situation in all different translations available")
+                        .deprecate("Not allowed according to profile. Use ´advice´ instead.")
                         .dataFetcher(environment -> {
                             AlertPatch alertPatch = environment.getSource();
                             Alert alert = alertPatch.getAlert();
@@ -1193,6 +1194,22 @@ public class TransmodelIndexGraphQLSchema {
                                 return ((TranslatedString) alert.alertDetailText).getTranslations();
                             } else if (alert.alertDetailText != null) {
                                 return Arrays.asList(new AbstractMap.SimpleEntry<>(null, alert.alertDetailText.toString()));
+                            } else {
+                                return emptyList();
+                            }
+                        })
+                        .build())
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("advice")
+                        .type(new GraphQLNonNull(new GraphQLList(new GraphQLNonNull(multilingualStringType))))
+                        .description("Advice of situation in all different translations available")
+                        .dataFetcher(environment -> {
+                            AlertPatch alertPatch = environment.getSource();
+                            Alert alert = alertPatch.getAlert();
+                            if (alert.alertAdviceText instanceof TranslatedString) {
+                                return ((TranslatedString) alert.alertAdviceText).getTranslations();
+                            } else if (alert.alertAdviceText != null) {
+                                return Arrays.asList(new AbstractMap.SimpleEntry<>(null, alert.alertAdviceText.toString()));
                             } else {
                                 return emptyList();
                             }

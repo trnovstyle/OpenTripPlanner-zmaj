@@ -106,6 +106,7 @@ public class AlertsUpdateHandler {
 
         alert.alertDescriptionText = getTranslatedString(situation.getDescriptions());
         alert.alertDetailText = getTranslatedString(situation.getDetails());
+        alert.alertAdviceText = getTranslatedString(situation.getAdvices());
         alert.alertHeaderText = getTranslatedString(situation.getSummaries());
 
         alert.alertUrl = getInfoLinkAsString(situation.getInfoLinks());
@@ -426,6 +427,7 @@ public class AlertsUpdateHandler {
                                                 vehicleJourneyAlert.alertHeaderText = alert.alertHeaderText;
                                                 vehicleJourneyAlert.alertDescriptionText = alert.alertDescriptionText;
                                                 vehicleJourneyAlert.alertDetailText = alert.alertDetailText;
+                                                vehicleJourneyAlert.alertAdviceText = alert.alertAdviceText;
                                                 vehicleJourneyAlert.alertUrl = alert.alertUrl;
                                                 vehicleJourneyAlert.effectiveStartDate = serviceDate.getAsDate();
                                                 vehicleJourneyAlert.effectiveEndDate = serviceDate.next().getAsDate();
@@ -454,6 +456,7 @@ public class AlertsUpdateHandler {
                                             vehicleJourneyAlert.alertHeaderText = alert.alertHeaderText;
                                             vehicleJourneyAlert.alertDescriptionText = alert.alertDescriptionText;
                                             vehicleJourneyAlert.alertDetailText = alert.alertDetailText;
+                                            vehicleJourneyAlert.alertAdviceText = alert.alertAdviceText;
                                             vehicleJourneyAlert.alertUrl = alert.alertUrl;
                                             vehicleJourneyAlert.effectiveStartDate = serviceDate.getAsDate();
                                             vehicleJourneyAlert.effectiveEndDate = serviceDate.next().getAsDate();
