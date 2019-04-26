@@ -138,7 +138,7 @@ public abstract class GenericJsonBikeRentalDataSource implements BikeRentalDataS
         }
     }
 
-    private String convertStreamToString(java.io.InputStream is) {
+    protected String convertStreamToString(java.io.InputStream is) {
         java.util.Scanner scanner = null;
         String result="";
         try {
@@ -167,6 +167,10 @@ public abstract class GenericJsonBikeRentalDataSource implements BikeRentalDataS
 
     public void setUrl(String url) {
         this.url = url;
+    }
+
+    protected void setJsonParsePath(String jsonParsePath) {
+        this.jsonParsePath = jsonParsePath;
     }
 
     public abstract BikeRentalStation makeStation(JsonNode rentalStationNode);
