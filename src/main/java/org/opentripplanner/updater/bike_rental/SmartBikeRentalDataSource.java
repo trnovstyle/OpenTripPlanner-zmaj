@@ -38,7 +38,7 @@ public class SmartBikeRentalDataSource extends OAuthJsonBikeRentalDataSource {
         brstation.y = rentalStationNode.path("location").path("lat").asDouble();
 
         brstation.bikesAvailable = rentalStationNode.path("availability").path("bikes").asInt();
-        brstation.spacesAvailable = rentalStationNode.path("availability").path("locks").asInt();
+        brstation.spacesAvailable = rentalStationNode.path("availability").path("slots").asInt();
 
         brstation.description = new NonLocalizedString(rentalStationNode.path("address").asText("").trim());
 
