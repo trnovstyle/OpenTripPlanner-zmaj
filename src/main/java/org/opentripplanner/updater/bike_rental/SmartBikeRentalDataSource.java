@@ -32,7 +32,7 @@ public class SmartBikeRentalDataSource extends OAuthJsonBikeRentalDataSource {
     public BikeRentalStation makeStation(JsonNode rentalStationNode) {
         BikeRentalStation brstation = new BikeRentalStation();
 
-        brstation.id = rentalStationNode.path("id").toString();
+        brstation.id = rentalStationNode.path("id").asText();
         brstation.name = new NonLocalizedString(rentalStationNode.path("name").asText("").trim());
         brstation.x = rentalStationNode.path("location").path("lon").asDouble();
         brstation.y = rentalStationNode.path("location").path("lat").asDouble();

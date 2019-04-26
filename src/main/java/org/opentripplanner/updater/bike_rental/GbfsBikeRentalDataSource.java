@@ -100,7 +100,7 @@ public class GbfsBikeRentalDataSource implements BikeRentalDataSource, JsonConfi
         public BikeRentalStation makeStation(JsonNode stationNode) {
             BikeRentalStation brstation = new BikeRentalStation();
 
-            brstation.id = stationNode.path("station_id").toString();
+            brstation.id = stationNode.path("station_id").asText();
             brstation.x = stationNode.path("lon").asDouble();
             brstation.y = stationNode.path("lat").asDouble();
             brstation.name =  new NonLocalizedString(stationNode.path("name").asText());
@@ -119,7 +119,7 @@ public class GbfsBikeRentalDataSource implements BikeRentalDataSource, JsonConfi
         public BikeRentalStation makeStation(JsonNode stationNode) {
             BikeRentalStation brstation = new BikeRentalStation();
 
-            brstation.id = stationNode.path("station_id").toString();
+            brstation.id = stationNode.path("station_id").asText();
             brstation.bikesAvailable = stationNode.path("num_bikes_available").asInt();
             brstation.spacesAvailable = stationNode.path("num_docks_available").asInt();
 
@@ -137,7 +137,7 @@ public class GbfsBikeRentalDataSource implements BikeRentalDataSource, JsonConfi
         public BikeRentalStation makeStation(JsonNode stationNode) {
             BikeRentalStation brstation = new BikeRentalStation();
 
-            brstation.id = stationNode.path("bike_id").toString();
+            brstation.id = stationNode.path("bike_id").asText();
             brstation.name = new NonLocalizedString(stationNode.path("name").asText());
             brstation.x = stationNode.path("lon").asDouble();
             brstation.y = stationNode.path("lat").asDouble();
