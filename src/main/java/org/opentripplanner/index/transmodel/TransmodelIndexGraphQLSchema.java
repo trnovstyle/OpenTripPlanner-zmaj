@@ -3400,8 +3400,12 @@ public class TransmodelIndexGraphQLSchema {
     private static void filterSituationsByDateAndStopConditions(Collection<AlertPatch> alertPatches, Date fromTime, Date toTime, List<StopCondition> stopConditions) {
         if (alertPatches != null) {
 
+            // First and last period
             alertPatches.removeIf(alert -> alert.getAlert().effectiveStartDate.after(toTime) ||
                     (alert.getAlert().effectiveEndDate != null && alert.getAlert().effectiveEndDate.before(fromTime)));
+
+            // Handle repeating validityPeriods
+            alertPatches.removeIf(alertPatch -> !alertPatch.displayDuring(fromTime.getTime()/1000, toTime.getTime()/1000));
 
             alertPatches.removeIf(alert -> {
                 boolean removeByStopCondition = false;
