@@ -669,10 +669,12 @@ public abstract class GraphPathToTripPlanConverter {
                         // this leg.
                         if (alertPatch.getTrip().equals(leg.tripId)) {
                             leg.addAlert(alertPatch.getAlert(), requestedLocale);
+                            leg.addAlertPatch(alertPatch);
                         }
                     } else {
                         // If we are not matching a particular trip add all known alerts for this trip pattern.
                         leg.addAlert(alertPatch.getAlert(), requestedLocale);
+                        leg.addAlertPatch(alertPatch);
                     }
                 }
             }
@@ -761,6 +763,8 @@ public abstract class GraphPathToTripPlanConverter {
                         requestedLocale, leg.startTime.getTime(), leg.endTime.getTime());
             }
 
+            // Filter alerts when there are multiple timePeriods for each alert
+            leg.alertPatches.removeIf(alertPatch ->  !alertPatch.displayDuring(leg.startTime.getTimeInMillis()/1000, leg.endTime.getTimeInMillis()/1000));
         }
     }
 
