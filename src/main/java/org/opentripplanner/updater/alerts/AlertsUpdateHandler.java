@@ -142,7 +142,7 @@ public class AlertsUpdateHandler {
                     bestEndTime = realEnd;
                 }
 
-                periods.add(new TimePeriod(start, end));
+                periods.add(new TimePeriod(start/1000, end/1000));
             }
             if (bestStartTime != Long.MAX_VALUE) {
                 alert.effectiveStartDate = new Date(bestStartTime);
@@ -427,7 +427,7 @@ public class AlertsUpdateHandler {
 
                                             //  A tripId for a given date may be reused for other dates not affected by this alert.
                                             List<TimePeriod> timePeriodList = new ArrayList<>();
-                                            timePeriodList.add(new TimePeriod(effectiveStartDate.getTime(), effectiveEndDate.getTime()));
+                                            timePeriodList.add(new TimePeriod(effectiveStartDate.getTime()/1000, effectiveEndDate.getTime()/1000));
                                             alertPatch.setTimePeriods(timePeriodList);
 
 
@@ -456,7 +456,7 @@ public class AlertsUpdateHandler {
 
                                         //  A tripId for a given date may be reused for other dates not affected by this alert.
                                         List<TimePeriod> timePeriodList = new ArrayList<>();
-                                        timePeriodList.add(new TimePeriod(effectiveStartDate.getTime(), effectiveEndDate.getTime()));
+                                        timePeriodList.add(new TimePeriod(effectiveStartDate.getTime()/1000, effectiveEndDate.getTime()/1000));
                                         alertPatch.setTimePeriods(timePeriodList);
 
 

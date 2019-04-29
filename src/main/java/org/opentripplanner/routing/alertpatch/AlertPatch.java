@@ -102,8 +102,8 @@ public class AlertPatch implements Serializable {
 
     public boolean displayDuring(long startTimeSeconds, long endTimeSeconds) {
         for (TimePeriod timePeriod : timePeriods) {
-            if (endTimeSeconds*1000 >= timePeriod.startTime) {
-                if (startTimeSeconds*1000 < timePeriod.endTime) {
+            if (endTimeSeconds >= timePeriod.startTime) {
+                if (startTimeSeconds < timePeriod.endTime) {
                     return true;
                 }
             }
