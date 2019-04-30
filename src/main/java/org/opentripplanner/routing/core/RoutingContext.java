@@ -13,6 +13,7 @@ import org.opentripplanner.routing.algorithm.strategies.EuclideanRemainingWeight
 import org.opentripplanner.routing.algorithm.strategies.RemainingWeightHeuristic;
 import org.opentripplanner.routing.algorithm.strategies.TrivialRemainingWeightHeuristic;
 import org.opentripplanner.routing.edgetype.StreetEdge;
+import org.opentripplanner.routing.edgetype.TemporaryEdge;
 import org.opentripplanner.routing.edgetype.TemporaryPartialStreetEdge;
 import org.opentripplanner.routing.edgetype.TimetableSnapshot;
 import org.opentripplanner.routing.error.GraphNotFoundException;
@@ -32,14 +33,7 @@ import org.opentripplanner.util.NonLocalizedString;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-import java.util.TimeZone;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -119,6 +113,10 @@ public class RoutingContext implements Cloneable {
 
     /** Indicates that a maximum slope constraint was specified but was removed during routing to produce a result. */
     public boolean slopeRestrictionRemoved = false;
+
+    public Collection<TemporaryEdge> temporaryEdges = new ArrayList<>();
+
+    public Collection<Vertex> temporaryVertices = new ArrayList<>();
 
     /* CONSTRUCTORS */
 

@@ -17,47 +17,22 @@ package org.opentripplanner.model.impl;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Multimap;
-import org.opentripplanner.model.Agency;
-import org.opentripplanner.model.AgencyAndId;
-import org.opentripplanner.model.Branding;
-import org.opentripplanner.model.FareAttribute;
-import org.opentripplanner.model.FareRule;
-import org.opentripplanner.model.FeedInfo;
-import org.opentripplanner.model.Frequency;
-import org.opentripplanner.model.IdentityBean;
-import org.opentripplanner.model.Notice;
-import org.opentripplanner.model.NoticeAssignment;
-import org.opentripplanner.model.Operator;
-import org.opentripplanner.model.Pathway;
-import org.opentripplanner.model.Route;
-import org.opentripplanner.model.ServiceCalendar;
-import org.opentripplanner.model.ServiceCalendarDate;
-import org.opentripplanner.model.ShapePoint;
-import org.opentripplanner.model.Stop;
-import org.opentripplanner.model.StopPattern;
-import org.opentripplanner.model.StopTime;
-import org.opentripplanner.model.TariffZone;
-import org.opentripplanner.model.Transfer;
-import org.opentripplanner.model.Trip;
-import org.opentripplanner.model.OtpTransitService;
+import org.opentripplanner.model.*;
 import org.opentripplanner.netex.mapping.AgencyAndIdFactory;
+import org.opentripplanner.netex.mapping.FlexibleQuayWithArea;
 import org.opentripplanner.routing.edgetype.TripPattern;
-import org.opentripplanner.model.Parking;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class OtpTransitBuilder {
     private static final Logger LOG = LoggerFactory.getLogger(OtpTransitBuilder.class);
 
     private final List<Agency> agencies = new ArrayList<>();
+
+    private final List<Area> areas = new ArrayList<>();
 
     private final List<ServiceCalendarDate> calendarDates = new ArrayList<>();
 
@@ -68,6 +43,8 @@ public class OtpTransitBuilder {
     private final List<FareRule> fareRules = new ArrayList<>();
 
     private final List<FeedInfo> feedInfos = new ArrayList<>();
+
+    private final EntityMap<AgencyAndId, FlexibleQuayWithArea> flexibleStopsWithArea = new EntityMap<>();
 
     private final List<Frequency> frequencies = new ArrayList<>();
 
@@ -114,6 +91,8 @@ public class OtpTransitBuilder {
         return agencies;
     }
 
+    public List<Area> getAreas() { return areas; }
+
     public Agency findAgencyById(String id) {
         return agencies.stream().filter(a -> a.getId().equals(id)).findFirst().orElse(null);
     }
@@ -137,6 +116,8 @@ public class OtpTransitBuilder {
     public List<FeedInfo> getFeedInfos() {
         return feedInfos;
     }
+
+    public EntityMap<AgencyAndId, FlexibleQuayWithArea> getFlexibleQuayWithArea() { return flexibleStopsWithArea; }
 
     public List<Frequency> getFrequencies() {
         return frequencies;
@@ -227,7 +208,7 @@ public class OtpTransitBuilder {
     }
 
     public OtpTransitService build() {
-        createNoneExistingIds();
+        createNoneExistentIds();
 
         return new OtpTransitServiceImpl(this);
     }
@@ -246,7 +227,7 @@ public class OtpTransitBuilder {
             quaysByStopPlace.put(stopsById.get(AgencyAndIdFactory.createAgencyAndId(stop.getParentStation())), stop);
         }
 
-        // Find quays not used
+        // Find quays not used in tripPatterns
         Set<Stop> quaysNotInUse = new HashSet<>(quays);
         for (StopPattern stopPattern : tripPatterns.keySet()) {
             for (Stop stop : stopPattern.stops) {
@@ -262,6 +243,13 @@ public class OtpTransitBuilder {
         for (Map.Entry<Stop, Collection<Stop>> entry : quaysByStopPlace.asMap().entrySet()) {
             if (entry.getValue().stream().anyMatch(s -> !quaysNotInUse.contains(s))) {
                 stopPlacesNotInUse.remove(entry.getKey());
+            }
+        }
+
+        // Find stop places not used in tripPatterns
+        for (StopPattern stopPattern : tripPatterns.keySet()) {
+            for (Stop stop : stopPattern.stops) {
+                stopPlacesNotInUse.remove(stop);
             }
         }
 
@@ -315,19 +303,29 @@ public class OtpTransitBuilder {
         LOG.info(groupOfStopPlacesNotInUse.size() + " groupsOfStopPlaces removed (expired and not in use)");
     }
 
-    private void createNoneExistingIds() {
-        generateNoneExistingIds(feedInfos);
+    private void createNoneExistentIds() {
+        generateNoneExistentIds(feedInfos);
     }
 
-    static <T extends IdentityBean<Integer>> void generateNoneExistingIds(Collection<T> entities) {
+    static <T extends IdentityBean<String>> void generateNoneExistentIds(List<T> entities) {
         int maxId = 0;
+
+
         for (T it : entities) {
-            maxId = zeroOrNull(it.getId()) ? maxId : Math.max(maxId, it.getId());
+            try {
+                if(it.getId() != null) {
+                    maxId = Math.max(maxId, Integer.parseInt(it.getId()));
+                }
+            } catch (NumberFormatException ignore) {}
         }
+
         for (T it : entities) {
-            if(zeroOrNull(it.getId())) {
-                it.setId(++maxId);
+            try {
+                if(it.getId() == null || Integer.parseInt(it.getId()) == 0) {
+                    it.setId(Integer.toString(++maxId));
+                }
             }
+            catch (NumberFormatException ignore) { }
         }
     }
 

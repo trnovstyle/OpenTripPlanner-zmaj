@@ -16,6 +16,7 @@ package org.opentripplanner.api.model;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import org.opentripplanner.model.AgencyAndId;
 import org.opentripplanner.util.Constants;
+import org.opentripplanner.util.model.EncodedPolylineBean;
 
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
@@ -102,6 +103,16 @@ public class Place {
      * In case the vertex is of type Bike sharing station.
      */
     public String bikeShareId;
+
+    /**
+     * Type of board or alight (to distinguish flexible transit modes).
+     */
+    public BoardAlightType boardAlightType;
+
+    /**
+     * Board or alight area for flag stops
+     */
+    public EncodedPolylineBean flagStopArea;
 
     /**
      * In case the vertex is of a parking type.

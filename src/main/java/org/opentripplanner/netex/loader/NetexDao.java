@@ -1,30 +1,7 @@
 package org.opentripplanner.netex.loader;
 
 import org.opentripplanner.netex.loader.support.*;
-import org.rutebanken.netex.model.Authority;
-import org.rutebanken.netex.model.Branding;
-import org.rutebanken.netex.model.DayType;
-import org.rutebanken.netex.model.DayTypeAssignment;
-import org.rutebanken.netex.model.DestinationDisplay;
-import org.rutebanken.netex.model.GroupOfLines;
-import org.rutebanken.netex.model.GroupOfStopPlaces;
-import org.rutebanken.netex.model.JourneyPattern;
-import org.rutebanken.netex.model.Line;
-import org.rutebanken.netex.model.Line_VersionStructure;
-import org.rutebanken.netex.model.Network;
-import org.rutebanken.netex.model.Notice;
-import org.rutebanken.netex.model.NoticeAssignment;
-import org.rutebanken.netex.model.OperatingPeriod;
-import org.rutebanken.netex.model.Operator;
-import org.rutebanken.netex.model.Parking;
-import org.rutebanken.netex.model.Quay;
-import org.rutebanken.netex.model.Route;
-import org.rutebanken.netex.model.ServiceJourney;
-import org.rutebanken.netex.model.ServiceJourneyInterchange;
-import org.rutebanken.netex.model.ServiceLink;
-import org.rutebanken.netex.model.StopPlace;
-import org.rutebanken.netex.model.StopPointInJourneyPattern;
-import org.rutebanken.netex.model.TariffZone;
+import org.rutebanken.netex.model.*;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -49,6 +26,8 @@ public class NetexDao {
     public final HierarchicalMap<String, Boolean> dayTypeAvailable;
     public final HierarchicalMapById<DayType> dayTypeById;
     public final HierarchicalMapById<DestinationDisplay> destinationDisplayById;
+    public final HierarchicalMultimapById<FlexibleStopPlace> flexibleStopPlaceById;
+    public final HierarchicalMap<String, String> flexibleStopPlaceIdByStopPointRef;
     public final HierarchicalMapById<GroupOfLines> groupOfLinesById;
     public final HierarchicalMap<String, GroupOfLines> groupOfLinesByLineId;
     public final HierarchicalMapById<GroupOfStopPlaces> groupsOfStopPlacesById;
@@ -93,6 +72,8 @@ public class NetexDao {
         this.dayTypeAvailable = new HierarchicalMap<>();
         this.dayTypeById = new HierarchicalMapById<>();
         this.destinationDisplayById = new HierarchicalMapById<>();
+        this.flexibleStopPlaceById = new HierarchicalMultimapById<>();
+        this.flexibleStopPlaceIdByStopPointRef = new HierarchicalMap<>();
         this.groupOfLinesById = new HierarchicalMapById<>();
         this.groupOfLinesByLineId = new HierarchicalMap<>();
         this.groupsOfStopPlacesById = new HierarchicalMapById<>();
@@ -133,6 +114,8 @@ public class NetexDao {
         this.dayTypeAvailable = new HierarchicalMap<>(parent.dayTypeAvailable);
         this.dayTypeById = new HierarchicalMapById<>(parent.dayTypeById);
         this.destinationDisplayById = new HierarchicalMapById<>(parent.destinationDisplayById);
+        this.flexibleStopPlaceById = new HierarchicalMultimapById<>(parent.flexibleStopPlaceById);
+        this.flexibleStopPlaceIdByStopPointRef = new HierarchicalMap<>(parent.flexibleStopPlaceIdByStopPointRef);
         this.groupOfLinesById = new HierarchicalMapById<>(parent.groupOfLinesById);
         this.groupOfLinesByLineId = new HierarchicalMap<>(parent.groupOfLinesByLineId);
         this.groupsOfStopPlacesById = new HierarchicalMapById<>(parent.groupsOfStopPlacesById);

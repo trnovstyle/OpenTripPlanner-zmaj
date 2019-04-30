@@ -18,6 +18,7 @@ import java.util.BitSet;
 import java.util.Locale;
 
 import org.locationtech.jts.geom.LineString;
+import org.opentripplanner.model.Route;
 import org.opentripplanner.model.Stop;
 import org.opentripplanner.model.Trip;
 import org.opentripplanner.model.calendar.ServiceDate;
@@ -155,6 +156,14 @@ public class TransitBoardAlight extends TablePatternEdge implements OnboardEdge 
             return null;
         }
 
+        // if eligibility-restricted services are disallowed, check this route. Only supports 0/1 values.
+        if (!options.useEligibilityServices) {
+            Route route = getPattern().route;
+            if (route.hasEligibilityRestricted() && route.getEligibilityRestricted() == 1) {
+                return null;
+            }
+        }
+
         /*
          * Determine whether we are going onto or off of transit. Entering and leaving transit is
          * not the same thing as boarding and alighting. When arriveBy == true, we are entering
@@ -181,6 +190,7 @@ public class TransitBoardAlight extends TablePatternEdge implements OnboardEdge 
             // arrives/departs, so previousStop is direction-dependent.
             s1.setPreviousStop(getStop()); 
             s1.setLastPattern(this.getPattern());
+            s1.setIsLastBoardAlightDeviated(isDeviated());
             if (boarding) {
                 int boardingTime = options.getBoardTime(this.getPattern().mode);
                 if (boardingTime != 0) {
@@ -196,6 +206,7 @@ public class TransitBoardAlight extends TablePatternEdge implements OnboardEdge 
                     // TODO: should we have different cost for alighting and boarding compared to regular waiting?
                 }
             }
+            s1.incrementWeight(getExtraWeight(options));
 
             /* Determine the wait. */
             if (arrivalTimeAtStop > 0) { // FIXME what is this arrivalTimeAtStop?
@@ -278,12 +289,10 @@ public class TransitBoardAlight extends TablePatternEdge implements OnboardEdge 
                 // However, experiments seem to show very little measurable improvement here (due to cache locality?)
                 // if ( ! timetable.temporallyViable(sd, s0.getTimeSeconds(), bestWait, boarding)) continue;
                 /* Find the next or prev departure depending on final boolean parameter. */
-                TripTimes tripTimes = timetable.getNextTrip(s0, sd, stopIndex, boarding);
+                TripTimes tripTimes = getNextTrip(s0, sd, timetable);
                 if (tripTimes != null) {
                     /* Wait is relative to departures on board and arrivals on alight. */
-                    int wait = boarding ? 
-                        (int)(sd.time(tripTimes.getDepartureTime(stopIndex)) - s0.getTimeSeconds()):
-                        (int)(s0.getTimeSeconds() - sd.time(tripTimes.getArrivalTime(stopIndex)));
+                    int wait = calculateWait(s0, sd, tripTimes);
                     /* A trip was found. The wait should be non-negative. */
                     if (wait < 0) LOG.error("Negative wait time when boarding.");
                     /* Track the soonest departure over all relevant schedules. */
@@ -351,7 +360,8 @@ public class TransitBoardAlight extends TablePatternEdge implements OnboardEdge 
             } else {
                 s1.incrementWeight(wait_cost + options.getBoardCost(s0.getNonTransitMode()));
             }
-            
+            s1.incrementWeight(getExtraWeight(options));
+
             // On-the-fly reverse optimization
             // determine if this needs to be reverse-optimized.
             // The last alight can be moved forward by bestWait (but no further) without
@@ -370,6 +380,24 @@ public class TransitBoardAlight extends TablePatternEdge implements OnboardEdge 
             /* If we didn't return an optimized path, return an unoptimized one. */
             return s1.makeState();
         }
+    }
+
+    public long getExtraWeight(RoutingRequest options) {
+        return 0;
+    }
+
+    public TripTimes getNextTrip(State s0, ServiceDay sd, Timetable timetable) {
+        return timetable.getNextTrip(s0, sd, stopIndex, boarding);
+    }
+
+    public int calculateWait(State s0, ServiceDay sd, TripTimes tripTimes) {
+        return boarding ?
+                (int)(sd.time(tripTimes.getDepartureTime(stopIndex)) - s0.getTimeSeconds()):
+                (int)(s0.getTimeSeconds() - sd.time(tripTimes.getArrivalTime(stopIndex)));
+    }
+
+    public boolean isDeviated() {
+        return false;
     }
 
     /** @return the stop where this board/alight edge is located. */

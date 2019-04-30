@@ -406,21 +406,13 @@ public class SimpleStreetSplitter {
         // every edge can be split exactly once, so this is a valid label
         SplitterVertex v;
         if (temporarySplit) {
-            v = new TemporarySplitterVertex(tempSplitterVertexLabel(), splitPoint.x, splitPoint.y,
-                edge, endVertex);
-            if (edge.isWheelchairAccessible()) {
-                ((TemporarySplitterVertex) v).setWheelchairAccessible(true);
-            } else {
-                ((TemporarySplitterVertex) v).setWheelchairAccessible(false);
-            }
+            v = new TemporarySplitterVertex(tempSplitterVertexLabel(), splitPoint.x, splitPoint.y, edge, endVertex);
         } else {
-            v = new SplitterVertex(graph, tempSplitterVertexLabel(),
-                    splitPoint.x, splitPoint.y, edge);
+            v = new SplitterVertex(graph, tempSplitterVertexLabel(), splitPoint.x, splitPoint.y, edge);
         }
 
-        // make the edges
-        // TODO this is using the StreetEdge implementation of split, which will discard elevation information
-        // on edges that have it
+        // Split the 'edge' at 'v' in 2 new edges and connect these 2 edges to the
+        // existing vertices
         P2<StreetEdge> edges = edge.split(v, !temporarySplit);
 
         if (destructiveSplitting) {
@@ -532,12 +524,13 @@ public class SimpleStreetSplitter {
 
     /** projected distance from stop to edge, in latitude degrees */
     private static double distance (Vertex tstop, StreetEdge edge, double xscale) {
-        // use JTS internal tools wherever possible
+        // Despite the fact that we want to use a fast somewhat inaccurate projection, still use JTS library tools
+        // for the actual distance calculations.
         LineString transformed = equirectangularProject(edge.getGeometry(), xscale);
         return transformed.distance(geometryFactory.createPoint(new Coordinate(tstop.getLon() * xscale, tstop.getLat())));
     }
 
-    /** projected distance from stop to edge, in latitude degrees */
+    /** projected distance from stop to another stop, in latitude degrees */
     private static double distance (Vertex tstop, Vertex tstop2, double xscale) {
         // use JTS internal tools wherever possible
         return new Coordinate(tstop.getLon() * xscale, tstop.getLat()).distance(new Coordinate(tstop2.getLon() * xscale, tstop2.getLat()));

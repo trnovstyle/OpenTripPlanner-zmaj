@@ -156,6 +156,12 @@ public class Router {
             }
         }
 
+        /* Set whether to use flex service */
+        JsonNode useFlexService = config.get("useFlexService");
+        if (useFlexService != null) {
+            graph.setUseFlexService(useFlexService.asBoolean(false));
+        }
+
         JsonNode tokenUrl = config.get("kartverketTokenUrl");
         if (tokenUrl != null && tokenUrl.has("url")) {
             this.kartverketToken = tokenUrl.get("url").asText();

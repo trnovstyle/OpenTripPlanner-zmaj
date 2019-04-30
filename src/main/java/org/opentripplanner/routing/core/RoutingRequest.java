@@ -542,6 +542,58 @@ public class RoutingRequest implements Cloneable, Serializable {
     public boolean disableRemainingWeightHeuristic = false;
 
     /**
+     * Extra penalty added for flag-stop boarding/alighting
+     */
+    public int flagStopExtraPenalty = 90;
+
+    /**
+     * Extra penalty added for deviated-route boarding/alighting
+     */
+    public int deviatedRouteExtraPenalty = 180;
+
+    /**
+     * Reluctance for call-n-ride
+     */
+    public double callAndRideReluctance = 1.0;
+
+    /**
+     * Total time we can spend on call-n-ride legs. After an itinerary is found, this value is
+     * reduced to min(duration - options.reduceCallAndRideSeconds, duration * reduceCallAndRideRatio)
+     */
+    public int maxCallAndRideSeconds = 3600;
+
+    /**
+     * Seconds to reduce maxCallAndRideSeconds after a complete call-n-ride itinerary
+     */
+    public int reduceCallAndRideSeconds = 15 * 60;
+
+    /**
+     * Percentage to reduce maxCallAndRideSeconds after a complete call-n-ride itinerary
+     */
+    public double reduceCallAndRideRatio = 0.5;
+
+    /**
+     * Size of flag stop buffer in UI
+     */
+    public double flagStopBufferSize;
+
+    /**
+     * Whether to use reservation-based services
+     */
+    public boolean useReservationServices = true;
+
+    /**
+     * Whether to use eligibility-based services
+     */
+    public boolean useEligibilityServices = true;
+
+    /**
+     * Whether to ignore DRT time limits
+     */
+    public boolean ignoreDrtAdvanceBookMin = false;
+
+
+    /**
      * Set the penalty for transferring at unpreffered stops
      */
 
@@ -608,7 +660,7 @@ public class RoutingRequest implements Cloneable, Serializable {
     /**
      * Should traffic congestion be considered when driving?
      */
-    public boolean useTraffic = true;
+    public boolean useTraffic = false;
 
     /**
      * The function that compares paths converging on the same vertex to decide which ones continue to be explored.
@@ -630,6 +682,24 @@ public class RoutingRequest implements Cloneable, Serializable {
      */
     public boolean geoidElevation = false;
 
+    public boolean enterStationsWithCar = false;
+
+    /**
+     * Totally exclude walking from trip plan results
+     */
+    public boolean excludeWalking = false;
+
+    /**
+     * Minimum length of partial hop edges
+     */
+    public int minPartialHopLength = 400;
+
+    /**
+     * Use flexible services
+     */
+
+    public boolean useFlexService = false;
+
     /**
      * How many trips used in a itineraries should be banned from inclusion in successive itineraries. Counting from start of itinerary.
      */
@@ -641,6 +711,9 @@ public class RoutingRequest implements Cloneable, Serializable {
      * This is used so that TrivialPathException is thrown if origin and destination search would split the same edge
      */
     private StreetEdge splitEdge = null;
+
+    public long clockTimeSec;
+
 
     /* CONSTRUCTORS */
 
@@ -1149,66 +1222,78 @@ public class RoutingRequest implements Cloneable, Serializable {
                     && ((to == null && other.to == null) || to.equals(other.to));
         }
         return endpointsMatch
-                       && dateTime == other.dateTime
-                       && arriveBy == other.arriveBy
-                       && numItineraries == other.numItineraries // should only apply in non-batch?
-                       && walkSpeed == other.walkSpeed
-                       && bikeSpeed == other.bikeSpeed
-                       && carSpeed == other.carSpeed
-                       && maxWeight == other.maxWeight
-                       && worstTime == other.worstTime
-                       && maxTransfers == other.maxTransfers
-                       && modes.equals(other.modes)
-                       && wheelchairAccessible == other.wheelchairAccessible
-                       && optimize.equals(other.optimize)
-                       && maxWalkDistance == other.maxWalkDistance
-                       && maxTransferWalkDistance == other.maxTransferWalkDistance
-                       && maxPreTransitWalkDistance == other.maxPreTransitWalkDistance
-                       && maxPreTransitTime == other.maxPreTransitTime
-                       && preTransitReluctance == other.preTransitReluctance
-                       && transferPenalty == other.transferPenalty
-                       && maxSlope == other.maxSlope
-                       && walkReluctance == other.walkReluctance
-                       && walkOnStreetReluctance == other.walkOnStreetReluctance
-                       && waitReluctance == other.waitReluctance
-                       && waitAtBeginningFactor == other.waitAtBeginningFactor
-                       && walkBoardCost == other.walkBoardCost
-                       && bikeBoardCost == other.bikeBoardCost
-                       && bannedRoutes.equals(other.bannedRoutes)
-                       && bannedTrips.equals(other.bannedTrips)
-                       && preferredRoutes.equals(other.preferredRoutes)
-                       && unpreferredRoutes.equals(other.unpreferredRoutes)
-                       && transferSlack == other.transferSlack
-                       && boardSlack == other.boardSlack
-                       && alightSlack == other.alightSlack
-                       && nonpreferredTransferPenalty == other.nonpreferredTransferPenalty
-                       && otherThanPreferredRoutesPenalty == other.otherThanPreferredRoutesPenalty
-                       && useUnpreferredRoutesPenalty == other.useUnpreferredRoutesPenalty
-                       && triangleSafetyFactor == other.triangleSafetyFactor
-                       && triangleSlopeFactor == other.triangleSlopeFactor
-                       && triangleTimeFactor == other.triangleTimeFactor
-                       && stairsReluctance == other.stairsReluctance
-                       && elevatorBoardTime == other.elevatorBoardTime
-                       && elevatorBoardCost == other.elevatorBoardCost
-                       && elevatorHopTime == other.elevatorHopTime
-                       && elevatorHopCost == other.elevatorHopCost
-                       && bikeSwitchTime == other.bikeSwitchTime
-                       && bikeSwitchCost == other.bikeSwitchCost
-                       && bikeRentalPickupTime == other.bikeRentalPickupTime
-                       && bikeRentalPickupCost == other.bikeRentalPickupCost
-                       && bikeRentalDropoffTime == other.bikeRentalDropoffTime
-                       && bikeRentalDropoffCost == other.bikeRentalDropoffCost
-                       && useBikeRentalAvailabilityInformation == other.useBikeRentalAvailabilityInformation
-                       && extensions.equals(other.extensions)
-                       && clampInitialWait == other.clampInitialWait
-                       && reverseOptimizeOnTheFly == other.reverseOptimizeOnTheFly
-                       && ignoreRealtimeUpdates == other.ignoreRealtimeUpdates
-                       && ignoreInterchanges == other.ignoreInterchanges
-                       && disableRemainingWeightHeuristic == other.disableRemainingWeightHeuristic
-                       && Objects.equal(startingTransitTripId, other.startingTransitTripId)
-                       && useTraffic == other.useTraffic
-                       && disableAlertFiltering == other.disableAlertFiltering
-                       && geoidElevation == other.geoidElevation;
+                && dateTime == other.dateTime
+                && arriveBy == other.arriveBy
+                && numItineraries == other.numItineraries // should only apply in non-batch?
+                && walkSpeed == other.walkSpeed
+                && bikeSpeed == other.bikeSpeed
+                && carSpeed == other.carSpeed
+                && maxWeight == other.maxWeight
+                && worstTime == other.worstTime
+                && maxTransfers == other.maxTransfers
+                && modes.equals(other.modes)
+                && wheelchairAccessible == other.wheelchairAccessible
+                && optimize.equals(other.optimize)
+                && maxWalkDistance == other.maxWalkDistance
+                && maxTransferWalkDistance == other.maxTransferWalkDistance
+                && maxPreTransitWalkDistance == other.maxPreTransitWalkDistance
+                && maxPreTransitTime == other.maxPreTransitTime
+                && preTransitReluctance == other.preTransitReluctance
+                && transferPenalty == other.transferPenalty
+                && maxSlope == other.maxSlope
+                && walkReluctance == other.walkReluctance
+                && walkOnStreetReluctance == other.walkOnStreetReluctance
+                && waitReluctance == other.waitReluctance
+                && waitAtBeginningFactor == other.waitAtBeginningFactor
+                && walkBoardCost == other.walkBoardCost
+                && bikeBoardCost == other.bikeBoardCost
+                && bannedRoutes.equals(other.bannedRoutes)
+                && bannedTrips.equals(other.bannedTrips)
+                && preferredRoutes.equals(other.preferredRoutes)
+                && unpreferredRoutes.equals(other.unpreferredRoutes)
+                && transferSlack == other.transferSlack
+                && boardSlack == other.boardSlack
+                && alightSlack == other.alightSlack
+                && nonpreferredTransferPenalty == other.nonpreferredTransferPenalty
+                && otherThanPreferredRoutesPenalty == other.otherThanPreferredRoutesPenalty
+                && useUnpreferredRoutesPenalty == other.useUnpreferredRoutesPenalty
+                && triangleSafetyFactor == other.triangleSafetyFactor
+                && triangleSlopeFactor == other.triangleSlopeFactor
+                && triangleTimeFactor == other.triangleTimeFactor
+                && stairsReluctance == other.stairsReluctance
+                && elevatorBoardTime == other.elevatorBoardTime
+                && elevatorBoardCost == other.elevatorBoardCost
+                && elevatorHopTime == other.elevatorHopTime
+                && elevatorHopCost == other.elevatorHopCost
+                && bikeSwitchTime == other.bikeSwitchTime
+                && bikeSwitchCost == other.bikeSwitchCost
+                && bikeRentalPickupTime == other.bikeRentalPickupTime
+                && bikeRentalPickupCost == other.bikeRentalPickupCost
+                && bikeRentalDropoffTime == other.bikeRentalDropoffTime
+                && bikeRentalDropoffCost == other.bikeRentalDropoffCost
+                && useBikeRentalAvailabilityInformation == other.useBikeRentalAvailabilityInformation
+                && extensions.equals(other.extensions)
+                && clampInitialWait == other.clampInitialWait
+                && reverseOptimizeOnTheFly == other.reverseOptimizeOnTheFly
+                && ignoreRealtimeUpdates == other.ignoreRealtimeUpdates
+                && disableRemainingWeightHeuristic == other.disableRemainingWeightHeuristic
+                && Objects.equal(startingTransitTripId, other.startingTransitTripId)
+                && useTraffic == other.useTraffic
+                && disableAlertFiltering == other.disableAlertFiltering
+                && geoidElevation == other.geoidElevation
+                && flagStopExtraPenalty == other.flagStopExtraPenalty
+                && deviatedRouteExtraPenalty == other.deviatedRouteExtraPenalty
+                && callAndRideReluctance == other.callAndRideReluctance
+                && reduceCallAndRideSeconds == other.reduceCallAndRideSeconds
+                && reduceCallAndRideRatio == other.reduceCallAndRideRatio
+                && flagStopBufferSize == other.flagStopBufferSize
+                && useReservationServices == other.useReservationServices
+                && useEligibilityServices == other.useEligibilityServices
+                && ignoreDrtAdvanceBookMin == other.ignoreDrtAdvanceBookMin
+                && excludeWalking == other.excludeWalking
+                && minPartialHopLength == other.minPartialHopLength
+                && clockTimeSec == other.clockTimeSec
+                && useFlexService == other.useFlexService;
     }
 
     /**
@@ -1218,29 +1303,42 @@ public class RoutingRequest implements Cloneable, Serializable {
     @Override
     public int hashCode() {
         int hashCode = new Double(walkSpeed).hashCode() + new Double(bikeSpeed).hashCode()
-                               + new Double(carSpeed).hashCode() + new Double(maxWeight).hashCode()
-                               + (int) (worstTime & 0xffffffff) + modes.hashCode()
-                               + (arriveBy ? 8966786 : 0) + (wheelchairAccessible ? 731980 : 0)
-                               + optimize.hashCode() + new Double(maxWalkDistance).hashCode()
-                               + new Double(maxTransferWalkDistance).hashCode()
-                               + new Double(maxPreTransitWalkDistance).hashCode()
-                               + new Double(transferPenalty).hashCode() + new Double(maxSlope).hashCode()
-                               + new Double(walkReluctance).hashCode() + new Double(waitReluctance).hashCode()
-                               + new Double(walkOnStreetReluctance).hashCode()
-                               + new Double(waitAtBeginningFactor).hashCode() * 15485863
-                               + walkBoardCost + bikeBoardCost + bannedRoutes.hashCode()
-                               + bannedTrips.hashCode() * 1373 + transferSlack * 20996011
-                               + (int) nonpreferredTransferPenalty + (int) transferPenalty * 163013803
-                               + new Double(triangleSafetyFactor).hashCode() * 195233277
-                               + new Double(triangleSlopeFactor).hashCode() * 136372361
-                               + new Double(triangleTimeFactor).hashCode() * 790052899
-                               + new Double(stairsReluctance).hashCode() * 315595321
-                               + maxPreTransitTime * 63061489
-                               + new Long(clampInitialWait).hashCode() * 209477
-                               + new Boolean(reverseOptimizeOnTheFly).hashCode() * 95112799
-                               + new Boolean(ignoreRealtimeUpdates).hashCode() * 154329
-                               + new Boolean(disableRemainingWeightHeuristic).hashCode() * 193939
-                               + new Boolean(useTraffic).hashCode() * 10169;
+                + new Double(carSpeed).hashCode() + new Double(maxWeight).hashCode()
+                + (int) (worstTime & 0xffffffff) + modes.hashCode()
+                + (arriveBy ? 8966786 : 0) + (wheelchairAccessible ? 731980 : 0)
+                + optimize.hashCode() + new Double(maxWalkDistance).hashCode()
+                + new Double(maxTransferWalkDistance).hashCode()
+                + new Double(maxPreTransitWalkDistance).hashCode()
+                + new Double(transferPenalty).hashCode() + new Double(maxSlope).hashCode()
+                + new Double(walkReluctance).hashCode() + new Double(waitReluctance).hashCode()
+                + new Double(walkOnStreetReluctance).hashCode()
+                + new Double(waitAtBeginningFactor).hashCode() * 15485863
+                + walkBoardCost + bikeBoardCost + bannedRoutes.hashCode()
+                + bannedTrips.hashCode() * 1373 + transferSlack * 20996011
+                + (int) nonpreferredTransferPenalty + (int) transferPenalty * 163013803
+                + new Double(triangleSafetyFactor).hashCode() * 195233277
+                + new Double(triangleSlopeFactor).hashCode() * 136372361
+                + new Double(triangleTimeFactor).hashCode() * 790052899
+                + new Double(stairsReluctance).hashCode() * 315595321
+                + maxPreTransitTime * 63061489
+                + new Long(clampInitialWait).hashCode() * 209477
+                + new Boolean(reverseOptimizeOnTheFly).hashCode() * 95112799
+                + new Boolean(ignoreRealtimeUpdates).hashCode() * 154329
+                + new Boolean(disableRemainingWeightHeuristic).hashCode() * 193939
+                + new Boolean(useTraffic).hashCode() * 10169
+                + Integer.hashCode(flagStopExtraPenalty) * 179424691
+                + Integer.hashCode(deviatedRouteExtraPenalty) *  7424299
+                + Double.hashCode(callAndRideReluctance) * 86666621
+                + Integer.hashCode(maxCallAndRideSeconds) * 9994393
+                + Integer.hashCode(reduceCallAndRideSeconds) * 92356763
+                + Double.hashCode(reduceCallAndRideRatio) *  171157957
+                + Double.hashCode(flagStopBufferSize) * 803989
+                + Boolean.hashCode(useReservationServices) * 92429033
+                + Boolean.hashCode(useEligibilityServices) * 7916959
+                + Boolean.hashCode(ignoreDrtAdvanceBookMin) * 179992387
+                + Boolean.hashCode(excludeWalking) * 989684221
+                + Integer.hashCode(minPartialHopLength) * 15485863
+                + Long.hashCode(clockTimeSec) * 833389;
         if (batch) {
             hashCode *= -1;
             // batch mode, only one of two endpoints matters
@@ -1600,5 +1698,9 @@ public class RoutingRequest implements Cloneable, Serializable {
             }
         }
 
+    }
+
+    public void resetClockTime() {
+        this.clockTimeSec = System.currentTimeMillis() / 1000;
     }
 }

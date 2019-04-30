@@ -14,6 +14,9 @@
 package org.opentripplanner.routing.edgetype;
 
 import java.util.Locale;
+
+import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.Point;
 import org.opentripplanner.model.Stop;
 import org.opentripplanner.common.geometry.GeometryUtils;
 import org.opentripplanner.common.geometry.SphericalDistanceLibrary;
@@ -37,20 +40,49 @@ public class PatternHop extends TablePatternEdge implements OnboardEdge, HopEdge
 
     private Stop begin, end;
 
+    private RequestStops requestPickup;
+
+    private RequestStops requestDropoff;
+
+    private double serviceAreaRadius;
+
+    private Geometry serviceArea;
+
     public int stopIndex;
 
     private LineString geometry = null;
 
     private double distance;
 
-    public PatternHop(PatternStopVertex from, PatternStopVertex to, Stop begin, Stop end, int stopIndex) {
+    protected PatternHop(PatternStopVertex from, PatternStopVertex to, Stop begin, Stop end, int stopIndex, RequestStops requestPickup, RequestStops requestDropoff, double serviceAreaRadius, Geometry serviceArea, boolean setInPattern) {
         super(from, to);
         this.begin = begin;
         this.end = end;
         this.stopIndex = stopIndex;
         getPattern().setPatternHop(stopIndex, this);
-        this.distance = SphericalDistanceLibrary.distance(begin.getLat(), begin.getLon(), end.getLat(),
-                end.getLon());
+
+        double distance = 0;
+        LineString line = getGeometry();
+        for (int i = 0; i < line.getNumPoints() - 1; i++) {
+            Point p0 = line.getPointN(i), p1 = line.getPointN(i+1);
+            distance += SphericalDistanceLibrary.distance(p0.getCoordinate(), p1.getCoordinate());
+        }
+        this.distance = distance;
+
+        if (setInPattern)
+            getPattern().setPatternHop(stopIndex, this);
+        this.requestPickup = requestPickup;
+        this.requestDropoff = requestDropoff;
+        this.serviceAreaRadius = serviceAreaRadius;
+        this.serviceArea = serviceArea;
+    }
+
+    public PatternHop(PatternStopVertex from, PatternStopVertex to, Stop begin, Stop end, int stopIndex, int continuousPickup, int continuousDropoff, double serviceAreaRadius, Geometry serviceArea) {
+        this(from, to, begin, end, stopIndex, RequestStops.fromGtfs(continuousPickup),
+                RequestStops.fromGtfs(continuousDropoff), serviceAreaRadius, serviceArea, true);
+    }
+    public PatternHop(PatternStopVertex from, PatternStopVertex to, Stop begin, Stop end, int stopIndex) {
+        this(from, to, begin, end, stopIndex, 1, 1, 0d, null);
     }
 
     public double getDistance() {
@@ -98,8 +130,13 @@ public class PatternHop extends TablePatternEdge implements OnboardEdge, HopEdge
     public double weightLowerBound(RoutingRequest options) {
         return timeLowerBound(options);
     }
-    
+
+    @Override
     public State traverse(State s0) {
+        return traverse(s0, s0.edit(this));
+    }
+
+    public State traverse(State s0, StateEditor s1) {
         RoutingRequest options = s0.getOptions();
         
         // Ignore this edge if either of its stop is banned hard
@@ -109,9 +146,8 @@ public class PatternHop extends TablePatternEdge implements OnboardEdge, HopEdge
                 return null;
             }
         }
-        TripTimes tripTimes = s0.getTripTimes();
-        int runningTime = tripTimes.getRunningTime(stopIndex);
-        StateEditor s1 = s0.edit(this);
+        int runningTime = getRunningTime(s0);
+        // TODO Make sure call-and-ride reluctance is added. Call TemporaryDirectPatternHop getWeight()
         s1.incrementWeight(options.getModeWeight(getMode()) * runningTime + (options.transitDistanceReluctance * distance));
         s1.incrementTimeInSeconds(runningTime);
         if (s0.getOptions().arriveBy)
@@ -121,6 +157,16 @@ public class PatternHop extends TablePatternEdge implements OnboardEdge, HopEdge
         //s1.setRoute(pattern.getExemplar().route.getId());
         s1.setBackMode(getMode());
         return s1.makeState();
+    }
+
+    public int getRunningTime(State s0) {
+        TripTimes tripTimes = s0.getTripTimes();
+        return tripTimes.getRunningTime(stopIndex);
+    }
+
+    // allow subclasses to add a weight
+    public int getWeight(State s0, int runningTime) {
+        return runningTime;
     }
 
     public void setGeometry(LineString geometry) {
@@ -148,12 +194,73 @@ public class PatternHop extends TablePatternEdge implements OnboardEdge, HopEdge
         return begin;
     }
 
+    @Override
+    public String getFeedId() {
+        // stops don't really have an agency id, they have the per-feed default id
+        return begin.getId().getAgencyId();
+    }
+
     public String toString() {
-    	return "PatternHop(" + getFromVertex() + ", " + getToVertex() + ")";
+        return "PatternHop(" + getFromVertex() + ", " + getToVertex() + ")";
     }
 
     @Override
     public int getStopIndex() {
         return stopIndex;
+    }
+
+    public RequestStops getRequestPickup() {
+        return requestPickup;
+    }
+
+    public RequestStops getRequestDropoff() {
+        return requestDropoff;
+    }
+
+    public boolean hasFlagStopService() {
+        return requestPickup.allowed() || requestDropoff.allowed();
+    }
+
+    public boolean hasFlexService() {
+        return hasFlagStopService() || getServiceAreaRadius() > 0 || getServiceArea() != null;
+    }
+
+    public boolean canRequestService(boolean boarding) {
+        return boarding ? requestPickup.allowed() : requestDropoff.allowed();
+    }
+
+    public double getServiceAreaRadius() {
+        return serviceAreaRadius;
+    }
+
+    public Geometry getServiceArea() {
+        return serviceArea;
+    }
+
+    public boolean hasServiceArea() {
+        return serviceArea != null;
+    }
+
+    private enum RequestStops {
+        NO(1), YES(0), PHONE(2), COORDINATE_WITH_DRIVER(3);
+
+        final int gtfsCode;
+
+        RequestStops(int gtfsCode) {
+            this.gtfsCode = gtfsCode;
+        }
+
+        private static RequestStops fromGtfs(int code) {
+            for (RequestStops it : values()) {
+                if(it.gtfsCode == code) {
+                    return it;
+                }
+            }
+            return NO;
+        }
+
+        boolean allowed() {
+            return this != NO;
+        }
     }
 }

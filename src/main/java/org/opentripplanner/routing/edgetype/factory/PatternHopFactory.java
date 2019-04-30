@@ -26,19 +26,7 @@ import org.locationtech.jts.geom.LineString;
 import org.locationtech.jts.linearref.LinearLocation;
 import org.locationtech.jts.linearref.LocationIndexedLine;
 import org.apache.commons.math3.util.FastMath;
-import org.opentripplanner.model.Agency;
-import org.opentripplanner.model.AgencyAndId;
-import org.opentripplanner.model.FeedInfo;
-import org.opentripplanner.model.Operator;
-import org.opentripplanner.model.Parking;
-import org.opentripplanner.model.Pathway;
-import org.opentripplanner.model.Route;
-import org.opentripplanner.model.ShapePoint;
-import org.opentripplanner.model.Stop;
-import org.opentripplanner.model.StopTime;
-import org.opentripplanner.model.Transfer;
-import org.opentripplanner.model.Trip;
-import org.opentripplanner.model.OtpTransitService;
+import org.opentripplanner.model.*;
 import org.opentripplanner.common.geometry.GeometryUtils;
 import org.opentripplanner.common.geometry.PackedCoordinateSequence;
 import org.opentripplanner.common.geometry.SphericalDistanceLibrary;
@@ -50,8 +38,6 @@ import org.opentripplanner.graph_builder.annotation.NonStationParentStation;
 import org.opentripplanner.graph_builder.module.GtfsFeedId;
 import org.opentripplanner.gtfs.GtfsContext;
 import org.opentripplanner.gtfs.GtfsLibrary;
-import org.opentripplanner.model.Notice;
-import org.opentripplanner.model.NoticeAssignment;
 import org.opentripplanner.routing.car_park.CarPark;
 import org.opentripplanner.routing.car_park.CarParkService;
 import org.opentripplanner.routing.core.StopTransfer;
@@ -290,6 +276,8 @@ public class PatternHopFactory {
 
     private Map<AgencyAndId, double[]> _distancesByShapeId = new HashMap<AgencyAndId, double[]>();
 
+    private Map<String, Geometry> _areasById = new HashMap<>();
+
     private FareServiceFactory fareServiceFactory;
 
     private GtfsStopContext context = new GtfsStopContext();
@@ -344,7 +332,10 @@ public class PatternHopFactory {
 
         // TODO: Why is there cached "data", and why are we clearing it? Due to a general lack of comments, I have no idea.
         // Perhaps it is to allow name collisions with previously loaded feeds.
-        clearCachedData(); 
+        clearCachedData();
+
+        loadAreaMap();
+        loadAreasIntoGraph(graph);
 
         /* Assign 0-based numeric codes to all GTFS service IDs. */
         for (AgencyAndId serviceId : _transitService.getAllServiceIds()) {
@@ -1295,6 +1286,20 @@ public class PatternHopFactory {
                 new ParkAndRideEdge(parkAndRideVertex);
                 carParkService.addCarPark(carPark);
             }
+        }
+    }
+
+    private void loadAreaMap() {
+        for (Area area : _transitService.getAllAreas()) {
+            Geometry geometry = GeometryUtils.parseWkt(area.getWkt());
+            _areasById.put(area.getAreaId(), geometry);
+        }
+    }
+
+    private void loadAreasIntoGraph(Graph graph) {
+        for (Map.Entry<String, Geometry> entry : _areasById.entrySet()) {
+            AgencyAndId id = new AgencyAndId(_feedId.getId(), entry.getKey());
+            graph.areasById.put(id, entry.getValue());
         }
     }
 }

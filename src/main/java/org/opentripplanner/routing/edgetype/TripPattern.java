@@ -542,7 +542,7 @@ public class TripPattern implements Cloneable, Serializable {
             }
             pav1 = new PatternArriveVertex(graph, this, stop + 1);
             arriveVertices[stop + 1] = pav1;
-            hopEdges[stop] = new PatternHop(pdv0, pav1, s0, s1, stop);
+            hopEdges[stop] = new PatternHop(pdv0, pav1, s0, s1, stop, stopPattern.continuousPickup[stop], stopPattern.continuousDropOff[stop], stopPattern.serviceAreaRadius[stop], stopPattern.serviceAreas[stop]);
 
             /* Get the arrive and depart vertices for the current stop (not pattern stop). */
             TransitStopDepart stopDepart = ((TransitStop) transitStops.get(s0)).departVertex;
@@ -745,4 +745,7 @@ public class TripPattern implements Cloneable, Serializable {
         return route.getId().getAgencyId();
     }
 
+    public boolean hasFlexService() {
+        return Arrays.stream(patternHops).anyMatch(PatternHop::hasFlexService);
+    }
 }

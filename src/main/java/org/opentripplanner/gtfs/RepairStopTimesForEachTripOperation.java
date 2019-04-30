@@ -95,10 +95,18 @@ public class RepairStopTimesForEachTripOperation {
         StopTime prev = null;
         Iterator<StopTime> it = stopTimes.iterator();
         TIntList stopSequencesRemoved = new TIntArrayList();
+        double serviceAreaRadius = 0.0d;
+        String serviceAreaWkt = null;
         while (it.hasNext()) {
             StopTime st = it.next();
+            if (st.getStartServiceAreaRadius() != StopTime.MISSING_VALUE) {
+                serviceAreaRadius = st.getStartServiceAreaRadius();
+            }
+            if (st.getStartServiceArea() != null) {
+                serviceAreaWkt = st.getStartServiceArea().getWkt();
+            }
             if (prev != null) {
-                if (prev.getStop().equals(st.getStop())) {
+                if (prev.getStop().equals(st.getStop()) && serviceAreaRadius == 0.0d && serviceAreaWkt == null) {
                     // OBA gives us unmodifiable lists, but we have copied them.
 
                     // Merge the two stop times, making sure we're not throwing out a stop time with times in favor of an
@@ -118,6 +126,12 @@ public class RepairStopTimesForEachTripOperation {
                 }
             }
             prev = st;
+            if (st.getEndServiceAreaRadius() != StopTime.MISSING_VALUE) {
+                serviceAreaRadius = 0.0d;
+            }
+            if (st.getEndServiceArea() != null) {
+                serviceAreaWkt = null;
+            }
         }
         return stopSequencesRemoved;
     }

@@ -56,7 +56,7 @@ public class NetexLoader {
         this.unmarshaller = createUnmarshaller();
         OtpTransitBuilder transitBuilder = new OtpTransitBuilder();
 
-        this.otpMapper = new NetexMapper(transitBuilder, netexBundle.netexParameters.netexFeedId);
+        this.otpMapper = new NetexMapper(transitBuilder, netexBundle.netexParameters.netexFeedId, netexBundle.netexParameters.defaultFlexMaxTravelTime);
 
         loadDao();
 
@@ -156,6 +156,7 @@ public class NetexLoader {
                     List<JAXBElement<? extends Common_VersionFrameStructure>> commonFrames = cf
                             .getFrames().getCommonFrame();
                     for (JAXBElement commonFrame : commonFrames) {
+                        loadSiteFrames(commonFrame);
                         loadResourceFrames(commonFrame);
                         loadServiceCalendarFrames(commonFrame);
                         loadTimeTableFrames(commonFrame);
@@ -184,24 +185,34 @@ public class NetexLoader {
         if (commonFrame.getValue() instanceof SiteFrame) {
             SiteFrame sf = (SiteFrame) commonFrame.getValue();
             StopPlacesInFrame_RelStructure stopPlaces = sf.getStopPlaces();
-            List<StopPlace> stopPlaceList = stopPlaces.getStopPlace();
-            for (StopPlace stopPlace : stopPlaceList) {
-                if (stopPlace.getKeyList().getKeyValue().stream().anyMatch(keyValueStructure ->
-                        keyValueStructure.getKey().equals("IS_PARENT_STOP_PLACE") && keyValueStructure.getValue().equals("true"))) {
-                    currentNetexDao().multimodalStopPlaceById.add(stopPlace);
-                } else {
-                    currentNetexDao().stopPlaceById.add(stopPlace);
-                    if (stopPlace.getQuays() == null) {
-                        LOG.warn(stopPlace.getId() + " does not contain any quays");
+            if (stopPlaces != null) {
+                List<StopPlace> stopPlaceList = stopPlaces.getStopPlace();
+                for (StopPlace stopPlace : stopPlaceList) {
+                    if (stopPlace.getKeyList().getKeyValue().stream().anyMatch(keyValueStructure ->
+                            keyValueStructure.getKey().equals("IS_PARENT_STOP_PLACE") && keyValueStructure.getValue().equals("true"))) {
+                        currentNetexDao().multimodalStopPlaceById.add(stopPlace);
                     } else {
-                        List<Object> quayRefOrQuay = stopPlace.getQuays().getQuayRefOrQuay();
-                        for (Object quayObject : quayRefOrQuay) {
-                            if (quayObject instanceof Quay) {
-                                Quay quay = (Quay) quayObject;
-                                currentNetexDao().quayById.add(quay);
+                        currentNetexDao().stopPlaceById.add(stopPlace);
+                        if (stopPlace.getQuays() == null) {
+                            LOG.warn(stopPlace.getId() + " does not contain any quays");
+                        } else {
+                            List<Object> quayRefOrQuay = stopPlace.getQuays().getQuayRefOrQuay();
+                            for (Object quayObject : quayRefOrQuay) {
+                                if (quayObject instanceof Quay) {
+                                    Quay quay = (Quay) quayObject;
+                                    currentNetexDao().quayById.add(quay);
+                                }
                             }
                         }
                     }
+                }
+            }
+
+            FlexibleStopPlacesInFrame_RelStructure flexibleStopPlaces = sf.getFlexibleStopPlaces();
+            if (flexibleStopPlaces != null) {
+                List<FlexibleStopPlace> flexibleStopPlaceList = flexibleStopPlaces.getFlexibleStopPlace();
+                for (FlexibleStopPlace flexibleStopPlace : flexibleStopPlaceList) {
+                    currentNetexDao().flexibleStopPlaceById.add(flexibleStopPlace);
                 }
             }
 
@@ -250,6 +261,16 @@ public class NetexLoader {
                             currentNetexDao().quayIdByStopPointRef.add(passengerStopAssignment.getScheduledStopPointRef().getValue().getRef(), quay.getId());
                         } else {
                             LOG.warn("Quay " + quayRef + " not found in stop place file.");
+                        }
+                    }
+                    if (assignment.getValue() instanceof FlexibleStopAssignment) {
+                        FlexibleStopAssignment flexibleStopAssignment = (FlexibleStopAssignment) assignment.getValue();
+                        String flexstopRef = flexibleStopAssignment.getFlexibleStopPlaceRef().getRef();
+                        FlexibleStopPlace flexibleStopPlace = currentNetexDao().flexibleStopPlaceById.lookupLastVersionById(flexstopRef);
+                        if (flexibleStopPlace != null) {
+                            currentNetexDao().flexibleStopPlaceIdByStopPointRef.add(flexibleStopAssignment.getScheduledStopPointRef().getValue().getRef(), flexibleStopPlace.getId());
+                        } else {
+                            LOG.warn("Flexible StopPlace " + flexstopRef + " not found.");
                         }
                     }
                 }

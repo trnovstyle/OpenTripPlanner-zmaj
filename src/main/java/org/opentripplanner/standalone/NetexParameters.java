@@ -34,6 +34,8 @@ public class NetexParameters {
 
     private static final String NETEX_FEED_ID = "DefaultFeed";
 
+    private static final String DEFAULT_FLEX_MAX_TRAVEL_TIME = "1t+2";
+
     /**
      * This field is used to identify the specific NeTEx feed. It is used instead of the feed_id field in GTFS file
      * feed_info.txt.
@@ -112,6 +114,15 @@ public class NetexParameters {
      */
     public final Pattern groupFilePattern;
 
+    /**
+     * This is the default value for how to calculate travel time for call-and-ride trips when a value is not given in
+     * the NeTEx dataset. Travel time is expressed on the form <code>xt+c</code> where t is the direct travel time
+     * calculated by the travel planner and x and c are constants.
+     * Default value is <code>2t+10</code>.
+     */
+
+    public final String defaultFlexMaxTravelTime;
+
     NetexParameters(JsonNode config) {
         moduleFilePattern = pattern("moduleFilePattern", MODULE_FILE_PATTERN, config);
         ignoreFilePattern = pattern("ignoreFilePattern", IGNORE_FILE_PATTERN, config);
@@ -119,6 +130,7 @@ public class NetexParameters {
         sharedGroupFilePattern = pattern("sharedGroupFilePattern", SHARED_GROUP_FILE_PATTERN, config);
         groupFilePattern = pattern("groupFilePattern", GROUP_FILE_PATTERN, config);
         netexFeedId = text("netexFeedId", NETEX_FEED_ID, config);
+        defaultFlexMaxTravelTime = text("flexMaxTravelTime", DEFAULT_FLEX_MAX_TRAVEL_TIME, config);
     }
 
     private static Pattern pattern(String path, String defaultValue, JsonNode config) {

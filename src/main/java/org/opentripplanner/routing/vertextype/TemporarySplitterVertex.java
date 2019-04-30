@@ -3,7 +3,6 @@ package org.opentripplanner.routing.vertextype;
 import org.opentripplanner.routing.edgetype.StreetEdge;
 import org.opentripplanner.routing.edgetype.TemporaryEdge;
 import org.opentripplanner.routing.graph.Edge;
-import org.opentripplanner.routing.graph.Graph;
 
 /**
  * TODO: decide what to do with this. Currently temporary vertices have only incoming or outgoing edges
@@ -19,6 +18,7 @@ public class TemporarySplitterVertex extends SplitterVertex implements Temporary
     public TemporarySplitterVertex(String label, double x, double y, StreetEdge streetEdge, boolean endVertex) {
         super(null, label, x, y, streetEdge);
         this.endVertex = endVertex;
+        this.wheelchairAccessible = streetEdge.isWheelchairAccessible();
     }
 
     @Override

@@ -282,6 +282,60 @@ public class Leg {
      public BookingArrangement bookingArrangements;
 
      /**
+      * True if this is a call-and-ride leg.
+      */
+     @XmlAttribute
+     @JsonSerialize
+     public Boolean callAndRide = false;
+
+     /* For call-n-ride leg, supply maximum start time based on calculation. */
+     @XmlAttribute
+     @JsonSerialize
+     public Calendar maxStartTime = null;
+
+     /* For call-n-ride leg, supply minimum end time based on calculation. */
+     @XmlAttribute
+     @JsonSerialize
+     public Calendar minEndTime = null;
+
+     /** trip.drt_advance_book_min if this is a demand-response leg */
+     @XmlAttribute
+     @JsonSerialize
+     public double drtAdvanceBookMin;
+
+     /**
+      *  Agency message if this is leg has a demand-response pickup and the Trip has
+      *  `drt_pickup_message` defined.
+      */
+     @XmlAttribute
+     @JsonSerialize
+     public String drtPickupMessage;
+
+     /**
+      * Agency message if this is leg has a demand-response dropoff and the Trip has
+      * `drt_drop_off_message` defined.
+      */
+     @XmlAttribute
+     @JsonSerialize
+     public String drtDropOffMessage;
+
+     /**
+      * Agency message if this is leg has a flag stop pickup and the Trip has
+      * `continuous_pickup_message` defined.
+      */
+     @XmlAttribute
+     @JsonSerialize
+     public String continuousPickupMessage;
+
+     /**
+      * Agency message if this is leg has a flag stop dropoff and the Trip has
+      * `continuous_drop_off_message` defined.
+      */
+     @XmlAttribute
+     @JsonSerialize
+     public String continuousDropOffMessage;
+
+     /**
      * Whether this leg is a transit leg or not.
      * @return Boolean true if the leg is a transit leg
      */
@@ -292,6 +346,11 @@ public class Leg {
          } catch (IllegalArgumentException iae) {
              return null;
          }
+     }
+
+     // TODO Also check for hail and ride
+     public boolean isFlexible() {
+         return callAndRide;
      }
 
     /**

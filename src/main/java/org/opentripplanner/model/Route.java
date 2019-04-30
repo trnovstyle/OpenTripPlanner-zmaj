@@ -62,6 +62,8 @@ public final class Route extends IdentityBean<AgencyAndId> {
 
     private String brandingUrl;
 
+    private int eligibilityRestricted = MISSING_VALUE;
+
     public AgencyAndId getId() {
         return id;
     }
@@ -228,6 +230,18 @@ public final class Route extends IdentityBean<AgencyAndId> {
 
     public void setFlexibleRouteType(FlexibleRouteTypeEnum flexibleRouteType) {
         this.flexibleRouteType = flexibleRouteType;
+    }
+
+    public boolean hasEligibilityRestricted() {
+        return eligibilityRestricted != MISSING_VALUE;
+    }
+
+    public int getEligibilityRestricted() {
+        return eligibilityRestricted;
+    }
+
+    public void setEligibilityRestricted(int eligibilityRestricted) {
+        this.eligibilityRestricted = eligibilityRestricted;
     }
 
     @Override

@@ -1,21 +1,16 @@
 package org.opentripplanner.netex.mapping;
 
+import org.opentripplanner.model.*;
 import org.opentripplanner.model.NoticeAssignment;
 import org.opentripplanner.model.Route;
-import org.opentripplanner.model.ShapePoint;
-import org.opentripplanner.model.Stop;
-import org.opentripplanner.model.Transfer;
 import org.opentripplanner.model.impl.OtpTransitBuilder;
 import org.opentripplanner.netex.loader.NetexDao;
-import org.rutebanken.netex.model.Authority;
+import org.rutebanken.netex.model.*;
 import org.rutebanken.netex.model.Branding;
-import org.rutebanken.netex.model.GroupOfStopPlaces;
-import org.rutebanken.netex.model.JourneyPattern;
-import org.rutebanken.netex.model.Line_VersionStructure;
 import org.rutebanken.netex.model.Notice;
-import org.rutebanken.netex.model.StopPlace;
 import org.rutebanken.netex.model.TariffZone;
 
+import java.util.AbstractMap;
 import java.util.Collection;
 
 import static org.opentripplanner.netex.mapping.CalendarMapper.mapToCalendarDates;
@@ -34,6 +29,8 @@ public class NetexMapper {
 
     private final StopMapper stopMapper = new StopMapper();
 
+    private final FlexibleStopPlaceMapper flexibleStopPlaceMapper = new FlexibleStopPlaceMapper();
+
     private final TripPatternMapper tripPatternMapper = new TripPatternMapper();
 
     private final ParkingMapper parkingMapper = new ParkingMapper();
@@ -50,10 +47,13 @@ public class NetexMapper {
 
     private final String agencyId;
 
+    private final String defaultFlexMaxTravelTime;
 
-    public NetexMapper(OtpTransitBuilder transitBuilder, String agencyId) {
+
+    public NetexMapper(OtpTransitBuilder transitBuilder, String agencyId, String defaultFlexMaxTravelTime) {
         this.transitBuilder = transitBuilder;
         this.agencyId = agencyId;
+        this.defaultFlexMaxTravelTime = defaultFlexMaxTravelTime;
     }
 
     public void mapNetexToOtpEntities(NetexDao netexDao) {
@@ -116,8 +116,16 @@ public class NetexMapper {
             }
         }
 
+        for (String flexibleStopPlaceId : netexDao.flexibleStopPlaceById.keys()) {
+            // TODO Consider also checking validity instead of always picking last version, as is being done with stop places
+            FlexibleStopPlace flexibleStopPlace = netexDao.flexibleStopPlaceById.lookupLastVersionById(flexibleStopPlaceId);
+            if (flexibleStopPlace != null) {
+                flexibleStopPlaceMapper.mapFlexibleStopPlaceWithQuay(flexibleStopPlace, transitBuilder);
+            }
+        }
+
         for (JourneyPattern journeyPattern : netexDao.journeyPatternsById.values()) {
-            tripPatternMapper.mapTripPattern(journeyPattern, transitBuilder, netexDao);
+            tripPatternMapper.mapTripPattern(journeyPattern, transitBuilder, netexDao, defaultFlexMaxTravelTime);
         }
 
         for (String serviceId : netexDao.getCalendarServiceIds()) {

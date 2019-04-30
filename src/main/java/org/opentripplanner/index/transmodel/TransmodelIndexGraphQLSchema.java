@@ -19,10 +19,7 @@ import org.opentripplanner.index.model.StopTimesInPattern;
 import org.opentripplanner.index.model.TripTimeShort;
 import org.opentripplanner.index.transmodel.mapping.TransmodelMappingUtil;
 import org.opentripplanner.index.transmodel.model.TransmodelPlaceType;
-import org.opentripplanner.index.transmodel.model.scalars.DateScalarFactory;
-import org.opentripplanner.index.transmodel.model.scalars.DateTimeScalarFactory;
-import org.opentripplanner.index.transmodel.model.scalars.LocalTimeScalarFactory;
-import org.opentripplanner.index.transmodel.model.scalars.TimeScalarFactory;
+import org.opentripplanner.index.transmodel.model.scalars.*;
 import org.opentripplanner.index.util.TripTimeShortHelper;
 import org.opentripplanner.model.*;
 import org.opentripplanner.model.calendar.ServiceDate;
@@ -215,6 +212,12 @@ public class TransmodelIndexGraphQLSchema {
              .value("child", "child", "Only mono modal children stop places, not their multi modal parent stop")
              .value("all", "all", "Both multiModal parents and their mono modal child stop places.")
              .build();
+
+    private static GraphQLEnumType stopTypeEnum = GraphQLEnumType.newEnum()
+            .name("StopType")
+            .value("regular", Stop.stopTypeEnumeration.REGULAR)
+            .value("flexible_area", Stop.stopTypeEnumeration.FLEXIBLE_AREA)
+            .build();
 
 
     private static GraphQLEnumType transportSubmode = TransmodelIndexGraphQLSchema.createEnum("TransportSubmode", TransmodelTransportSubmode.values(), (t -> t.getValue()));
@@ -982,6 +985,11 @@ public class TransmodelIndexGraphQLSchema {
                         .defaultValue(defaultRoutingRequest.maxPreTransitWalkDistance)
                         .build())
                 .argument(GraphQLArgument.newArgument()
+                        .name("useFlex")
+                        .type(Scalars.GraphQLBoolean)
+                        .defaultValue(defaultRoutingRequest.useFlexService)
+                        .build())
+                .argument(GraphQLArgument.newArgument()
                         .name("banFirstServiceJourneysFromReuseNo")
                         .description("How many service journeys used in a tripPatterns should be banned from inclusion in successive tripPatterns. Counting from start of tripPattern.")
                         .type(Scalars.GraphQLInt)
@@ -1006,10 +1014,10 @@ public class TransmodelIndexGraphQLSchema {
                         .defaultValue(defaultRoutingRequest.waitReluctance)
                         .build())
                 .argument(GraphQLArgument.newArgument()
-                        .name("useFlex")
-                        .description("Not implemented.")
+                        .name("ignoreMinimumBookingPeriod")
+                        .description("Ignore the MinimumBookingPeriod defined on the ServiceJourney and allow itineraries to start immediately after the current time.")
                         .type(Scalars.GraphQLBoolean)
-                        .defaultValue(false)
+                        .defaultValue(defaultRoutingRequest.ignoreDrtAdvanceBookMin)
                         .build())
                 .argument(GraphQLArgument.newArgument()
                         .name("transitDistanceReluctance")
@@ -1678,6 +1686,17 @@ public class TransmodelIndexGraphQLSchema {
                         .dataFetcher(dataFetchingEnvironment -> index.getAlertsForStop(
                                 dataFetchingEnvironment.getSource()))
                         .build())
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("stopType")
+                        .type(stopTypeEnum)
+                        .dataFetcher(environment -> (((Stop) environment.getSource()).getStopType()))
+                        .build())
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("flexibleArea")
+                        .description("Geometry for flexible area.")
+                        .type(GeoJSONCoordinatesScalar.getGraphQGeoJSONCoordinatesScalar())
+                        .dataFetcher(environment -> (((Stop) environment.getSource()).getArea() != null ? ((Stop) environment.getSource()).getArea().getCoordinates() : null))
+                        .build())
                 .build();
 
         timetabledPassingTimeType = GraphQLObjectType.newObject()
@@ -1965,6 +1984,13 @@ public class TransmodelIndexGraphQLSchema {
                          .dataFetcher(environment ->  getBookingArrangementForTripTimeShort(environment.getSource()))
                          .type(bookingArrangementType)
                          .build())
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("flexible")
+                        .type(Scalars.GraphQLBoolean)
+                        .description("Whether this call is part of a flexible trip. This means that arrival or departure " +
+                                "times are not scheduled but estimated within specified operating hours.")
+                        .dataFetcher(environment -> ((TripTimeShort) environment.getSource()).isFlexible())
+                        .build())
                 .build();
 
         serviceJourneyType = GraphQLObjectType.newObject()

@@ -27,6 +27,8 @@ import org.opentripplanner.routing.alertpatch.AlertPatch;
 import org.opentripplanner.routing.alertpatch.StopCondition;
 import org.opentripplanner.routing.core.*;
 import org.opentripplanner.routing.edgetype.*;
+import org.opentripplanner.routing.edgetype.flex.PartialPatternHop;
+import org.opentripplanner.routing.edgetype.flex.TemporaryDirectPatternHop;
 import org.opentripplanner.routing.error.TrivialPathException;
 import org.opentripplanner.routing.graph.Edge;
 import org.opentripplanner.routing.graph.Graph;
@@ -243,17 +245,23 @@ public abstract class GraphPathToTripPlanConverter {
         return calendar;
     }
 
+    private static Calendar makeCalendar(TimeZone timeZone, long time) {
+        Calendar calendar = Calendar.getInstance(timeZone);
+        calendar.setTimeInMillis(time);
+        return calendar;
+    }
+
     /**
      * Generate a {@link CoordinateArrayListSequence} based on an {@link Edge} array.
      *
      * @param edges The array of input edges
      * @return The coordinates of the points on the edges
      */
-    private static CoordinateArrayListSequence makeCoordinates(Edge[] edges) {
+    public static CoordinateArrayListSequence makeCoordinates(Edge[] edges) {
         CoordinateArrayListSequence coordinates = new CoordinateArrayListSequence();
 
         for (Edge edge : edges) {
-            LineString geometry = edge.getGeometry();
+            LineString geometry = edge.getDisplayGeometry();
 
             if (geometry != null) {
                 if (coordinates.size() == 0) {
@@ -775,9 +783,12 @@ public abstract class GraphPathToTripPlanConverter {
     private static Collection<AlertPatch> getAlertsForStopAndRoute(Graph graph, AgencyAndId stopId, AgencyAndId routeId, boolean checkParentStop) {
 
         Stop stop = graph.index.stopForId.get(stopId);
+        if (stop == null) {
+            return new ArrayList<>();
+        }
         Collection<AlertPatch> alertsForStopAndRoute = graph.index.getAlertsForStopAndRoute(stopId,routeId);
-        if (checkParentStop && stop.getParentStation() != null) {
-
+        if (stop != null && checkParentStop && stop.getParentStation() != null) {
+            alertsForStopAndRoute = graph.index.getAlertsForStopAndRoute(stopId,routeId);
             //No alerts found for quay - check parent
             Collection<AlertPatch> parentStopAlerts = graph.index.getAlertsForStopAndRoute(stop.getParentStationAgencyAndId(), routeId);
             if (parentStopAlerts != null) {
@@ -797,11 +808,10 @@ public abstract class GraphPathToTripPlanConverter {
     }
 
     private static Collection<AlertPatch> getAlertsForStopAndTrip(Graph graph, AgencyAndId stopId, AgencyAndId tripId, boolean checkParentStop) {
-
+        Collection<AlertPatch> alertsForStopAndTrip = new ArrayList<>();
         Stop stop = graph.index.stopForId.get(stopId);
-        Collection<AlertPatch> alertsForStopAndTrip = graph.index.getAlertsForStopAndTrip(stopId, tripId);
-        if (checkParentStop && stop.getParentStation() != null) {
-
+        if (stop != null && checkParentStop && stop.getParentStation() != null) {
+            alertsForStopAndTrip = graph.index.getAlertsForStopAndTrip(stopId, tripId);
             //No alerts found for quay - check parent
             Collection<AlertPatch> parentStopAlerts = graph.index.getAlertsForStopAndTrip(stop.getParentStationAgencyAndId(), tripId);
             if (parentStopAlerts != null) {
@@ -820,11 +830,10 @@ public abstract class GraphPathToTripPlanConverter {
     }
 
     private static Collection<AlertPatch> getAlertsForStop(Graph graph, AgencyAndId stopId, boolean checkParentStop) {
-
+        Collection<AlertPatch> alertsForStop = new ArrayList<>();
         Stop stop = graph.index.stopForId.get(stopId);
-        Collection<AlertPatch> alertsForStop = graph.index.getAlertsForStopId(stopId);
-        if (checkParentStop && stop.getParentStation() != null) {
-
+        if (stop != null && checkParentStop && stop.getParentStation() != null) {
+            alertsForStop = graph.index.getAlertsForStopId(stopId);
             //No alerts found for quay - check parent
             Collection<AlertPatch> parentStopAlerts = graph.index.getAlertsForStopId(stop.getParentStationAgencyAndId());
             if (parentStopAlerts != null) {
@@ -896,6 +905,11 @@ public abstract class GraphPathToTripPlanConverter {
             leg.tripId = trip.getId();
             leg.tripShortName = trip.getTripShortName();
             leg.tripBlockId = trip.getBlockId();
+            leg.drtAdvanceBookMin = trip.getDrtAdvanceBookMin();
+            leg.drtPickupMessage = trip.getDrtPickupMessage();
+            leg.drtDropOffMessage = trip.getDrtDropOffMessage();
+            leg.continuousPickupMessage = trip.getContinuousPickupMessage();
+            leg.continuousDropOffMessage = trip.getContinuousDropOffMessage();
 
             if (serviceDay != null) {
                 leg.serviceDate = serviceDay.getServiceDate().getAsString();
@@ -904,6 +918,31 @@ public abstract class GraphPathToTripPlanConverter {
             if (leg.headsign == null) {
                 leg.headsign = trip.getTripHeadsign();
             }
+
+
+            Edge edge = states[states.length - 1].backEdge;
+            if (edge instanceof TemporaryDirectPatternHop) {
+                leg.callAndRide = true;
+            }
+            if (edge instanceof PartialPatternHop) {
+                PartialPatternHop hop = (PartialPatternHop) edge;
+                int directTime = hop.getDirectVehicleTime();
+                TripTimes tt = states[states.length - 1].getTripTimes();
+                int maxTime = tt.getDemandResponseMaxTime(directTime);
+                int avgTime = tt.getDemandResponseAvgTime(directTime);
+                int delta = maxTime - avgTime;
+                if (directTime != 0 && delta > 0) {
+                    if (hop.isDeviatedRouteBoard()) {
+                        long maxStartTime = leg.startTime.getTimeInMillis() + (delta * 1000);
+                        leg.maxStartTime = makeCalendar(leg.startTime.getTimeZone(), maxStartTime);
+                    }
+                    if (hop.isDeviatedRouteAlight()) {
+                        long minEndTime = leg.endTime.getTimeInMillis() - (delta * 1000);
+                        leg.minEndTime = makeCalendar(leg.endTime.getTimeZone(), minEndTime);
+                    }
+                }
+            }
+
         }
     }
 
@@ -1011,6 +1050,22 @@ public abstract class GraphPathToTripPlanConverter {
                 place.stopSequence = tripTimes.getStopSequence(place.stopIndex);
             }
             place.vertexType = VertexType.TRANSIT;
+            place.boardAlightType = BoardAlightType.DEFAULT;
+            if (edge instanceof PartialPatternHop) {
+                PartialPatternHop hop = (PartialPatternHop) edge;
+                if (hop.hasBoardArea() && !endOfLeg) {
+                    place.flagStopArea = PolylineEncoder.createEncodings(hop.getBoardArea());
+                }
+                if (hop.hasAlightArea() && endOfLeg) {
+                    place.flagStopArea = PolylineEncoder.createEncodings(hop.getAlightArea());
+                }
+                if ((endOfLeg && hop.isFlagStopAlight()) || (!endOfLeg && hop.isFlagStopBoard())) {
+                    place.boardAlightType = BoardAlightType.FLAG_STOP;
+                }
+                if ((endOfLeg && hop.isDeviatedRouteAlight()) || (!endOfLeg && hop.isDeviatedRouteBoard())) {
+                    place.boardAlightType = BoardAlightType.DEVIATED;
+                }
+            }
         }
         else if (vertex instanceof TransitVertex && edge instanceof SimpleTransfer) {
             place.stopId = stop.getId();

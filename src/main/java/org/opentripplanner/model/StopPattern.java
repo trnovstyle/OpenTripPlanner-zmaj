@@ -3,11 +3,14 @@ package org.opentripplanner.model;
 import com.google.common.hash.HashCode;
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hasher;
+import org.locationtech.jts.geom.Geometry;
 
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
+import java.util.function.Function;
 
 /**
  * This class represents what is called a JourneyPattern in Transmodel: the sequence of stops at
@@ -48,6 +51,10 @@ public class StopPattern implements Serializable {
     public final Stop[] stops;
     public final int[]  pickups;
     public final int[]  dropoffs;
+    public final int[] continuousPickup;
+    public final int[] continuousDropOff;
+    public final double[] serviceAreaRadius;
+    public final Geometry[] serviceAreas; // likely at most one distinct object will be in this array
     public final BookingArrangement[] bookingArrangements;
 
     private StopPattern (int size) {
@@ -55,13 +62,23 @@ public class StopPattern implements Serializable {
         stops     = new Stop[size];
         pickups   = new int[size];
         dropoffs  = new int[size];
+        continuousPickup = new int[size];
+        continuousDropOff = new int[size];
+        serviceAreaRadius = new double[size];
+        serviceAreas = new Geometry[size];
         bookingArrangements = new BookingArrangement[size];
     }
 
+    public StopPattern (List<StopTime> stopTimes) {
+        this(stopTimes, null);
+    }
+
     /** Assumes that stopTimes are already sorted by time. */
-    public StopPattern (Collection<StopTime> stopTimes) {
+    public StopPattern (List<StopTime> stopTimes, Function<String, Geometry> areaGeometryByArea) {
         this (stopTimes.size());
         if (size == 0) return;
+        double lastServiceAreaRadius = 0;
+        Geometry lastServiceArea = null;
         Iterator<StopTime> stopTimeIterator = stopTimes.iterator();
 
         for (int i = 0; i < size; ++i) {
@@ -71,6 +88,29 @@ public class StopPattern implements Serializable {
             // pick/drop messages could be stored in individual trips
             pickups[i] = stopTime.getPickupType();
             dropoffs[i] = stopTime.getDropOffType();
+
+            // continuous stops can be empty, which means 1 (no continuous stopping behavior)
+            continuousPickup[i] = stopTime.getContinuousPickup() == StopTime.MISSING_VALUE ? 1 : stopTime.getContinuousPickup();
+            continuousDropOff[i] = stopTime.getContinuousDropOff() == StopTime.MISSING_VALUE ? 1 : stopTime.getContinuousDropOff();
+
+
+            if (stopTime.getStartServiceAreaRadius() != StopTime.MISSING_VALUE) {
+                lastServiceAreaRadius = stopTime.getStartServiceAreaRadius();
+            }
+            serviceAreaRadius[i] = lastServiceAreaRadius;
+            if (stopTime.getEndServiceAreaRadius() != StopTime.MISSING_VALUE) {
+                lastServiceAreaRadius = 0;
+            }
+
+            if (areaGeometryByArea != null) {
+                if (stopTime.getStartServiceArea() != null) {
+                    lastServiceArea = areaGeometryByArea.apply(stopTime.getStartServiceArea().getAreaId());
+                }
+                serviceAreas[i] = lastServiceArea;
+                if (stopTime.getEndServiceArea() != null) {
+                    lastServiceArea = null;
+                }
+            }
         }
         /*
          * TriMet GTFS has many trips that differ only in the pick/drop status of their initial and
@@ -98,7 +138,10 @@ public class StopPattern implements Serializable {
             StopPattern that = (StopPattern) other;
             return Arrays.equals(this.stops,    that.stops) &&
                    Arrays.equals(this.pickups,  that.pickups) &&
-                   Arrays.equals(this.dropoffs, that.dropoffs);
+                    Arrays.equals(this.dropoffs, that.dropoffs) &&
+                    Arrays.equals(this.continuousPickup, that.continuousPickup) &&
+                    Arrays.equals(this.continuousDropOff, that.continuousDropOff) &&
+                    Arrays.equals(this.serviceAreas, that.serviceAreas);
         } else {
             return false;
         }
@@ -111,6 +154,12 @@ public class StopPattern implements Serializable {
         hash += Arrays.hashCode(this.pickups);
         hash *= 31;
         hash += Arrays.hashCode(this.dropoffs);
+        hash *= 31;
+        hash += Arrays.hashCode(this.continuousPickup);
+        hash *= 31;
+        hash += Arrays.hashCode(this.continuousDropOff);
+        hash *= 31;
+        hash += Arrays.hashCode(this.serviceAreas);
         return hash;
     }
 
@@ -142,6 +191,10 @@ public class StopPattern implements Serializable {
         for (int hop = 0; hop < size - 1; hop++) {
             hasher.putInt(pickups[hop]);
             hasher.putInt(dropoffs[hop + 1]);
+            hasher.putInt(continuousPickup[hop]);
+            hasher.putInt(continuousDropOff[hop]);
+            hasher.putDouble(serviceAreaRadius[hop]);
+            hasher.putInt(serviceAreas[hop].hashCode());
         }
         return hasher.hash();
     }

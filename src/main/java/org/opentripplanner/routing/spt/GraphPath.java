@@ -16,14 +16,20 @@ package org.opentripplanner.routing.spt;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.locationtech.jts.geom.LineString;
+import org.opentripplanner.api.resource.CoordinateArrayListSequence;
+import org.opentripplanner.common.geometry.GeometryUtils;
 import org.opentripplanner.model.AgencyAndId;
 import org.opentripplanner.model.Trip;
 import org.opentripplanner.routing.core.RoutingContext;
 import org.opentripplanner.routing.core.State;
+import org.opentripplanner.routing.edgetype.flex.TemporaryDirectPatternHop;
 import org.opentripplanner.routing.graph.Edge;
 import org.opentripplanner.routing.graph.Vertex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static org.opentripplanner.api.resource.GraphPathToTripPlanConverter.makeCoordinates;
 
 /**
  * A shortest path on the graph.
@@ -211,6 +217,22 @@ public class GraphPath {
     
     public RoutingContext getRoutingContext() {
         return rctx;
+    }
+
+    public LineString getGeometry() {
+        CoordinateArrayListSequence coordinates = makeCoordinates(edges.toArray(new Edge[0]));
+        return GeometryUtils.getGeometryFactory().createLineString(coordinates);
+    }
+
+    public int getCallAndRideDuration() {
+        int duration = 0;
+        for (State s : states) {
+            if (s.getBackEdge() != null && s.getBackEdge() instanceof TemporaryDirectPatternHop) {
+                TemporaryDirectPatternHop hop = (TemporaryDirectPatternHop) s.getBackEdge();
+                duration += hop.getDirectVehicleTime();
+            }
+        }
+        return duration;
     }
 
 }

@@ -31,6 +31,8 @@ import org.opentripplanner.routing.edgetype.TransitBoardAlight;
 import org.opentripplanner.routing.error.PathNotFoundException;
 import org.opentripplanner.routing.error.SearchTimeoutException;
 import org.opentripplanner.routing.error.VertexNotFoundException;
+import org.opentripplanner.routing.flex.DeviatedRouteGraphModifier;
+import org.opentripplanner.routing.flex.FlagStopGraphModifier;
 import org.opentripplanner.routing.graph.Edge;
 import org.opentripplanner.routing.graph.Vertex;
 import org.opentripplanner.routing.spt.DominanceFunction;
@@ -136,6 +138,19 @@ public class GraphPathFinder {
          * This would cause long distance mode to do unbounded street searches and consider the whole graph walkable. */
         if (options.maxWalkDistance == Double.MAX_VALUE) options.maxWalkDistance = DEFAULT_MAX_WALK;
         if (options.maxWalkDistance > CLAMP_MAX_WALK) options.maxWalkDistance = CLAMP_MAX_WALK;
+        if (options.modes.isTransit() && router.graph.useFlexService && options.useFlexService) {
+            // create temporary flex stops/hops (just once even if we run multiple searches)
+            FlagStopGraphModifier svc1 = new FlagStopGraphModifier(router.graph);
+            DeviatedRouteGraphModifier svc2 = new DeviatedRouteGraphModifier(router.graph);
+            svc1.createForwardHops(options);
+            if (options.useReservationServices) {
+                svc2.createForwardHops(options);
+            }
+            svc1.createBackwardHops(options);
+            if (options.useReservationServices) {
+                svc2.createBackwardHops(options);
+            }
+        }
         long searchBeginTime = System.currentTimeMillis();
         LOG.debug("BEGIN SEARCH");
         List<GraphPath> paths = Lists.newArrayList();
@@ -168,14 +183,13 @@ public class GraphPathFinder {
             }
 
             // Do a full reversed search to compact the legs
-            if(options.compactLegsByReversedSearch){
+            if(options.compactLegsByReversedSearch) {
                 try {
                     newPaths = compactLegsByReversedSearch(aStar, originalReq, options, newPaths, timeout, reversedSearchHeuristic);
                 } catch (Exception e) {
                     LOG.warn("CompactLegsByReversedSearch failed on request: " + originalReq.toString(), e);
                 }
             }
-
             // Find all trips used in this path and ban them for the remaining searches
             for (GraphPath path : newPaths) {
                 // path.dump();
@@ -185,6 +199,15 @@ public class GraphPathFinder {
                 if (tripIds.isEmpty()) {
                     // This path does not use transit (is entirely on-street). Do not repeatedly find the same one.
                     options.onlyTransitTrips = true;
+                }
+                // for direct-hop trip banning, limit the allowable call-n-ride time to what it is currently
+                if (tripIds.size() < 2) {
+                    int duration = path.getCallAndRideDuration();
+                    if (duration > 0) {
+                        int constantLimit = Math.min(0, duration - options.reduceCallAndRideSeconds);
+                        int ratioLimit = (int) Math.round(options.reduceCallAndRideRatio * duration);
+                        options.maxCallAndRideSeconds = Math.min(constantLimit, ratioLimit);
+                    }
                 }
             }
 
@@ -215,7 +238,9 @@ public class GraphPathFinder {
         int i = 1;
         for (AgencyAndId tripId : orderedTripIds) {
             if (i++ <= options.banFirstTripsFromReuseNo) {
-                options.banTrip(tripId);
+                if (!router.graph.index.tripIsCallAndRide(tripId)) {
+                    options.banTrip(tripId);
+                }
             }
         }
     }

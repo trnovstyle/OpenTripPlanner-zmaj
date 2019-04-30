@@ -87,6 +87,11 @@ public class StreetTransitLink extends Edge {
             return null;
         }
 
+        // Do not get off at a real stop when on call-n-ride (force a transfer instead).
+        if (s0.isLastBoardAlightDeviated() && !(transitStop.checkCallAndRideStreetLinkOk(s0))) {
+            return null;
+        }
+
         RoutingRequest req = s0.getOptions();
         if (s0.getOptions().wheelchairAccessible && !wheelchairAccessible) {
             return null;
@@ -108,7 +113,7 @@ public class StreetTransitLink extends Edge {
 
         /* Only enter stations in CAR mode if parking is not required (kiss and ride) */
         /* Note that in arriveBy searches this is double-traversing link edges to fork the state into both WALK and CAR mode. This is an insane hack. */
-        if (s0.getNonTransitMode() == TraverseMode.CAR) {
+        if (s0.getNonTransitMode() == TraverseMode.CAR && !req.enterStationsWithCar) {
             if ((req.kissAndRide && !s0.isCarParked()) || (req.rideAndKiss && s0.isCarParked())) {
                 s1.setCarParked(true);
             } else {

@@ -25,13 +25,13 @@ import java.util.Set;
 public class StopMapper {
     private static final Logger LOG = LoggerFactory.getLogger(StopMapper.class);
 
-    private StopPlaceTypeMapper stopPlaceTypeMapper = new StopPlaceTypeMapper();
+    protected StopPlaceTypeMapper stopPlaceTypeMapper = new StopPlaceTypeMapper();
 
-    private TransportModeMapper transportModeMapper = new TransportModeMapper();
+    protected TransportModeMapper transportModeMapper = new TransportModeMapper();
 
-    private AdjacentSitesMapper adjacentSitesMapper = new AdjacentSitesMapper();
+    protected AdjacentSitesMapper adjacentSitesMapper = new AdjacentSitesMapper();
 
-    private String DEFAULT_TIMEZONE = "Europe/Oslo";
+    protected String DEFAULT_TIMEZONE = "Europe/Oslo";
 
     public Collection<Stop> mapParentAndChildStops(Collection<StopPlace> stopPlaces, OtpTransitBuilder transitBuilder, NetexDao netexDao){
         // Extract current stop based on validity and version
@@ -284,4 +284,6 @@ public class StopMapper {
             return Stop.interchangeWeightingEnumeration.INTERCHANGE_ALLOWED;
         }
     }
+
+
 }

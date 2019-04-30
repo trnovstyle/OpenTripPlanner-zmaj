@@ -13,16 +13,24 @@
 
 package org.opentripplanner;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 
+import org.opentripplanner.graph_builder.module.DirectTransferGenerator;
+import org.opentripplanner.graph_builder.module.osm.DefaultWayPropertySetSource;
+import org.opentripplanner.graph_builder.module.osm.OpenStreetMapModule;
+import org.opentripplanner.model.CalendarService;
 import org.opentripplanner.model.calendar.CalendarServiceData;
 import org.opentripplanner.graph_builder.module.StreetLinkerModule;
 import org.opentripplanner.gtfs.GtfsContext;
+import org.opentripplanner.openstreetmap.impl.AnyFileBasedOpenStreetMapProviderImpl;
 import org.opentripplanner.routing.edgetype.factory.PatternHopFactory;
 import org.opentripplanner.routing.edgetype.factory.TransferGraphLinker;
 import org.opentripplanner.routing.graph.Graph;
+import org.opentripplanner.routing.impl.DefaultStreetVertexIndexFactory;
 
+import static org.opentripplanner.calendar.impl.CalendarServiceDataFactoryImpl.createCalendarService;
 import static org.opentripplanner.calendar.impl.CalendarServiceDataFactoryImpl.createCalendarServiceData;
 import static org.opentripplanner.gtfs.GtfsContextBuilder.contextBuilder;
 
@@ -38,11 +46,17 @@ public class ConstantsForTests {
 
     public static final String FARE_COMPONENT_GTFS = "src/test/resources/farecomponent_gtfs.zip";
 
+    public static final String VERMONT_GTFS = "src/test/resources/vermont/ruralcommunity-flex-vt-us.zip";
+
+    public static final String VERMONT_OSM = "src/test/resources/vermont/vermont-rct.osm.pbf";
+
     private static ConstantsForTests instance = null;
 
     private Graph portlandGraph = null;
 
     private GtfsContext portlandContext = null;
+
+    private Graph vermontGraph = null;
 
     private ConstantsForTests() {
 
@@ -92,6 +106,52 @@ public class ConstantsForTests {
 
         StreetLinkerModule ttsnm = new StreetLinkerModule();
         ttsnm.buildGraph(portlandGraph, new HashMap<Class<?>, Object>());
+    }
+
+    public Graph getVermontGraph() {
+        if (vermontGraph == null) {
+            try {
+                vermontGraph = new Graph();
+
+                OpenStreetMapModule osmModule = new OpenStreetMapModule();
+                AnyFileBasedOpenStreetMapProviderImpl provider = new AnyFileBasedOpenStreetMapProviderImpl();
+                osmModule.setDefaultWayPropertySetSource(new DefaultWayPropertySetSource());
+                provider.setPath(new File(ConstantsForTests.VERMONT_OSM));
+                osmModule.setProvider(provider);
+                osmModule.buildGraph(vermontGraph, new HashMap<>());
+
+                GtfsContext vermontGtfsContext = contextBuilder(ConstantsForTests.VERMONT_GTFS)
+                        .withGraphBuilderAnnotationsAndDeduplicator(vermontGraph)
+                        .build();
+
+                PatternHopFactory factory = new PatternHopFactory(vermontGtfsContext);
+                factory.run(vermontGraph);
+
+                CalendarServiceData csd = createCalendarServiceData(vermontGtfsContext.getTransitBuilder());
+                vermontGraph.putService(CalendarServiceData.class, csd);
+                vermontGraph.updateTransitFeedValidity(csd);
+                vermontGraph.hasTransit = true;
+
+                vermontGraph.putService(
+                        CalendarService.class,
+                        createCalendarService(vermontGtfsContext.getTransitBuilder())
+                );
+
+
+                new DirectTransferGenerator(2000).buildGraph(vermontGraph, new HashMap<>());
+
+                new StreetLinkerModule().buildGraph(vermontGraph, new HashMap<>());
+
+                vermontGraph.index(new DefaultStreetVertexIndexFactory());
+
+                vermontGraph.setUseFlexService(true);
+            } catch (Exception e) {
+                e.printStackTrace();
+                throw new RuntimeException(e);
+            }
+        }
+
+        return vermontGraph;
     }
 
     public static Graph buildGraph(String path) {

@@ -17,11 +17,11 @@ package org.opentripplanner.model;
 
 import org.opentripplanner.model.calendar.ServiceDate;
 
-public final class FeedInfo extends IdentityBean<Integer> {
+public final class FeedInfo extends IdentityBean<String> {
 
     private static final long serialVersionUID = 1L;
 
-    private int id;
+    private String id;
 
     private String publisherName;
 
@@ -84,12 +84,12 @@ public final class FeedInfo extends IdentityBean<Integer> {
     }
 
     @Override
-    public Integer getId() {
+    public String getId() {
         return id;
     }
 
     @Override
-    public void setId(Integer id) {
+    public void setId(String id) {
         this.id = id;
     }
 

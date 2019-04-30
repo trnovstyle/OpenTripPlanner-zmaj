@@ -71,6 +71,13 @@ public class TripTimeShortHelper {
         List<TripTimeShort> tripTimes = getTripTimesShort(trip, serviceDate);
         long startTimeSeconds = (leg.startTime.toInstant().toEpochMilli() - serviceDate.getAsDate().getTime()) / 1000;
 
+        if (leg.isFlexible()) {
+            TripTimeShort tripTimeShort = tripTimes.get(leg.from.stopSequence);
+            tripTimeShort.scheduledDeparture = (int) startTimeSeconds;
+            tripTimeShort.realtimeDeparture = (int) startTimeSeconds;
+            return tripTimeShort;
+        }
+
         if (leg.realTime) {
             return tripTimes.stream().filter(tripTime -> tripTime.realtimeDeparture == startTimeSeconds && matchesQuayOrSiblingQuay(leg.from.stopId, tripTime.stopId)).findFirst().orElse(null);
         }
@@ -89,6 +96,13 @@ public class TripTimeShortHelper {
 
         List<TripTimeShort> tripTimes = getTripTimesShort(trip, serviceDate);
         long endTimeSeconds = (leg.endTime.toInstant().toEpochMilli() - serviceDate.getAsDate().getTime()) / 1000;
+
+        if (leg.isFlexible()) {
+            TripTimeShort tripTimeShort = tripTimes.get(leg.to.stopSequence);
+            tripTimeShort.scheduledArrival = (int) endTimeSeconds;
+            tripTimeShort.realtimeArrival = (int) endTimeSeconds;
+            return tripTimeShort;
+        }
 
         if (leg.realTime) {
             return tripTimes.stream().filter(tripTime -> tripTime.realtimeArrival == endTimeSeconds && matchesQuayOrSiblingQuay(leg.to.stopId, tripTime.stopId)).findFirst().orElse(null);

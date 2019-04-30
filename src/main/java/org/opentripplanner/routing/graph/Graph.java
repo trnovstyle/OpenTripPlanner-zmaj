@@ -33,6 +33,7 @@ import gnu.trove.list.linked.TDoubleLinkedList;
 import gnu.trove.map.hash.TIntIntHashMap;
 import org.apache.commons.math3.stat.descriptive.rank.Median;
 import org.joda.time.DateTime;
+import org.locationtech.jts.geom.Polygon;
 import org.objenesis.strategy.SerializingInstantiatorStrategy;
 import org.opentripplanner.analyst.request.SampleFactory;
 import org.opentripplanner.calendar.impl.CalendarServiceImpl;
@@ -59,6 +60,7 @@ import org.opentripplanner.routing.core.TraverseMode;
 import org.opentripplanner.routing.edgetype.EdgeWithCleanup;
 import org.opentripplanner.routing.edgetype.StreetEdge;
 import org.opentripplanner.routing.edgetype.TripPattern;
+import org.opentripplanner.routing.flex.FlexIndex;
 import org.opentripplanner.routing.impl.DefaultStreetVertexIndexFactory;
 import org.opentripplanner.routing.services.StreetVertexIndexFactory;
 import org.opentripplanner.routing.services.StreetVertexIndexService;
@@ -140,6 +142,8 @@ public class Graph implements Serializable, AddBuilderAnnotation {
     public transient StreetVertexIndexService streetIndex;
 
     public transient GraphIndex index;
+
+    public transient FlexIndex flexIndex;
 
     private transient SampleFactory sampleFactory;
 
@@ -231,9 +235,16 @@ public class Graph implements Serializable, AddBuilderAnnotation {
 
     /** A speed source for traffic data */
     public transient StreetSpeedSnapshotSource streetSpeedSource;
-    
+
     /** The difference in meters between the WGS84 ellipsoid height and geoid height at the graph's center */
     public Double ellipsoidToGeoidDifference = 0.0;
+
+    /** Whether to use flex modes */
+    public boolean useFlexService = false;
+
+    /** Areas for flex service */
+    public Map<AgencyAndId, Geometry> areasById = new HashMap<>();
+
 
     /** Multimodal stops **/
     public Map<AgencyAndId, Stop> multiModalStopById = new HashMap<>();
@@ -658,6 +669,10 @@ public class Graph implements Serializable, AddBuilderAnnotation {
         }
         // TODO: Move this ^ stuff into the graph index
         this.index = new GraphIndex(this);
+        if (useFlexService ) {
+            this.flexIndex = new FlexIndex();
+            flexIndex.init(this);
+        }
     }
     
     public static Graph load(InputStream in) {
@@ -852,6 +867,10 @@ public class Graph implements Serializable, AddBuilderAnnotation {
         this.feedInfoForId.put(info.getId().toString(), info);
     }
 
+    public void addArea(String feedId, String areaId, Polygon area) {
+        this.areasById.put(new AgencyAndId(feedId, areaId), area);
+    }
+
     /**
      * Returns the time zone for the first agency in this graph. This is used to interpret times in API requests. The JVM default time zone cannot be
      * used because we support multiple graphs on one server via the routerId. Ideally we would want to interpret times in the time zone of the
@@ -1022,5 +1041,14 @@ public class Graph implements Serializable, AddBuilderAnnotation {
             synchronisedSimpleStreetSplitter = new SynchronisedSimpleStreetSplitter(this);
         }
         return synchronisedSimpleStreetSplitter;
+    }
+
+    public void setUseFlexService(boolean useFlexService) {
+        // when passing in graph from memory, router config had not loaded when "index()" called
+        if (useFlexService && !this.useFlexService) {
+            this.flexIndex = new FlexIndex();
+            flexIndex.init(this);
+        }
+        this.useFlexService = useFlexService;
     }
 }

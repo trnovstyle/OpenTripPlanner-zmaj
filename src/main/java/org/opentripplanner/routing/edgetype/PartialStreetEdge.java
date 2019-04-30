@@ -1,16 +1,3 @@
-/* This program is free software: you can redistribute it and/or
- modify it under the terms of the GNU Lesser General Public License
- as published by the Free Software Foundation, either version 3 of
- the License, or (at your option) any later version.
-
- This program is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
-
- You should have received a copy of the GNU General Public License
- along with this program.  If not, see <http://www.gnu.org/licenses/>. */
-
 package org.opentripplanner.routing.edgetype;
 
 import org.locationtech.jts.geom.Coordinate;
@@ -18,6 +5,7 @@ import org.locationtech.jts.geom.LineString;
 import org.opentripplanner.common.TurnRestriction;
 import org.opentripplanner.routing.graph.Edge;
 import org.opentripplanner.routing.graph.Graph;
+import org.opentripplanner.routing.util.ElevationUtils;
 import org.opentripplanner.routing.vertextype.StreetVertex;
 
 import java.util.List;
@@ -39,13 +27,31 @@ public class PartialStreetEdge extends StreetWithElevationEdge {
      */
     private StreetEdge parentEdge;
 
-    public PartialStreetEdge(StreetEdge parentEdge, StreetVertex v1, StreetVertex v2,
+    /**
+     * Create a new partial street edge along the given 'parentEdge' from 'v1' to 'v2'.
+     * The elevation data is calculated using the 'parentEdge' and given 'length'.
+     */
+    PartialStreetEdge(StreetEdge parentEdge, StreetVertex v1, StreetVertex v2,
                              LineString geometry, I18NString name, double length) {
         super(v1, v2, geometry, name, length, parentEdge.getPermission(), false);
-        setCarSpeed(parentEdge.getCarSpeed());
         this.parentEdge = parentEdge;
+        setCarSpeed(parentEdge.getCarSpeed());
+        setElevationProfileUsingParents();
     }
-    
+
+    /**
+     * Create a new partial street edge along the given 'parentEdge' from 'v1' to 'v2'.
+     * The length is calculated using the provided geometry.
+     * The elevation data is calculated using the 'parentEdge' and the calculated 'length'.
+     */
+    PartialStreetEdge(StreetEdge parentEdge, StreetVertex v1, StreetVertex v2,
+            LineString geometry, I18NString name) {
+        super(v1, v2, geometry, name, 0, parentEdge.getPermission(), false);
+        this.parentEdge = parentEdge;
+        setCarSpeed(parentEdge.getCarSpeed());
+        calculateLengthFromGeometry();
+        setElevationProfileUsingParents();
+    }
 
     //For testing only
     public PartialStreetEdge(StreetEdge parentEdge, StreetVertex v1, StreetVertex v2,
@@ -127,5 +133,14 @@ public class PartialStreetEdge extends StreetWithElevationEdge {
         return "PartialStreetEdge(" + this.getName() + ", " + this.getFromVertex() + " -> "
                 + this.getToVertex() + " length=" + this.getDistance() + " carSpeed="
                 + this.getCarSpeed() + " parentEdge=" + parentEdge + ")";
+    }
+
+    private void setElevationProfileUsingParents() {
+        setElevationProfile(
+                ElevationUtils.getPartialElevationProfile(
+                        getParentEdge().getElevationProfile(), 0, getDistance()
+                ),
+                false
+        );
     }
 }

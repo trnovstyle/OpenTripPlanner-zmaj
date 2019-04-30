@@ -16,6 +16,8 @@ public interface OtpTransitService {
      */
     Collection<Agency> getAllAgencies();
 
+    Collection<Area> getAllAreas();
+
     /**
      * NeTEx Operator. Not applicable for GTFS.
      */

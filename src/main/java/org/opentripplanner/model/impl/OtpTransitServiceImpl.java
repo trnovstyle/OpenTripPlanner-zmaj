@@ -17,24 +17,8 @@
  */
 package org.opentripplanner.model.impl;
 
-import org.opentripplanner.model.Agency;
-import org.opentripplanner.model.AgencyAndId;
-import org.opentripplanner.model.Branding;
-import org.opentripplanner.model.FareAttribute;
-import org.opentripplanner.model.FareRule;
-import org.opentripplanner.model.FeedInfo;
-import org.opentripplanner.model.Notice;
-import org.opentripplanner.model.NoticeAssignment;
-import org.opentripplanner.model.Operator;
-import org.opentripplanner.model.OtpTransitService;
-import org.opentripplanner.model.Pathway;
-import org.opentripplanner.model.ShapePoint;
-import org.opentripplanner.model.Stop;
-import org.opentripplanner.model.StopTime;
-import org.opentripplanner.model.Transfer;
-import org.opentripplanner.model.Trip;
+import org.opentripplanner.model.*;
 import org.opentripplanner.routing.edgetype.TripPattern;
-import org.opentripplanner.model.Parking;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -62,6 +46,8 @@ import static java.util.stream.Collectors.groupingBy;
 class OtpTransitServiceImpl implements OtpTransitService {
 
     private final Collection<Agency> agencies;
+
+    private final Collection<Area> areas;
 
     private final Collection<Operator> operators;
 
@@ -112,6 +98,7 @@ class OtpTransitServiceImpl implements OtpTransitService {
      */
     OtpTransitServiceImpl(OtpTransitBuilder builder) {
         this.agencies = nullSafeUnmodifiableList(builder.getAgencies());
+        this.areas = nullSafeUnmodifiableList(builder.getAreas());
         this.fareAttributes = nullSafeUnmodifiableList(builder.getFareAttributes());
         this.fareRules = nullSafeUnmodifiableList(builder.getFareRules());
         this.feedInfos = nullSafeUnmodifiableList(builder.getFeedInfos());
@@ -135,6 +122,11 @@ class OtpTransitServiceImpl implements OtpTransitService {
     @Override
     public Collection<Agency> getAllAgencies() {
         return agencies;
+    }
+
+    @Override
+    public Collection<Area> getAllAreas() {
+        return areas;
     }
 
     @Override

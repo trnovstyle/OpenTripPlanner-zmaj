@@ -24,19 +24,24 @@ import org.opentripplanner.routing.edgetype.TemporaryEdge;
 import org.opentripplanner.routing.vertextype.TemporaryVertex;
 
 public class TemporaryConcreteEdge extends Edge implements TemporaryEdge {
+    final private boolean endEdge;
 
     public TemporaryConcreteEdge(TemporaryVertex v1, Vertex v2) {
         super((Vertex) v1, v2);
 
         if (v1.isEndVertex()) {
             throw new IllegalStateException("A temporary edge is directed away from an end vertex");
+        } else {
+            endEdge = false;
         }
     }
 
     public TemporaryConcreteEdge(Vertex v1, TemporaryVertex v2) {
         super(v1, (Vertex) v2);
 
-        if (!v2.isEndVertex()) {
+        if (v2.isEndVertex()) {
+            endEdge = true;
+        } else {
             throw new IllegalStateException("A temporary edge is directed towards a start vertex");
         }
     }
@@ -70,5 +75,14 @@ public class TemporaryConcreteEdge extends Edge implements TemporaryEdge {
     @Override
     public double getDistance() {
         return SphericalDistanceLibrary.distance(getFromVertex().getCoordinate(), getToVertex().getCoordinate());
+    }
+
+    @Override
+    public void dispose() {
+        if (endEdge) {
+            fromv.removeOutgoing(this);
+        } else {
+            tov.removeIncoming(this);
+        }
     }
 }

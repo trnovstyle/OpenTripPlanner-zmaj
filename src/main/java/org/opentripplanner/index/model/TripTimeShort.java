@@ -3,8 +3,10 @@ package org.opentripplanner.index.model;
 import com.beust.jcommander.internal.Lists;
 import org.opentripplanner.model.AgencyAndId;
 import org.opentripplanner.model.Stop;
+import org.opentripplanner.model.StopTime;
 import org.opentripplanner.model.Trip;
 import org.opentripplanner.routing.core.ServiceDay;
+import org.opentripplanner.routing.edgetype.PatternHop;
 import org.opentripplanner.routing.edgetype.Timetable;
 import org.opentripplanner.routing.trippattern.RealTimeState;
 import org.opentripplanner.routing.trippattern.TripTimes;
@@ -32,6 +34,10 @@ public class TripTimeShort {
     public AgencyAndId tripId;
     public String blockId;
     public String headsign;
+    public int continuousPickup;
+    public int continuousDropOff;
+    public double serviceAreaRadius;
+    public String serviceArea;
     public boolean isRecordedStop;
     public boolean isCancelledStop;
 
@@ -64,6 +70,10 @@ public class TripTimeShort {
         realtimeState      = tt.getRealTimeState();
         blockId            = tt.trip.getBlockId();
         headsign           = tt.getHeadsign(i);
+        continuousPickup   = tt.getContinuousPickup(i);
+        continuousDropOff  = tt.getContinuousDropOff(i);
+        serviceAreaRadius  = tt.getServiceAreaRadius(i);
+        serviceArea        = tt.getServiceArea(i);
     }
 
     public TripTimeShort(TripTimes tt, int i, Stop stop, ServiceDay sd) {
@@ -97,6 +107,11 @@ public class TripTimeShort {
 
     public static Comparator<TripTimeShort> compareByDeparture() {
         return Comparator.comparing(t -> t.serviceDay + t.realtimeDeparture);
+    }
+
+    // TODO Are all these checks valid?
+    public boolean isFlexible() {
+        return continuousPickup == 0 || continuousDropOff == 0 || serviceArea != null || serviceAreaRadius != 0;
     }
 
     @Override

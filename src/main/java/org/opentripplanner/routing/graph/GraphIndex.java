@@ -13,6 +13,7 @@ import graphql.analysis.MaxQueryComplexityInstrumentation;
 import graphql.schema.GraphQLSchema;
 import org.apache.lucene.util.PriorityQueue;
 import org.joda.time.LocalDate;
+import org.locationtech.jts.geom.Geometry;
 import org.opentripplanner.common.LuceneIndex;
 import org.opentripplanner.common.geometry.HashGridSpatialIndex;
 import org.opentripplanner.common.model.GenericLocation;
@@ -120,6 +121,7 @@ public class GraphIndex {
     public final Multimap<Stop, TripPattern> patternsForStop = ArrayListMultimap.create();
     public final Multimap<AgencyAndId, Stop> stopsForParentStation = ArrayListMultimap.create();
     final HashGridSpatialIndex<TransitStop> stopSpatialIndex = new HashGridSpatialIndex<TransitStop>();
+    public final Map<AgencyAndId, Geometry> areasById = Maps.newHashMap();
     private Map<AgencyAndId, Notice> noticeMap = new HashMap<>();
     private Map<AgencyAndId, List<Notice>> noticeAssignmentMap = new HashMap<>();
 
@@ -234,6 +236,14 @@ public class GraphIndex {
 
         indexSchema = new IndexGraphQLSchema(this).indexSchema;
         getLuceneIndex();
+
+        LOG.info("Initializing areas....");
+        if (graph.areasById != null) {
+            for (AgencyAndId id : graph.areasById.keySet()) {
+                areasById.put(id, graph.areasById.get(id));
+            }
+        }
+
         LOG.info("Done indexing graph.");
     }
 
@@ -1043,5 +1053,12 @@ public class GraphIndex {
 
     public Collection<Notice> getNoticesForElement(AgencyAndId id) {
         return this.noticeAssignmentMap.containsKey(id) ? this.noticeAssignmentMap.get(id) : new ArrayList<>();
+    }
+
+    // Heuristic for deciding if trip is call-n-ride, only used for transfer and banning rules
+    public boolean tripIsCallAndRide(AgencyAndId tripId) {
+        Trip trip = tripForId.get(tripId);
+        TripPattern pattern = patternForTrip.get(trip);
+        return pattern.geometry == null;
     }
 }

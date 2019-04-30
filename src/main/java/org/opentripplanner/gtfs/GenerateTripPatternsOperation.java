@@ -17,14 +17,11 @@ package org.opentripplanner.gtfs;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Multimap;
+import org.locationtech.jts.geom.Geometry;
+import org.opentripplanner.common.geometry.GeometryUtils;
 import org.opentripplanner.graph_builder.annotation.TripDegenerate;
 import org.opentripplanner.graph_builder.annotation.TripUndefinedService;
-import org.opentripplanner.model.CalendarService;
-import org.opentripplanner.model.Frequency;
-import org.opentripplanner.model.Route;
-import org.opentripplanner.model.StopPattern;
-import org.opentripplanner.model.StopTime;
-import org.opentripplanner.model.Trip;
+import org.opentripplanner.model.*;
 import org.opentripplanner.model.impl.OtpTransitBuilder;
 import org.opentripplanner.routing.edgetype.TripPattern;
 import org.opentripplanner.routing.edgetype.factory.PatternHopFactory;
@@ -36,7 +33,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * This class is responsible for generating trip patterns when loading GTFS data. This was
@@ -119,7 +118,7 @@ public class GenerateTripPatternsOperation {
         }
 
         int directionId = getDirectionId(trip);
-        Collection<StopTime> stopTimes = transitDaoBuilder.getStopTimesSortedByTrip().get(trip);
+        List<StopTime> stopTimes = transitDaoBuilder.getStopTimesSortedByTrip().get(trip);
 
         // If after filtering this trip does not contain at least 2 stoptimes, it does not serve any purpose.
         if (stopTimes.size() < 2) {
@@ -128,7 +127,7 @@ public class GenerateTripPatternsOperation {
         }
 
         // Get the existing TripPattern for this filtered StopPattern, or create one.
-        StopPattern stopPattern = new StopPattern(stopTimes);
+        StopPattern stopPattern = new StopPattern(stopTimes, getAreasById()::get);
 
         TripPattern tripPattern = findOrCreateTripPattern(stopPattern, trip.getRoute(),
                 directionId);
@@ -176,5 +175,14 @@ public class GenerateTripPatternsOperation {
         tripPattern.directionId = directionId;
         tripPatterns.put(stopPattern, tripPattern);
         return tripPattern;
+    }
+
+    private Map<String, Geometry> getAreasById() {
+        Map<String, Geometry> areasById = new HashMap<>();
+        for (Area area : transitDaoBuilder.getAreas()) {
+            Geometry geometry = GeometryUtils.parseWkt(area.getWkt());
+            areasById.put(area.getAreaId(), geometry);
+        }
+        return areasById;
     }
 }

@@ -69,6 +69,10 @@ public final class Stop extends IdentityBean<AgencyAndId> {
 
     private boolean expired = false;
 
+    private Area area;
+
+    private stopTypeEnumeration stopType = stopTypeEnumeration.REGULAR;
+
     public Stop() {
 
     }
@@ -91,6 +95,8 @@ public final class Stop extends IdentityBean<AgencyAndId> {
         this.platformCode = obj.platformCode;
         this.weight = obj.weight;
         this.tariffZones = new ArrayList<>(obj.tariffZones);
+        this.area = obj.area;
+        this.stopType = obj.stopType;
     }
 
     public AgencyAndId getId() {
@@ -265,4 +271,14 @@ public final class Stop extends IdentityBean<AgencyAndId> {
     public boolean isExpired() { return expired; }
 
     public void setExpired(boolean expired) { this.expired = expired; }
+
+    public enum stopTypeEnumeration { REGULAR, FLEXIBLE_AREA }
+
+    public Area getArea() { return area; }
+
+    public void setArea(Area area) { this.area = area; }
+
+    public stopTypeEnumeration getStopType() { return stopType; }
+
+    public void setStopType(stopTypeEnumeration stopType) { this.stopType = stopType; }
 }
