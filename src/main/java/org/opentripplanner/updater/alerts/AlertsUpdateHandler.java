@@ -22,6 +22,7 @@ import org.opentripplanner.model.TransmodelTransportSubmode;
 import org.opentripplanner.model.calendar.ServiceDate;
 import org.opentripplanner.routing.alertpatch.Alert;
 import org.opentripplanner.routing.alertpatch.AlertPatch;
+import org.opentripplanner.routing.alertpatch.AlertUrl;
 import org.opentripplanner.routing.alertpatch.StopCondition;
 import org.opentripplanner.routing.alertpatch.TimePeriod;
 import org.opentripplanner.routing.core.TraverseMode;
@@ -110,6 +111,7 @@ public class AlertsUpdateHandler {
         alert.alertHeaderText = getTranslatedString(situation.getSummaries());
 
         alert.alertUrl = getInfoLinkAsString(situation.getInfoLinks());
+        alert.setAlertUrlList(getInfoLinks(situation.getInfoLinks()));
 
         Set<String> idsToExpire = new HashSet<>();
         boolean expireSituation = (situation.getProgress() != null &&
@@ -538,6 +540,9 @@ public class AlertsUpdateHandler {
         return Pair.of(idsToExpire, patches);
     }
 
+    /*
+     * Returns first InfoLink-uri as a String
+     */
     private I18NString getInfoLinkAsString(PtSituationElement.InfoLinks infoLinks) {
         if (infoLinks != null) {
             if (!isListNullOrEmpty(infoLinks.getInfoLinks())) {
@@ -548,6 +553,30 @@ public class AlertsUpdateHandler {
             }
         }
         return null;
+    }
+
+    /*
+     * Returns all InfoLinks
+     */
+    private List<AlertUrl> getInfoLinks(PtSituationElement.InfoLinks infoLinks) {
+        List<AlertUrl> alerts = new ArrayList<>();
+        if (infoLinks != null) {
+            if (!isListNullOrEmpty(infoLinks.getInfoLinks())) {
+                for (InfoLinkStructure infoLink : infoLinks.getInfoLinks()) {
+                    AlertUrl alertUrl = new AlertUrl();
+
+                    List<NaturalLanguageStringStructure> labels = infoLink.getLabels();
+                    if (labels != null && !labels.isEmpty()) {
+                        NaturalLanguageStringStructure label = labels.get(0);
+                        alertUrl.label = label.getValue();
+                    }
+
+                    alertUrl.uri = infoLink.getUri();
+                    alerts.add(alertUrl);
+                }
+            }
+        }
+        return alerts;
     }
 
     private void updateStopConditions(AlertPatch alertPatch, List<RoutePointTypeEnumeration> stopConditions) {

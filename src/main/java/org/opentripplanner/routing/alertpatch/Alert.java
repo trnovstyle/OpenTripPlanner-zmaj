@@ -19,8 +19,10 @@ import org.opentripplanner.util.NonLocalizedString;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlType;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.List;
 
 @XmlType
 public class Alert implements Serializable {
@@ -41,6 +43,8 @@ public class Alert implements Serializable {
     @XmlElement
     public I18NString alertUrl;
 
+    private List<AlertUrl> alertUrlList = new ArrayList<>();
+
     //null means unknown
     @XmlElement
     public Date effectiveStartDate;
@@ -56,6 +60,14 @@ public class Alert implements Serializable {
     //null means unknown
     @XmlElement
     public String severity;
+
+    public List<AlertUrl> getAlertUrlList() {
+        return alertUrlList;
+    }
+
+    public void setAlertUrlList(List<AlertUrl> alertUrlList) {
+        this.alertUrlList = alertUrlList;
+    }
 
     public static HashSet<Alert> newSimpleAlertSet(String text) {
         Alert note = createSimpleAlerts(text);

@@ -28,6 +28,7 @@ import org.opentripplanner.model.*;
 import org.opentripplanner.model.calendar.ServiceDate;
 import org.opentripplanner.routing.alertpatch.Alert;
 import org.opentripplanner.routing.alertpatch.AlertPatch;
+import org.opentripplanner.routing.alertpatch.AlertUrl;
 import org.opentripplanner.routing.alertpatch.StopCondition;
 import org.opentripplanner.routing.bike_park.BikePark;
 import org.opentripplanner.routing.bike_rental.BikeRentalStation;
@@ -1099,6 +1100,29 @@ public class TransmodelIndexGraphQLSchema {
                 .build();
 
 
+        GraphQLObjectType infoLinkType = GraphQLObjectType.newObject()
+                .name("infoLink")
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("uri")
+                        .type(Scalars.GraphQLString)
+                        .description("URI")
+                        .dataFetcher(environment -> {
+                            AlertUrl source = environment.getSource();
+                            return source.uri;
+                        })
+                        .build())
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("label")
+                        .type(Scalars.GraphQLString)
+                        .description("Label")
+                        .dataFetcher(environment -> {
+                            AlertUrl source = environment.getSource();
+                            return source.label;
+                        })
+                        .build())
+                .build();
+
+
         ptSituationElementType = GraphQLObjectType.newObject()
                 .name("PtSituationElement")
                 .description("Simple public transport situation element")
@@ -1218,8 +1242,15 @@ public class TransmodelIndexGraphQLSchema {
                 .field(GraphQLFieldDefinition.newFieldDefinition()
                         .name("infoLink")
                         .type(Scalars.GraphQLString)
+                        .deprecate("Use the attribute infoLinks instead.")
                         .description("Url with more information")
                         .dataFetcher(environment -> ((AlertPatch) environment.getSource()).getAlert().alertUrl)
+                        .build())
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("infoLinks")
+                        .type(new GraphQLList(infoLinkType))
+                        .description("Optional links to more information.")
+                        .dataFetcher(environment -> ((AlertPatch) environment.getSource()).getAlert().getAlertUrlList())
                         .build())
                 .field(GraphQLFieldDefinition.newFieldDefinition()
                         .name("validityPeriod")
