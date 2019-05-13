@@ -219,6 +219,9 @@ public abstract class GtfsFlexGraphModifier {
     // Return a reasonable name for a vertex.
     private String findName(State state, StreetVertex vertex, Locale locale, boolean forwards) {
         I18NString unnamed = new LocalizedString("unnamedStreet", (String[]) null);
+        if (vertex == null) {
+            return unnamed.toString();
+        }
         I18NString name = vertex.getIntersectionName(locale);
         if (!name.equals(unnamed)) {
             return name.toString();
