@@ -102,8 +102,8 @@ public class PreBoardEdge extends FreeEdge implements StationEdge {
 
             StateEditor s1 = s0.edit(this);
             s1.setTimeSeconds(board_after);
-            // Removed wait cost from incrementWeight. This has caused problems when combined with interchanges.
-            s1.incrementWeight(transfer_penalty);
+            long wait_cost = board_after - t0;
+            s1.incrementWeight(wait_cost + transfer_penalty);
             s1.setBackMode(getMode());
             return s1.makeState();
         }

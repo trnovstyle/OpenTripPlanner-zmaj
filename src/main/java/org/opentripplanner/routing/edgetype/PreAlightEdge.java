@@ -95,8 +95,8 @@ public class PreAlightEdge extends FreeEdge implements StationEdge {
 
             StateEditor s1 = s0.edit(this);
             s1.setTimeSeconds(alight_before);
-            // Removed wait cost from incrementWeight. This has caused problems when combined with interchanges.
-            s1.incrementWeight(transfer_penalty);
+            long wait_cost = t0 - alight_before;
+            s1.incrementWeight(wait_cost + transfer_penalty);
             s1.setBackMode(getMode());
             return s1.makeState();
         } else {
