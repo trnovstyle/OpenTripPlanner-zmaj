@@ -21,7 +21,7 @@ public class StopLinkedTooFar extends GraphBuilderAnnotation {
     private static final long serialVersionUID = 1L;
 
     public static final String FMT = "Stop %s is far away from nearest street. Snap distance is %s.";
-    public static final String HTMLFMT = "Stop <a href=\"http://www.openstreetmap.org/?mlat=%s&mlon=%s&layers=T\">\"%s\" (%s)</a> is far away from nearest street. Snap distance is %s.";
+    public static final String HTMLFMT = "Stop <a href=\"http://www.openstreetmap.org/?mlat=%s&mlon=%s\">\"%s\" (%s)</a> is far away from nearest street. Snap distance is %s.";
 
     final TransitStop stop;
     final int distance;

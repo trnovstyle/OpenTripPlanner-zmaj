@@ -24,8 +24,8 @@ public class TransferCouldNotBeRouted extends GraphBuilderAnnotation {
             "Euclidean distance is %s.";
 
     public static final String HTMLFMT = "Connection between stop " +
-            "<a href=\"http://www.openstreetmap.org/?mlat=%s&mlon=%s&layers=T\">\"%s\" (%s)</a> and stop " +
-            "<a href=\"http://www.openstreetmap.org/?mlat=%s&mlon=%s&layers=T\">\"%s\" (%s)</a> could not be routed. " +
+            "<a href=\"http://www.openstreetmap.org/?mlat=%s&mlon=%s\">\"%s\" (%s)</a> and stop " +
+            "<a href=\"http://www.openstreetmap.org/?mlat=%s&mlon=%s\">\"%s\" (%s)</a> could not be routed. " +
             "Euclidean distance is %s.";
 
     private final TransitStop origin;

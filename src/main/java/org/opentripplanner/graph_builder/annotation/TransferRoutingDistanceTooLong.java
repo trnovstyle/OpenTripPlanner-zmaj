@@ -24,8 +24,8 @@ public class TransferRoutingDistanceTooLong extends GraphBuilderAnnotation {
             "euclidean distance. Street distance: %s, direct distance: %s.";
 
     public static final String HTMLFMT = "Routing distance between stop " +
-            "<a href=\"http://www.openstreetmap.org/?mlat=%s&mlon=%s&layers=T\">\"%s\" (%s)</a> and stop " +
-            "<a href=\"http://www.openstreetmap.org/?mlat=%s&mlon=%s&layers=T\">\"%s\" (%s)</a> is %s times longer than " +
+            "<a href=\"http://www.openstreetmap.org/?mlat=%s&mlon=%s\">\"%s\" (%s)</a> and stop " +
+            "<a href=\"http://www.openstreetmap.org/?mlat=%s&mlon=%s\">\"%s\" (%s)</a> is %s times longer than " +
             "the euclidean distance. Street distance: %s, direct distance: %s.";
 
     private final TransitStop origin;
