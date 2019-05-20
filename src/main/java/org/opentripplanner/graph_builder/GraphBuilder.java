@@ -16,14 +16,8 @@ package org.opentripplanner.graph_builder;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.collect.Lists;
 import org.opentripplanner.graph_builder.model.GtfsBundle;
+import org.opentripplanner.graph_builder.module.*;
 import org.opentripplanner.netex.loader.NetexBundle;
-import org.opentripplanner.graph_builder.module.DirectTransferGenerator;
-import org.opentripplanner.graph_builder.module.EmbedConfig;
-import org.opentripplanner.graph_builder.module.GtfsModule;
-import org.opentripplanner.graph_builder.module.NetexModule;
-import org.opentripplanner.graph_builder.module.PruneFloatingIslands;
-import org.opentripplanner.graph_builder.module.StreetLinkerModule;
-import org.opentripplanner.graph_builder.module.TransitToTaggedStopsModule;
 import org.opentripplanner.graph_builder.module.map.BusRouteStreetMatcher;
 import org.opentripplanner.graph_builder.module.ned.DegreeGridNEDTileSource;
 import org.opentripplanner.graph_builder.module.ned.ElevationModule;
@@ -347,6 +341,9 @@ public class GraphBuilder implements Runnable {
             streetLinkerModule.setAddExtraEdgesToAreas(builderParams.extraEdgesStopPlatformLink);
             graphBuilder.addModule(streetLinkerModule);
             if ( hasGTFS || hasNETEX) {
+                if (builderParams.analyzeTransfers) {
+                    graphBuilder.addModule(new DirectTransferAnalyzer(builderParams.maxTransferDistance));
+                }
                 // The stops can be linked to each other once they are already linked to the street network.
                 if (!builderParams.useTransfersTxt) {
                     // This module will use streets or straight line distance depending on whether OSM data is found in the graph.
