@@ -13,10 +13,10 @@ import org.opentripplanner.routing.core.RoutingContext;
 import org.opentripplanner.routing.core.RoutingRequest;
 import org.opentripplanner.routing.core.State;
 import org.opentripplanner.routing.core.TraverseMode;
-import org.opentripplanner.routing.edgetype.PatternHop;
-import org.opentripplanner.routing.edgetype.StationStopEdge;
-import org.opentripplanner.routing.edgetype.TripPattern;
+import org.opentripplanner.routing.edgetype.*;
 import org.opentripplanner.routing.edgetype.flex.TemporaryPartialPatternHop;
+import org.opentripplanner.routing.error.PathNotFoundException;
+import org.opentripplanner.routing.graph.Edge;
 import org.opentripplanner.routing.graph.Graph;
 import org.opentripplanner.routing.graph.Vertex;
 import org.opentripplanner.routing.spt.GraphPath;
@@ -244,8 +244,16 @@ public class DeviatedRouteGraphModifier extends GtfsFlexGraphModifier {
         if (v instanceof StreetVertex) {
             return (StreetVertex) v;
         }
-        // TODO Find street vertex from position if toVertex og fromVertex are stops
-        return null;
+        if (v instanceof TransitStation) {
+            Edge stationStopEdge = v.getOutgoing().stream().filter(e -> e instanceof StationStopEdge).findFirst().get();
+            Edge streetTransitLink = stationStopEdge.getToVertex().getOutgoing().stream().filter(e -> e instanceof StreetTransitLink).findFirst().get();
+            return (StreetVertex)streetTransitLink.getToVertex();
+        }
+        if (v instanceof TransitStop) {
+            Edge stationStopEdge = v.getOutgoing().stream().filter(e -> e instanceof StreetTransitLink).findFirst().get();
+            return (StreetVertex)stationStopEdge.getToVertex();
+        }
+        throw new PathNotFoundException();
     }
 
     private TransitStop getFirstTransitStop(Vertex v) {
