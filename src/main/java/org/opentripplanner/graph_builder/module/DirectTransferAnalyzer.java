@@ -116,8 +116,8 @@ public class DirectTransferAnalyzer implements GraphBuilderModule {
             ));
         }
 
-        /* Sort by origin stop name before adding to annotations */
-        directTransfersNotFound.sort(Comparator.comparing(t -> t.origin.getStop().getName()));
+        /* Sort by direct distance before adding to annotations */
+        directTransfersNotFound.sort(Comparator.comparingDouble(TransferInfo::getDirectDistance));
 
         for (TransferInfo transferInfo : directTransfersNotFound) {
             graph.addBuilderAnnotation(new TransferCouldNotBeRouted(
@@ -146,6 +146,8 @@ public class DirectTransferAnalyzer implements GraphBuilderModule {
         public double getRatio() {
             return ratio;
         }
+
+        public double getDirectDistance() { return directDistance; }
 
         TransferInfo(
                 TransitStop origin,
