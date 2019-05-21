@@ -343,6 +343,8 @@ public class GraphBuilder implements Runnable {
             if ( hasGTFS || hasNETEX) {
                 if (builderParams.analyzeTransfers) {
                     graphBuilder.addModule(new DirectTransferAnalyzer(builderParams.maxTransferDistance));
+                } else {
+                    LOG.info("Analyze transfers skipped");
                 }
                 // The stops can be linked to each other once they are already linked to the street network.
                 if (!builderParams.useTransfersTxt) {
