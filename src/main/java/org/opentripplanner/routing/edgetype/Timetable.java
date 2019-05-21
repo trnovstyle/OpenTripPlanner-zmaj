@@ -700,6 +700,8 @@ public class Timetable implements Serializable {
         ZonedDateTime departureDate = null;
         Set<Object> alreadyVisited = new HashSet<>();
 
+        boolean isJourneyPredictionInaccurate =  (journey.isPredictionInaccurate() != null && journey.isPredictionInaccurate());
+
         int departureFromPreviousStop = 0;
         int lastArrivalDelay = 0;
         int lastDepartureDelay = 0;
@@ -801,6 +803,11 @@ public class Timetable implements Serializable {
                         if (estimatedCall.isCancellation() != null) {
                             newTimes.setCancelledStop(callCounter, estimatedCall.isCancellation());
                         }
+
+                        boolean isCallPredictionInaccurate = estimatedCall.isPredictionInaccurate() != null && estimatedCall.isPredictionInaccurate();
+
+                        // Set flag for inaccurate prediction if either call OR journey has inaccurate-flag set.
+                        newTimes.setPredictionInaccurate(callCounter, (isJourneyPredictionInaccurate | isCallPredictionInaccurate));
 
                         // Update dropoff-/pickuptype only if status is cancelled
                         CallStatusEnumeration arrivalStatus = estimatedCall.getArrivalStatus();

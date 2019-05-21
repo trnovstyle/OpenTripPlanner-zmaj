@@ -114,6 +114,11 @@ public class TripTimes implements Serializable, Comparable<TripTimes>, Cloneable
     boolean[] isCancelledStop;
 
     /**
+     * Flag tho indicate inaccurate predictions on each stop. Non-final to allow updates, transient for backwards graph-compatibility.
+     */
+    transient boolean[] isPredictionInaccurate;
+
+    /**
      * Flag tho indicate cancellations on each stop. Non-final to allow updates.
      */
     int[] pickups;
@@ -497,6 +502,20 @@ public class TripTimes implements Serializable, Comparable<TripTimes>, Cloneable
         this.realTimeState = realTimeState;
     }
 
+
+    //Is prediction for single stop inaccurate
+    public void setPredictionInaccurate(int stop, boolean predictionInaccurate) {
+        checkCreateTimesArrays();
+        isPredictionInaccurate[stop] = predictionInaccurate;
+    }
+
+    public boolean isPredictionInaccurate(int stop) {
+        if (isPredictionInaccurate == null) {
+            return false;
+        }
+        return isPredictionInaccurate[stop];
+    }
+
     /** Returns whether this stop allows continuous pickup */
     public int getContinuousPickup(final int stop) {
         return continuousPickup[stop];
@@ -632,11 +651,13 @@ public class TripTimes implements Serializable, Comparable<TripTimes>, Cloneable
             departureTimes = Arrays.copyOf(scheduledDepartureTimes, scheduledDepartureTimes.length);
             isRecordedStop = new boolean[arrivalTimes.length];
             isCancelledStop = new boolean[arrivalTimes.length];
+            isPredictionInaccurate = new boolean[arrivalTimes.length];
             for (int i = 0; i < arrivalTimes.length; i++) {
                 arrivalTimes[i] += timeShift;
                 departureTimes[i] += timeShift;
                 isRecordedStop[i] = false;
                 isCancelledStop[i] = false;
+                isPredictionInaccurate[i] = false;
             }
 
             // Update the real-time state

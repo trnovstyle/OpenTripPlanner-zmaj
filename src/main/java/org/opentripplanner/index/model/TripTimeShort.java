@@ -3,10 +3,8 @@ package org.opentripplanner.index.model;
 import com.beust.jcommander.internal.Lists;
 import org.opentripplanner.model.AgencyAndId;
 import org.opentripplanner.model.Stop;
-import org.opentripplanner.model.StopTime;
 import org.opentripplanner.model.Trip;
 import org.opentripplanner.routing.core.ServiceDay;
-import org.opentripplanner.routing.edgetype.PatternHop;
 import org.opentripplanner.routing.edgetype.Timetable;
 import org.opentripplanner.routing.trippattern.RealTimeState;
 import org.opentripplanner.routing.trippattern.TripTimes;
@@ -40,6 +38,7 @@ public class TripTimeShort {
     public String serviceArea;
     public boolean isRecordedStop;
     public boolean isCancelledStop;
+    public boolean predictionInaccurate;
 
     public int pickupType;
     public int dropoffType;
@@ -74,6 +73,7 @@ public class TripTimeShort {
         continuousDropOff  = tt.getContinuousDropOff(i);
         serviceAreaRadius  = tt.getServiceAreaRadius(i);
         serviceArea        = tt.getServiceArea(i);
+        predictionInaccurate = tt.isPredictionInaccurate(i);
     }
 
     public TripTimeShort(TripTimes tt, int i, Stop stop, ServiceDay sd) {

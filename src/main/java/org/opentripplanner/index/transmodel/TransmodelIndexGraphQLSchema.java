@@ -1900,6 +1900,12 @@ public class TransmodelIndexGraphQLSchema {
                         .dataFetcher(environment -> ((TripTimeShort) environment.getSource()).realtime)
                         .build())
                 .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("predictionInaccurate")
+                        .type(Scalars.GraphQLBoolean)
+                        .description("Whether the updated estimates are expected to be inaccurate.")
+                        .dataFetcher(environment -> ((TripTimeShort) environment.getSource()).predictionInaccurate)
+                        .build())
+                .field(GraphQLFieldDefinition.newFieldDefinition()
                         .name("realtimeState")
                         .type(realtimeStateEnum)
                         .dataFetcher(environment -> ((TripTimeShort) environment.getSource()).realtimeState)
@@ -1907,7 +1913,7 @@ public class TransmodelIndexGraphQLSchema {
                 .field(GraphQLFieldDefinition.newFieldDefinition()
                         .name("forBoarding")
                         .type(Scalars.GraphQLBoolean)
-                        .description("Whether vehicle may be borded at quay.")
+                        .description("Whether vehicle may be boarded at quay.")
                         .dataFetcher(environment -> {
                             if (((TripTimeShort) environment.getSource()).pickupType >= 0) {
                                 //Realtime-updated
