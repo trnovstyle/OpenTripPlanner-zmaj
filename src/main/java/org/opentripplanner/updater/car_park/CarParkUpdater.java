@@ -72,6 +72,8 @@ public class CarParkUpdater extends PollingGraphUpdater {
 
     private SynchronisedSimpleStreetSplitter linker;
 
+    private boolean onlyUpdateExistingCarParks;
+
     public CarParkUpdater() {
     }
 
@@ -88,6 +90,9 @@ public class CarParkUpdater extends PollingGraphUpdater {
         if (sourceType != null) {
             if (sourceType.equals("hsl-parkandride")) {
                 source = new HslCarParkDataSource();
+            } else if (sourceType.equals("siemens-parkandride")) {
+                source = new SiemensCarParkDataSource();
+                onlyUpdateExistingCarParks = true;
             }
         }
 
@@ -146,52 +151,59 @@ public class CarParkUpdater extends PollingGraphUpdater {
 
         @Override
         public void run(Graph graph) {
-            // Apply stations to graph
-            Set<CarPark> carParkSet = new HashSet<CarPark>();
-            /* Add any new park and update space available for existing parks */
-            for (CarPark carPark : carParks) {
-                carParkService.addCarPark(carPark);
-                carParkSet.add(carPark);
-                if (verticesByPark.get(carPark) == null) {
-                    ParkAndRideVertex carParkVertex = new ParkAndRideVertex(graph, carPark);
-                    new ParkAndRideEdge(carParkVertex);
-                    Envelope envelope = carPark.geometry.getEnvelopeInternal();
-                    long numberOfVertices = streetIndex
-                        .getVerticesForEnvelope(envelope)
-                        .stream()
-                        .filter(vertex -> vertex instanceof StreetVertex)
-                        .filter(vertex -> gf.createPoint(vertex.getCoordinate()).within(carPark.geometry))
-                        .peek(vertex -> new ParkAndRideLinkEdge(vertex, carParkVertex))
-                        .peek(vertex -> new ParkAndRideLinkEdge(carParkVertex, vertex))
-                        .count();
-                    if (numberOfVertices == 0) {
-                        if (!(linker.link(carParkVertex, TraverseMode.CAR, null) &&
-                              linker.link(carParkVertex, TraverseMode.WALK, null))) {
-                            LOG.warn("{} not near any streets; it will not be usable.", carPark);
+            if (onlyUpdateExistingCarParks) {
+
+                carParks.stream().forEach(carParkService::addCarPark);
+
+                LOG.info("Updated {} CarParks.", carParks.size());
+            } else {
+                // Apply stations to graph
+                Set<CarPark> carParkSet = new HashSet<CarPark>();
+                /* Add any new park and update space available for existing parks */
+                for (CarPark carPark : carParks) {
+                    carParkService.addCarPark(carPark);
+                    carParkSet.add(carPark);
+                    if (verticesByPark.get(carPark) == null) {
+                        ParkAndRideVertex carParkVertex = new ParkAndRideVertex(graph, carPark);
+                        new ParkAndRideEdge(carParkVertex);
+                        Envelope envelope = carPark.geometry.getEnvelopeInternal();
+                        long numberOfVertices = streetIndex
+                                .getVerticesForEnvelope(envelope)
+                                .stream()
+                                .filter(vertex -> vertex instanceof StreetVertex)
+                                .filter(vertex -> gf.createPoint(vertex.getCoordinate()).within(carPark.geometry))
+                                .peek(vertex -> new ParkAndRideLinkEdge(vertex, carParkVertex))
+                                .peek(vertex -> new ParkAndRideLinkEdge(carParkVertex, vertex))
+                                .count();
+                        if (numberOfVertices == 0) {
+                            if (!(linker.link(carParkVertex, TraverseMode.CAR, null) &&
+                                    linker.link(carParkVertex, TraverseMode.WALK, null))) {
+                                LOG.warn("{} not near any streets; it will not be usable.", carPark);
+                            }
                         }
+                        verticesByPark.put(carPark, carParkVertex);
+                    } else {
+                        verticesByPark.get(carPark).spacesAvailable = carPark.spacesAvailable;
                     }
-                    verticesByPark.put(carPark, carParkVertex);
-                } else {
-                    verticesByPark.get(carPark).spacesAvailable = carPark.spacesAvailable;
                 }
-            }
-            /* Remove existing parks that were not present in the update */
-            List<CarPark> toRemove = new ArrayList<CarPark>();
-            for (Map.Entry<CarPark, ParkAndRideVertex> entry : verticesByPark.entrySet()) {
-                CarPark carPark = entry.getKey();
-                if (carParkSet.contains(carPark))
-                    continue;
-                ParkAndRideVertex vertex = entry.getValue();
-                if (graph.containsVertex(vertex)) {
-                    graph.removeVertexAndEdges(vertex);
+                /* Remove existing parks that were not present in the update */
+                List<CarPark> toRemove = new ArrayList<CarPark>();
+                for (Map.Entry<CarPark, ParkAndRideVertex> entry : verticesByPark.entrySet()) {
+                    CarPark carPark = entry.getKey();
+                    if (carParkSet.contains(carPark))
+                        continue;
+                    ParkAndRideVertex vertex = entry.getValue();
+                    if (graph.containsVertex(vertex)) {
+                        graph.removeVertexAndEdges(vertex);
+                    }
+                    toRemove.add(carPark);
+                    carParkService.removeCarPark(carPark);
+                    // TODO: need to unsplit any streets that were split
                 }
-                toRemove.add(carPark);
-                carParkService.removeCarPark(carPark);
-                // TODO: need to unsplit any streets that were split
-            }
-            for (CarPark carPark : toRemove) {
-                // post-iteration removal to avoid concurrent modification
-                verticesByPark.remove(carPark);
+                for (CarPark carPark : toRemove) {
+                    // post-iteration removal to avoid concurrent modification
+                    verticesByPark.remove(carPark);
+                }
             }
         }
     }

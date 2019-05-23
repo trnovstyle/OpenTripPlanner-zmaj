@@ -50,6 +50,22 @@ public class CarPark implements Serializable {
     @JsonSerialize
     public int maxCapacity = Integer.MAX_VALUE;
 
+    @XmlAttribute
+    @JsonSerialize
+    public transient int maxCapacityRecharging; // Temporarily transient for backwards graph compatibility
+
+    @XmlAttribute
+    @JsonSerialize
+    public transient int spacesAvailableRecharging; // Temporarily transient for backwards graph compatibility
+
+    @XmlAttribute
+    @JsonSerialize
+    public transient int maxCapacityHandicap; // Temporarily transient for backwards graph compatibility
+
+    @XmlAttribute
+    @JsonSerialize
+    public transient int spacesAvailableHandicap; // Temporarily transient for backwards graph compatibility
+
     /**
      * Whether this parking has space available information updated in real-time. If no real-time
      * data, users should take spacesAvailable with a pinch of salt, as they are a crude estimate.

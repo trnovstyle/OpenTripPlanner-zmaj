@@ -99,8 +99,7 @@ public abstract class GenericJsonCarParkDataSource implements CarParkDataSource,
         return true;
     }
 
-    private void parseJSON(InputStream dataStream) throws JsonProcessingException,
-        IllegalArgumentException, IOException {
+    private void parseJSON(InputStream dataStream) throws IllegalArgumentException, IOException {
 
         ArrayList<CarPark> out = new ArrayList<>();
 
