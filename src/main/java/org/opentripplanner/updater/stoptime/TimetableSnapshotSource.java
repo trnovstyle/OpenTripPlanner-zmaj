@@ -723,7 +723,7 @@ public class TimetableSnapshotSource {
         graph.index.patternForTrip.put(trip, pattern);
 
         if (estimatedVehicleJourney.isCancellation() != null && estimatedVehicleJourney.isCancellation()) {
-            tripTimes.setRealTimeState(RealTimeState.CANCELED);
+            tripTimes.cancel();
         } else {
             tripTimes.setRealTimeState(RealTimeState.ADDED);
         }
