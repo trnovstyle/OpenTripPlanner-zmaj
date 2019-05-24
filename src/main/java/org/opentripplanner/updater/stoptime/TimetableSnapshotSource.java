@@ -686,6 +686,8 @@ public class TimetableSnapshotSource {
 
         TripTimes tripTimes = new TripTimes(trip, aimedStopTimes, graph.deduplicator);
 
+        boolean isJourneyPredictionInaccurate = (estimatedVehicleJourney.isPredictionInaccurate() != null && estimatedVehicleJourney.isPredictionInaccurate());
+
         // If added trip is updated with realtime - loop through and add delays
         for (int i = 0; i < estimatedCalls.size(); i++) {
             EstimatedCall estimatedCall = estimatedCalls.get(i);
@@ -707,6 +709,9 @@ public class TimetableSnapshotSource {
             if (estimatedCall.isCancellation() != null) {
                 tripTimes.setCancelledStop(i,  estimatedCall.isCancellation());
             }
+
+            boolean isCallPredictionInaccurate = estimatedCall.isPredictionInaccurate() != null && estimatedCall.isPredictionInaccurate();
+            tripTimes.setPredictionInaccurate(i, (isJourneyPredictionInaccurate | isCallPredictionInaccurate));
 
             if (i == 0) {
                 // Fake arrival on first stop
