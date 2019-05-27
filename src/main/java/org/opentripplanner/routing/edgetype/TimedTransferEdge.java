@@ -52,9 +52,11 @@ public class TimedTransferEdge extends Edge {
     @Override
     public State traverse(State s0) {
         // Check fromStop early to improve performance. ToStop is not known until later.
-        Stop checkStop = s0.getOptions().arriveBy ? transferDetails.getToStop() : transferDetails.getFromStop();
-        if (!checkStop.getId().equals(s0.getPreviousTrip().getId())) {
-            return null;
+        if (transferDetails != null) {
+            Stop checkStop = s0.getOptions().arriveBy ? transferDetails.getToStop() : transferDetails.getFromStop();
+            if (!checkStop.getId().equals(s0.getPreviousTrip().getId())) {
+                return null;
+            }
         }
         if (s0.getOptions().ignoreInterchanges) {
             return null;
