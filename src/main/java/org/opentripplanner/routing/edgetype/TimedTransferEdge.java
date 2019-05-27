@@ -13,6 +13,7 @@
 
 package org.opentripplanner.routing.edgetype;
 
+import org.opentripplanner.model.Stop;
 import org.opentripplanner.model.Transfer;
 import org.opentripplanner.routing.core.State;
 import org.opentripplanner.routing.core.StateEditor;
@@ -50,6 +51,11 @@ public class TimedTransferEdge extends Edge {
 
     @Override
     public State traverse(State s0) {
+        // Check fromStop early to improve performance. ToStop is not known until later.
+        Stop checkStop = s0.getOptions().arriveBy ? transferDetails.getToStop() : transferDetails.getFromStop();
+        if (!checkStop.getId().equals(s0.getPreviousTrip().getId())) {
+            return null;
+        }
         if (s0.getOptions().ignoreInterchanges) {
             return null;
         }
