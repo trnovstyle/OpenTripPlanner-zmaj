@@ -572,13 +572,18 @@ public class TimetableSnapshotSource {
 //        String groupOfLines = estimatedVehicleJourney.getGroupOfLinesRef().getValue();
 
 //        Preconditions.checkNotNull(estimatedVehicleJourney.getExternalLineRef(), "ExternalLineRef is required");
-//        String externalLineRef = estimatedVehicleJourney.getExternalLineRef().getValue();
+        String externalLineRef = estimatedVehicleJourney.getExternalLineRef().getValue();
 
         Operator operator = graphIndex.operatorForId.get(new AgencyAndId(SIRI_FEED_ID, operatorRef));
         Preconditions.checkNotNull(operator, "Operator " + operatorRef + " is unknown");
 
         AgencyAndId tripId = new AgencyAndId(SIRI_FEED_ID, newServiceJourneyRef);
         AgencyAndId serviceId = new AgencyAndId(SIRI_FEED_ID, newServiceJourneyRef);
+
+        Route replacedRoute = null;
+        if (externalLineRef != null) {
+            replacedRoute = graph.index.routeForId.get(new AgencyAndId(SIRI_FEED_ID, externalLineRef));
+        }
 
         AgencyAndId routeId = new AgencyAndId(SIRI_FEED_ID, lineRef);
         Route route = graph.index.routeForId.get(routeId);
@@ -609,6 +614,19 @@ public class TimetableSnapshotSource {
         trip.setId(tripId);
         trip.setRoute(route);
 
+        // Set transport-submode base on replaced- and replacement-route
+        if (replacedRoute != null) {
+            if (replacedRoute.getType() >= 100 && replacedRoute.getType() < 200) { // Replaced-route is RAIL
+                if (route.getType() == 100) {
+                    // Replacement-route is also RAIL
+                    trip.setTransportSubmode(TransmodelTransportSubmode.REPLACEMENT_RAIL_SERVICE);
+                } else if (route.getType() == 700) {
+                    // Replacement-route is BUS
+                    trip.setTransportSubmode(TransmodelTransportSubmode.RAIL_REPLACEMENT_BUS);
+                }
+            }
+        }
+
         trip.setServiceId(serviceId);
 
         // TODO: PublishedLineName not defined in SIRI-profile
@@ -619,7 +637,6 @@ public class TimetableSnapshotSource {
         trip.setTripOperator(operator);
 
         // TODO: Populate these?
-        trip.setTransportSubmode(null); // SIRI only specifies main transport-mode, set subMode to null
         trip.setShapeId(null);          // Replacement-trip has different shape
         trip.setTripPrivateCode(null);
         trip.setTripPublicCode(null);
