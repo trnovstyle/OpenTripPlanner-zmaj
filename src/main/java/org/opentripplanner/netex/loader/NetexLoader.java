@@ -188,7 +188,7 @@ public class NetexLoader {
             if (stopPlaces != null) {
                 List<StopPlace> stopPlaceList = stopPlaces.getStopPlace();
                 for (StopPlace stopPlace : stopPlaceList) {
-                    if (stopPlace.getKeyList().getKeyValue().stream().anyMatch(keyValueStructure ->
+                    if (stopPlace.getKeyList() != null && stopPlace.getKeyList().getKeyValue().stream().anyMatch(keyValueStructure ->
                             keyValueStructure.getKey().equals("IS_PARENT_STOP_PLACE") && keyValueStructure.getValue().equals("true"))) {
                         currentNetexDao().multimodalStopPlaceById.add(stopPlace);
                     } else {

@@ -181,9 +181,13 @@ public class StopMapper {
                         stopQuay.setTimezone(DEFAULT_TIMEZONE);
 
                         // Continue if this is not newest version of quay
-                        if (netexDao.quayById.lookup(stopQuay.getId().getId()).stream()
-                                .anyMatch(q -> Integer.parseInt(q.getVersion()) > Integer.parseInt(quay.getVersion()))) {
-                            continue;
+                        try {
+                            if (netexDao.quayById.lookup(stopQuay.getId().getId()).stream()
+                                    .anyMatch(q -> Integer.parseInt(q.getVersion()) > Integer.parseInt(quay.getVersion()))) {
+                                continue;
+                            }
+                        } catch (NumberFormatException e) {
+                            LOG.info("Quay version not an integer.");
                         }
 
                         if (!quaysSeen.contains(quay.getId())) {
