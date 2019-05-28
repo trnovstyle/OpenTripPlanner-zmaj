@@ -27,7 +27,7 @@ public class DirectTransferAnalyzer implements GraphBuilderModule {
 
     final double radiusMeters;
 
-    static final int RADIUS_MULTIPLIER = 5;
+    static final int RADIUS_MULTIPLIER = 3;
 
     static final int MIN_RATIO_TO_LOG = 3;
 
@@ -51,7 +51,7 @@ public class DirectTransferAnalyzer implements GraphBuilderModule {
 
         NearbyStopFinder nearbyStopFinderEuclidian = new NearbyStopFinder(graph, radiusMeters, false);
         NearbyStopFinder nearbyStopFinderStreets =
-                new NearbyStopFinder(graph, radiusMeters * RADIUS_MULTIPLIER, true);
+                new NearbyStopFinder(graph, MAX_DIRECT_DISTANCE * RADIUS_MULTIPLIER, true);
 
         for (TransitStop originStop : Iterables.filter(graph.getVertices(), TransitStop.class)) {
             /* Find nearby stops by euclidean distance */
