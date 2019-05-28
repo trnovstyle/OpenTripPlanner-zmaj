@@ -49,7 +49,7 @@ public class DirectTransferAnalyzer implements GraphBuilderModule {
         List<TransferInfo> directTransfersTooLong = new ArrayList<>();
         List<TransferInfo> directTransfersNotFound = new ArrayList<>();
 
-        NearbyStopFinder nearbyStopFinderEuclidian = new NearbyStopFinder(graph, radiusMeters, false);
+        NearbyStopFinder nearbyStopFinderEuclidian = new NearbyStopFinder(graph, MAX_DIRECT_DISTANCE, false);
         NearbyStopFinder nearbyStopFinderStreets =
                 new NearbyStopFinder(graph, MAX_DIRECT_DISTANCE * RADIUS_MULTIPLIER, true);
 
