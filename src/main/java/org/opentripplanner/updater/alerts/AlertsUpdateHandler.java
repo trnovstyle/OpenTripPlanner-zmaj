@@ -103,15 +103,8 @@ public class AlertsUpdateHandler {
     }
 
     private Pair<Set<String>, Set<AlertPatch>> handleAlert(PtSituationElement situation) {
-        Alert alert = new Alert();
 
-        alert.alertDescriptionText = getTranslatedString(situation.getDescriptions());
-        alert.alertDetailText = getTranslatedString(situation.getDetails());
-        alert.alertAdviceText = getTranslatedString(situation.getAdvices());
-        alert.alertHeaderText = getTranslatedString(situation.getSummaries());
-
-        alert.alertUrl = getInfoLinkAsString(situation.getInfoLinks());
-        alert.setAlertUrlList(getInfoLinks(situation.getInfoLinks()));
+        Alert alert = createAlertWithTexts(situation);
 
         Set<String> idsToExpire = new HashSet<>();
         boolean expireSituation = (situation.getProgress() != null &&
@@ -317,36 +310,83 @@ public class AlertsUpdateHandler {
                                 continue;
                             }
 
-                            Set<Route> affectedRoutes = siriFuzzyTripMatcher.getRoutes(lineRef.getValue());
-                            for (Route route : affectedRoutes) {
+                            List<AffectedStopPointStructure> affectedStops = new ArrayList<>();
 
-                                String id = paddedSituationNumber + route.getId();
-                                if (expireSituation) {
-                                    idsToExpire.add(id);
+                            AffectedLineStructure.Routes routes = line.getRoutes();
+
+                            // Resolve AffectedStop-ids
+                            if (routes != null) {
+                                for (AffectedRouteStructure route : routes.getAffectedRoutes()) {
+                                    if (route.getStopPoints() != null) {
+                                        List<Serializable> stopPointsList = route.getStopPoints().getAffectedStopPointsAndLinkProjectionToNextStopPoints();
+                                        for (Serializable serializable : stopPointsList) {
+                                            if (serializable instanceof AffectedStopPointStructure) {
+                                                AffectedStopPointStructure stopPointStructure = (AffectedStopPointStructure) serializable;
+                                                affectedStops.add(stopPointStructure);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            Set<Route> affectedRoutes = siriFuzzyTripMatcher.getRoutes(lineRef.getValue());
+
+                            for (Route route : affectedRoutes) {
+                                if (! affectedStops.isEmpty()) {
+                                    for (AffectedStopPointStructure affectedStop : affectedStops) {
+                                        AgencyAndId stop = siriFuzzyTripMatcher.getStop(affectedStop.getStopPointRef().getValue());
+                                        if (stop == null) {
+                                            continue;
+                                        }
+                                        String id = paddedSituationNumber + route.getId() + "-" + stop.getId();
+                                        if (expireSituation) {
+                                            idsToExpire.add(id);
+                                        } else {
+                                            AlertPatch alertPatch = new AlertPatch();
+                                            alertPatch.setRoute(route.getId());
+                                            alertPatch.setStop(stop);
+                                            alertPatch.setId(id);
+                                            alertPatch.setTimePeriods(periods);
+
+                                            Alert vehicleJourneyAlert = cloneAlertTexts(alert);
+                                            vehicleJourneyAlert.effectiveStartDate = alert.effectiveStartDate;
+                                            vehicleJourneyAlert.effectiveEndDate = alert.effectiveEndDate;
+
+                                            alertPatch.setAlert(vehicleJourneyAlert);
+
+                                            updateStopConditions(alertPatch, affectedStop.getStopConditions());
+                                            patches.add(alertPatch);
+                                        }
+                                    }
                                 } else {
-                                    AlertPatch alertPatch = new AlertPatch();
-                                    alertPatch.setRoute(route.getId());
-                                    alertPatch.setTimePeriods(periods);
-                                    alertPatch.setId(id);
-                                    patches.add(alertPatch);
+                                    String id = paddedSituationNumber + route.getId();
+                                    if (expireSituation) {
+                                        idsToExpire.add(id);
+                                    } else {
+                                        AlertPatch alertPatch = new AlertPatch();
+                                        alertPatch.setRoute(route.getId());
+                                        alertPatch.setTimePeriods(periods);
+                                        alertPatch.setId(id);
+                                        patches.add(alertPatch);
+                                    }
                                 }
                             }
                         }
-                    }
-                    NetworkRefStructure networkRef = affectedNetwork.getNetworkRef();
-                    if (networkRef == null || networkRef.getValue() == null) {
-                        continue;
-                    }
-                    String networkId = networkRef.getValue();
-
-                    String id = paddedSituationNumber + networkId;
-                    if (expireSituation) {
-                        idsToExpire.add(id);
                     } else {
-                        AlertPatch alertPatch = new AlertPatch();
-                        alertPatch.setId(id);
-                        alertPatch.setTimePeriods(periods);
-                        patches.add(alertPatch);
+                        NetworkRefStructure networkRef = affectedNetwork.getNetworkRef();
+                        if (networkRef == null || networkRef.getValue() == null) {
+                            continue;
+                        }
+                        String networkId = networkRef.getValue();
+
+                        String id = paddedSituationNumber + networkId;
+                        if (expireSituation) {
+                            idsToExpire.add(id);
+                        } else {
+                            AlertPatch alertPatch = new AlertPatch();
+                            alertPatch.setId(id);
+                            alertPatch.setTimePeriods(periods);
+                            patches.add(alertPatch);
+                        }
                     }
                 }
             }
@@ -433,12 +473,7 @@ public class AlertsUpdateHandler {
                                             alertPatch.setTimePeriods(timePeriodList);
 
 
-                                            Alert vehicleJourneyAlert = new Alert();
-                                            vehicleJourneyAlert.alertHeaderText = alert.alertHeaderText;
-                                            vehicleJourneyAlert.alertDescriptionText = alert.alertDescriptionText;
-                                            vehicleJourneyAlert.alertDetailText = alert.alertDetailText;
-                                            vehicleJourneyAlert.alertAdviceText = alert.alertAdviceText;
-                                            vehicleJourneyAlert.alertUrl = alert.alertUrl;
+                                            Alert vehicleJourneyAlert = cloneAlertTexts(alert);
                                             vehicleJourneyAlert.effectiveStartDate = effectiveStartDate;
                                             vehicleJourneyAlert.effectiveEndDate = effectiveEndDate;
 
@@ -462,12 +497,7 @@ public class AlertsUpdateHandler {
                                         alertPatch.setTimePeriods(timePeriodList);
 
 
-                                        Alert vehicleJourneyAlert = new Alert();
-                                        vehicleJourneyAlert.alertHeaderText = alert.alertHeaderText;
-                                        vehicleJourneyAlert.alertDescriptionText = alert.alertDescriptionText;
-                                        vehicleJourneyAlert.alertDetailText = alert.alertDetailText;
-                                        vehicleJourneyAlert.alertAdviceText = alert.alertAdviceText;
-                                        vehicleJourneyAlert.alertUrl = alert.alertUrl;
+                                        Alert vehicleJourneyAlert = cloneAlertTexts(alert);
                                         vehicleJourneyAlert.effectiveStartDate = effectiveStartDate;
                                         vehicleJourneyAlert.effectiveEndDate = effectiveEndDate;
 
@@ -540,6 +570,38 @@ public class AlertsUpdateHandler {
         return Pair.of(idsToExpire, patches);
     }
 
+
+    /*
+     * Creates alert from PtSituation with all textual content
+     */
+    private Alert createAlertWithTexts(PtSituationElement situation) {
+        Alert alert = new Alert();
+
+        alert.alertDescriptionText = getTranslatedString(situation.getDescriptions());
+        alert.alertDetailText = getTranslatedString(situation.getDetails());
+        alert.alertAdviceText = getTranslatedString(situation.getAdvices());
+        alert.alertHeaderText = getTranslatedString(situation.getSummaries());
+        alert.alertUrl = getInfoLinkAsString(situation.getInfoLinks());
+        alert.setAlertUrlList(getInfoLinks(situation.getInfoLinks()));
+
+        return alert;
+    }
+
+    /*
+     * Clones alert with all textual content
+     */
+    private Alert cloneAlertTexts(Alert alert) {
+        Alert vehicleJourneyAlert = new Alert();
+        vehicleJourneyAlert.alertHeaderText = alert.alertHeaderText;
+        vehicleJourneyAlert.alertDescriptionText = alert.alertDescriptionText;
+        vehicleJourneyAlert.alertDetailText = alert.alertDetailText;
+        vehicleJourneyAlert.alertAdviceText = alert.alertAdviceText;
+        vehicleJourneyAlert.alertUrl = alert.alertUrl;
+        vehicleJourneyAlert.setAlertUrlList(alert.getAlertUrlList());
+
+        return vehicleJourneyAlert;
+    }
+
     /*
      * Returns first InfoLink-uri as a String
      */
@@ -559,7 +621,7 @@ public class AlertsUpdateHandler {
      * Returns all InfoLinks
      */
     private List<AlertUrl> getInfoLinks(PtSituationElement.InfoLinks infoLinks) {
-        List<AlertUrl> alerts = new ArrayList<>();
+        List<AlertUrl> alertUrls = new ArrayList<>();
         if (infoLinks != null) {
             if (!isListNullOrEmpty(infoLinks.getInfoLinks())) {
                 for (InfoLinkStructure infoLink : infoLinks.getInfoLinks()) {
@@ -572,11 +634,11 @@ public class AlertsUpdateHandler {
                     }
 
                     alertUrl.uri = infoLink.getUri();
-                    alerts.add(alertUrl);
+                    alertUrls.add(alertUrl);
                 }
             }
         }
-        return alerts;
+        return alertUrls;
     }
 
     private void updateStopConditions(AlertPatch alertPatch, List<RoutePointTypeEnumeration> stopConditions) {
