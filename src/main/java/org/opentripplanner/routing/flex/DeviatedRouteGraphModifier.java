@@ -25,6 +25,7 @@ import org.opentripplanner.routing.vertextype.*;
 import org.opentripplanner.routing.vertextype.flex.TemporaryTransitStop;
 
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -245,8 +246,11 @@ public class DeviatedRouteGraphModifier extends GtfsFlexGraphModifier {
             return (StreetVertex) v;
         }
         if (v instanceof TransitStation) {
-            Edge stationStopEdge = v.getOutgoing().stream().filter(e -> e instanceof StationStopEdge).findFirst().get();
-            Edge streetTransitLink = stationStopEdge.getToVertex().getOutgoing().stream().filter(e -> e instanceof StreetTransitLink).findFirst().get();
+            Edge stationStopEdge = v.getOutgoing().stream().filter(e -> e instanceof StationStopEdge)
+                    .sorted(Comparator.comparing(e -> ((TransitStop)e.getToVertex()).getStop().getId().getId()) )
+                    .findFirst().get();
+            Edge streetTransitLink = stationStopEdge.getToVertex().getOutgoing().stream()
+                    .filter(e -> e instanceof StreetTransitLink).findFirst().get();
             return (StreetVertex)streetTransitLink.getToVertex();
         }
         if (v instanceof TransitStop) {
