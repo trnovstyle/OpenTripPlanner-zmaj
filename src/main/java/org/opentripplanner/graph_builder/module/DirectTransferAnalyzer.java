@@ -29,9 +29,11 @@ public class DirectTransferAnalyzer implements GraphBuilderModule {
 
     static final int RADIUS_MULTIPLIER = 5;
 
-    static final int MIN_RATIO_TO_LOG = 2;
+    static final int MIN_RATIO_TO_LOG = 3;
 
-    static final int MIN_STREET_DISTANCE_TO_LOG = 100;
+    static final int MIN_STREET_DISTANCE_TO_LOG = 300;
+
+    static final int MAX_DIRECT_DISTANCE = 1000;
 
     public DirectTransferAnalyzer (double radiusMeters) {
         this.radiusMeters = radiusMeters;
@@ -85,7 +87,9 @@ public class DirectTransferAnalyzer implements GraphBuilderModule {
                         streetStop.dist);
 
                 /* Log transfer where the street distance is too long compared to the euclidean distance */
-                if (transferInfo.ratio > MIN_RATIO_TO_LOG && transferInfo.streetDistance > MIN_STREET_DISTANCE_TO_LOG) {
+                if (transferInfo.ratio > MIN_RATIO_TO_LOG
+                        && transferInfo.streetDistance > MIN_STREET_DISTANCE_TO_LOG
+                        && transferInfo.directDistance < MAX_DIRECT_DISTANCE) {
                     directTransfersTooLong.add(transferInfo);
                 }
             }
@@ -93,13 +97,22 @@ public class DirectTransferAnalyzer implements GraphBuilderModule {
             for (TransitStop destStop : stopsUnconnected) {
                 NearbyStopFinder.StopAtDistance euclideanStop = stopsEuclidean.get(destStop);
 
+                TransferInfo transferInfo = new TransferInfo(
+                        originStop,
+                        destStop,
+                        euclideanStop.dist,
+                        -1);
+
                 /* Log transfers that are found by euclidean search but not by street search */
-                directTransfersNotFound.add(
-                        new TransferInfo(
-                                originStop,
-                                destStop,
-                                euclideanStop.dist,
-                                -1));
+                if (transferInfo.directDistance < MAX_DIRECT_DISTANCE) {
+
+                    directTransfersNotFound.add(
+                            new TransferInfo(
+                                    originStop,
+                                    destStop,
+                                    euclideanStop.dist,
+                                    -1));
+                }
             }
         }
 
