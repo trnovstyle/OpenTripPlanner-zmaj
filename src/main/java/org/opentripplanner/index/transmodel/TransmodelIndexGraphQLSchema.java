@@ -3448,6 +3448,8 @@ public class TransmodelIndexGraphQLSchema {
 
         Stop stop = index.stopForId.get(stopId);
         AgencyAndId parentStopId = stop.getParentStationAgencyAndId();
+        AgencyAndId multimodalStopId = new AgencyAndId(stopId.getAgencyId(), stop.getMultiModalStation());
+
 
         Collection<AlertPatch> allAlerts = new HashSet<>();
 
@@ -3459,6 +3461,11 @@ public class TransmodelIndexGraphQLSchema {
         allAlerts.addAll(index.getAlertsForStopId(parentStopId));
         allAlerts.addAll(index.getAlertsForStopAndTrip(parentStopId, tripId));
         allAlerts.addAll(index.getAlertsForStopAndRoute(parentStopId, routeId));
+        // MultimodalStopPlace
+        allAlerts.addAll(index.getAlertsForStopId(multimodalStopId));
+        allAlerts.addAll(index.getAlertsForStopAndTrip(multimodalStopId, tripId));
+        allAlerts.addAll(index.getAlertsForStopAndRoute(multimodalStopId, routeId));
+
         // Trip
         allAlerts.addAll(index.getAlertsForTripId(tripId));
         // Route
