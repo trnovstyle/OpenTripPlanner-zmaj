@@ -95,10 +95,14 @@ public class TransmodelIndexGraphQLSchema {
 
     private static GraphQLEnumType severityEnum = GraphQLEnumType.newEnum()
             .name("Severity") //SIRI - SeverityEnumeration
+            .value("unknown", "unknown", "Situation has unknown impact on trips.")
             .value("noImpact", "noImpact", "Situation has no impact on trips.")
-            .value("slight", "slight", "Situation has a small impact on trips.")
+            .value("verySlight", "verySlight", "Situation has a very slight impact on trips.")
+            .value("slight", "slight", "Situation has a slight impact on trips.")
             .value("normal", "normal", "Situation has an impact on trips (default).")
             .value("severe", "severe", "Situation has a severe impact on trips.")
+            .value("verySevere", "verySevere", "Situation has a very severe impact on trips.")
+            .value("undefined", "undefined", "Severity is undefined.")
             .build();
 
     private static GraphQLEnumType stopConditionEnum = GraphQLEnumType.newEnum()
