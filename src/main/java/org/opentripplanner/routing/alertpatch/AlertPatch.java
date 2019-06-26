@@ -187,18 +187,19 @@ public class AlertPatch implements Serializable {
             }
         } else if (stop != null) {
             TransitStop transitStop = graph.index.stopVertexForStop.get(stop);
-
-            for (Edge edge : transitStop.getOutgoing()) {
-                if (edge instanceof PreBoardEdge) {
-                    graph.addAlertPatch(edge, this);
-                    break;
+            if (transitStop != null) {
+                for (Edge edge : transitStop.getOutgoing()) {
+                    if (edge instanceof PreBoardEdge) {
+                        graph.addAlertPatch(edge, this);
+                        break;
+                    }
                 }
-            }
 
-            for (Edge edge : transitStop.getIncoming()) {
-                if (edge instanceof PreAlightEdge) {
-                    graph.addAlertPatch(edge, this);
-                    break;
+                for (Edge edge : transitStop.getIncoming()) {
+                    if (edge instanceof PreAlightEdge) {
+                        graph.addAlertPatch(edge, this);
+                        break;
+                    }
                 }
             }
             tripPatterns = emptyList();
