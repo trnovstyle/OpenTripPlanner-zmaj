@@ -175,6 +175,21 @@ public class TransmodelIndexGraphQLSchema {
             .value("unknown", "unknown")
             .build();
 
+    private static GraphQLEnumType getFlexibleLineTypeEnum = GraphQLEnumType.newEnum()
+            .name("FlexibleLineType")
+            .value("fixed", Route.FlexibleRouteTypeEnum.fixed)
+            .value("corridorService", Route.FlexibleRouteTypeEnum.corridorService)
+            .value("fixedStopAreaWide", Route.FlexibleRouteTypeEnum.fixedStopAreaWide)
+            .value("flexibleAreasOnly", Route.FlexibleRouteTypeEnum.flexibleAreasOnly)
+            .value("freeAreaAreaWide", Route.FlexibleRouteTypeEnum.freeAreaAreaWide)
+            .value("hailAndRideSections", Route.FlexibleRouteTypeEnum.hailAndRideSections)
+            .value("mainRouteWithFlexibleEnds", Route.FlexibleRouteTypeEnum.mainRouteWithFlexibleEnds)
+            .value("mainRouteWithFlexibleEnds", Route.FlexibleRouteTypeEnum.mainRouteWithFlexibleEnds)
+            .value("mixedFlexible", Route.FlexibleRouteTypeEnum.mixedFlexible)
+            .value("mixedFlexibleAndFixed", Route.FlexibleRouteTypeEnum.mixedFlexibleAndFixed)
+            .value("other", Route.FlexibleRouteTypeEnum.other)
+            .build();
+
     private static GraphQLEnumType relativeDirectionEnum = GraphQLEnumType.newEnum()
             .name("RelativeDirection")
             .value("depart", RelativeDirection.DEPART)
@@ -3170,6 +3185,10 @@ public class TransmodelIndexGraphQLSchema {
                                 .description("Set of ids of authorities to fetch lines for.")
                                 .type(new GraphQLList(Scalars.GraphQLString))
                                 .build())
+                        .argument(GraphQLArgument.newArgument()
+                                .name("flexibleLineTypes")
+                                .type(new GraphQLList(flexibleLineTypeEnum))
+                                .build())
                         .dataFetcher(environment -> {
                             if ((environment.getArgument("ids") instanceof List)) {
                                 if (environment.getArguments().entrySet()
@@ -3218,6 +3237,14 @@ public class TransmodelIndexGraphQLSchema {
                                         .filter(route ->
                                                 route.getAgency() != null && authorityIds.contains(route.getAgency().getId()));
                             }
+                            if ((environment.getArgument("flexibleLineTypes") instanceof Collection)) {
+                                Set<Route.FlexibleRouteTypeEnum> flexibleLineTypes = new HashSet<> ((List<Route.FlexibleRouteTypeEnum>)
+                                        environment.getArgument("flexibleLineTypes"));
+                                stream = stream
+                                        .filter(route ->
+                                                flexibleLineTypes.contains(route.getFlexibleRouteType()));
+                            }
+
                             return stream.collect(Collectors.toList());
                         })
                         .build())
