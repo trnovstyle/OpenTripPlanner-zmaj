@@ -2205,7 +2205,7 @@ public class TransmodelIndexGraphQLSchema {
                 .field(GraphQLFieldDefinition.newFieldDefinition()
                         .name("destinationDisplay")
                         .type(destinationDisplayType)
-                        .deprecate("Get destinationDisplay from estimatedCall or timetabledPassingTime instead. DestinationDisplay from JourneyPattern is not correct according to model, will give misleading results in some cases and will be removed!")
+                        .deprecate("Get destinationDisplay from estimatedCall or timetabledPassingTime instead. DestinationDisplay from JourneyPattern is not correct according to model, will give misleading results in some cases and will be removed! (This is because a DestinationDisplay can change in the middle of a JourneyPattern.)")
                         .dataFetcher(environment -> ((TripPattern) environment.getSource()).getDirection())
                         .build())
                 .field(GraphQLFieldDefinition.newFieldDefinition()
