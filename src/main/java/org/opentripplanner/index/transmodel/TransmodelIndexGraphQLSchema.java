@@ -2168,7 +2168,7 @@ public class TransmodelIndexGraphQLSchema {
                         .dataFetcher(environment -> {
                                     LineString geometry = index.patternForTrip
                                             .get(environment.getSource())
-                                            .geometry;
+                                            .getGeometry();
                                     if (geometry == null) {
                                         return null;
                                     }
@@ -2270,7 +2270,7 @@ public class TransmodelIndexGraphQLSchema {
                         .name("pointsOnLink")
                         .type(linkGeometryType)
                         .dataFetcher(environment -> {
-                            LineString geometry = ((TripPattern) environment.getSource()).geometry;
+                            LineString geometry = ((TripPattern) environment.getSource()).getGeometry();
                             if (geometry == null) {
                                 return null;
                             } else {

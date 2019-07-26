@@ -1062,6 +1062,6 @@ public class GraphIndex {
     public boolean tripIsCallAndRide(AgencyAndId tripId) {
         Trip trip = tripForId.get(tripId);
         TripPattern pattern = patternForTrip.get(trip);
-        return pattern.geometry == null;
+        return pattern.getGeometry() == null;
     }
 }
