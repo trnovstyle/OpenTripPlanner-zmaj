@@ -465,7 +465,7 @@ public class AlertsUpdateHandler {
                                     int tripDepartureTime = siriFuzzyTripMatcher.getTripDepartureTime(tripId);
                                     int tripArrivalTime = siriFuzzyTripMatcher.getTripArrivalTime(tripId);
 
-                                    effectiveStartDate = new Date(alert.effectiveStartDate.getTime() + tripDepartureTime * 1000);
+                                    effectiveStartDate = new Date(effectiveStartDate.getTime() + tripDepartureTime * 1000);
 
                                     // Appending 6 hours to end-validity in case of delays.
                                     effectiveEndDate = new Date(effectiveStartDate.getTime() + (tripArrivalTime - tripDepartureTime + 6 * 3600) * 1000);
