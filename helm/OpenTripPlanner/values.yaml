@@ -1,0 +1,30 @@
+minReplicas: 4
+maxReplicas: 4
+image: eu.gcr.io/carbon-1287/otp
+imageTag: latest
+imagePullPolicy: Always
+slack: talk-ror
+team: ror
+type: backend
+app: otp
+api: journey-planner-v2
+service:
+  name: otp
+  type: ClusterIP
+  externalPort: 80
+  internalPort: 8080
+  debugPort: 5005
+resources:
+  cpuLimit: "7"
+  memLimit: 2048Mi
+  cpuRequest: 200m
+  memRequest: 512Mi
+  xmx: 1024m
+
+# Environment Specific
+externalDns:
+  ingressLoadBalancerIP: 
+    dev: "35.195.223.29"
+    staging: "35.195.146.93"
+    production: "35.187.15.14"
+
