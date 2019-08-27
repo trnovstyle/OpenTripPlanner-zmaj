@@ -31,11 +31,11 @@ aliases:
   - &get-version-git-tag
     name: Getting app version from git-tag
     command: |
-        currentVersion=$(git describe --tags --abbrev=0 | cut -d'-' -f2)
-        nextVersionPatchNumber=$(($(echo $currentVersion | grep -o '[0-9]*$')+1))
-        staticVersion=$(echo $currentVersion | grep -o '[0-9].[0-9].')
-        echo release-$staticVersion$nextVersionPatchNumber
-        echo "export APP_VERSION=release-$staticVersion$nextVersionPatchNumber" >> $BASH_ENV
+      currentVersion=$(git describe --tags --abbrev=0 | cut -d'-' -f2)
+      nextVersionPatchNumber=$(($(echo $currentVersion | grep -o '[0-9]*$')+1))
+      staticVersion=$(echo $currentVersion | grep -o '[0-9].[0-9].')
+      echo release-$staticVersion$nextVersionPatchNumber
+      echo "export APP_VERSION=release-$staticVersion$nextVersionPatchNumber" >> $BASH_ENV
 
   - &set-versions-to-app-version
     name: Set version in helm dir to $APP_VERSION
@@ -117,40 +117,40 @@ jobs:
   test:
     executor: cci-toolbox-java11
     steps:
-    - checkout
-    - restore_cache:
-        key: dep-cache-{{ checksum "pom.xml" }}
-    - run: mvn org.apache.maven.plugins:maven-dependency-plugin:3.1.0:go-offline -s /tools/m2/settings.xml
-    - save_cache:
-        paths:
-        - ~/.m2
-        key: dep-cache-{{ checksum "pom.xml" }}
-    - run: mvn test -s /tools/m2/settings.xml
+      - checkout
+      - restore_cache:
+          key: dep-cache-{{ checksum "pom.xml" }}
+      - run: mvn org.apache.maven.plugins:maven-dependency-plugin:3.1.0:go-offline -s /tools/m2/settings.xml
+      - save_cache:
+          paths:
+            - ~/.m2
+          key: dep-cache-{{ checksum "pom.xml" }}
+      - run: mvn test -s /tools/m2/settings.xml
       - run: *save-test-results
-    - store_test_results:
-           path: ~/reports
-    - store_artifacts:
+      - store_test_results:
+          path: ~/reports
+      - store_artifacts:
           path: ~/reports
   build:
     executor: cci-toolbox-java11
     steps:
-    - checkout
-    - restore_cache:
-        key: dep-cache-{{ checksum "pom.xml" }}
+      - checkout
+      - restore_cache:
+          key: dep-cache-{{ checksum "pom.xml" }}
       - run: mvn org.apache.maven.plugins:maven-dependency-plugin:3.1.0:go-offline -s /tools/m2/settings.xml
-    - save_cache:
-        paths:
-        - ~/.m2
-        key: dep-cache-{{ checksum "pom.xml" }}
+      - save_cache:
+          paths:
+            - ~/.m2
+          key: dep-cache-{{ checksum "pom.xml" }}
       # Cannot use -o because of snapshot dependencies.
       - run: *get-version-git-tag
-    - run: mvn deploy -s /tools/m2/settings.xml -DskipTests
-    - persist_to_workspace:
-        root: ~/project
-        paths:
-          - target
-          - pom.xml
-          - .circleci
+      - run: mvn deploy -s /tools/m2/settings.xml -DskipTests
+      - persist_to_workspace:
+          root: ~/project
+          paths:
+            - target
+            - pom.xml
+            - .circleci
             - helm/*/
       - slack-status
   prepare-next-release:
@@ -202,13 +202,13 @@ workflows:
   version: 2.1
   release:
     jobs:
-    - test:
+      - test:
           name: test-release
           context: dev
       - build:
           name: build-release
           context: dev
-        requires:
+          requires:
             - test-release
       - docker/publish:
           name: push-release
@@ -218,7 +218,7 @@ workflows:
           deploy: true
           docker-password: GCLOUD_SERVICE_KEY
           context: dev
-        requires:
+          requires:
             - build-release
           after_checkout:
             - attach_workspace:
@@ -229,9 +229,9 @@ workflows:
       - deploy:
           name: deploy-dev-release
           context: dev
-        requires:
+          requires:
             - push-release
       - prepare-next-release:
           context: dev
-        requires:
+          requires:
             - deploy-dev-release
