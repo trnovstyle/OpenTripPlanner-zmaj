@@ -1,18 +1,17 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  annotations: {}
   labels:
-    name: otp
-  name: otp
-  namespace: default
+    {{- include "common.labels" . | indent 4 }}
+  name: {{ .Release.Name }}
+  namespace: {{ .Release.Namespace }}
 spec:
   progressDeadlineSeconds: 600
-  replicas: 4
+  replicas: {{ .Values.minReplicas }}
   revisionHistoryLimit: 2
   selector:
     matchLabels:
-      name: otp
+      name: {{ .Release.Name }}
   strategy:
     rollingUpdate:
       maxSurge: 1
@@ -21,7 +20,7 @@ spec:
   template:
     metadata:
       labels:
-        name: otp
+        name: {{ .Release.Name }}
     spec:
       affinity:
         podAntiAffinity:
@@ -41,8 +40,8 @@ spec:
             - java
             - -Dfile.encoding=UTF-8
             - -Dtransmodel.graphql.api.agency.id=RB
-            - -Xms10g
-            - -Xmx12g
+            - -Xms{{ .Values.resources.xms }}
+            - -Xmx{{ .Values.resources.xmx }}
             - -server
             - -Dcom.sun.management.jmxremote
             - -Dcom.sun.management.jmxremote.port=9010
@@ -61,11 +60,11 @@ spec:
             - name: TZ
               value: Europe/Oslo
             - name: MARDUK_GCP_BASE
-              value: gs://marduk/
+              value: {{ .Values.mardukBase }}
             - name: ROUTER_CONFIG
               value: router-config.json
           image: {{ .Values.image }}:{{ .Values.imageTag }}
-          imagePullPolicy: Always
+          imagePullPolicy: {{ .Values.imagePullPolicy }}
           lifecycle:
             preStop:
               exec:
@@ -76,21 +75,21 @@ spec:
             failureThreshold: 3
             httpGet:
               path: /otp/routers/ready
-              port: 8080
+              port: {{ .Values.service.internalPort }}
               scheme: HTTP
             initialDelaySeconds: 900
             periodSeconds: 10
             successThreshold: 1
             timeoutSeconds: 30
-          name: otp
+          name: {{ .Release.Name }}
           ports:
-            - containerPort: 8080
+            - containerPort: {{ .Values.service.internalPort }}
               protocol: TCP
           readinessProbe:
             failureThreshold: 3
             httpGet:
               path: /otp/routers/ready
-              port: 8080
+              port: {{ .Values.service.internalPort }}
               scheme: HTTP
             initialDelaySeconds: 120
             periodSeconds: 10
@@ -98,11 +97,11 @@ spec:
             timeoutSeconds: 20
           resources:
             limits:
-              cpu: '7'
-              memory: 15000Mi
+              cpu: {{ .Values.resources.cpuLimit }}
+              memory: {{ .Values.resources.memLimit }}
             requests:
-              cpu: '2'
-              memory: 13100Mi
+              cpu: {{ .Values.resources.cpuRequest }}
+              memory: {{ .Values.resources.memRequest }}
           terminationMessagePath: /dev/termination-log
           terminationMessagePolicy: File
           volumeMounts:
@@ -122,7 +121,7 @@ spec:
         - name: marduk-key
           secret:
             defaultMode: 420
-            secretName: marduk-carbon-storage-key
+            secretName: {{ .Values.mardukKey }}
         - configMap:
             defaultMode: 420
             name: otp-router-config

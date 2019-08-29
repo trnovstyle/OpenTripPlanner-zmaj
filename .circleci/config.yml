@@ -178,10 +178,9 @@ jobs:
       - run: *get-version-git-tag
       - run: *set-versions-to-app-version
       - run: *GCP-auth
-      - helm/install-helm-chart:
-          chart: ./helm/$CIRCLE_PROJECT_REPONAME
-          namespace: default
-          release-name: otp
+      - run:
+          name: Deploy Helm chart to Kubernetes
+          command: helm upgrade --install otp ./helm/$CIRCLE_PROJECT_REPONAME --values=./helm/$CIRCLE_PROJECT_REPONAME/values.yaml --values=./helm/$CIRCLE_PROJECT_REPONAME/$NAMESPACE-values.yaml --namespace=$NAMESPACE
       - run:
           name: Deployed helm chart
           command: cat ./helm/$CIRCLE_PROJECT_REPONAME/Chart.yaml
