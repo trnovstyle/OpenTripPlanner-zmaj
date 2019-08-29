@@ -1,7 +1,7 @@
 minReplicas: 5
 maxReplicas: 5
 image: eu.gcr.io/carbon-1287/otp
-imageTag: release-1.0.5
+imageTag: release-1.0.6
 imagePullPolicy: Always
 slack: talk-ror
 team: ror
