@@ -215,7 +215,7 @@ workflows:
           image: otp
           tag: $APP_VERSION
           deploy: true
-          context: dev
+          context: global
           requires:
             - build-release
           after_checkout:
