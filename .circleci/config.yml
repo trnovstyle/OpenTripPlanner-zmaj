@@ -35,10 +35,11 @@ aliases:
       nextVersionPatchNumber=$(($(echo $currentVersion | grep -o '[0-9]*$')+1))
       staticVersion=$(echo $currentVersion | grep -o '[0-9].[0-9].')
       echo release-$staticVersion$nextVersionPatchNumber
-      echo "export APP_VERSION=release-$staticVersion$nextVersionPatchNumber" >> $BASH_ENV
+      APP_VERSION=release-$staticVersion$nextVersionPatchNumber
+      echo "export APP_VERSION=$APP_VERSION" >> $BASH_ENV
       echo $APP_VERSION > ./app_version
   - &get-app-version-from-file
-    name: Getting release version from mvn_version file
+    name: Getting release version from app_version file
     command: |
       echo "export APP_VERSION=$(cat ./app_version)" >> $BASH_ENV
 
