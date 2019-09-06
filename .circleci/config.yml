@@ -87,6 +87,14 @@ aliases:
 
     when: always
 
+  - &post-hook
+    name: Notify about build and docker image pushed
+    command: |
+      echo 'export CIRCLE_PROJECT_REPONAME="$CIRCLE_PROJECT_REPONAME"' >> $BASH_ENV
+      echo 'export CIRCLE_SHA1="$CIRCLE_SHA1"' >> $BASH_ENV
+      echo 'export BUILD_STATUS_API_KEY="$BUILD_STATUS_API_KEY"' >> $BASH_ENV
+      /tools/build_notify.sh
+
   - &deploy-payload
       "*Ready to Deploy*: <$CIRCLE_BUILD_URL|$CIRCLE_PROJECT_REPONAME #$CIRCLE_PREVIOUS_BUILD_NUM> to *$NAMESPACE*\n
         Repository: <https://circleci.com/bb/enturas/workflows/$CIRCLE_PROJECT_REPONAME|$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME>\n
@@ -175,6 +183,10 @@ jobs:
       - run: *set-versions-to-app-version
       - run: *git-push-next-version-release
       - slack-status
+  notify-build:
+    executor: cci-toolbox-java11
+    steps:
+      - run: *post-hook
 
   deploy:
     executor: entur-cci-toolbox
@@ -231,6 +243,11 @@ workflows:
             - run: *get-app-version-from-file
           post-steps:
             - slack-status
+      - notify-build:
+          name: notify-build-babylon
+          context: org-carbon
+          requires:
+            - push-release
       - deploy:
           name: deploy-dev-release
           context: dev

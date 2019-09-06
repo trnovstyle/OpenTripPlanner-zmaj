@@ -1,6 +1,6 @@
 minReplicas: 5
 maxReplicas: 5
-image: eu.gcr.io/entur-system-1287/otp
+image: eu.gcr.io/carbon-1287/otp
 imageTag: release-1.0.14
 imagePullPolicy: Always
 slack: talk-ror
