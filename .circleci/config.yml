@@ -193,6 +193,7 @@ jobs:
             - helm/*/
             - ./app_version
             - Dockerfile
+            - docker
       - slack-status
   publish-docker:
     docker:
