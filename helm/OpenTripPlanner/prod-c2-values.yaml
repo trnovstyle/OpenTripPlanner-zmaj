@@ -1,0 +1,15 @@
+env: production-c2
+
+replicas: 15
+
+horizontalPodAutoscaler:
+  enabled: true
+  maxReplicas: 65
+  targetCPUUtilizationPercentage: 70
+
+rollingUpdate:
+  maxSurge: 3
+  maxUnavailable: 1
+
+environmentValues:
+  mardukGcpBaseName: "gs://marduk-prod/"

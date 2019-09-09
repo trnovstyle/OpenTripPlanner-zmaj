@@ -8,6 +8,6 @@ keywords:
 sources:
 - https://github.com/entur/opentripplanner
 maintainers:
-- name: 'Team: ror'
+- name: 'team-ror'
   email: team.rutedata@entur.org
 engine: gotpl

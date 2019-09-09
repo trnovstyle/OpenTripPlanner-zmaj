@@ -1,0 +1,15 @@
+env: staging-c2
+
+replicas: 4
+
+horizontalPodAutoscaler:
+  enabled: true
+  maxReplicas: 15
+  targetCPUUtilizationPercentage: 70
+
+rollingUpdate:
+  maxSurge: 3
+  maxUnavailable: 1
+
+environmentValues:
+  mardukGcpBaseName: "gs://marduk-stage/"

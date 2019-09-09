@@ -1,0 +1,23 @@
+env: dev-c2
+
+replicas: 4
+
+horizontalPodAutoscaler:
+  enabled: true
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
+
+rollingUpdate:
+  maxSurge: 3
+  maxUnavailable: 1
+
+environmentValues:
+  mardukGcpBaseName: "gs://marduk/"
+
+
+
+
+
+
+
+
