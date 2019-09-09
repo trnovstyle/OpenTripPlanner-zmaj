@@ -59,6 +59,31 @@ aliases:
       gcloud auth activate-service-account --key-file ${HOME}/account-auth.json
       gcloud beta container clusters get-credentials $OTP_CONTAINER_CLUSTER --region $OTP_CLUSTER_REGION --project $CLOUDSDK_CORE_PROJECT
 
+  - &GCP-docker-auth
+    name: GCP Authenticate
+    command: |
+      echo 'export GCLOUD_SERVICE_KEY="$GCLOUD_SERVICE_KEY"' >> $BASH_ENV
+      /tools/gcp_authenticate.sh
+  - &docker-login
+    name: Docker login
+    command: |
+      echo 'export GCLOUD_SERVICE_KEY="$GCLOUD_SERVICE_KEY"' >> $BASH_ENV
+      /tools/docker_login.sh
+  - &docker-build-and-push
+    name: Docker build and push
+    command: |
+      IMAGE="eu.gcr.io/carbon-1287/${CIRCLE_PROJECT_REPONAME}"
+      echo "Image: ${IMAGE}"
+      docker build -t $IMAGE .
+      docker tag $IMAGE "${IMAGE}":"${APP_VERSION}"
+      docker push $IMAGE
+  - &post-hook
+    name: Notify about build and docker image pushed
+    command: |
+      echo 'export CIRCLE_PROJECT_REPONAME="$CIRCLE_PROJECT_REPONAME"' >> $BASH_ENV
+      echo 'export CIRCLE_SHA1="$CIRCLE_SHA1"' >> $BASH_ENV
+      echo 'export BUILD_STATUS_API_KEY="$BUILD_STATUS_API_KEY"' >> $BASH_ENV
+      /tools/build_notify.sh
   - &git-push-next-version-release
     name: Push to repository
     command: |
@@ -168,6 +193,23 @@ jobs:
             - helm/*/
             - ./app_version
       - slack-status
+  publish-docker:
+    docker:
+      - image: eu.gcr.io/carbon-1287/circleci-toolbox-image-java11
+        auth:
+          username: _json_key
+          password: $GCLOUD_SERVICE_KEY
+    environment:
+        DEBIAN_FRONTEND: "noninteractive"
+    steps:
+        - attach_workspace:
+            at: ~/project
+        - setup_remote_docker:
+            docker_layer_caching: true
+        - run: *get-app-version-from-file
+        - run: *GCP-docker-auth
+        - run: *docker-login
+        - run: *docker-build-and-push
   prepare-next-release:
     executor: cci-toolbox-java11
     steps:
@@ -228,31 +270,23 @@ workflows:
           context: dev
           requires:
             - test-release
-      - docker/publish:
-          name: push-release
-          registry: eu.gcr.io/carbon-1287
-          image: otp
-          tag: $APP_VERSION
-          deploy: true
+      - publish-docker:
+          name: publish-docker
           context: org-carbon
           requires:
             - build-release
-          after_checkout:
-            - attach_workspace:
-                at: .
-            - run: *get-app-version-from-file
           post-steps:
             - slack-status
       - notify-build:
           name: notify-build-babylon
           context: org-carbon
           requires:
-            - push-release
+            - publish-docker
       - deploy:
           name: deploy-dev-release
           context: dev
           requires:
-            - push-release
+            - publish-docker
       - prepare-next-release:
           context: dev
           requires:
