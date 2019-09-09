@@ -312,12 +312,12 @@ workflows:
           context: production
           requires:
             - deploy-staging-release
-            - approve-staging-release:
+      - approve-production-release:
                 type: approval
                 requires:
                   - production-deploy-message-release
       - deploy:
           name: deploy-production-release
           context: production
-            requires:
-                  - approve-production-release
+          requires:
+              - approve-production-release
