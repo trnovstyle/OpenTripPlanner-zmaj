@@ -9,7 +9,7 @@ spec:
   replicas: {{ .Values.replicas }}
   selector:
     matchLabels:
-      {{- include "common.labels" . | indent 6 }}
+      app: {{ template "otp.name" . }}
   strategy:
     rollingUpdate:
       maxSurge: {{ .Values.rollingUpdate.maxSurge }}
