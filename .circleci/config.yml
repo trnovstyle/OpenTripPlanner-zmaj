@@ -192,6 +192,7 @@ jobs:
             - .circleci
             - helm/*/
             - ./app_version
+            - Dockerfile
       - slack-status
   publish-docker:
     docker:
