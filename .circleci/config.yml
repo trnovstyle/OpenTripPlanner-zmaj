@@ -90,6 +90,12 @@ aliases:
       echo "Trying to tag $APP_VERSION"
       git config --global user.email "circleci@entur.org"
       git config --global user.name "EnturCircleCi"
+      git pull
+      currentVersion=$(git describe --tags --abbrev=0 | cut -d'-' -f2)
+      nextVersionPatchNumber=$(($(echo $currentVersion | grep -o '[0-9]*$')+1))
+      staticVersion=$(echo $currentVersion | grep -o '[0-9].[0-9].')
+      echo release-$staticVersion$nextVersionPatchNumber
+      APP_VERSION=release-$staticVersion$nextVersionPatchNumber
       git tag -a $APP_VERSION -m "Tagging current version"
       git add helm/$CIRCLE_PROJECT_REPONAME/Chart.yaml
       git add helm/$CIRCLE_PROJECT_REPONAME/values.yaml

@@ -38,7 +38,7 @@ configmapMounts:
     readOnly: false
 
 image:
-  repo: eu.gcr.io/entur-system-1287/otp
+  repo: eu.gcr.io/carbon-1287/otp
   imagePullPolicy: Always
   imagePullSecrets:
     enabled: true
