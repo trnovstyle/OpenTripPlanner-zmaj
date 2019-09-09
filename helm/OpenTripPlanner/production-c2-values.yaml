@@ -12,7 +12,7 @@ rollingUpdate:
   maxUnavailable: 3
 
 environmentValues:
-  mardukGcpBaseName: "gs://marduk-prod/"
+  mardukGcpBaseName: "gs://marduk-production/"
 
 cronjobRedeployOtp:
   environmentValues:
@@ -20,7 +20,7 @@ cronjobRedeployOtp:
 
 secretMounts:
   - name: marduk-key
-    mountPath: /code/otpdata/norway/router-config.json
-    subPath: ""
+    mountPath: /etc/marduk/marduk-blobstore-credentials.json
+    subPath: marduk-blobstore-credentials.json
     secretName: marduk-neon-storage-key
     readOnly: true

@@ -49,8 +49,8 @@ spec:
             volumeMounts:
             {{- range .Values.secretMounts }}
             - name: {{ .name }}
-              mountPath: /etc/redeploy/marduk-blobstore-credentials.json
-              subPath: marduk-blobstore-credentials.json
+              mountPath: {{ .mountPath }}
+              subPath: {{ .subPath }}
               readOnly: {{ .readOnly }}
             {{- end }}
           dnsPolicy: ClusterFirst

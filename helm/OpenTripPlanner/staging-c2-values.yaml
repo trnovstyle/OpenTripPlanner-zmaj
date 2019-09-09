@@ -20,7 +20,7 @@ cronjobRedeployOtp:
 
 secretMounts:
   - name: marduk-key
-    mountPath: /code/otpdata/norway/router-config.json
-    subPath: ""
+    mountPath: /etc/marduk/marduk-blobstore-credentials.json
+    subPath: marduk-blobstore-credentials.json
     secretName: marduk-radon-storage-key
     readOnly: true
