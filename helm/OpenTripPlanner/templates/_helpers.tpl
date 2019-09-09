@@ -35,3 +35,14 @@ slack: talk-ror
 type: journey-planner
 namespace: {{ .Release.Namespace }}
 {{- end }}
+
+{{/* cronjob redeploy ot basic labels */}}
+{{- define "conrjobOtpRedeploy.labels" }}
+app: cronjob-redeploy-{{ template "otp.name" . }}
+chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+release: {{ .Release.Name }}
+team: ror
+slack: talk-ror
+type: journey-planner
+namespace: {{ .Release.Namespace }}
+{{- end }}

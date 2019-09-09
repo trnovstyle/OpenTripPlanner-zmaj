@@ -1,6 +1,6 @@
 env: production-c2
 
-replicas: 15
+replicas: 5
 
 horizontalPodAutoscaler:
   enabled: true
@@ -8,8 +8,19 @@ horizontalPodAutoscaler:
   targetCPUUtilizationPercentage: 70
 
 rollingUpdate:
-  maxSurge: 3
-  maxUnavailable: 1
+  maxSurge: 5
+  maxUnavailable: 3
 
 environmentValues:
   mardukGcpBaseName: "gs://marduk-prod/"
+
+cronjobRedeployOtp:
+  environmentValues:
+    cloudsdkCoreProject: neon-1287
+
+secretMounts:
+  - name: marduk-key
+    mountPath: /code/otpdata/norway/router-config.json
+    subPath: ""
+    secretName: marduk-neon-storage-key
+    readOnly: true

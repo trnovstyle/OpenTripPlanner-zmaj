@@ -18,7 +18,7 @@ metadata:
 spec:
   rules:
   {{- if eq .Values.env "production-c2"}}
-  - host: otpdebug-c2.entur.io.entur.io
+  - host: otpdebug-c2.entur.io
   {{ else }}
   - host: otpdebug-c2.{{ .Release.Namespace }}.entur.io
   {{- end}}

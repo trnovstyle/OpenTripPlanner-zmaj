@@ -55,3 +55,20 @@ ingress:
     devIp: 34.90.8.202
     stagingIp: 34.90.167.146
     productionIp: 35.204.106.27
+
+cronjobRedeployOtp:
+  enabled: true
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 1
+  concurrencyPolicy: Allow
+  resources:
+    cpuLimit: 900m
+    memLimit: 2550Mi
+    cpuRequest: 100m
+    memRequest: 1000Mi
+  image:
+    repo: eu.gcr.io/carbon-1287/gcloud-sdk:258.0.0
+  environmentValues:
+    otpRedeploySlack: slack-url
+    cloudsdkCoreProject: carbon-1287
+

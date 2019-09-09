@@ -13,3 +13,14 @@ rollingUpdate:
 
 environmentValues:
   mardukGcpBaseName: "gs://marduk-stage/"
+
+cronjobRedeployOtp:
+  environmentValues:
+    cloudsdkCoreProject: radon-1287
+
+secretMounts:
+  - name: marduk-key
+    mountPath: /code/otpdata/norway/router-config.json
+    subPath: ""
+    secretName: marduk-radon-storage-key
+    readOnly: true
