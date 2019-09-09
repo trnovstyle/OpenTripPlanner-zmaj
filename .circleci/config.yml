@@ -72,7 +72,7 @@ aliases:
   - &docker-build-and-push
     name: Docker build and push
     command: |
-      IMAGE="eu.gcr.io/carbon-1287/${CIRCLE_PROJECT_REPONAME}"
+      IMAGE="eu.gcr.io/carbon-1287/otp"
       echo "Image: ${IMAGE}"
       docker build -t $IMAGE .
       docker tag $IMAGE "${IMAGE}":"${APP_VERSION}"
