@@ -9,10 +9,17 @@ metadata:
     {{- if eq .Values.env "production-c2"}}
     external-dns.alpha.kubernetes.io/target: {{ .Values.ingress.c2.productionIp }}
     {{ else if eq .Values.env "staging-c2"}}
-    external-dns.alpha.kubernetes.io/target: {{ .Values.ingress.c2.staginIp }}
+    external-dns.alpha.kubernetes.io/target: {{ .Values.ingress.c2.stagingIp }}
     {{ else if eq .Values.env "dev-c2"}}
     external-dns.alpha.kubernetes.io/target: {{ .Values.ingress.c2.devIp }}
     {{- end}}
+    traefik.ingress.kubernetes.io/rate-limit: |
+      extractorfunc: client.ip
+      rateset:
+        api-rateset:
+          period: 60s
+          average: 5
+          burst: 5
   name: otpdebug
   namespace: {{ .Release.Namespace }}
 spec:
