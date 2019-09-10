@@ -276,11 +276,19 @@ workflows:
       - build:
           name: build-release
           context: dev
+          filters:
+            branches:
+              only:
+                - rutebanken_develop
           requires:
             - test-release
       - publish-docker:
           name: publish-docker
           context: org-carbon
+          filters:
+            branches:
+              only:
+                - rutebanken_develop
           requires:
             - build-release
           post-steps:
@@ -288,6 +296,10 @@ workflows:
       - notify-build:
           name: notify-build-babylon
           context: org-carbon
+          filters:
+            branches:
+              only:
+                - rutebanken_develop
           requires:
             - publish-docker
       - deploy:
@@ -297,6 +309,10 @@ workflows:
             - publish-docker
       - prepare-next-release:
           context: dev
+          filters:
+            branches:
+              only:
+                - rutebanken_develop
           requires:
             - deploy-dev-release
       - slack-approval:
