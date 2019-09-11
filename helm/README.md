@@ -8,9 +8,11 @@ Download Helm version >v2.13.0 https://github.com/kubernetes/helm
 
 ## Installing the Chart
 
+### Print template
+
 To see the template output before deploying:
 ```bash
-$ helm template ./DIRNAME --name RELEASENAME  --values VALUES.YAML --namespace NAMESPACE
+$ helm template DIRNAME --name RELEASENAME  --values VALUES.YAML --namespace NAMESPACE
 ```
 
 For example:
@@ -18,19 +20,20 @@ For example:
 $ helm template helm/OpenTripPlanner/ --name otp  --values helm/OpenTripPlanner/dev-c2-values.yaml --namespace dev
 ```
 
+### Intall chart
 
 To install the chart with the release name `my-release`:
 
 ```bash
-$ helm install ./ --name RELEASENAME --namespace NAMESPACE
+$ helm install DIRNAME --name RELEASENAME --namespace NAMESPACE
 ```
 Watch the deployment with this command
 
 ```bash
-$ kubectl get svc <release-name> --namespace my-namespace -w
+$ kubectl get pods -n NAMESPACE
 ```
 
-## Uninstalling the Chart
+## Uninstalling the Chart (WARNING)
 
 To completely remove `my-release`:
 
@@ -39,23 +42,13 @@ $ helm delete <release-name> --purge
 ```
 
 ## Updating a chart
+Run helm upgrade:
 
-Use `--reuse-values` if you want to keep values set on earlier install/upgrade. Values can be checked using this command:
 ```bash
-$ helm get values <release-name>
+$ helm upgrade --install RELEASENAME DIRNAME --namespace NAMESPACE --values VALUES.YAML
 ```
 
-#### From remote repository
+for example:
 ```bash
-$ helm update
-$ helm upgrade <release-name> entur/ukur-demo
+$ helm upgrade --install otp helm/OpenTripPlanner --namespace dev --values helm/OpenTripPlanner/dev-c2-values.yaml
 ```
-
-#### From local chart
-```bash
-$ helm upgrade --set imageTag=<image-tag e.g. master-v40> ./ukur-demo
-```
-
-## Configuration
-
-The following tables lists the configurable parameters of the order chart and their default values.
