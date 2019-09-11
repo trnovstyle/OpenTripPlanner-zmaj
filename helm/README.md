@@ -4,25 +4,25 @@ This chart will setup the `otp` app and it's dependencies in a given namespace.
 
 ## Prerequisites
 
-Download Helm version >v2.12.0 https://github.com/kubernetes/helm
-
-```
-$ helm init --client-only
-$ helm repo add entur https://entur-helm-charts.storage.googleapis.com
-$ helm dependency update
-```
+Download Helm version >v2.13.0 https://github.com/kubernetes/helm
 
 ## Installing the Chart
 
 To see the template output before deploying:
 ```bash
-$ helm template ./ --name ukur-demo-dev  --values values.yaml --namespace dev
+$ helm template ./DIRNAME --name RELEASENAME  --values VALUES.YAML --namespace NAMESPACE
 ```
+
+For example:
+```bash
+$ helm template helm/OpenTripPlanner/ --name otp  --values helm/OpenTripPlanner/dev-c2-values.yaml --namespace dev
+```
+
 
 To install the chart with the release name `my-release`:
 
 ```bash
-$ helm install ./ --name <release-name> --namespace my-namespace
+$ helm install ./ --name RELEASENAME --namespace NAMESPACE
 ```
 Watch the deployment with this command
 
