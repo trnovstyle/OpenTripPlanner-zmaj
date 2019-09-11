@@ -52,3 +52,14 @@ for example:
 ```bash
 $ helm upgrade --install otp helm/OpenTripPlanner --namespace dev --values helm/OpenTripPlanner/dev-c2-values.yaml
 ```
+
+## Helm rollback
+Check available revision:
+```bash
+$ helm history REPONAME
+```
+
+Rollback to a revision:
+```bash
+$ helm rollback REPONAME REVISIONNUMBER
+```
