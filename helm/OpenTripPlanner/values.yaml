@@ -13,11 +13,11 @@ rollingUpdate:
 
 resources:
   cpuLimit: "7"
-  memLimit: 18000Mi
-  cpuRequest: "2"
-  memRequest: 14000Mi
-  xmx: 12g
-  xms: 7g
+  memLimit: 16000Mi
+  cpuRequest: "4"
+  memRequest: 10000Mi
+  xmx: 11g
+  xms: 9g
 
 environmentValues:
   mardukGcpBaseName: "gs://marduk/"
