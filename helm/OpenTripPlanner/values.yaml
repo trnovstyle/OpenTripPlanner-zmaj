@@ -35,7 +35,7 @@ configmapMounts:
     mountPath: /code/otpdata/norway/router-config.json
     subPath: router-config.json
     configMap: otp-router-config
-    readOnly: false
+    readOnly: true
 
 image:
   repo: eu.gcr.io/carbon-1287/otp
