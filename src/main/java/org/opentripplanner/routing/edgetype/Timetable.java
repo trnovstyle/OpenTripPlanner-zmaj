@@ -729,6 +729,13 @@ public class Timetable implements Serializable {
                         if (departureDate == null) {
                             departureDate = recordedCall.getAimedArrivalTime();
                         }
+                        if (oldTimes.getDepartureTime(0) > 86400) {
+                            // The "departure-date" for this trip is set to "yesterday" (or before) even though it actually departs "today"
+
+                            int dayOffsetCount = oldTimes.getDepartureTime(0)/86400; // calculate number of offset-days
+
+                            departureDate = departureDate.minusDays(dayOffsetCount);
+                        }
                     }
 
                     //Flag as recorded
