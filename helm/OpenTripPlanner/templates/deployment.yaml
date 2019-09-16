@@ -61,6 +61,21 @@ spec:
               value: {{ .Values.environmentValues.mardukGcpBaseName }}
             - name: ROUTER_CONFIG
               value: {{ .Values.environmentValues.routerConfigName }}
+            - name: LILLESTROM_BYSYKKEL_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  key: lillestrom_bysykkel_api_key
+                  name: otp-external-api-keys
+            - name: DRAMMEN_BYSYKKEL_PUBLIC_ID
+              valueFrom:
+                secretKeyRef:
+                  key: drammen_bysykkel_public_id
+                  name: otp-external-api-keys
+            - name: DRAMMEN_BYSYKKEL_SECRET
+              valueFrom:
+                secretKeyRef:
+                  key: drammen_bysykkel_secret
+                  name: otp-external-api-keys
           image: {{ .Values.image.repo }}:{{ .Chart.AppVersion }}
           imagePullPolicy: {{ .Values.image.imagePullPolicy }}
           lifecycle:

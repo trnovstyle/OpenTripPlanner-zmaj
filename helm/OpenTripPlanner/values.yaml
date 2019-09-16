@@ -72,3 +72,8 @@ cronjobRedeployOtp:
     otpRedeploySlack: slack-url
     cloudsdkCoreProject: carbon-1287
 
+configuration:
+  siriVMUpdater: https://api.dev.entur.io/realtime/v1/services
+  siriETUdpater: https://api.dev.entur.io/realtime/v1/services
+  siriSXUpdater: https://api.dev.entur.io/realtime/v1/services?maxSize=50
+  useFlexService: true
