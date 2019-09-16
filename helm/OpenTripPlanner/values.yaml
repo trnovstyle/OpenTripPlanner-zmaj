@@ -52,9 +52,9 @@ service:
 ingress:
   c2: 
     enabled: true
-    devIp: 34.90.8.202
-    stagingIp: 34.90.167.146
-    productionIp: 35.204.106.27
+    devIpOrg: 34.90.8.202
+    stagingIpOrg: 34.90.167.146
+    productionIpOrg: 35.204.106.27
 
 cronjobRedeployOtp:
   enabled: true

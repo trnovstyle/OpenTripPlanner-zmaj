@@ -7,27 +7,27 @@ metadata:
   annotations:
     kubernetes.io/ingress.class: traefik
     {{- if eq .Values.env "production-c2"}}
-    external-dns.alpha.kubernetes.io/target: {{ .Values.ingress.c2.productionIp }}
+    external-dns.alpha.kubernetes.io/target: {{ .Values.ingress.c2.productionIpOrg }}
     {{ else if eq .Values.env "staging-c2"}}
-    external-dns.alpha.kubernetes.io/target: {{ .Values.ingress.c2.stagingIp }}
+    external-dns.alpha.kubernetes.io/target: {{ .Values.ingress.c2.stagingIpOrg }}
     {{ else if eq .Values.env "dev-c2"}}
-    external-dns.alpha.kubernetes.io/target: {{ .Values.ingress.c2.devIp }}
+    external-dns.alpha.kubernetes.io/target: {{ .Values.ingress.c2.devIpOrg }}
     {{- end}}
     traefik.ingress.kubernetes.io/rate-limit: |
       extractorfunc: client.ip
       rateset:
         api-rateset:
           period: 60s
-          average: 5
-          burst: 5
+          average: 20
+          burst: 20
   name: otpdebug
   namespace: {{ .Release.Namespace }}
 spec:
   rules:
   {{- if eq .Values.env "production-c2"}}
-  - host: otpdebug-c2.entur.io
+  - host: otpdebug-c2.entur.org
   {{ else }}
-  - host: otpdebug-c2.{{ .Release.Namespace }}.entur.io
+  - host: otpdebug-c2.{{ .Release.Namespace }}.entur.org
   {{- end}}
     http:
       paths:
