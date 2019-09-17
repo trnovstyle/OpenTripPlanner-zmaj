@@ -1,6 +1,6 @@
 env: production-c2
 
-replicas: 5
+replicas: 20
 
 horizontalPodAutoscaler:
   enabled: true
@@ -9,7 +9,7 @@ horizontalPodAutoscaler:
 
 rollingUpdate:
   maxSurge: 5
-  maxUnavailable: 3
+  maxUnavailable: 1
 
 environmentValues:
   mardukGcpBaseName: "gs://marduk-production/"
