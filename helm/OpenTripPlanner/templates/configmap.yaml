@@ -70,10 +70,12 @@ data:
     	"totalTimeout": 15,
 
       "boardTimes": {
-        "AIRPLANE": 2100
+        "INTERNATIONAL_FLIGHT": 5400,
+        "DOMESTIC_FLIGHT": 2100
       },
       "alightTimes": {
-        "AIRPLANE": 900
+        "INTERNATIONAL_FLIGHT": 1800,
+        "DOMESTIC_FLIGHT": 900
       },
       "kartverketTokenUrl": {
         "url": "https://stoppested.entur.org/token"
