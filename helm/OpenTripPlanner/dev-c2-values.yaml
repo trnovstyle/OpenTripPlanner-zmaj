@@ -5,7 +5,7 @@ replicas: 4
 horizontalPodAutoscaler:
   enabled: true
   maxReplicas: 10
-  targetCPUUtilizationPercentage: 70
+  targetCPUUtilizationPercentage: 90
 
 rollingUpdate:
   maxSurge: 3
@@ -30,9 +30,3 @@ configuration:
   siriETUdpater: https://api.dev.entur.io/realtime/v1/services
   siriSXUpdater: https://api.dev.entur.io/realtime/v1/services?maxSize=50
   useFlexService: true
-
-
-
-
-
-
