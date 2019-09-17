@@ -27,6 +27,6 @@ secretMounts:
 
 configuration:
   siriVMUpdater: https://api.entur.io/realtime/v1/services
-  siriETUdpater: https://api.entur.io/realtime/v1/services
+  siriETUpdater: https://api.entur.io/realtime/v1/services
   siriSXUpdater: https://api.entur.io/realtime/v1/services?maxSize=50
   useFlexService: true
