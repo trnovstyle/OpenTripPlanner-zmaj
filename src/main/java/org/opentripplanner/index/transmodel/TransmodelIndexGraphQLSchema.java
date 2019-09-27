@@ -4620,7 +4620,12 @@ public class TransmodelIndexGraphQLSchema {
         if (parentId == null) {
             return Optional.empty();
         }
-        return Optional.of(index.stationForId.get(mappingUtil.fromIdString(parentId)));
+        Stop parent = index.stationForId.get(mappingUtil.fromIdString(parentId));
+        if(parent == null) {
+            LOG.warn("Multi-modal stop place {} not found for {}.", parentId, stopPlace);
+            return Optional.empty();
+        }
+        return Optional.of(parent);
     }
 
 
