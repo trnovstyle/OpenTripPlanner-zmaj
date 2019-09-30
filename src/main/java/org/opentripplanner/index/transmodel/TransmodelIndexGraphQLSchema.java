@@ -3241,15 +3241,19 @@ public class TransmodelIndexGraphQLSchema {
                                         );
                             }
                             if (environment.getArgument("publicCode") != null) {
+                                String publicCode = ((String)environment.getArgument("publicCode")).toLowerCase();
                                 stream = stream
                                         .filter(route -> route.getShortName() != null)
-                                        .filter(route -> route.getShortName().equals(environment.getArgument("publicCode")));
+                                        .filter(route -> route.getShortName().toLowerCase().equals(publicCode));
                             }
                             if (environment.getArgument("publicCodes") instanceof List) {
-                                Set<String> publicCodes = new HashSet<>((List)environment.getArgument("publicCodes"));
+                                // The 'publicCodes' are nullable, so we must filter away null elements
+                                Set<String> publicCodes = ((List<String>) environment.getArgument("publicCodes"))
+                                        .stream().filter(Objects::nonNull).map(String::toLowerCase).collect(Collectors.toSet());
+
                                 stream = stream
                                                  .filter(route -> route.getShortName() != null)
-                                                 .filter(route -> publicCodes.contains(route.getShortName()));
+                                                 .filter(route -> publicCodes.contains(route.getShortName().toLowerCase()));
                             }
                             if (environment.getArgument("transportModes") != null) {
 
