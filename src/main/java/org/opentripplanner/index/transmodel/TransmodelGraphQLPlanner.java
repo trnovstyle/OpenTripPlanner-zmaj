@@ -73,7 +73,7 @@ public class TransmodelGraphQLPlanner {
 
         try {
             List<GraphPath> paths = gpFinder.graphPathFinderEntryPoint(request);
-            removeAccessAndEgressFootPathsAtStation(paths, sourceStopId(request.from), sourceStopId(request.to));
+            //removeAccessAndEgressFootPathsAtStation(paths, sourceStopId(request.from), sourceStopId(request.to));
             plan = GraphPathToTripPlanConverter.generatePlan(paths, request);
         } catch (Exception e) {
             PlannerError error = new PlannerError(e);
