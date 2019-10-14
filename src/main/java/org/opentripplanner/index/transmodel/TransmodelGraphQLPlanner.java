@@ -334,7 +334,6 @@ public class TransmodelGraphQLPlanner {
         if (vertex instanceof TransitStation) {
             TransitStop stopVertex = ((TransitStop)vertex.getOutgoing().stream()
                     .filter(t -> t instanceof StationStopEdge).findFirst().get().getToVertex());
-            location.vertexId = "";
             location.lat = stopVertex.getLat();
             location.lng = stopVertex.getLon();
         }
