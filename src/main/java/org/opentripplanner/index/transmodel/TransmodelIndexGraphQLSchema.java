@@ -3330,10 +3330,21 @@ public class TransmodelIndexGraphQLSchema {
                         })
                         .build())
                 .field(GraphQLFieldDefinition.newFieldDefinition()
-                        .name("bikeRentalStations")
-                        .description("Get all bike rental stations")
-                        .type(new GraphQLNonNull(new GraphQLList(bikeRentalStationType)))
-                        .dataFetcher(dataFetchingEnvironment -> new ArrayList<>(index.graph.getService(BikeRentalStationService.class).getBikeRentalStations()))
+                               .name("bikeRentalStations")
+                               .description("Get all bike rental stations")
+                               .argument(GraphQLArgument.newArgument()
+                                                 .name("ids")
+                                                 .type(new GraphQLList(Scalars.GraphQLString))
+                                                 .build())
+                               .type(new GraphQLNonNull(new GraphQLList(bikeRentalStationType)))
+                               .dataFetcher(environment -> {
+                                   Collection<BikeRentalStation> all = new ArrayList<>(index.graph.getService(BikeRentalStationService.class).getBikeRentalStations());
+                                   List<String> filterByIds = environment.getArgument("ids");
+                                   if (all != null && !CollectionUtils.isEmpty(filterByIds)) {
+                                       return all.stream().filter(station -> filterByIds.contains(station.id)).collect(Collectors.toList());
+                                   }
+                                   return all;
+                               })
                         .build())
                 .field(GraphQLFieldDefinition.newFieldDefinition()
                         .name("bikeRentalStation")
