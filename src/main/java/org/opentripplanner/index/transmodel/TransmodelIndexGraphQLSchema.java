@@ -138,6 +138,7 @@ public class TransmodelIndexGraphQLSchema {
             .value("planned", Trip.ServiceAlteration.planned)
             .value("cancellation", Trip.ServiceAlteration.cancellation)
             .value("extraJourney", Trip.ServiceAlteration.extraJourney)
+            .value("replaced", Trip.ServiceAlteration.replaced)
             .build();
 
     private static GraphQLEnumType modeEnum = GraphQLEnumType.newEnum()
