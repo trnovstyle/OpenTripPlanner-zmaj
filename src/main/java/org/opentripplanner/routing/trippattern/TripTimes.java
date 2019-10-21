@@ -591,7 +591,9 @@ public class TripTimes implements Serializable, Comparable<TripTimes>, Cloneable
             return false;
         }
 
-        if (!options.includePlannedCancellations && Trip.ServiceAlteration.cancellation.equals(trip.getServiceAlteration())){
+        if (!options.includePlannedCancellations &&
+                (Trip.ServiceAlteration.cancellation.equals(trip.getServiceAlteration()) ||
+                        Trip.ServiceAlteration.replaced.equals(trip.getServiceAlteration()))) {
             return false;
         }
 
