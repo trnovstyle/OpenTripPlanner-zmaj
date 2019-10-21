@@ -65,7 +65,7 @@ data:
       },
       "stopClusterMode": "parentStation",
      "useFlexService": {{ .Values.configuration.useFlexService }},
-    	"timeouts": [9, 6, 5, 4, 4, 1, 1, 1],
+    	"timeouts": [9, 6, 3, 2, 1, 1, 1, 1],
 
     	"totalTimeout": 15,
 
