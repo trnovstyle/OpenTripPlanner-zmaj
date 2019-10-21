@@ -1,18 +1,17 @@
 package org.opentripplanner.graph_builder.module;
 
 import org.opentripplanner.calendar.impl.MultiCalendarServiceImpl;
-import org.opentripplanner.netex.loader.NetexBundle;
-import org.opentripplanner.netex.loader.NetexLoader;
 import org.opentripplanner.graph_builder.services.GraphBuilderModule;
+import org.opentripplanner.graph_builder.triptransformer.TripTransformService;
 import org.opentripplanner.model.calendar.CalendarServiceData;
 import org.opentripplanner.model.impl.OtpTransitBuilder;
+import org.opentripplanner.netex.loader.NetexBundle;
+import org.opentripplanner.netex.loader.NetexLoader;
 import org.opentripplanner.routing.edgetype.factory.GtfsStopContext;
 import org.opentripplanner.routing.edgetype.factory.PatternHopFactory;
 import org.opentripplanner.routing.graph.Graph;
 import org.opentripplanner.routing.impl.DefaultFareServiceFactory;
 import org.opentripplanner.routing.services.FareServiceFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.List;
@@ -43,6 +42,9 @@ public class NetexModule implements GraphBuilderModule {
                 if (netexBundle.removeStopsNotInUse) {
                     daoBuilder.removeStopsNotInUse();
                 }
+
+                TripTransformService.runTripTransform(daoBuilder, calendarService.getData(), netexBundle.fileDir());
+
 
                 PatternHopFactory hf = new PatternHopFactory(
                         new GtfsFeedId.Builder().id(netexBundle.netexParameters.netexFeedId).build(),
