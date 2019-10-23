@@ -23,11 +23,11 @@ import java.util.stream.Stream;
 
 class TransitServiceDecorator {
     private final OtpTransitBuilder transitService;
-    private final CalendarServiceData data;
+    private final CalendarServiceData calServiceData;
 
     TransitServiceDecorator(OtpTransitBuilder transitService, CalendarServiceData data) {
         this.transitService = transitService;
-        this.data = data;
+        this.calServiceData = data;
     }
 
     Multimap<Route, Trip> tripsByRoute(ServiceDate date, Function<Trip, Boolean> filter, boolean allTrips) {
@@ -131,7 +131,7 @@ class TransitServiceDecorator {
     }
 
     boolean isOneDayService(Trip trip) {
-        return data.getServiceDatesForServiceId(trip.getServiceId()).size() == 1;
+        return calServiceData.getServiceDatesForServiceId(trip.getServiceId()).size() == 1;
     }
 
     int departureTime(Trip trip) {
@@ -146,6 +146,15 @@ class TransitServiceDecorator {
         return TimeUtil.isDstSummerTime(departureTime(t));
     }
 
+    AgencyAndId findServiceDefinedOnlyOn(ServiceDate serviceDate) {
+        Set<AgencyAndId> serviceIds = serviceIdsForDate(serviceDate);
+        for (AgencyAndId serviceId : serviceIds) {
+            if(calServiceData.getServiceDatesForServiceId(serviceId).size() == 1) {
+                return serviceId;
+            }
+        }
+        throw new IllegalStateException("There is no service defined for ONLY " + serviceDate + ".");
+    }
 
     /* private methods */
 
@@ -164,7 +173,7 @@ class TransitServiceDecorator {
     }
 
     private Set<AgencyAndId> serviceIdsForDate(ServiceDate date) {
-        return data.getServiceIdsForDate(date);
+        return calServiceData.getServiceIdsForDate(date);
     }
 
     private Collection<Trip> trips() {

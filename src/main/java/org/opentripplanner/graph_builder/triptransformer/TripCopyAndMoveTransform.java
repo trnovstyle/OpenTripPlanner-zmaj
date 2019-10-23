@@ -23,7 +23,8 @@ import java.util.stream.Collectors;
  * This service is used to patch (copy/move) trip using a "TransitTransform.txt" file.
  * Put the file in the same directory as the GTFS or Netex Zip file and make sure the
  * GTFS/Netex module run this service after the ServiceCalendar and transit data is
- * loaded.
+ * loaded. (Currently the {@link TripTransformService} is only invoked from the Netex
+ * import, but if enabled in the GTFS import it would work there too.)
  * <p>
  * The "TransitTransform.txt" should be UTF-8 encoded and use the following format:
  * <p>
@@ -34,9 +35,7 @@ import java.util.stream.Collectors;
  * <ul>
  * <li>{@code applyOnDate; [yyyy-mm-dd]} All commands after this line will apply the command on trips found 
  * on this DATE. This command must be run at least once, and before any copy/move command.
- * <li>{@code moveToServiceId; [Service ID]} All commands will assign all copied or moved trips to this serviceId 
- * (Netex dayType). This command must be run at least once, and before any copy/move command.
- * <li>{@code CopyFromTo; [Route ID]; [Headsign]; [Source time]; [Target time]} Copy a trip with the given 
+ * <li>{@code CopyFromTo; [Route ID]; [Headsign]; [Source time]; [Target time]} Copy a trip with the given
  * [Route ID], [Headsign] and/or [source time] to the given [target time]. All stop times are moved with the same
  * delta as the depature time.
  * <li>{@code CopyTimeShift; [Route ID]; [Headsign]; [Time shift]; [List of source times]} Copy a trip with the 
@@ -49,8 +48,6 @@ import java.util.stream.Collectors;
  * ARGUMENTS
  * <ul>
  * <li>{@code [yyyy-mm-dd]} Service date in ISO8601 format, using the feed timezone.
- * <li>{@code [Service ID]}  Service ID, must exist after the transit data is imported into OTP, PS!This ID is
- * generated for Nexet feeds.
  * <li>{@code [Route ID]}    The Line ID (Netex) or Route ID (GTFS) witch the trip (source) is part of. Without
  * feed id prefix.
  * <li>{@code [Headsign]}    The headsign (GTFS) or DestinationDisplay (Netex) for the trip used. If a '*' is
@@ -70,7 +67,7 @@ import java.util.stream.Collectors;
  *  them until the same command
  *  ('applyOnDate' or 'moveToServiceId') is repeted.
  */
-public class TripCopyAndMoveTransform {
+class TripCopyAndMoveTransform {
     private static final Logger LOG = LoggerFactory.getLogger(TripCopyAndMoveTransform.class);
 
     private final TransitServiceDecorator transit;
@@ -80,7 +77,7 @@ public class TripCopyAndMoveTransform {
     private ServiceDate currentServiceDate = null;
 
 
-    public TripCopyAndMoveTransform(File inputDir, OtpTransitBuilder transitService, CalendarServiceData data) {
+    TripCopyAndMoveTransform(File inputDir, OtpTransitBuilder transitService, CalendarServiceData data) {
         if(inputDir == null) {
             this.inputFile = null;
             this.transit = null;
@@ -91,7 +88,7 @@ public class TripCopyAndMoveTransform {
         }
     }
 
-    public void run() {
+    void run() {
         try {
             if(inputFile == null || !inputFile.exists() || !inputFile.canRead()) {
                 LOG.info("Trip Transit transformations no performed, no file available.");
@@ -142,10 +139,12 @@ public class TripCopyAndMoveTransform {
             case ApplyOnDate:
                 // applyOnDate; 2019-10-27
                 currentServiceDate = parseServiceDate(arg1);
+                currentServiceIdTarget = transit.findServiceDefinedOnlyOn(currentServiceDate);
                 break;
+            // TODO TGR - The 'MoveToServiceId' value can be safly removed after 27-10-2019
             case MoveToServiceId:
                 // moveToServiceId; RUT:DayType:0-133916
-                currentServiceIdTarget = createId(arg1);
+                // currentServiceIdTarget = createId(arg1);
                 break;
             default:
                 parseError();
@@ -257,6 +256,6 @@ public class TripCopyAndMoveTransform {
     }
 
     enum Command {
-        CopyFromTo, CopyTimeShift, MoveTimeShift, ApplyOnDate, MoveToServiceId;
+        CopyFromTo, CopyTimeShift, MoveTimeShift, ApplyOnDate, @Deprecated MoveToServiceId;
     }
 }
