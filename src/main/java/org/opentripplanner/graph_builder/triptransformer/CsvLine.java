@@ -4,12 +4,16 @@ import org.opentripplanner.model.Route;
 import org.opentripplanner.model.Trip;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
 class CsvLine {
+    private final static int MAX_PRINT_SIZE = 12;
     private static final String SEP = "; ";
+
+    private String tag;
     private String agency;
     private Route route;
     private String headsign;
@@ -17,11 +21,16 @@ class CsvLine {
     private List<Departure> depDayBefore = new ArrayList<>();
 
 
-    CsvLine(Route route, String headsign) {
+    CsvLine(String tag, Route route, String headsign) {
+        this.tag = tag;
         this.agency = route.getAgency().getName();
         this.route = route;
         this.headsign = headsign;
     }
+
+    Route route() { return route; }
+    String headsign() { return headsign; }
+    String tag() { return tag; }
 
     void addDeparture(Trip trip, Integer tripDepartureTime, boolean oneDayService) {
         departures.add(new Departure(trip, tripDepartureTime, oneDayService));
@@ -32,32 +41,28 @@ class CsvLine {
     }
 
     static String csvHeader() {
-        return "Agency; Public code; Route; Headsign; Only DST day; Dep. day before; Departures; Route id";
+        return "Tag; Agency; Route id; Public code; Route; Headsign; Dep. day before; Departures;DST Service";
+    }
+
+    private void sortDepartures() {
+        Collections.sort(departures);
+        Collections.sort(depDayBefore);
     }
 
     String toCsv(){
-        Collections.sort(departures);
-        Collections.sort(depDayBefore);
-
-        boolean oneDayService = dstOneDayService(departures);
-
-        List<Departure> timeList = departures.stream().limit(10).collect(Collectors.toList());
-        int realCutOffTime = timeList.get(timeList.size() -1).time;
-        String times = timeList.stream().map(Departure::timeToString).collect(Collectors.joining(" "));
-        long more = departures.stream().filter(it -> it.time > realCutOffTime).count();
-        String times2 = depDayBefore.stream().map(Departure::timeToString).collect(Collectors.joining(" "));
-
-        return agency + SEP
+        sortDepartures();
+        return (tag==null ? "" : tag) + SEP
+                + agency + SEP
+                + route.getId() + SEP
                 + route.getShortName() + SEP
                 + route.getLongName() + SEP
-                + headsign + SEP +
-                (oneDayService ? "" : "NO!") + SEP
-                + times2 + SEP
-                + times + (more > 0 ? "... (" + more + " more)" : "") + SEP
-                + route.getId();
+                + headsign + SEP
+                + timesToString(depDayBefore) + SEP
+                + timesToString(departures) + SEP
+                + (dstOneDayService(departures) ? "Ok" : "");
     }
 
-    private boolean dstOneDayService(List<Departure> departures) {
+    private static boolean dstOneDayService(List<Departure> departures) {
         for (Departure it : departures) {
             if(!it.isSummerTime()) return true;
             if (!it.oneDayService) return false;
@@ -65,8 +70,17 @@ class CsvLine {
         return true;
     }
 
-    boolean firstDepartureIsBeforeDstChanges() {
-        Collections.sort(departures);
-        return TimeUtil.isDstSummerTime(departures.get(0).time);
+    private static String timesToString(Collection<Departure> departures) {
+        return departures.stream()
+                .limit(MAX_PRINT_SIZE)
+                .map(Departure::timeToString)
+                .collect(Collectors.joining(" "))
+                + more(departures);
     }
+
+    private static String more(Collection<Departure> list) {
+        final int size = list.size();
+        return size > MAX_PRINT_SIZE + 2 ? " .. (" + (size - MAX_PRINT_SIZE) + " more)" : "";
+    }
+
 }

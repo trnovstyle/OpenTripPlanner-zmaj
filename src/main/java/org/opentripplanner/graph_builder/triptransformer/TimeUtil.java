@@ -3,11 +3,18 @@ package org.opentripplanner.graph_builder.triptransformer;
 import org.opentripplanner.model.calendar.ServiceDate;
 
 import java.time.Duration;
+import java.util.HashMap;
+
 
 class TimeUtil {
     /** The time the clock is changed from summer time to winter time given in service wintertime (seconds). */
     private static final int DST_CHANGE_SEC = 2 * 60 * 60;
     static final ServiceDate DST_2019_OCT = new ServiceDate(2019, 10, 27);
+    private static final HashMap<ServiceDate, Integer> DST_OFFSET_PREV_DAY = new HashMap<>();
+
+    static {
+        DST_OFFSET_PREV_DAY.put(DST_2019_OCT, 25 * 3600);
+    }
 
     static boolean isDstSummerTime(int timeSec) {
         return timeSec <= DST_CHANGE_SEC;
@@ -21,16 +28,11 @@ class TimeUtil {
 
     static String timeToString(int timeSec) {
         boolean neg = timeSec < 0;
-        int temp = timeSec / 60;
-        if(neg) temp = temp + 60 * 24;
+        int temp = (neg ? -timeSec : timeSec) / 60;
         int hour = temp / 60;
         int min = temp % 60;
 
-        return "" + hour + ":" + String.format("%02d", min) + (neg ? "-1d" : "");
-    }
-
-    private static void testTime(int time) {
-        System.out.printf("%8s -> %8s %n", timeToString(time), dstToString(time));
+        return (neg ? "-" : "") + hour + ":" + String.format("%02d", min);
     }
 
     static ServiceDate dayBefore(ServiceDate date) {
@@ -66,5 +68,9 @@ class TimeUtil {
         long d = Duration.parse(text).getSeconds();
 
         return (int)d;
+    }
+
+    public static int offsetPrevDaySec(ServiceDate date) {
+        return DST_OFFSET_PREV_DAY.getOrDefault(date, 24 * 3600);
     }
 }

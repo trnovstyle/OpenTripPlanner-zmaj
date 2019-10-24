@@ -1,22 +1,18 @@
 package org.opentripplanner.graph_builder.triptransformer;
 
-import org.apache.commons.io.FileUtils;
 import org.opentripplanner.model.AgencyAndId;
-import org.opentripplanner.model.Trip;
-import org.opentripplanner.model.calendar.CalendarServiceData;
 import org.opentripplanner.model.calendar.ServiceDate;
 import org.opentripplanner.model.impl.OtpTransitBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.function.IntPredicate;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 
 /**
@@ -33,15 +29,15 @@ import java.util.stream.Collectors;
  * <p>
  * COMMANDS
  * <ul>
- * <li>{@code applyOnDate; [yyyy-mm-dd]} All commands after this line will apply the command on trips found 
+ * <li>{@code applyOnDate; [yyyy-mm-dd]} All commands after this line will apply the command on trips found
  * on this DATE. This command must be run at least once, and before any copy/move command.
  * <li>{@code CopyFromTo; [Route ID]; [Headsign]; [Source time]; [Target time]} Copy a trip with the given
  * [Route ID], [Headsign] and/or [source time] to the given [target time]. All stop times are moved with the same
  * delta as the depature time.
- * <li>{@code CopyTimeShift; [Route ID]; [Headsign]; [Time shift]; [List of source times]} Copy a trip with the 
+ * <li>{@code CopyTimeShift; [Route ID]; [Headsign]; [Time shift]; [List of source times]} Copy a trip with the
  * to the given [target time]. All stop times are moved with the same delta as the depature time.
- * <li>{@code MoveTimeShift; [Route ID]; [Headsign]; [Time shift]; [List of source times]} Copy a trip with the 
- * given [Route ID], [Headsign] and/or [source time] to the given [target time]. All stop times are moved with 
+ * <li>{@code MoveTimeShift; [Route ID]; [Headsign]; [Time shift]; [List of source times]} Copy a trip with the
+ * given [Route ID], [Headsign] and/or [source time] to the given [target time]. All stop times are moved with
  * the same delta as the depature time.
  * <p>
  * <p>
@@ -71,53 +67,33 @@ class TripCopyAndMoveTransform {
     private static final Logger LOG = LoggerFactory.getLogger(TripCopyAndMoveTransform.class);
 
     private final TransitServiceDecorator transit;
-    private final File inputFile;
-    private String currentLine;
-    private AgencyAndId currentServiceIdTarget = null;
+    private final TransitTransformFileInput input;
     private ServiceDate currentServiceDate = null;
+    private String currentLine = null;
 
 
-    TripCopyAndMoveTransform(File inputDir, OtpTransitBuilder transitService, CalendarServiceData data) {
+    TripCopyAndMoveTransform(File inputDir, OtpTransitBuilder transitService) {
         if(inputDir == null) {
-            this.inputFile = null;
             this.transit = null;
+            this.input = new TransitTransformFileInput(null);
         }
         else {
-            this.transit = new TransitServiceDecorator(transitService, data);
-            this.inputFile = new File(inputDir, "TransitTransform.txt");
+            this.transit = new TransitServiceDecorator(transitService);
+            this.input = new TransitTransformFileInput(inputDir);
         }
     }
 
     void run() {
         try {
-            if(inputFile == null || !inputFile.exists() || !inputFile.canRead()) {
-                LOG.info("Trip Transit transformations no performed, no file available.");
-                return;
+            List<List<String>> lines = input.readFile();
+            for (List<String> line : lines) {
+                currentLine = String.join("; ", line);
+                if(line.size() < 2) throw new IllegalArgumentException("Not enough args.");
+                executeCommand(line);
             }
-
-            List<String> lines = FileUtils.readLines(inputFile, StandardCharsets.UTF_8);
-            for (String line : lines) {
-                if(line.isBlank() || line.startsWith("#")) continue;
-                processLine(line);
-            }
-        }
-        catch (IOException e) {
-            LOG.error("Unable to read input file: " + inputFile, e);
         }
         catch (Exception e) {
-            LOG.error("Unable to process input: {}" + currentLine, e);
-        }
-    }
-
-    private void processLine(String line) {
-        this.currentLine = line;
-        List<String> tokens = Arrays.stream(line.split(";")).map(String::trim).collect(Collectors.toList());
-
-        if(tokens.size() >= 2) {
-            executeCommand(tokens);
-        }
-        else {
-            parseError();
+            LOG.error("Unable to process input: " + currentLine, e);
         }
     }
 
@@ -139,15 +115,9 @@ class TripCopyAndMoveTransform {
             case ApplyOnDate:
                 // applyOnDate; 2019-10-27
                 currentServiceDate = parseServiceDate(arg1);
-                currentServiceIdTarget = transit.findServiceDefinedOnlyOn(currentServiceDate);
-                break;
-            // TODO TGR - The 'MoveToServiceId' value can be safly removed after 27-10-2019
-            case MoveToServiceId:
-                // moveToServiceId; RUT:DayType:0-133916
-                // currentServiceIdTarget = createId(arg1);
                 break;
             default:
-                parseError();
+                parseError("Unknown command: " + cmd);
                 break;
         }
     }
@@ -159,35 +129,56 @@ class TripCopyAndMoveTransform {
         int sourceDepTimeSec = TimeUtil.timeInSec(args.get(1));
         int targetDepTimeSec = TimeUtil.timeInSec(args.get(2));
         int timeShiftSec = targetDepTimeSec - sourceDepTimeSec;
-        Trip trip = transit.findTrip(currentServiceDate, lineId, headsignFilter, t -> t == sourceDepTimeSec);
-        transit.copyTrip(trip, timeShiftSec, currentServiceIdTarget);
+        TripDeparture trip = transit.findTrip(currentServiceDate, lineId, headsignFilter, t -> t == sourceDepTimeSec);
+        transit.copyTrip(trip, timeShiftSec, currentServiceDate);
         success();
     }
 
 
     /** CopyTimeShift;RUT:Line:20;Helsfyr;-1h;2:20*;2:50* */
     private void copyTimeShift(AgencyAndId lineId, List<String> args) {
-        if(!verifyInputIsOk(args, 3, 13)) return;
+        if(!verifyInputIsOk(args, 3, 33)) return;
         Predicate<String> headsignFilter = headsignFilter(args.get(0));
         int timeshiftSec = TimeUtil.durationInSec(args.get(1));
         IntPredicate departureFilter = departureFilter(args.subList(2, args.size()));
-        List<Trip> trips = transit.findAllTrips(currentServiceDate, lineId, headsignFilter, departureFilter);
-        for (Trip trip : trips) {
-            transit.copyTrip(trip, timeshiftSec, currentServiceIdTarget);
+        List<TripDeparture> trips = transit.findAllTrips(currentServiceDate, lineId, headsignFilter, departureFilter);
+
+        removeDuplicates(trips);
+
+        for (TripDeparture trip : trips) {
+            transit.copyTrip(trip, timeshiftSec, currentServiceDate);
         }
         success();
     }
     /** MoveTimeShift;RUT:Line:3250;*;-1h;* */
     private void moveTimeShift(AgencyAndId lineId, List<String> args) {
-        if(!verifyInputIsOk(args, 3, 13)) return;
+        if(!verifyInputIsOk(args, 3, 33)) return;
         Predicate<String> headsignFilter = headsignFilter(args.get(0));
         int timeshiftSec = TimeUtil.durationInSec(args.get(1));
         IntPredicate departureFilter = departureFilter(args.subList(2, args.size()));
-        List<Trip> trips = transit.findAllTrips(currentServiceDate, lineId, headsignFilter, departureFilter);
-        for (Trip trip : trips) {
-            transit.moveTrip(trip, timeshiftSec, currentServiceIdTarget);
+        List<TripDeparture> trips = transit.findAllTrips(currentServiceDate, lineId, headsignFilter, departureFilter);
+
+        removeDuplicates(trips);
+
+        for (TripDeparture trip : trips) {
+            transit.moveTrip(trip, timeshiftSec, currentServiceDate);
         }
         success();
+    }
+
+    private static void removeDuplicates(List<TripDeparture> trips) {
+        List<TripDeparture> removeList = new ArrayList<>();
+        Set<String> exist = new HashSet<>();
+        for (TripDeparture t : trips) {
+            String key = t.id();
+            if(exist.contains(key)) {
+                removeList.add(t);
+            }
+            else {
+                exist.add(key);
+            }
+        }
+        trips.removeAll(removeList);
     }
 
     private IntPredicate departureFilter(List<String> args) {
@@ -204,7 +195,7 @@ class TripCopyAndMoveTransform {
         };
     }
 
-    private Predicate<String> headsignFilter(String arg) {
+    private static Predicate<String> headsignFilter(String arg) {
         return "*".equals(arg) ? null : arg::equals;
     }
 
@@ -220,24 +211,25 @@ class TripCopyAndMoveTransform {
         return new ServiceDate(year, month, day);
     }
 
+    @SuppressWarnings("BooleanMethodIsAlwaysInverted")
     private boolean verifyInputIsOk(List<String> args, int minLimitArgs, int maxLimitArgs) {
         if(args.size() < minLimitArgs || args.size() > maxLimitArgs) {
-            parseError();
+            parseError("Args limit excided. " + args.size() + " not between " + minLimitArgs + " - " + maxLimitArgs);
             return false;
         }
 
-        if(currentServiceDate == null || currentServiceIdTarget == null) {
+        if(currentServiceDate == null) {
             LOG.error(
-                    "Transit transformation line skipped. ApplyOnDate: {}, moveToServiceId; {}, Line: {}",
-                    currentServiceDate, currentServiceIdTarget, currentLine
+                    "Transit transformation line skipped. ApplyOnDate: {}, Line: {}",
+                    currentServiceDate, currentLine
             );
             return false;
         }
         return true;
     }
 
-    private void parseError() {
-        LOG.error("Transit transformation parsing error: '{}'", currentLine);
+    private void parseError(String message) {
+        LOG.error("Transit transformation parsing error. {}, Line: '{}'", message, currentLine);
     }
 
     private void success() {
@@ -256,6 +248,6 @@ class TripCopyAndMoveTransform {
     }
 
     enum Command {
-        CopyFromTo, CopyTimeShift, MoveTimeShift, ApplyOnDate, @Deprecated MoveToServiceId;
+        CopyFromTo, CopyTimeShift, MoveTimeShift, ApplyOnDate;
     }
 }

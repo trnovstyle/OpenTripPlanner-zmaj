@@ -37,13 +37,14 @@ public class NetexModule implements GraphBuilderModule {
             for (NetexBundle netexBundle : netexBundles) {
                 OtpTransitBuilder daoBuilder = new NetexLoader(netexBundle).loadBundle();
 
+                TripTransformService.runTripTransform(daoBuilder, netexBundle.fileDir());
+
                 calendarService.addData(daoBuilder);
 
                 if (netexBundle.removeStopsNotInUse) {
                     daoBuilder.removeStopsNotInUse();
                 }
 
-                TripTransformService.runTripTransform(daoBuilder, calendarService.getData(), netexBundle.fileDir());
 
 
                 PatternHopFactory hf = new PatternHopFactory(

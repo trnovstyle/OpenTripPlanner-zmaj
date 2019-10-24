@@ -5,7 +5,6 @@ import com.google.common.collect.Multimap;
 import org.opentripplanner.model.AgencyAndId;
 import org.opentripplanner.model.Route;
 import org.opentripplanner.model.Trip;
-import org.opentripplanner.model.calendar.CalendarServiceData;
 import org.opentripplanner.model.calendar.ServiceDate;
 import org.opentripplanner.model.impl.OtpTransitBuilder;
 
@@ -14,9 +13,12 @@ import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
+import java.util.stream.Collectors;
+
 
 
 /**
@@ -29,27 +31,35 @@ import java.util.Map;
  */
 class PrintDaylightSavingTimeReport {
     private TransitServiceDecorator  transit;
+    private List<CsvLine> lines = new ArrayList<>();
 
-    public PrintDaylightSavingTimeReport(OtpTransitBuilder transitService, CalendarServiceData data) {
-        this.transit = new TransitServiceDecorator(transitService, data);
+    PrintDaylightSavingTimeReport(OtpTransitBuilder transitService) {
+        this.transit = new TransitServiceDecorator(transitService);
+    }
+
+    void collectData(String tag) {
+        ServiceDate dstDate = TimeUtil.DST_2019_OCT;
+        lines.addAll(
+                mapOfCsvLines(
+                    tag,
+                    transit.tripsByRoute(dstDate, transit::isBefore_04_30, true),
+                    transit.tripsByRoute(TimeUtil.dayBefore(dstDate), transit::departAfter2400, false)
+                )
+        );
     }
 
     public void print(String filename) {
-        ServiceDate dstDate = TimeUtil.DST_2019_OCT;
-        Map<Route, Map<String, CsvLine>> lines = mapOfCsvLines(
-                transit.tripsByRoute(dstDate, transit::isDstSummerTime, true),
-                transit.tripsByRoute(TimeUtil.dayBefore(dstDate), transit::departAfter2400, false)
-        );
-        printTripsOperatingInPeriod(lines, filename);
+        printTripsOperatingInPeriod(filename, lines);
     }
 
     public void printTrip(ServiceDate date, AgencyAndId routeId, int departureTimeMin) {
-        Map<Route, Map<String, CsvLine>> lines = mapOfCsvLines(
+        List<CsvLine> lines = mapOfCsvLines(
+                null,
                 transit.tripsByRoute(date, (t) -> filterTimeShift(t, routeId, departureTimeMin), false),
                 ArrayListMultimap.create()
         );
         System.out.println("\n---------------------------------------");
-        printTripsOperatingInPeriod(lines, null);
+        printTripsOperatingInPeriod(null, lines);
         System.out.println("---------------------------------------\n");
     }
 
@@ -57,11 +67,12 @@ class PrintDaylightSavingTimeReport {
         return t.getRoute().getId().equals(routeId) && transit.departureTime(t) == depatureTime;
     }
 
-    private Map<Route, Map<String, CsvLine>> mapOfCsvLines(
+    private List<CsvLine> mapOfCsvLines(
+            String tag,
             Multimap<Route, Trip> tripsByRouteDst,
             Multimap<Route, Trip> tripsByRouteDayBeforeDst
     ) {
-        Map<Route, Map<String, CsvLine>> lines = new HashMap<>();
+        List<CsvLine> lines = new ArrayList<>();
         List<Route> routes = new ArrayList<>(tripsByRouteDst.keySet());
         routes.sort(new RouteComparator());
 
@@ -69,12 +80,9 @@ class PrintDaylightSavingTimeReport {
             final Multimap<String, Trip> tripBySign = mapTripByHeadsign(tripsByRouteDst.get(route));
             final Multimap<String, Trip> tripBySignDayBeforeDst = mapTripByHeadsign(tripsByRouteDayBeforeDst.get(route));
 
-            Map<String, CsvLine> headsignMap = new HashMap<>();
-            lines.put(route, headsignMap);
-
             for (String headsign : tripBySign.keySet()) {
-                CsvLine csvLine = new CsvLine(route, headsign);
-                headsignMap.put(headsign, csvLine);
+                CsvLine csvLine = new CsvLine(tag, route, headsign);
+                lines.add(csvLine);
 
                 for (Trip trip : tripBySign.get(headsign)) {
                     csvLine.addDeparture(
@@ -97,11 +105,14 @@ class PrintDaylightSavingTimeReport {
         return lines;
     }
 
-    private void printTripsOperatingInPeriod(Map<Route, Map<String, CsvLine>> lines, String filename) {
-        List<Route> routes = new ArrayList<>(lines.keySet());
-        routes.sort(new RouteComparator());
-
+    private void printTripsOperatingInPeriod(String filename, List<CsvLine> lines) {
         try {
+            List<Route> routes = lines.stream()
+                    .map(CsvLine::route)
+                    .distinct()
+                    .sorted(new RouteComparator())
+                    .collect(Collectors.toList());
+
             PrintWriter out = filename != null
                     ? new PrintWriter(new File(filename))
                     : new PrintWriter(System.out, true);
@@ -109,13 +120,27 @@ class PrintDaylightSavingTimeReport {
             out.println(CsvLine.csvHeader());
 
             for (Route route : routes) {
-                Map<String, CsvLine> headsignsLines = lines.get(route);
+                List<CsvLine> linesForRoute = lines
+                        .stream()
+                        .filter(l -> l.route().equals(route))
+                        .collect(Collectors.toList());
+
+                Map<String, List<CsvLine>> headsignsLines = new TreeMap<>();
+                for (CsvLine line : linesForRoute) {
+                    headsignsLines.putIfAbsent(line.headsign(), new ArrayList<>());
+                    headsignsLines.get(line.headsign()).add(line);
+                }
+
                 List<String> headsigns = new ArrayList<>(headsignsLines.keySet());
                 headsigns.sort(String::compareToIgnoreCase);
 
-                for (String it : headsigns) {
-                    CsvLine csvLine = headsignsLines.get(it);
-                    out.println(csvLine.toCsv());
+                for (String heading : headsigns) {
+                    List<CsvLine> csvLines = headsignsLines.get(heading);
+                    csvLines.sort(Comparator.comparing(CsvLine::tag));
+
+                    for (CsvLine it : csvLines) {
+                        out.println(it.toCsv());
+                    }
                 }
             }
             if(filename != null) {

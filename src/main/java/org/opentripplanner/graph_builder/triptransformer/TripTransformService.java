@@ -1,6 +1,5 @@
 package org.opentripplanner.graph_builder.triptransformer;
 
-import org.opentripplanner.model.calendar.CalendarServiceData;
 import org.opentripplanner.model.impl.OtpTransitBuilder;
 
 import java.io.File;
@@ -13,11 +12,27 @@ public class TripTransformService {
      * startup: {@code "-DenableDstReport"}.
      * </ul>
      */
-    public static void runTripTransform(OtpTransitBuilder otpBuilder, CalendarServiceData calendarServiceData, File feedDirectory) {
-        boolean enableDstReport = System.getProperty("enableDstReport") != null;
-        if (enableDstReport) new PrintDaylightSavingTimeReport(otpBuilder, calendarServiceData).print("DST-before.csv");
-        new TripCopyAndMoveTransform(feedDirectory, otpBuilder, calendarServiceData).run();
-        if (enableDstReport) new PrintDaylightSavingTimeReport(otpBuilder, calendarServiceData).print("DST-after.csv");
+    public static void runTripTransform(OtpTransitBuilder otpBuilder, File feedDirectory) {
+        boolean generateCmds = System.getProperty("generateCmds") != null;
+        boolean printReport = System.getProperty("enableDstReport") != null;
 
+        PrintDaylightSavingTimeReport report = null;
+        if (printReport) {
+            report = new PrintDaylightSavingTimeReport(otpBuilder);
+            report.collectData("IN -->");
+            System.out.println("\n\n\n* * * * * * * * * * * * * * * * * * * * * * * *");
+        }
+        if(generateCmds) {
+            new GenerateTripCopyAndMoveTransforms(otpBuilder).generateCmds();
+        }
+        else {
+            new TripCopyAndMoveTransform(feedDirectory, otpBuilder).run();
+            if (report != null) report.collectData("OUT <-");
+        }
+        if (report != null) {
+            report.print(null);
+            report.print("DST-Summary.csv");
+        }
+        if(printReport) System.out.println("* * * * * * * * * * * * * * * * * * * * * * * *\n\n\n");
     }
 }

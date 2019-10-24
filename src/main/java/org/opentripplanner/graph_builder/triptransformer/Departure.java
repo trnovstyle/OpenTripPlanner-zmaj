@@ -25,4 +25,11 @@ class Departure implements Comparable<Departure> {
     public int compareTo(Departure o) {
         return time - o.time;
     }
+
+    @Override
+    public String toString() {
+        return timeToString()
+                + " " + trip.getRoute().getShortName()
+                + " " + trip.getServiceId();
+    }
 }
