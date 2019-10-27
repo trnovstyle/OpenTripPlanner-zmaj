@@ -1,30 +1,32 @@
-package org.opentripplanner.graph_builder.triptransformer;
+package org.opentripplanner.graph_builder.triptransformer.transform;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
+import org.opentripplanner.graph_builder.triptransformer.util.TripTransformerTimeUtil;
+import org.opentripplanner.model.calendar.ServiceDate;
 import org.opentripplanner.model.impl.OtpTransitBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 
-class GenerateTripCopyAndMoveTransforms {
-    private static final Logger LOG = LoggerFactory.getLogger(GenerateTripCopyAndMoveTransforms.class);
+public class GenerateTransformCommands {
+    private static final Logger LOG = LoggerFactory.getLogger(GenerateTransformCommands.class);
 
     private final TransitServiceDecorator transit;
+    private final ServiceDate serviceDate;
 
 
-    GenerateTripCopyAndMoveTransforms(OtpTransitBuilder transitService) {
+    public GenerateTransformCommands(ServiceDate date, OtpTransitBuilder transitService) {
+        this.serviceDate = date;
         this.transit = new TransitServiceDecorator(transitService);
     }
 
-    void generateCmds() {
+    public void generateCmds() {
         try {
             shiftBeforeAndCopyTrips("100", 60, "3:14", "4:30");
             shiftBeforeAndCopyTrips("110", 60, "3:40", "4:46");
@@ -70,12 +72,6 @@ class GenerateTripCopyAndMoveTransforms {
         }
     }
 
-    void listLineIds() {
-        listLineIds("150, 160, 210, 220, 230, 340, 380, 390, 400");
-        listLineIds("130N, 140N, 1N, 240N, 250N, 30N, 32N, 500N, 540N");
-        listLineIds("63N, 3N, 4N, 70N");
-    }
-
     private void shiftBeforeNewOperationDayStarts(String ... publicCodes) {
         System.out.println();
         for (String publicCode : publicCodes) {
@@ -97,7 +93,7 @@ class GenerateTripCopyAndMoveTransforms {
 
 
     private void shiftBeforeOperationDayStarts(String publicCode) {
-        List<TripDeparture> trips = transit.findAllTripsByPublicCode(TimeUtil.DST_2019_OCT, publicCode);
+        List<TripDeparture> trips = transit.findAllTripsByPublicCode(serviceDate, publicCode);
         Multimap<String, TripDeparture> tripBySign = ArrayListMultimap.create();
 
         for (TripDeparture it : trips) tripBySign.put(it.trip.getTripHeadsign(), it);
@@ -147,10 +143,10 @@ class GenerateTripCopyAndMoveTransforms {
 
     private void shiftBeforeAddTrips(String publicCode, int copyLastMinutes, String departureTimeST) {
         int hits = 0;
-        List<TripDeparture> trips = transit.findAllTripsByPublicCode(TimeUtil.DST_2019_OCT, publicCode);
+        List<TripDeparture> trips = transit.findAllTripsByPublicCode(serviceDate, publicCode);
         Multimap<String, TripDeparture> tripBySign = ArrayListMultimap.create();
 
-        int maxTime = TimeUtil.timeInSec(departureTimeST);
+        int maxTime = TripTransformerTimeUtil.timeInSec(departureTimeST);
         int cpTimeLimit = maxTime - 60 * copyLastMinutes;
 
         for (TripDeparture it : trips) tripBySign.put(it.trip.getTripHeadsign(), it);
@@ -180,12 +176,17 @@ class GenerateTripCopyAndMoveTransforms {
             }
         }
 
-        if(hits != 1) throw new IllegalStateException();
+        if(hits != 1) {
+            throw new IllegalStateException(
+                    "Not able to generate cmd for Line " + publicCode
+                            + ", cpMin: " + copyLastMinutes + ", depTimeST:  " + departureTimeST
+            );
+        }
     }
 
     private String depTimes(List<TripDeparture> tripDepartures) {
         return tripDepartures.stream()
-                .map(it -> TimeUtil.timeToString(it.departureTime))
+                .map(it -> TripTransformerTimeUtil.timeToString(it.departureTime))
                 .collect(Collectors.joining("; "));
     }
 
@@ -195,18 +196,8 @@ class GenerateTripCopyAndMoveTransforms {
 
         return tripDepartures.stream()
                 .limit(limit)
-                .map(it -> TimeUtil.timeToString(it.departureTime))
+                .map(it -> TripTransformerTimeUtil.timeToString(it.departureTime))
                 .collect(Collectors.joining(" "))
                 + (rest > 0 ? " ... (more " + rest + ")" : "") ;
-    }
-
-    private void listLineIds(String ids) {
-        List<String> publicCodes = Arrays.stream(ids.split(",")).map(String::trim).collect(Collectors.toList());
-
-        for (String publicCode : publicCodes) {
-            List<TripDeparture> trips = transit.findAllTripsByPublicCode(TimeUtil.DST_2019_OCT, publicCode);
-            Set<String> lineIds = trips.stream().map(t -> t.trip.getRoute().getId().getId()).collect(Collectors.toSet());
-            lineIds.forEach(it -> System.out.printf("%4s %s %n", publicCode, it));
-        }
     }
 }

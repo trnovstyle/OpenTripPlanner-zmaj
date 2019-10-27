@@ -1,24 +1,19 @@
-package org.opentripplanner.graph_builder.triptransformer;
+package org.opentripplanner.graph_builder.triptransformer.timetablereport;
 
+import org.opentripplanner.graph_builder.triptransformer.util.TripTransformerTimeUtil;
 import org.opentripplanner.model.Trip;
 
 class Departure implements Comparable<Departure> {
     final Trip trip;
     final int time;
-    final boolean oneDayService;
 
-    Departure(Trip trip, int time, boolean oneDayService) {
+    Departure(Trip trip, int time) {
         this.trip = trip;
         this.time = time;
-        this.oneDayService = oneDayService;
     }
 
     String timeToString() {
-        return TimeUtil.dstToString(time);
-    }
-
-    boolean isSummerTime() {
-        return TimeUtil.isDstSummerTime(time);
+        return TripTransformerTimeUtil.timeToString(time);
     }
 
     @Override

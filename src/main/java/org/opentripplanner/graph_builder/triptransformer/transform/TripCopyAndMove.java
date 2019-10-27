@@ -1,5 +1,7 @@
-package org.opentripplanner.graph_builder.triptransformer;
+package org.opentripplanner.graph_builder.triptransformer.transform;
 
+import org.opentripplanner.graph_builder.triptransformer.TripTransformService;
+import org.opentripplanner.graph_builder.triptransformer.util.TripTransformerTimeUtil;
 import org.opentripplanner.model.AgencyAndId;
 import org.opentripplanner.model.calendar.ServiceDate;
 import org.opentripplanner.model.impl.OtpTransitBuilder;
@@ -63,8 +65,8 @@ import java.util.function.Predicate;
  *  them until the same command
  *  ('applyOnDate' or 'moveToServiceId') is repeted.
  */
-class TripCopyAndMoveTransform {
-    private static final Logger LOG = LoggerFactory.getLogger(TripCopyAndMoveTransform.class);
+public class TripCopyAndMove {
+    private static final Logger LOG = LoggerFactory.getLogger(TripCopyAndMove.class);
 
     private final TransitServiceDecorator transit;
     private final TransitTransformFileInput input;
@@ -72,18 +74,16 @@ class TripCopyAndMoveTransform {
     private String currentLine = null;
 
 
-    TripCopyAndMoveTransform(File inputDir, OtpTransitBuilder transitService) {
-        if(inputDir == null) {
-            this.transit = null;
-            this.input = new TransitTransformFileInput(null);
-        }
-        else {
-            this.transit = new TransitServiceDecorator(transitService);
-            this.input = new TransitTransformFileInput(inputDir);
-        }
+    private TripCopyAndMove(File inputDir, OtpTransitBuilder transitService) {
+       this.transit = new TransitServiceDecorator(transitService);
+       this.input = new TransitTransformFileInput(inputDir);
     }
 
-    void run() {
+    public static void run(File inputDir, OtpTransitBuilder transitService) {
+        new TripCopyAndMove(inputDir, transitService).run();
+    }
+
+    private void run() {
         try {
             List<List<String>> lines = input.readFile();
             for (List<String> line : lines) {
@@ -98,51 +98,58 @@ class TripCopyAndMoveTransform {
     }
 
     private void executeCommand(List<String> tokens) {
-        Command cmd = parseCommand(tokens.get(0));
-        String arg1 = tokens.get(1);
-        List<String> args = tokens.subList(2, tokens.size());
+        try {
+            Command cmd = parseCommand(tokens.get(0));
+            String arg1 = tokens.get(1);
+            List<String> args = tokens.subList(2, tokens.size());
 
-        switch (cmd) {
-            case CopyFromTo:
-                copyFromTo(createId(arg1), args);
-                break;
-            case CopyTimeShift:
-                copyTimeShift(createId(arg1), args);
-                break;
-            case MoveTimeShift:
-                moveTimeShift(createId(arg1), args);
-                break;
-            case ApplyOnDate:
-                // applyOnDate; 2019-10-27
-                currentServiceDate = parseServiceDate(arg1);
-                break;
-            default:
-                parseError("Unknown command: " + cmd);
-                break;
+            switch (cmd) {
+                case CopyFromTo:
+                    copyFromTo(createId(arg1), args);
+                    break;
+                case CopyTimeShift:
+                    copyTimeShift(createId(arg1), args);
+                    break;
+                case MoveTimeShift:
+                    moveTimeShift(createId(arg1), args);
+                    break;
+                case ApplyOnDate:
+                    // applyOnDate; 2019-10-27
+                    currentServiceDate = parseServiceDate(arg1);
+                    break;
+                default:
+                    parseError("Unknown command: " + cmd);
+                    break;
+            }
+        }
+        catch (IllegalArgumentException e) {
+            LOG.error("{} Command: '{}'", e.getMessage(), currentLine);
         }
     }
 
-    /** CopyFromTo;RUT:Line:20;Skøyen;2:02*;1:02* */
     private void copyFromTo(AgencyAndId lineId, List<String> args) {
         if(!verifyInputIsOk(args, 3, 3)) return;
         Predicate<String> headsignFilter = headsignFilter(args.get(0));
-        int sourceDepTimeSec = TimeUtil.timeInSec(args.get(1));
-        int targetDepTimeSec = TimeUtil.timeInSec(args.get(2));
+        int sourceDepTimeSec = TripTransformerTimeUtil.timeInSec(args.get(1));
+        int targetDepTimeSec = TripTransformerTimeUtil.timeInSec(args.get(2));
         int timeShiftSec = targetDepTimeSec - sourceDepTimeSec;
         TripDeparture trip = transit.findTrip(currentServiceDate, lineId, headsignFilter, t -> t == sourceDepTimeSec);
+
+        if(trip == null) throw new IllegalArgumentException("No trip found.");
+
         transit.copyTrip(trip, timeShiftSec, currentServiceDate);
         success();
     }
 
 
-    /** CopyTimeShift;RUT:Line:20;Helsfyr;-1h;2:20*;2:50* */
     private void copyTimeShift(AgencyAndId lineId, List<String> args) {
         if(!verifyInputIsOk(args, 3, 33)) return;
         Predicate<String> headsignFilter = headsignFilter(args.get(0));
-        int timeshiftSec = TimeUtil.durationInSec(args.get(1));
+        int timeshiftSec = TripTransformerTimeUtil.durationInSec(args.get(1));
         IntPredicate departureFilter = departureFilter(args.subList(2, args.size()));
         List<TripDeparture> trips = transit.findAllTrips(currentServiceDate, lineId, headsignFilter, departureFilter);
 
+        if(trips.isEmpty()) throw new IllegalArgumentException("No trips found.");
         removeDuplicates(trips);
 
         for (TripDeparture trip : trips) {
@@ -150,14 +157,14 @@ class TripCopyAndMoveTransform {
         }
         success();
     }
-    /** MoveTimeShift;RUT:Line:3250;*;-1h;* */
     private void moveTimeShift(AgencyAndId lineId, List<String> args) {
         if(!verifyInputIsOk(args, 3, 33)) return;
         Predicate<String> headsignFilter = headsignFilter(args.get(0));
-        int timeshiftSec = TimeUtil.durationInSec(args.get(1));
+        int timeshiftSec = TripTransformerTimeUtil.durationInSec(args.get(1));
         IntPredicate departureFilter = departureFilter(args.subList(2, args.size()));
         List<TripDeparture> trips = transit.findAllTrips(currentServiceDate, lineId, headsignFilter, departureFilter);
 
+        if(trips.isEmpty()) throw new IllegalArgumentException("No trips found.");
         removeDuplicates(trips);
 
         for (TripDeparture trip : trips) {
@@ -170,7 +177,7 @@ class TripCopyAndMoveTransform {
         List<TripDeparture> removeList = new ArrayList<>();
         Set<String> exist = new HashSet<>();
         for (TripDeparture t : trips) {
-            String key = t.id();
+            String key = t.key();
             if(exist.contains(key)) {
                 removeList.add(t);
             }
@@ -185,7 +192,7 @@ class TripCopyAndMoveTransform {
         if(args.size() == 1 && "*".equals(args.get(0))) {
             return null;
         }
-        final int[] times = args.stream().mapToInt(TimeUtil::timeInSec).toArray();
+        final int[] times = args.stream().mapToInt(TripTransformerTimeUtil::timeInSec).toArray();
 
         return (t) -> {
             for (int time : times) {

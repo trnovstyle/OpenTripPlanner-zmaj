@@ -1,19 +1,24 @@
-package org.opentripplanner.graph_builder.triptransformer;
+package org.opentripplanner.graph_builder.triptransformer.transform;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
+import org.opentripplanner.graph_builder.triptransformer.util.TripTransformerTimeUtil;
 import org.opentripplanner.model.AgencyAndId;
 import org.opentripplanner.model.Route;
 import org.opentripplanner.model.StopTime;
 import org.opentripplanner.model.Trip;
 import org.opentripplanner.model.calendar.ServiceDate;
 import org.opentripplanner.model.impl.OtpTransitBuilder;
+import org.opentripplanner.routing.edgetype.TripPattern;
+import org.opentripplanner.routing.trippattern.TripTimes;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.IntPredicate;
@@ -21,17 +26,23 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-@SuppressWarnings("SameParameterValue")
-class TransitServiceDecorator {
+public class TransitServiceDecorator {
     private final OtpTransitBuilder transitService;
-    private final MyCalService calService ;
+    private final TTCalService calService ;
+    private final Map<Trip, TripPattern> patterns = new HashMap<>();
 
-    TransitServiceDecorator(OtpTransitBuilder transitService) {
+    public TransitServiceDecorator(OtpTransitBuilder transitService) {
         this.transitService = transitService;
-        this.calService = new MyCalService(transitService.getCalendarDates());
+        this.calService = new TTCalService(transitService.getCalendarDates());
+
+        for (TripPattern pattern : transitService.getTripPatterns().values()) {
+            for (Trip trip : pattern.getTrips()) {
+                this.patterns.put(trip, pattern);
+            }
+        }
     }
 
-    Multimap<Route, Trip> tripsByRoute(ServiceDate date, Function<Trip, Boolean> filter, boolean allTrips) {
+    public Multimap<Route, Trip> tripsByRoute(ServiceDate date, Function<Trip, Boolean> filter, boolean allTrips) {
         Set<AgencyAndId> serviceIds = serviceIdsForDate(date);
 
         List<Trip> trips = findAllTripsByServiceIds(serviceIds);
@@ -112,13 +123,9 @@ class TransitServiceDecorator {
         if(newDepartureTime < 0) {
             // No use for so fare, can be implemented in the same way as the move method below
             throw new IllegalArgumentException("Can no copy trip to previous day. time: "
-                    + TimeUtil.timeToString(newDepartureTime) + ", trip: " + trip);
+                    + TripTransformerTimeUtil.timeToString(newDepartureTime) + ", trip: " + trip);
         }
-
-        MyCalService.NewServiceIds ids = calService.newServiceIds(trip.getServiceId(), date, date);
-
-        copyTrip(trip, timeShiftSeconds, ids.targetId);
-        trip.setServiceId(ids.otherDaysId);
+        copyTrip(trip, timeShiftSeconds, calService.getServiceIdForOnlyDate(date));
     }
 
     void moveTrip(TripDeparture tripDeparture, int timeShiftSeconds, ServiceDate date) {
@@ -129,11 +136,11 @@ class TransitServiceDecorator {
 
         // Move trip to previous operation day
         if(newDepartureTime < 0) {
-            newDate = TimeUtil.dayBefore(date);
-            newTimeShift = timeShiftSeconds + TimeUtil.offsetPrevDaySec(date);
+            newDate = TripTransformerTimeUtil.dayBefore(date);
+            newTimeShift = timeShiftSeconds + TripTransformerTimeUtil.offsetPrevDaySec(date);
         }
 
-        MyCalService.NewServiceIds ids = calService.newServiceIds(trip.getServiceId(), date, newDate);
+        NewServiceIds ids = calService.newServiceIds(trip.getServiceId(), date, newDate);
 
         // Trip is running on move than one service day
         // Service needs to be split
@@ -148,67 +155,16 @@ class TransitServiceDecorator {
         }
     }
 
-    boolean isOneDayService(Trip trip) {
-        return calService.isOnlyOneDatesForServiceId(trip.getServiceId());
+    public StopTimesWrapper stopTimes(Trip trip) {
+        return new StopTimesWrapper(trip, transitService.getStopTimesSortedByTrip().get(trip));
     }
 
-    int departureTime(Trip trip) {
-        return transitService.getStopTimesSortedByTrip().get(trip).get(0).getDepartureTime();
-    }
-
-    boolean departAfter2400(Trip t) {
-        return departureTime(t) > 24 * 3600;
-    }
-
-    boolean isBefore_04_30(Trip t) {
-        return  departureTime(t) < (4 * 60 + 30) * 60;
+    public int departureTime(Trip trip) {
+        return stopTimes(trip).departureTime();
     }
 
 
     /* private methods */
-
-    private void copyTrip(Trip trip, int timeShiftSeconds, AgencyAndId targetServiceId) {
-        AgencyAndId id = trip.getId();
-        Trip newTrip = new Trip(trip);
-        newTrip.setId(newId(id, timeShiftSeconds));
-
-        List<StopTime> newTimes = new ArrayList<>();
-        List<StopTime> times = getStopTimesForTrip(trip);
-
-        for (StopTime it : times) {
-            StopTime newTime = new StopTime(it);
-            id = it.getId();
-            newTime.setId(newId(id, timeShiftSeconds));
-            newTime.setDepartureTime(calculateNewTime(it.getDepartureTime(), timeShiftSeconds));
-            newTime.setArrivalTime(calculateNewTime(it.getArrivalTime(), timeShiftSeconds));
-            newTimes.add(newTime);
-        }
-        newTrip.setServiceId(targetServiceId);
-
-        addTrip(newTrip, newTimes);
-    }
-
-    private void moveTrip(Trip trip, int timeShiftSeconds, AgencyAndId targetServiceId) {
-        List<StopTime> times = getStopTimesForTrip(trip);
-
-        for (StopTime it : times) {
-            it.setId(newId(it.getId(), timeShiftSeconds));
-            it.setDepartureTime(calculateNewTime(it.getDepartureTime(), timeShiftSeconds));
-            it.setArrivalTime(calculateNewTime(it.getArrivalTime(), timeShiftSeconds));
-        }
-        trip.setServiceId(targetServiceId);
-    }
-
-    @Deprecated
-    AgencyAndId findServiceDefinedOnlyOn(ServiceDate serviceDate) {
-        Set<AgencyAndId> serviceIds = serviceIdsForDate(serviceDate);
-        for (AgencyAndId serviceId : serviceIds) {
-            if(calService.isOnlyOneDatesForServiceId(serviceId)) {
-                return serviceId;
-            }
-        }
-        throw new IllegalStateException("There is no service defined for ONLY " + serviceDate + ".");
-    }
 
     private List<Trip> findAllTripsByServiceIds(Collection<AgencyAndId> serviceIds) {
         List<Trip> trips = new ArrayList<>();
@@ -218,6 +174,43 @@ class TransitServiceDecorator {
             }
         }
         return trips;
+    }
+
+    private void moveTrip(Trip trip, int timeShiftSeconds, AgencyAndId targetServiceId) {
+        List<StopTime> times = getStopTimesForTrip(trip);
+        TripTimes tt = patterns.get(trip).scheduledTimetable.getTripTimes(trip);
+
+        trip.setServiceId(targetServiceId);
+        tt.timeShiftThis(timeShiftSeconds);
+
+        for (StopTime it : times) {
+            it.setId(newId(it.getId(), timeShiftSeconds));
+            it.setDepartureTime(calculateNewTime(it.getDepartureTime(), timeShiftSeconds));
+            it.setArrivalTime(calculateNewTime(it.getArrivalTime(), timeShiftSeconds));
+        }
+    }
+
+    private void copyTrip(Trip trip, int timeShiftSeconds, AgencyAndId targetServiceId) {
+        Trip newTrip = new Trip(trip);
+        newTrip.setId(newId(trip.getId(), timeShiftSeconds));
+        newTrip.setServiceId(targetServiceId);
+
+        List<StopTime> newTimes = copyTimeShiftedStopTimes(trip, timeShiftSeconds);
+
+        addTrip(newTrip, newTimes, timeShiftSeconds, trip);
+    }
+
+    private List<StopTime> copyTimeShiftedStopTimes(Trip trip, int timeShiftSeconds) {
+        List<StopTime> newTimes = new ArrayList<>();
+
+        for (StopTime it : getStopTimesForTrip(trip)) {
+            StopTime newTime = new StopTime(it);
+            newTime.setId(newId(it.getId(), timeShiftSeconds));
+            newTime.setDepartureTime(calculateNewTime(it.getDepartureTime(), timeShiftSeconds));
+            newTime.setArrivalTime(calculateNewTime(it.getArrivalTime(), timeShiftSeconds));
+            newTimes.add(newTime);
+        }
+        return newTimes;
     }
 
     private List<StopTime> getStopTimesForTrip(Trip trip) {
@@ -232,9 +225,14 @@ class TransitServiceDecorator {
         return transitService.getTrips().values();
     }
 
-    private void addTrip(Trip newTrip, List<StopTime> newTimes) {
+    private void addTrip(Trip newTrip, List<StopTime> stopTimes, int timeShiftSeconds, Trip oldTrip) {
         transitService.getTrips().add(newTrip);
-        transitService.getStopTimesSortedByTrip().put(newTrip, newTimes);
+        transitService.getStopTimesSortedByTrip().put(newTrip, stopTimes);
+
+        TripPattern tripPattern = patterns.get(oldTrip);
+        tripPattern.getTrips().add(newTrip);
+        TripTimes tt = new TripTimes(newTrip, timeShiftSeconds, tripPattern.scheduledTimetable.getTripTimes(oldTrip).clone());
+        tripPattern.scheduledTimetable.addTripTimes(tt);
     }
 
     private static AgencyAndId newId(AgencyAndId id, int suffix) {
@@ -245,7 +243,7 @@ class TransitServiceDecorator {
         if(original < 0) return original;
         int newTime = original + delta;
         if(newTime < 0) throw new IllegalArgumentException(
-                "Cant timeshift to a negative value: " + TimeUtil.timeToString(newTime)
+                "Cant time-shift to a negative value: " + TripTransformerTimeUtil.timeToString(newTime)
         );
         return newTime;
     }

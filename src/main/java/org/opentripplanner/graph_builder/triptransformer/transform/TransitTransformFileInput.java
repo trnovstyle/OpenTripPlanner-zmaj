@@ -1,4 +1,4 @@
-package org.opentripplanner.graph_builder.triptransformer;
+package org.opentripplanner.graph_builder.triptransformer.transform;
 
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;

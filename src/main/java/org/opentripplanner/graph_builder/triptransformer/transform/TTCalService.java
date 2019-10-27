@@ -1,18 +1,18 @@
-package org.opentripplanner.graph_builder.triptransformer;
+package org.opentripplanner.graph_builder.triptransformer.transform;
 
 import com.google.common.collect.HashMultimap;
 import org.opentripplanner.model.AgencyAndId;
 import org.opentripplanner.model.ServiceCalendarDate;
 import org.opentripplanner.model.calendar.ServiceDate;
 
-import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-class MyCalService {
+class TTCalService {
     private final List<ServiceCalendarDate> calendarDates;
 
     private final HashMultimap<AgencyAndId, ServiceDate> datesByServiceId = HashMultimap.create();
@@ -21,7 +21,7 @@ class MyCalService {
     private final String feedId;
 
 
-    MyCalService(List<ServiceCalendarDate> calendarDates) {
+    TTCalService(List<ServiceCalendarDate> calendarDates) {
         this.calendarDates = calendarDates;
         this.feedId = calendarDates.get(0).getServiceId().getAgencyId();
 
@@ -37,10 +37,6 @@ class MyCalService {
         return serviceIdsByDate.get(date);
     }
 
-    List<ServiceDate> getServiceDatesForServiceId(AgencyAndId serviceId) {
-        return new ArrayList<>(datesByServiceId.get(serviceId));
-    }
-
     NewServiceIds newServiceIds(AgencyAndId originalServiceId, ServiceDate originalDate, ServiceDate targetDate) {
         Set<ServiceDate> oldDates = datesByServiceId.get(originalServiceId);
         Set<ServiceDate> newOtherDates = oldDates.stream().filter(it -> !it.equals(originalDate)).collect(Collectors.toSet());
@@ -53,7 +49,7 @@ class MyCalService {
                 return serviceId;
             }
         }
-        throw new IllegalStateException();
+        return createServiceIdForDates(Collections.singleton(date));
     }
 
     boolean isOnlyOneDatesForServiceId(AgencyAndId serviceId) {
@@ -76,7 +72,6 @@ class MyCalService {
 
     private AgencyAndId createServiceIdForDates(Set<ServiceDate> dates) {
         AgencyAndId serviceId = newServiceId(dates);
-
         for (ServiceDate date : dates) {
             calendarDates.add(newCalDate(serviceId, date));
             datesByServiceId.put(serviceId, date);
@@ -101,13 +96,4 @@ class MyCalService {
         return new AgencyAndId(feedId, temp);
     }
 
-    static class NewServiceIds {
-        final AgencyAndId targetId;
-        final AgencyAndId otherDaysId;
-
-        private NewServiceIds(AgencyAndId targetId, AgencyAndId otherDaysId) {
-            this.targetId = targetId;
-            this.otherDaysId = otherDaysId;
-        }
-    }
 }

@@ -45,6 +45,7 @@ public class NetexModule implements GraphBuilderModule {
                     daoBuilder.removeStopsNotInUse();
                 }
 
+                TripTransformService.printTimeTable(daoBuilder, netexBundle.fileDir());
 
 
                 PatternHopFactory hf = new PatternHopFactory(

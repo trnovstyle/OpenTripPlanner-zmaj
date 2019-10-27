@@ -1,4 +1,4 @@
-package org.opentripplanner.graph_builder.triptransformer;
+package org.opentripplanner.graph_builder.triptransformer.timetablereport;
 
 import org.opentripplanner.model.Route;
 

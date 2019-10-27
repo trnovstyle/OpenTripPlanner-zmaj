@@ -1,5 +1,6 @@
-package org.opentripplanner.graph_builder.triptransformer;
+package org.opentripplanner.graph_builder.triptransformer.transform;
 
+import org.opentripplanner.graph_builder.triptransformer.util.TripTransformerTimeUtil;
 import org.opentripplanner.model.Route;
 import org.opentripplanner.model.Trip;
 
@@ -17,14 +18,15 @@ class TripDeparture implements Comparable<TripDeparture> {
     }
 
     String departureTimeAsString() {
-        return TimeUtil.timeToString(departureTime);
+        return TripTransformerTimeUtil.timeToString(departureTime);
     }
 
-    String id() {
+    /** A String that "most likely" kan be used to identify a trip. */
+    String key() {
         return String.format(
                 "%s-%s-%s-%s",
-                departureTimeAsString(),
                 trip.getRoute().getId().getId(),
+                departureTimeAsString(),
                 trip.getTripHeadsign(),
                 trip.getServiceId()
         );
@@ -39,6 +41,6 @@ class TripDeparture implements Comparable<TripDeparture> {
     public String toString() {
         Route route = trip.getRoute();
         return "<" + route.getShortName()+ " " + route.getId().getId() + " " + trip.getTripHeadsign()
-                + " " + TimeUtil.timeToString(departureTime) + '>';
+                + " " + TripTransformerTimeUtil.timeToString(departureTime) + '>';
     }
 }
