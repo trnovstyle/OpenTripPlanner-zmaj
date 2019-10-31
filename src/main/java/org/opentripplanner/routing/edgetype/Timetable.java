@@ -973,13 +973,17 @@ public class Timetable implements Serializable {
 
         List<Stop> modifiedStops = new ArrayList<>();
 
+        Set<Object> alreadyVisited = new HashSet<>();
+
         for (int i = 0; i < stops.length; i++) {
             Stop stop = stops[i];
 
             boolean foundMatch = false;
             if (i < recordedCalls.size()) {
                 for (RecordedCall recordedCall : recordedCalls) {
-
+                    if (alreadyVisited.contains(recordedCall)) {
+                        continue;
+                    }
                     //Current stop is being updated
                     boolean stopsMatchById = stop.getId().getId().equals(recordedCall.getStopPointRef().getValue());
 
@@ -994,11 +998,16 @@ public class Timetable implements Serializable {
                     if (stopsMatchById) {
                         foundMatch = true;
                         modifiedStops.add(stop);
+                        alreadyVisited.add(recordedCall);
                         break;
                     }
                 }
             } else {
                 for (EstimatedCall estimatedCall : estimatedCalls) {
+
+                    if (alreadyVisited.contains(estimatedCall)) {
+                        continue;
+                    }
 
                     //Current stop is being updated
                     boolean stopsMatchById = stop.getId().getId().equals(estimatedCall.getStopPointRef().getValue());
@@ -1014,6 +1023,7 @@ public class Timetable implements Serializable {
                     if (stopsMatchById) {
                         foundMatch = true;
                         modifiedStops.add(stop);
+                        alreadyVisited.add(estimatedCall);
                         break;
                     }
                 }
