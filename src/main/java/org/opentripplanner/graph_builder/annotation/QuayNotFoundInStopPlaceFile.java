@@ -2,7 +2,7 @@ package org.opentripplanner.graph_builder.annotation;
 
 public class QuayNotFoundInStopPlaceFile extends GraphBuilderAnnotation {
 
-    public static final String FMT = "Quay % not found in stop place file.";
+    public static final String FMT = "Quay %s not found in stop place file.";
 
     final String quayRef;
 
