@@ -594,7 +594,7 @@ public class TripPattern implements Cloneable, Serializable {
 
     public LineString getGeometry() {
         List<LineString> lineStrings = new ArrayList<>();
-        for (int i = 0; i < patternHops.length - 1; i++) {
+        for (int i = 0; i < patternHops.length; i++) {
             if (patternHops[i] != null) { // TODO SIRI: Added trips have no PatternHops
                 lineStrings.add(patternHops[i].getGeometry());
             }
