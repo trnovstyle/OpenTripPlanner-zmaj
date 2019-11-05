@@ -14,11 +14,14 @@ public class SmartBikeRentalDataSource extends OAuthJsonBikeRentalDataSource {
 
     private Set<String> networks = null;
 
-    SmartBikeRentalDataSource(String network, String publicId, String secret, String accessTokenUrl) {
+    private String idPrefix;
+
+    SmartBikeRentalDataSource(String network, String publicId, String secret, String accessTokenUrl, String idPrefix) {
         super("stations", publicId, secret, accessTokenUrl);
         this.baseURL = getUrl();
         this.networks = new HashSet<>();
         this.networks.add(network);
+        this.idPrefix = idPrefix;
     }
 
     /**
@@ -32,7 +35,7 @@ public class SmartBikeRentalDataSource extends OAuthJsonBikeRentalDataSource {
     public BikeRentalStation makeStation(JsonNode rentalStationNode) {
         BikeRentalStation brstation = new BikeRentalStation();
 
-        brstation.id = rentalStationNode.path("id").asText();
+        brstation.id = idPrefix + rentalStationNode.path("id").asText();
         brstation.name = new NonLocalizedString(rentalStationNode.path("name").asText("").trim());
         brstation.x = rentalStationNode.path("location").path("lon").asDouble();
         brstation.y = rentalStationNode.path("location").path("lat").asDouble();
