@@ -73,7 +73,20 @@ public class TripPatternCache {
             // TODO: purge these vertices and edges once in a while?
             tripPattern.makePatternVerticesAndEdges(graph, graph.index.stopVertexForStop);
             
-            // TODO: Add pattern to graph index? 
+            // TODO: Add pattern to graph index?
+
+            // This will copy the geometry from the hopEdges of the old TripPattern to the HopEdges
+            // of the new one. It does a check if the start/end stops are the same per HopEdge
+            // and in the case they are different it defaults to a straight line.
+            TripPattern originalTripPattern = graph.index.patternForTrip.get(trip);
+            if (originalTripPattern != null) {
+                for (int i = 0; i < originalTripPattern.hopEdges.length; i++) {
+                    if (tripPattern.hopEdges[i].getBeginStop().equals(originalTripPattern.hopEdges[i].getBeginStop())
+                            && tripPattern.hopEdges[i].getEndStop().equals(originalTripPattern.hopEdges[i].getEndStop())) {
+                        tripPattern.hopEdges[i].setGeometry(originalTripPattern.hopEdges[i].getGeometry());
+                    }
+                }
+            }
             
             // Add pattern to cache
             cache.put(key, tripPattern);
