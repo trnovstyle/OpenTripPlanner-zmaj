@@ -50,11 +50,20 @@ public class NetexMapper {
 
     private final String defaultFlexMaxTravelTime;
 
+    private final int defaultMinimumFlexPaddingTime;
 
-    public NetexMapper(OtpTransitBuilder transitBuilder, String agencyId, String defaultFlexMaxTravelTime, AddBuilderAnnotation addBuilderAnnotation) {
+
+    public NetexMapper(
+            OtpTransitBuilder transitBuilder,
+            String agencyId,
+            String defaultFlexMaxTravelTime,
+            int defaultMinimumFlexPaddingTime,
+            AddBuilderAnnotation addBuilderAnnotation
+    ) {
         this.transitBuilder = transitBuilder;
         this.agencyId = agencyId;
         this.defaultFlexMaxTravelTime = defaultFlexMaxTravelTime;
+        this.defaultMinimumFlexPaddingTime = defaultMinimumFlexPaddingTime;
         this.tripPatternMapper = new TripPatternMapper(addBuilderAnnotation);
         this.flexibleStopPlaceMapper= new FlexibleStopPlaceMapper(addBuilderAnnotation);
         this.serviceLinkMapper = new ServiceLinkMapper(addBuilderAnnotation);
@@ -130,7 +139,7 @@ public class NetexMapper {
         }
 
         for (JourneyPattern journeyPattern : netexDao.journeyPatternsById.values()) {
-            tripPatternMapper.mapTripPattern(journeyPattern, transitBuilder, netexDao, defaultFlexMaxTravelTime);
+            tripPatternMapper.mapTripPattern(journeyPattern, transitBuilder, netexDao, defaultFlexMaxTravelTime, defaultMinimumFlexPaddingTime);
         }
 
         for (String serviceId : netexDao.getCalendarServiceIds()) {

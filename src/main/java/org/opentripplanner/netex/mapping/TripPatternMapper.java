@@ -34,12 +34,13 @@ public class TripPatternMapper {
     private BookingArrangementMapper bookingArrangementMapper = new BookingArrangementMapper();
     private final AddBuilderAnnotation addBuilderAnnotation;
     private String currentHeadsign;
+    private int defaultMinimumFlexPaddingTime;
 
     public TripPatternMapper(AddBuilderAnnotation addBuilderAnnotation) {
         this.addBuilderAnnotation = addBuilderAnnotation;
     }
 
-    public void mapTripPattern(JourneyPattern journeyPattern, OtpTransitBuilder transitBuilder, NetexDao netexDao, String defaultFlexMaxTravelTime) {
+    public void mapTripPattern(JourneyPattern journeyPattern, OtpTransitBuilder transitBuilder, NetexDao netexDao, String defaultFlexMaxTravelTime, int defaultMinimumFlexPaddingTime) {
         TripMapper tripMapper = new TripMapper();
 
         List<Trip> trips = new ArrayList<>();
@@ -67,7 +68,7 @@ public class TripPatternMapper {
                 }
             }
 
-            Trip trip = tripMapper.mapServiceJourney(serviceJourney, transitBuilder, netexDao, defaultFlexMaxTravelTime);
+            Trip trip = tripMapper.mapServiceJourney(serviceJourney, transitBuilder, netexDao, defaultFlexMaxTravelTime, defaultMinimumFlexPaddingTime);
             trips.add(trip);
 
             TimetabledPassingTimes_RelStructure passingTimes = serviceJourney.getPassingTimes();
@@ -77,7 +78,7 @@ public class TripPatternMapper {
                     journeyPattern, transitBuilder, netexDao, trip, timetabledPassingTimes,isFlexible
             );
 
-            tripMapper.setdrtAdvanceBookMin(trip, stopTimes.stream().map(s -> s.bookingArrangement).collect(Collectors.toList()));
+            tripMapper.setdrtAdvanceBookMin(trip, defaultMinimumFlexPaddingTime);
 
             if (stopTimes != null && stopTimes.size() > 0) {
                 transitBuilder.getStopTimesSortedByTrip().put(trip, stopTimes.stream().map(stwb -> stwb.stopTime).collect(Collectors.toList()));

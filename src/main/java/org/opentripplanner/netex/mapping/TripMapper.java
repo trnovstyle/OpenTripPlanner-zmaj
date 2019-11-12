@@ -11,9 +11,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.xml.bind.JAXBElement;
-import java.time.Duration;
-import java.time.temporal.ChronoUnit;
-import java.util.List;
 
 /**
  * Agency id must be added when the stop is related to a line
@@ -26,7 +23,7 @@ public class TripMapper {
     private TransportModeMapper transportModeMapper = new TransportModeMapper();
     private BookingArrangementMapper bookingArrangementMapper = new BookingArrangementMapper();
 
-    public Trip mapServiceJourney(ServiceJourney serviceJourney, OtpTransitBuilder gtfsDao, NetexDao netexDao, String defaultFlexMaxTravelTime){
+    public Trip mapServiceJourney(ServiceJourney serviceJourney, OtpTransitBuilder gtfsDao, NetexDao netexDao, String defaultFlexMaxTravelTime, int defaultMinimumFlexPaddingTime){
 
         Line_VersionStructure line = lineFromServiceJourney(serviceJourney, netexDao);
 
@@ -157,23 +154,11 @@ public class TripMapper {
      * @param trip Trip to be modified
      * @param bookingArrangements Booking arrangements for StopPointsInJourneyPatterns for this trip
      *
-     * This maps minimumBookingPeriod from one of three levels to trip. Order of precedence is StopPointInJourneyPattern -
-     * ServiceJourney - Line.
+     * This sets DrtAdvanceBookMin to a default value, as the concept does not currently exist
+     * in NeTEx
      */
 
-    public void setdrtAdvanceBookMin(Trip trip, List<BookingArrangement> bookingArrangements) {
-        if (bookingArrangements.stream().anyMatch(b -> b != null && b.getMinimumBookingPeriod() != null)) {
-            trip.setDrtAdvanceBookMin(durationToMins(bookingArrangements.stream().filter(b -> b.getMinimumBookingPeriod() != null).findFirst()
-                    .get().getMinimumBookingPeriod()));
-        } else if (trip.getBookingArrangements() != null && trip.getBookingArrangements().getMinimumBookingPeriod() != null) {
-            trip.setDrtAdvanceBookMin(durationToMins(trip.getBookingArrangements().getMinimumBookingPeriod()));
-        } else if (trip.getRoute().getBookingArrangements() != null
-                && trip.getRoute().getBookingArrangements().getMinimumBookingPeriod() != null) {
-            trip.setDrtAdvanceBookMin(durationToMins(trip.getRoute().getBookingArrangements().getMinimumBookingPeriod()));
-        }
-    }
-
-    private double durationToMins(Duration duration) {
-        return duration.get(ChronoUnit.SECONDS) / 60.0;
+    public void setdrtAdvanceBookMin(Trip trip, int defaultMinimumFlexPaddingTime) {
+        trip.setDrtAdvanceBookMin(defaultMinimumFlexPaddingTime);
     }
 }

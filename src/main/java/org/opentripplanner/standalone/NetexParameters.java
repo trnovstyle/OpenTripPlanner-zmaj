@@ -36,6 +36,8 @@ public class NetexParameters {
 
     private static final String DEFAULT_FLEX_MAX_TRAVEL_TIME = "1t+2";
 
+    private static final int DEFAULT_MINIMUM_FLEX_PADDING_TIME = 15;
+
     /**
      * This field is used to identify the specific NeTEx feed. It is used instead of the feed_id field in GTFS file
      * feed_info.txt.
@@ -123,6 +125,14 @@ public class NetexParameters {
 
     public final String defaultFlexMaxTravelTime;
 
+    /**
+     * This is the default value for padding the start time of a flexible trip in relation to the
+     * current system time. We are keeping this parameter separate from minimumBookingPeriod. As
+     * a consequence this concept is not currently represented in NeTEx.
+     */
+
+    public final int defaultMinimumFlexPaddingTimeMins;
+
     NetexParameters(JsonNode config) {
         moduleFilePattern = pattern("moduleFilePattern", MODULE_FILE_PATTERN, config);
         ignoreFilePattern = pattern("ignoreFilePattern", IGNORE_FILE_PATTERN, config);
@@ -131,6 +141,7 @@ public class NetexParameters {
         groupFilePattern = pattern("groupFilePattern", GROUP_FILE_PATTERN, config);
         netexFeedId = text("netexFeedId", NETEX_FEED_ID, config);
         defaultFlexMaxTravelTime = text("flexMaxTravelTime", DEFAULT_FLEX_MAX_TRAVEL_TIME, config);
+        defaultMinimumFlexPaddingTimeMins = integer("defaultMinimumFlexPaddingTime", DEFAULT_MINIMUM_FLEX_PADDING_TIME, config);
     }
 
     private static Pattern pattern(String path, String defaultValue, JsonNode config) {
@@ -139,6 +150,10 @@ public class NetexParameters {
 
     private static String text(String path, String defaultValue, JsonNode config) {
         return config == null ? defaultValue : config.path(path).asText(defaultValue);
+    }
+
+    private static int integer(String path, int defaultValue, JsonNode config) {
+        return config == null ? defaultValue : config.path(path).asInt(defaultValue);
     }
 
     public boolean moduleFileMatches(String name) {

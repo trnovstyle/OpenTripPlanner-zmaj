@@ -63,7 +63,13 @@ public class NetexLoader {
         this.unmarshaller = createUnmarshaller();
         OtpTransitBuilder transitBuilder = new OtpTransitBuilder();
 
-        this.otpMapper = new NetexMapper(transitBuilder, netexBundle.netexParameters.netexFeedId, netexBundle.netexParameters.defaultFlexMaxTravelTime, addBuilderAnnotation);
+        this.otpMapper = new NetexMapper(
+                transitBuilder,
+                netexBundle.netexParameters.netexFeedId,
+                netexBundle.netexParameters.defaultFlexMaxTravelTime,
+                netexBundle.netexParameters.defaultMinimumFlexPaddingTimeMins,
+                addBuilderAnnotation
+        );
 
         loadDao();
 
