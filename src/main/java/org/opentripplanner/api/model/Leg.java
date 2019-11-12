@@ -298,6 +298,12 @@ public class Leg {
      @JsonSerialize
      public Calendar minEndTime = null;
 
+         /**
+          * This is the shortest possible travel time for a flexible transportation leg. It does
+          * not account for any deviations, but assumes the shortest route is taken.
+          */
+     public int directTime;
+
      /** trip.drt_advance_book_min if this is a demand-response leg */
      @XmlAttribute
      @JsonSerialize
@@ -360,6 +366,10 @@ public class Leg {
     @JsonSerialize
     public double getDuration() {
         return endTime.getTimeInMillis()/1000.0 - startTime.getTimeInMillis()/1000.0;
+    }
+
+    public int getDirectDuration() {
+        return this.directTime == 0 ? (int)getDuration() : this.directTime;
     }
 
     public void addAlert(Alert alert, Locale locale) {

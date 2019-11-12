@@ -960,6 +960,7 @@ public abstract class GraphPathToTripPlanConverter {
             if (edge instanceof PartialPatternHop) {
                 PartialPatternHop hop = (PartialPatternHop) edge;
                 int directTime = hop.getDirectVehicleTime();
+                leg.directTime = directTime;
                 TripTimes tt = states[states.length - 1].getTripTimes();
                 int maxTime = tt.getDemandResponseMaxTime(directTime);
                 int avgTime = tt.getDemandResponseAvgTime(directTime);
