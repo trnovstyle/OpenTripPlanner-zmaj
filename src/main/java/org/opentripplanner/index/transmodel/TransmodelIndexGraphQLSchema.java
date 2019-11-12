@@ -3926,7 +3926,9 @@ public class TransmodelIndexGraphQLSchema {
                         .build())
                 .field(GraphQLFieldDefinition.newFieldDefinition()
                         .name("directDuration")
-                        .description("The legs's direct duration in seconds")
+                        .description("In the case of a flexible journey, this will represent the " 
+                                + "duration of the best-case scenario, where the vehicle drives directly "
+                                + "to the destination for the current passenger.")
                         .type(Scalars.GraphQLLong)
                         .dataFetcher(environment -> ((Leg) environment.getSource()).getDirectDuration())
                         .build())
