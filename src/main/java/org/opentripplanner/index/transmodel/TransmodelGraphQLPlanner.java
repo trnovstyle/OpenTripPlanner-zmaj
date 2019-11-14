@@ -59,7 +59,8 @@ public class TransmodelGraphQLPlanner {
     }
 
     public Map<String, Object> plan(DataFetchingEnvironment environment) {
-        Router router = environment.getContext();
+        TransmodelApiContext context = environment.getContext();
+        Router router = context.router;
         RoutingRequest request = createRequest(environment);
         GraphPathFinder gpFinder = new GraphPathFinder(router);
 
@@ -78,7 +79,7 @@ public class TransmodelGraphQLPlanner {
         } catch (Exception e) {
             PlannerError error = new PlannerError(e);
             if (!PlannerError.isPlanningError(e.getClass()))
-                LOG.error("Error while planning path for request: {}", environment.getArguments().toString(), e);
+                LOG.error("Error while planning path ET-Client-Name {} and request: {}", context.clientName, environment.getArguments().toString(), e);
             messages.add(error.message);
         } finally {
             if (request.rctx != null) {
@@ -164,7 +165,8 @@ public class TransmodelGraphQLPlanner {
     }
 
     private RoutingRequest createRequest(DataFetchingEnvironment environment) {
-        Router router = environment.getContext();
+        TransmodelApiContext context = environment.getContext();
+        Router router = context.router;
         RoutingRequest request = router.defaultRoutingRequest.clone();
         request.routerId = router.id;
 
@@ -309,14 +311,14 @@ public class TransmodelGraphQLPlanner {
         callWith.argument("ignoreInterchanges", (Boolean v) -> request.ignoreInterchanges = v);
 
         if (!request.modes.isTransit() && request.modes.getCar()) {
-            getLocationOfFirstQuay(request.from, ((Router)environment.getContext()).graph.index);
-            getLocationOfFirstQuay(request.to, ((Router)environment.getContext()).graph.index);
+            getLocationOfFirstQuay(request.from, router.graph.index);
+            getLocationOfFirstQuay(request.to, router.graph.index);
         } else if (request.kissAndRide) {
-            getLocationOfFirstQuay(request.from, ((Router)environment.getContext()).graph.index);
+            getLocationOfFirstQuay(request.from, router.graph.index);
         } else if (request.rideAndKiss) {
-            getLocationOfFirstQuay(request.to, ((Router)environment.getContext()).graph.index);
+            getLocationOfFirstQuay(request.to, router.graph.index);
         } else if (request.parkAndRide) {
-            getLocationOfFirstQuay(request.from, ((Router)environment.getContext()).graph.index);
+            getLocationOfFirstQuay(request.from, router.graph.index);
         }
 
         return request;

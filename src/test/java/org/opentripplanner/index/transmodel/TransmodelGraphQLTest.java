@@ -128,7 +128,8 @@ public class TransmodelGraphQLTest extends GtfsTest {
                         "  }" +
                         "}";
 
-        HashMap<String, Object> result = graphIndex.getGraphQLExecutionResult(query, router, new HashMap<>(), null, 10000, 10000);
+        TransmodelApiContext context = new TransmodelApiContext(router, "");
+        HashMap<String, Object> result = graphIndex.getGraphQLExecutionResult(query, context, new HashMap<>(), null, 10000, 10000);
         Object tripPatternObj = ((Map) ((Map) result.get("data")).get("trip")).get("tripPatterns");
         assertTrue(tripPatternObj instanceof List);
         List tripPatterns = (List) tripPatternObj;

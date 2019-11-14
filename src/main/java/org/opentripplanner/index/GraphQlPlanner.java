@@ -9,6 +9,7 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import com.google.common.collect.ImmutableMap;
+import org.opentripplanner.index.transmodel.TransmodelApiContext;
 import org.opentripplanner.model.AgencyAndId;
 import org.opentripplanner.api.common.Message;
 import org.opentripplanner.api.common.ParameterException;
@@ -43,7 +44,8 @@ public class GraphQlPlanner {
     }
 
     public Map<String, Object> plan(DataFetchingEnvironment environment) {
-        Router router = (Router)environment.getContext();
+        TransmodelApiContext context = environment.getContext();
+        Router router = context.router;
         RoutingRequest request = createRequest(environment);
         GraphPathFinder gpFinder = new GraphPathFinder(router);
 
@@ -134,7 +136,8 @@ public class GraphQlPlanner {
     }
 
     private RoutingRequest createRequest(DataFetchingEnvironment environment) {
-        Router router = (Router)environment.getContext();
+        TransmodelApiContext context = environment.getContext();
+        Router router = context.router;
         RoutingRequest request = router.defaultRoutingRequest.clone();
         request.routerId = router.id;
 

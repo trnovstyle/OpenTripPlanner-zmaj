@@ -61,7 +61,12 @@ public class TransmodelIndexAPI {
     @POST
     @Path("/graphql")
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response getGraphQL(HashMap<String, Object> queryParameters, @HeaderParam("OTPTimeout") @DefaultValue("10000") int timeout, @HeaderParam("OTPMaxResolves") @DefaultValue("1000000") int maxResolves) {
+    public Response getGraphQL(
+            HashMap<String, Object> queryParameters,
+            @HeaderParam("OTPTimeout") @DefaultValue("10000") int timeout,
+            @HeaderParam("OTPMaxResolves") @DefaultValue("1000000") int maxResolves,
+            @HeaderParam("ET-Client-Name") @DefaultValue("") String clientName
+    ) {
         int finalTimeout = checkTimeout(timeout);
         Object queryParam = queryParameters.get("query");
         if (queryParameters==null || !(queryParam instanceof String)) {
@@ -84,21 +89,26 @@ public class TransmodelIndexAPI {
         } else {
             variables = new HashMap<>();
         }
-        return index.getGraphQLResponse(query, router, variables, operationName, finalTimeout, maxResolves);
+        TransmodelApiContext context = new TransmodelApiContext(router, clientName);
+
+        return index.getGraphQLResponse(query, context, variables, operationName, finalTimeout, maxResolves);
     }
 
     @POST
     @Path("/graphql")
     @Consumes("application/graphql")
-    public Response getGraphQL(String query, @HeaderParam("OTPTimeout") @DefaultValue("10000") int timeout, @HeaderParam("OTPMaxResolves") @DefaultValue("1000000") int maxResolves) {
+    public Response getGraphQL(String query, @HeaderParam("OTPTimeout") @DefaultValue("10000") int timeout, @HeaderParam("OTPMaxResolves") @DefaultValue("1000000") int maxResolves,
+            @HeaderParam("ET-Client-Name") @DefaultValue("") String clientName) {
         int finalTimeout = checkTimeout(timeout);
-        return index.getGraphQLResponse(query, router, null, null, finalTimeout, maxResolves);
+        TransmodelApiContext context = new TransmodelApiContext(router, clientName);
+        return index.getGraphQLResponse(query, context, null, null, finalTimeout, maxResolves);
     }
 
     @POST
     @Path("/graphql/batch")
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response getGraphQLBatch(List<HashMap<String, Object>> queries, @HeaderParam("OTPTimeout") @DefaultValue("10000") int timeout, @HeaderParam("OTPMaxResolves") @DefaultValue("1000000") int maxResolves) {
+    public Response getGraphQLBatch(List<HashMap<String, Object>> queries, @HeaderParam("OTPTimeout") @DefaultValue("10000") int timeout, @HeaderParam("OTPMaxResolves") @DefaultValue("1000000") int maxResolves,
+            @HeaderParam("ET-Client-Name") @DefaultValue("") String clientName) {
         int finalTimeout = checkTimeout(timeout);
         List<Map<String, Object>> responses = new ArrayList<>();
         List<Callable<Map>> futures = new ArrayList();
@@ -117,8 +127,9 @@ public class TransmodelIndexAPI {
                 variables = null;
             }
             String operationName = (String) query.getOrDefault("operationName", null);
+            TransmodelApiContext context = new TransmodelApiContext(router, clientName);
 
-            futures.add(() -> index.getGraphQLExecutionResult((String) query.get("query"), router,
+            futures.add(() -> index.getGraphQLExecutionResult((String) query.get("query"), context,
                     variables, operationName, finalTimeout, maxResolves));
         }
 

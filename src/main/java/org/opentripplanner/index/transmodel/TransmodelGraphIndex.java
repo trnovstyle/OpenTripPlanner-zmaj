@@ -38,7 +38,7 @@ public class TransmodelGraphIndex {
         indexSchema = new TransmodelIndexGraphQLSchema(router).indexSchema;
     }
 
-    public HashMap<String, Object> getGraphQLExecutionResult(String query, Router router,
+    public HashMap<String, Object> getGraphQLExecutionResult(String query, TransmodelApiContext context,
                                                                     Map<String, Object> variables, String operationName, int timeout, int maxResolves) {
         MaxQueryComplexityInstrumentation instrumentation = new MaxQueryComplexityInstrumentation(maxResolves);
         GraphQL graphQL = GraphQL.newGraphQL(indexSchema).instrumentation(instrumentation).build();
@@ -50,8 +50,8 @@ public class TransmodelGraphIndex {
         ExecutionInput executionInput = ExecutionInput.newExecutionInput()
                                                 .query(query)
                                                 .operationName(operationName)
-                                                .context(router)
-                                                .root(router)
+                                                .context(context)
+                                                .root(context)
                                                 .variables(variables)
                                                 .build();
         HashMap<String, Object> content = new HashMap<>();
@@ -92,7 +92,7 @@ public class TransmodelGraphIndex {
         }).collect(Collectors.toList());
     }
 
-    public Response getGraphQLResponse(String query, Router router, Map<String, Object> variables, String operationName, int timeout, int maxResolves) {
+    public Response getGraphQLResponse(String query, TransmodelApiContext router, Map<String, Object> variables, String operationName, int timeout, int maxResolves) {
         Response.ResponseBuilder res = Response.status(Response.Status.OK);
         HashMap<String, Object> content = getGraphQLExecutionResult(query, router, variables,
                 operationName, timeout, maxResolves);
