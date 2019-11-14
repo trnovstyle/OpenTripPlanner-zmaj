@@ -78,6 +78,9 @@ public class GenericDijkstra {
         while (!queue.empty()) { // Until the priority queue is empty:
             State u = queue.extract_min();
             Vertex u_vertex = u.getVertex();
+            if (u_vertex == null) {
+                continue;
+            }
 
             if (traverseVisitor != null) {
                 traverseVisitor.visitVertex(u);
