@@ -78,7 +78,7 @@ public class TransmodelGraphQLPlanner {
         } catch (Exception e) {
             PlannerError error = new PlannerError(e);
             if (!PlannerError.isPlanningError(e.getClass()))
-                LOG.warn("Error while planning path: ", e);
+                LOG.error("Error while planning path for request: {}", environment.getArguments().toString(), e);
             messages.add(error.message);
         } finally {
             if (request.rctx != null) {
