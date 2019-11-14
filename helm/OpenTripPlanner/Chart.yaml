@@ -1,7 +1,7 @@
 apiVersion: v1
 name: otp
-version: 'release-1.0.86'
-appVersion: 'release-1.0.86'
+version: 'release-1.0.87'
+appVersion: 'release-1.0.87'
 description: Open Trip Planner
 keywords:
 - otp
