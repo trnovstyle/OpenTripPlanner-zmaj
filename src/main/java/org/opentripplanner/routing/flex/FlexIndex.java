@@ -124,7 +124,9 @@ public class FlexIndex {
             }
         }
 
-        List<Edge> closestEdges = edgeDistanceMap.values().iterator().next()
+        List<Edge> closestEdges = edgeDistanceMap.isEmpty() ?
+                new ArrayList<>() :
+                edgeDistanceMap.values().iterator().next()
                 .stream().map(e -> (Edge) e).collect(Collectors.toList());
         return closestEdges;
     }
