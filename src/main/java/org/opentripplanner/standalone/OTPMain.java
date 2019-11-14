@@ -98,49 +98,57 @@ public class OTPMain {
 
         // TODO do params.infer() here to ensure coherency?
 
-        /* Create the top-level objects that represent the OTP server. */
-        makeGraphService();
-        otpServer = new OTPServer(params, graphService);
+        try {
 
-        /* Start graph builder if requested */
-        if (params.build != null) {
-            GraphBuilder graphBuilder = GraphBuilder.forDirectory(params, params.build); // TODO multiple directories
-            if (graphBuilder != null) {
-                graphBuilder.run();
-                /* If requested, hand off the graph to the server as the default graph using an in-memory GraphSource. */
-                if (params.inMemory || params.preFlight) {
-                    Graph graph = graphBuilder.getGraph();
-                    graph.index(new DefaultStreetVertexIndexFactory());
-                    // FIXME set true router IDs
-                    graphService.registerGraph("", new MemoryGraphSource("", graph));
+            /* Create the top-level objects that represent the OTP server. */
+            makeGraphService();
+            otpServer = new OTPServer(params, graphService);
 
+            /* Start graph builder if requested */
+            if (params.build != null) {
+                GraphBuilder graphBuilder = GraphBuilder.forDirectory(params, params.build); // TODO multiple directories
+                if (graphBuilder != null) {
+                    graphBuilder.run();
+                    /* If requested, hand off the graph to the server as the default graph using an in-memory GraphSource. */
+                    if (params.inMemory || params.preFlight) {
+                        Graph graph = graphBuilder.getGraph();
+                        graph.index(new DefaultStreetVertexIndexFactory());
+                        // FIXME set true router IDs
+                        graphService.registerGraph("", new MemoryGraphSource("", graph));
+
+                    }
+                } else {
+                    LOG.error("An error occurred while building the graph. Exiting.");
+                    System.exit(-1);
                 }
-            } else {
-                LOG.error("An error occurred while building the graph. Exiting.");
-                System.exit(-1);
             }
-        }
 
 
-        /* Scan for graphs to load from disk if requested */
-        // FIXME eventually router IDs will be present even when just building a graph.
-        if ((params.routerIds != null && params.routerIds.size() > 0) || params.autoScan) {
-            /* Auto-register pre-existing graph on disk, with optional auto-scan. */
-            GraphScanner graphScanner = new GraphScanner(graphService, params.graphDirectory, params.autoScan);
-            graphScanner.basePath = params.graphDirectory;
-            if (params.routerIds != null && params.routerIds.size() > 0) {
-                graphScanner.defaultRouterId = params.routerIds.get(0);
+            /* Scan for graphs to load from disk if requested */
+            // FIXME eventually router IDs will be present even when just building a graph.
+            if ((params.routerIds != null && params.routerIds.size() > 0) || params.autoScan) {
+                /* Auto-register pre-existing graph on disk, with optional auto-scan. */
+                GraphScanner graphScanner = new GraphScanner(graphService, params.graphDirectory,
+                        params.autoScan);
+                graphScanner.basePath = params.graphDirectory;
+                if (params.routerIds != null && params.routerIds.size() > 0) {
+                    graphScanner.defaultRouterId = params.routerIds.get(0);
+                }
+                graphScanner.autoRegister = params.routerIds;
+                graphScanner.startup();
             }
-            graphScanner.autoRegister = params.routerIds;
-            graphScanner.startup();
-        }
 
-        /* Start visualizer if requested */
-        if (params.visualize) {
-            Router defaultRouter = graphService.getRouter();
-            defaultRouter.graphVisualizer = new GraphVisualizer(defaultRouter);
-            defaultRouter.graphVisualizer.run();
-            defaultRouter.timeouts = new double[] {60}; // avoid timeouts due to search animation
+            /* Start visualizer if requested */
+            if (params.visualize) {
+                Router defaultRouter = graphService.getRouter();
+                defaultRouter.graphVisualizer = new GraphVisualizer(defaultRouter);
+                defaultRouter.graphVisualizer.run();
+                defaultRouter.timeouts = new double[] { 60 }; // avoid timeouts due to search animation
+            }
+        } catch (Throwable throwable) {
+            LOG.error("An uncaught {} error occurred during startup. Shutting down.",
+                    throwable.getClass().getSimpleName(), throwable);
+            System.exit(1);
         }
 
         /* Start web server if requested */
