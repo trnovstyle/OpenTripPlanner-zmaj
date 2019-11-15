@@ -106,6 +106,9 @@ public class PartialStreetEdge extends StreetWithElevationEdge {
             other = ((PartialStreetEdge) e).parentEdge;
         }
         
+        if (parentEdge == null) {
+            return false;
+        }
         // TODO(flamholz): is there a case where a partial edge has a reverse of its own?
         return parentEdge.isReverseOf(other);
     }
