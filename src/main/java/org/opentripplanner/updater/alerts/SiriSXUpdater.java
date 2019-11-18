@@ -95,9 +95,10 @@ public class SiriSXUpdater extends PollingGraphUpdater {
         requestHeaders = new HashMap<>();
         String hostname = System.getenv("HOSTNAME");
         if (hostname == null) {
-            hostname = "otp-SX-"+UUID.randomUUID().toString();
+            hostname = "otp-"+UUID.randomUUID().toString();
         }
-        requestHeaders.put("ET-Client-Name", hostname);
+
+        requestHeaders.put("ET-Client-Name", hostname + "-SX");
 
         LOG.info("Creating real-time alert updater (SIRI SX) running every {} seconds : {}", frequencySec, url);
     }

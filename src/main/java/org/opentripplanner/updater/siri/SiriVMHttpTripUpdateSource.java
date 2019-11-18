@@ -75,9 +75,9 @@ public class SiriVMHttpTripUpdateSource implements VehicleMonitoringSource, Json
         requestHeaders = new HashMap<>();
         String hostname = System.getenv("HOSTNAME");
         if (hostname == null) {
-            hostname = "otp-VM-"+UUID.randomUUID().toString();
+            hostname = "otp-"+UUID.randomUUID().toString();
         }
-        requestHeaders.put("ET-Client-Name", hostname);
+        requestHeaders.put("ET-Client-Name", hostname + "-VM");
     }
 
     @Override
