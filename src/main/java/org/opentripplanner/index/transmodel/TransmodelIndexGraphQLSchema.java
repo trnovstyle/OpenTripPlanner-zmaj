@@ -4112,6 +4112,14 @@ public class TransmodelIndexGraphQLSchema {
                         .dataFetcher(environment -> ((Itinerary) environment.getSource()).duration)
                         .build())
                 .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("directDuration")
+                        .description("This sums the direct durations of each leg. Be careful about "
+                                + "using this, as it is not equal to the duration between startTime "
+                                + "and endTime. See the directDuration documentation on Leg.")
+                        .type(Scalars.GraphQLLong)
+                        .dataFetcher(environment -> ((Itinerary) environment.getSource()).legs.stream().mapToInt(Leg::getDirectDuration).sum())
+                        .build())
+                .field(GraphQLFieldDefinition.newFieldDefinition()
                         .name("waitingTime")
                         .description("How much time is spent waiting for transit to arrive, in seconds.")
                         .type(Scalars.GraphQLLong)
