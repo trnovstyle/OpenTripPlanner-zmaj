@@ -13,11 +13,6 @@
 
 package org.opentripplanner.util;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
-
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.StatusLine;
@@ -32,6 +27,12 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.params.BasicHttpParams;
 import org.apache.http.params.HttpConnectionParams;
 import org.apache.http.params.HttpParams;
+
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
+import java.util.Map;
 
 public class HttpUtils {
     
@@ -67,11 +68,21 @@ public class HttpUtils {
     }
 
     public static InputStream postData(String url, String xmlData, int timeout) throws ClientProtocolException, IOException {
+        return postData(url, xmlData, timeout, null);
+    }
+
+    public static InputStream postData(String url, String xmlData, int timeout, Map<String, String> headers) throws ClientProtocolException, IOException {
         HttpPost httppost = new HttpPost(url);
         if (xmlData != null) {
             httppost.setEntity(new StringEntity(xmlData, ContentType.APPLICATION_XML));
         }
         HttpClient httpclient = getClient(timeout, timeout);
+
+        if (headers != null && !headers.isEmpty()) {
+            for (Map.Entry<String, String> header : headers.entrySet()) {
+                httppost.setHeader(header.getKey(), header.getValue());
+            }
+        }
 
         HttpResponse response = httpclient.execute(httppost);
         if(response.getStatusLine().getStatusCode() != 200)

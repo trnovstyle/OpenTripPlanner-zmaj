@@ -25,6 +25,8 @@ import uk.org.siri.siri20.Siri;
 import java.io.IOException;
 import java.io.InputStream;
 import java.time.ZonedDateTime;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 public class SiriETHttpTripUpdateSource implements EstimatedTimetableSource, JsonConfigurable {
@@ -52,6 +54,8 @@ public class SiriETHttpTripUpdateSource implements EstimatedTimetableSource, Jso
 
     private int previewIntervalMillis = -1;
 
+    private static Map<String, String> requestHeaders;
+
     @Override
     public void configure(Graph graph, JsonNode config) throws Exception {
         String url = config.path("url").asText();
@@ -75,6 +79,14 @@ public class SiriETHttpTripUpdateSource implements EstimatedTimetableSource, Jso
         if (previewIntervalMinutes > 0) {
             this.previewIntervalMillis = 1000*60*previewIntervalMinutes;
         }
+
+        // TODO: Make custom headers configurable
+        requestHeaders = new HashMap<>();
+        String hostname = System.getenv("HOSTNAME");
+        if (hostname == null) {
+            hostname = "otp-ET-"+UUID.randomUUID().toString();
+        }
+        requestHeaders.put("ET-Client-Name", hostname);
     }
 
     @Override
@@ -89,7 +101,7 @@ public class SiriETHttpTripUpdateSource implements EstimatedTimetableSource, Jso
             creating =  System.currentTimeMillis()-t1;
             t1 = System.currentTimeMillis();
 
-            InputStream is = HttpUtils.postData(url, etServiceRequest, timeout);
+            InputStream is = HttpUtils.postData(url, etServiceRequest, timeout, requestHeaders);
             if (is != null) {
                 // Decode message
                 fetching = System.currentTimeMillis()-t1;

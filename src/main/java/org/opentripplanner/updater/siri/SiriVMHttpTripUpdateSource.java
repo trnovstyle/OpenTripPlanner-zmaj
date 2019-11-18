@@ -24,6 +24,8 @@ import uk.org.siri.siri20.Siri;
 
 import java.io.InputStream;
 import java.time.ZonedDateTime;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 public class SiriVMHttpTripUpdateSource implements VehicleMonitoringSource, JsonConfigurable {
@@ -48,6 +50,8 @@ public class SiriVMHttpTripUpdateSource implements VehicleMonitoringSource, Json
     private String requestorRef;
     private int timeout;
 
+    private static Map<String, String> requestHeaders;
+
     @Override
     public void configure(Graph graph, JsonNode config) throws Exception {
         String url = config.path("url").asText();
@@ -67,6 +71,13 @@ public class SiriVMHttpTripUpdateSource implements VehicleMonitoringSource, Json
             this.timeout = 1000*timeoutSec;
         }
 
+        // TODO: Make custom headers configurable
+        requestHeaders = new HashMap<>();
+        String hostname = System.getenv("HOSTNAME");
+        if (hostname == null) {
+            hostname = "otp-VM-"+UUID.randomUUID().toString();
+        }
+        requestHeaders.put("ET-Client-Name", hostname);
     }
 
     @Override
@@ -82,7 +93,7 @@ public class SiriVMHttpTripUpdateSource implements VehicleMonitoringSource, Json
             creating = System.currentTimeMillis()-t1;
             t1 = System.currentTimeMillis();
 
-            InputStream is = HttpUtils.postData(url, vmServiceRequest, timeout);
+            InputStream is = HttpUtils.postData(url, vmServiceRequest, timeout, requestHeaders);
             if (is != null) {
                 // Decode message
                 fetching = System.currentTimeMillis()-t1;

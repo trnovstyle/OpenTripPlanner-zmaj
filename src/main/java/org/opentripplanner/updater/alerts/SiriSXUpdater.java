@@ -29,6 +29,8 @@ import uk.org.siri.siri20.Siri;
 
 import java.io.InputStream;
 import java.time.ZonedDateTime;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 public class SiriSXUpdater extends PollingGraphUpdater {
@@ -53,6 +55,8 @@ public class SiriSXUpdater extends PollingGraphUpdater {
     private String requestorRef;
 
     private int timeout;
+
+    private static Map<String, String> requestHeaders;
 
     @Override
     public void setGraphUpdaterManager(GraphUpdaterManager updaterManager) {
@@ -85,6 +89,15 @@ public class SiriSXUpdater extends PollingGraphUpdater {
         }
 
         this.fuzzyTripMatcher = new SiriFuzzyTripMatcher(graph.index);
+
+
+        // TODO: Make custom headers configurable
+        requestHeaders = new HashMap<>();
+        String hostname = System.getenv("HOSTNAME");
+        if (hostname == null) {
+            hostname = "otp-SX-"+UUID.randomUUID().toString();
+        }
+        requestHeaders.put("ET-Client-Name", hostname);
 
         LOG.info("Creating real-time alert updater (SIRI SX) running every {} seconds : {}", frequencySec, url);
     }
@@ -134,7 +147,7 @@ public class SiriSXUpdater extends PollingGraphUpdater {
             creating = System.currentTimeMillis()-t1;
             t1 = System.currentTimeMillis();
 
-            InputStream is = HttpUtils.postData(url, sxServiceRequest, timeout);
+            InputStream is = HttpUtils.postData(url, sxServiceRequest, timeout, requestHeaders);
 
             fetching = System.currentTimeMillis()-t1;
             t1 = System.currentTimeMillis();
