@@ -20,8 +20,6 @@ public class FlexibleStopPlaceMapper extends StopMapper {
 
     private static final Logger LOG = LoggerFactory.getLogger(FlexibleStopPlaceMapper.class);
 
-    private static int positionOffset = 0;
-
     private FlexibleStopPlaceTypeMapper flexibleStopPlaceTypeMapper = new FlexibleStopPlaceTypeMapper();
 
     public FlexibleStopPlaceMapper(AddBuilderAnnotation addBuilderAnnotation) {
@@ -78,10 +76,7 @@ public class FlexibleStopPlaceMapper extends StopMapper {
         } else if (area.getCoordinates().length > 0) {
             Coordinate centroid = GeometryUtils.calculateCentroid(area.getCoordinates());
             stopPlace.setLat(centroid.y);
-            // PositionOffset has to be done because the flex implementation does not work with duplicate
-            // centroids in the same trip
-            stopPlace.setLon(centroid.x + positionOffset / 1000.0);
-            positionOffset += 1;
+            stopPlace.setLon(centroid.x);
         }else {
             addBuilderAnnotation(new FlexibleStopPlaceWithoutCoordinates(flexibleStopPlace.getId()));
         }
