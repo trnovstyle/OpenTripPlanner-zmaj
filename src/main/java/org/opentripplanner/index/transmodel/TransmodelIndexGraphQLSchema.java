@@ -4151,7 +4151,11 @@ public class TransmodelIndexGraphQLSchema {
                         .build())
                 .field(GraphQLFieldDefinition.newFieldDefinition()
                         .name("weight")
-                        .description("Weight of the itinerary. Used for debugging.")
+                        .description("Weight of the itinerary. Used for debugging. The result might "
+                            + "have been modified after (e.g. by removing short legs) and will not"
+                            + "necessarily exactly represent the tripPattern. It is however the weight"
+                            + "that was the basis for choosing the result in the first place. If the "
+                            + "result has been heavily modified, this field will be null.")
                         .type(Scalars.GraphQLFloat)
                         .dataFetcher(environment -> ((Itinerary)environment.getSource()).weight)
                         .build())
