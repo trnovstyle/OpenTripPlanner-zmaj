@@ -639,12 +639,23 @@
             <artifactId>siri-java-model</artifactId>
             <version>0.13-SNAPSHOT</version>
         </dependency>
+        <dependency>
+            <groupId>org.entur</groupId>
+            <artifactId>siri-protobuf-mapper</artifactId>
+            <version>0.1-SNAPSHOT</version>
+        </dependency>
 
         <!-- SIRI -->
         <dependency>
             <groupId>org.apache.activemq</groupId>
             <artifactId>activemq-client</artifactId>
             <version>5.13.4</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.google.cloud</groupId>
+            <artifactId>google-cloud-pubsub</artifactId>
+            <version>1.100.0</version>
         </dependency>
 
         <dependency>

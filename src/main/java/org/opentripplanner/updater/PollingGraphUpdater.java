@@ -31,7 +31,7 @@ import org.slf4j.LoggerFactory;
  * 
  * @see GraphUpdater
  */
-public abstract class PollingGraphUpdater implements GraphUpdater {
+public abstract class PollingGraphUpdater extends ReadinessBlockingUpdater implements GraphUpdater {
 
     private static Logger LOG = LoggerFactory.getLogger(PollingGraphUpdater.class);
 
@@ -52,15 +52,6 @@ public abstract class PollingGraphUpdater implements GraphUpdater {
      */
     protected Integer frequencySec;
 
-    protected boolean blockReadinessUntilInitialized;
-
-    protected boolean isInitialized;
-
-    /**
-     * The type name in the preferences
-     */
-    private String type;
-
     @Override
     final public void run() {
         try {
@@ -80,7 +71,7 @@ public abstract class PollingGraphUpdater implements GraphUpdater {
                     // Throw further up the stack
                     throw e;
                 } catch (Exception e) {
-                    LOG.error("Error while running polling updater of type {}", type, e);
+                    LOG.error("Error while running polling updater of type {}", getType(), e);
                     // TODO Should we cancel the task? Or after n consecutive failures?
                     // cancel();
                 } finally {
@@ -111,14 +102,4 @@ public abstract class PollingGraphUpdater implements GraphUpdater {
         configurePolling(graph, config);
     }
 
-    public boolean isReady() {
-        if (blockReadinessUntilInitialized) {
-            return isInitialized;
-        }
-        return true;
-    }
-
-    public String getType() {
-        return type;
-    }
 }
