@@ -4,8 +4,10 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.MissingNode;
+import org.apache.commons.io.IOUtils;
 import org.opentripplanner.reflect.ReflectionLibrary;
 import org.opentripplanner.standalone.config.GraphBuilderParameters;
+import org.opentripplanner.util.EnvironmentVariableReplacer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -13,6 +15,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
 /**
  * Find and parse config files first to reveal syntax errors early without waiting for graph build.
@@ -27,7 +30,7 @@ public class ConfigLoader {
      * Check if a file is a config file using the configuration file name.
      * This method returns {@code true} if the file match {@code (build-config|router-config).json}.
      */
-    static boolean isConfigFile(String filename) {
+    public static boolean isConfigFile(String filename) {
         return BUILDER_CONFIG_FILENAME.equals(filename) || ROUTER_CONFIG_FILENAME.equals(filename);
     }
 
@@ -83,11 +86,14 @@ public class ConfigLoader {
      * present with no fields defined.
      */
     public static JsonNode loadJson(File file) {
-        try (FileInputStream jsonStream = new FileInputStream(file)) {
-            ObjectMapper mapper = new ObjectMapper();
-            mapper.configure(JsonParser.Feature.ALLOW_COMMENTS, true);
-            mapper.configure(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES, true);
-            return mapper.readTree(jsonStream);
+        try {
+            String configString = IOUtils.toString(
+                    new FileInputStream(file), StandardCharsets.UTF_8
+            );
+            EnvironmentVariableReplacer envReplacer = new EnvironmentVariableReplacer();
+            configString = envReplacer.replace(configString);
+
+            return toJsonNode(configString, file.toString());
         }
         catch (FileNotFoundException ex) {
             LOG.info("File '{}' is not present. Using default configuration.", file);
@@ -95,6 +101,24 @@ public class ConfigLoader {
         }
         catch (IOException e) {
             LOG.error("Error while parsing JSON config file '{}': {}", file, e.getMessage());
+            throw new RuntimeException(e.getLocalizedMessage(), e);
+        }
+    }
+
+    /**
+     * Convert a String into JsonNode. Comments and unquoted fields are allowed
+     * int he given {@code jsonAsString} input.
+     */
+    public static JsonNode toJsonNode(String jsonAsString, String source) {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            mapper.configure(JsonParser.Feature.ALLOW_COMMENTS, true);
+            mapper.configure(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES, true);
+
+            return mapper.readTree(jsonAsString);
+        }
+        catch (IOException e) {
+            LOG.error("Error while parsing JSON config file '{}': {}", source, e.getMessage());
             throw new RuntimeException(e.getLocalizedMessage(), e);
         }
     }

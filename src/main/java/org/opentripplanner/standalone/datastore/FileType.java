@@ -20,7 +20,7 @@ public enum FileType {
 
   /**
    * Return {@code true} if the the file is an input data file. This is GTFS, Netex, OpenStreetMap,
-   * and elevation data files. Config files are not considered data files.
+   * and elevation data files. Config files and graphs are not considered input data files.
    * <p>
    * At least one input data file must be present to build a graph.
    */

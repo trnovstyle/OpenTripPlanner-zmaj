@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.node.NullNode;
 import org.opentripplanner.routing.graph.Graph;
 import org.opentripplanner.routing.services.GraphSource;
 import org.opentripplanner.standalone.Router;
+import org.opentripplanner.standalone.datastore.file.ConfigLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,35 +51,14 @@ public class MemoryGraphSource implements GraphSource {
     }
 
     @Override
-    public boolean reload(boolean force, boolean preEvict) {
-        // "Reloading" does not make sense for memory-graph, but we want to support mixing in-memory and file-based graphs.
-        // Start up graph updaters and apply runtime configuration options
-        // TODO will the updaters be started repeatedly due to reload calls?
-
+    public void load() {
         try {
-            // There is no on-disk set of files for this graph, so only check for embedded router-config JSON.
-            ObjectMapper mapper = new ObjectMapper();
-            JsonNode routerJsonConf;
-            if (router.graph.routerConfig == null) {
-                LOG.info("No embedded router config available");
-                routerJsonConf = NullNode.getInstance();
-            } else {
-                routerJsonConf = mapper.readTree(router.graph.routerConfig);
-            }
-            router.startup(routerJsonConf);
-            return true;
-        } catch (IOException e) {
-            LOG.error("Can't startup graph: error with embed config (" + router.graph.routerConfig
-                    + ")", e);
-            return false;
+            router.startup(ConfigLoader.toJsonNode(
+                    router.graph.routerConfig,
+                    "memory:router.graph.routerConfig"
+            ));
+        } catch (RuntimeException e) {
+            LOG.error("Can't startup graph: error with embed config (" + router.graph.routerConfig + ")", e);
         }
-    }
-
-    @Override
-    public void evict() {
-        if (router != null) {
-            router.shutdown();
-        }
-        router = null;
     }
 }

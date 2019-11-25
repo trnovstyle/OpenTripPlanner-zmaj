@@ -15,27 +15,16 @@ package org.opentripplanner.standalone;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.ParameterException;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.MissingNode;
 import org.opentripplanner.common.MavenVersion;
 import org.opentripplanner.graph_builder.GraphBuilder;
-import org.opentripplanner.standalone.datastore.OtpDataStore;
-import org.opentripplanner.standalone.datastore.file.DefaultDataStore;
 import org.opentripplanner.routing.graph.Graph;
 import org.opentripplanner.routing.impl.DefaultStreetVertexIndexFactory;
 import org.opentripplanner.routing.impl.GraphScanner;
-import org.opentripplanner.routing.impl.InputStreamGraphSource;
 import org.opentripplanner.routing.impl.MemoryGraphSource;
 import org.opentripplanner.routing.services.GraphService;
 import org.opentripplanner.visualizer.GraphVisualizer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 
 /**
  * This is the main entry point to OpenTripPlanner. It allows both building graphs and starting up an OTP server
@@ -126,13 +115,11 @@ public class OTPMain {
                 }
             }
 
-
             /* Scan for graphs to load from disk if requested */
             // FIXME eventually router IDs will be present even when just building a graph.
             if ((params.routerIds != null && params.routerIds.size() > 0) || params.autoScan) {
                 /* Auto-register pre-existing graph on disk, with optional auto-scan. */
-                GraphScanner graphScanner = new GraphScanner(graphService, params.graphDirectory,
-                        params.autoScan);
+                GraphScanner graphScanner = new GraphScanner(graphService, params.graphDirectory);
                 graphScanner.basePath = params.graphDirectory;
                 if (params.routerIds != null && params.routerIds.size() > 0) {
                     graphScanner.defaultRouterId = params.routerIds.get(0);
@@ -171,17 +158,11 @@ public class OTPMain {
     }
 
     /**
-     * Create a cached GraphService that will be used by all OTP components to resolve router IDs to Graphs.
-     * If a graph is supplied (graph parameter is not null) then that graph is also registered.
-     * TODO move into OTPServer and/or GraphService itself, eliminate FileFactory and put basePath in GraphService
+     * Create a cached GraphService that will be used by all OTP components to resolve router IDs to
+     * Graphs. If a graph is supplied (graph parameter is not null) then that graph is also
+     * registered.
      */
     public void makeGraphService () {
-        graphService = new GraphService(params.autoReload);
-        InputStreamGraphSource.FileFactory graphSourceFactory =
-                new InputStreamGraphSource.FileFactory(params.graphDirectory);
-        graphService.graphSourceFactory = graphSourceFactory;
-        if (params.graphDirectory != null) {
-            graphSourceFactory.basePath = params.graphDirectory;
-        }
+        graphService = new GraphService();
     }
 }

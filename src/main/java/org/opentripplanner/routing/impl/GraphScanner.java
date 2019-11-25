@@ -35,9 +35,6 @@ public class GraphScanner {
 
     private static final Logger LOG = LoggerFactory.getLogger(GraphScanner.class);
 
-    /** Auto-scan for new graphs every n secs. */
-    private static final int AUTOSCAN_PERIOD_SEC = 10;
-
     /** Where to look for graphs. Defaults to 'graphs' under the OTP server base path. */
     public File basePath = null;
 
@@ -50,14 +47,9 @@ public class GraphScanner {
     /** The GraphService where register graphs to */
     private GraphService graphService;
 
-    private ScheduledExecutorService scanExecutor;
-
-    public GraphScanner(GraphService graphService, File basePath, boolean autoScan) {
+    public GraphScanner(GraphService graphService, File basePath) {
         this.graphService = graphService;
         this.basePath = basePath;
-        if (autoScan) {
-            scanExecutor = Executors.newSingleThreadScheduledExecutor();
-        }
     }
 
     /**
@@ -83,84 +75,6 @@ public class GraphScanner {
             }
         } else {
             LOG.info("No list of routerIds was provided for automatic registration.");
-        }
-        if (scanExecutor != null) {
-            LOG.info("Auto-scan mode activated, looking in {}", basePath);
-            autoScan();
-            scanExecutor.scheduleWithFixedDelay(new Runnable() {
-                @Override
-                public void run() {
-                    autoScan();
-                }
-            }, AUTOSCAN_PERIOD_SEC, AUTOSCAN_PERIOD_SEC, TimeUnit.SECONDS);
-        }
-    }
-
-    private void autoScan() {
-        LOG.debug("Auto discovering graphs under {}", basePath);
-        /*
-         * There is no need to synchronize scan and registration here. If a graph file is removed
-         * between scan and register, registering will fail but it's safe. It a graph file is
-         * created, we'll wait for the next scan to register it.
-         */
-        Set<String> graphOnDisk = new HashSet<String>();
-        /* First check for a root graph */
-        File rootGraphFile = new File(basePath, InputStreamGraphSource.GRAPH_FILENAME);
-        if (rootGraphFile.exists() && rootGraphFile.canRead()) {
-            graphOnDisk.add("");
-        }
-        /* Then graph in sub-directories */
-        for (String sub : basePath.list()) {
-            File subPath = new File(basePath, sub);
-            if (subPath.isDirectory()) {
-                File graphFile = new File(subPath, InputStreamGraphSource.GRAPH_FILENAME);
-                if (graphFile.exists() && graphFile.canRead()) {
-                    graphOnDisk.add(sub);
-                }
-            }
-        }
-        Set<String> graphRegistered = new HashSet<>(graphService.getRouterIds());
-        Set<String> graphToRegister = new HashSet<>(graphOnDisk);
-        graphToRegister.removeAll(graphRegistered);
-
-        if (!graphToRegister.isEmpty()) {
-            LOG.info("Found new routers to register: {}",
-                    Arrays.toString(graphToRegister.toArray()));
-            for (String routerId : graphToRegister) {
-                InputStreamGraphSource graphSource = InputStreamGraphSource.newFileGraphSource(
-                        routerId, getBasePath(routerId));
-                // Can be null here if the file has been removed in the meantime.
-                graphService.registerGraph(routerId, graphSource);
-            }
-        }
-        /*
-         * Note: We do not automatically evict removed graph. They will be evicted only in
-         * auto-reload mode, and that's the behavior we want.
-         */
-        Collection<String> routerIds = graphService.getRouterIds();
-        if (routerIds.isEmpty()) {
-            LOG.warn("No graphs have been loaded/registered. "
-                    + "You must place one or more graphs before routing.");
-        } else {
-            try {
-                // Check if we still have a default graph.
-                graphService.getRouter();
-            } catch (GraphNotFoundException e) {
-                // Let's see which one we want to take by default
-                if (routerIds.contains("")) {
-                    // If we have a root graph, this should be a good default
-                    LOG.info("Setting default routerId to root graph ''");
-                    graphService.setDefaultRouterId("");
-                } else {
-                    // Otherwise take first one present
-                    String defRouterId = routerIds.iterator().next();
-                    if (routerIds.size() > 1)
-                        LOG.warn("Setting default routerId to arbitrary one '{}'", defRouterId);
-                    else
-                        LOG.info("Setting default routerId to '{}'", defRouterId);
-                    graphService.setDefaultRouterId(defRouterId);
-                }
-            }
         }
     }
 

@@ -7,7 +7,8 @@ import org.junit.Test;
 
 import java.io.IOException;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class NetexParametersTest {
 
@@ -15,7 +16,6 @@ public class NetexParametersTest {
     public void testDefaultPatternMatchers() {
         NetexParameters subject = new NetexParameters(null);
 
-        assertTrue(subject.moduleFileMatches("A-netex-no.zip"));
         assertTrue(subject.ignoreFilePattern.matcher("").matches());
         assertTrue(subject.sharedFilePattern.matcher("shared-data.xml").matches());
         assertTrue(subject.sharedGroupFilePattern.matcher("RUT-anything-shared.xml").matches());
@@ -46,7 +46,6 @@ public class NetexParametersTest {
 
         NetexParameters subject = new NetexParameters(config);
 
-        assertTrue(subject.moduleFileMatches("netex_anything.zip"));
         assertTrue(subject.ignoreFilePattern.matcher(".ignore").matches());
         assertTrue(subject.ignoreFilePattern.matcher("__ignore").matches());
         assertTrue(subject.sharedFilePattern.matcher("_stops.xml").matches());

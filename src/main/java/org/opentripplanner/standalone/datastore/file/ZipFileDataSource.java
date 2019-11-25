@@ -24,6 +24,7 @@ public class ZipFileDataSource implements CompositeDataSource {
 
     private final ZipFile zipFile;
     private final FileType type;
+    private final String name;
     private final long lastModified;
     private final Collection<DataSource> content;
     private boolean closed = false;
@@ -31,6 +32,8 @@ public class ZipFileDataSource implements CompositeDataSource {
     ZipFileDataSource(File file, FileType type) {
         try {
             this.type = type;
+            // The get name on ZipFile returns the full path, we want just the name.
+            this.name = file.getName();
             this.zipFile = new ZipFile(file, ZipFile.OPEN_READ);
             this.lastModified = file.lastModified();
             this.content = retrieveContent(zipFile);
@@ -64,12 +67,12 @@ public class ZipFileDataSource implements CompositeDataSource {
 
     @Override
     public String name() {
-        return zipFile.getName();
+        return name;
     }
 
     @Override
     public String path() {
-        return name();
+        return name + " (" + zipFile.getName() + ")";
     }
 
     @Override

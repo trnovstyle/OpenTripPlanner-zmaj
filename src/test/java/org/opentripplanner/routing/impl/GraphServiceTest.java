@@ -1,16 +1,3 @@
-/* This program is free software: you can redistribute it and/or
- modify it under the terms of the GNU Lesser General Public License
- as published by the Free Software Foundation, either version 3 of
- the License, or (at your option) any later version.
-
- This program is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
-
- You should have received a copy of the GNU General Public License
- along with this program.  If not, see <http://www.gnu.org/licenses/>. */
-
 package org.opentripplanner.routing.impl;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -25,13 +12,22 @@ import org.opentripplanner.routing.edgetype.StreetTraversalPermission;
 import org.opentripplanner.routing.error.GraphNotFoundException;
 import org.opentripplanner.routing.graph.Graph;
 import org.opentripplanner.routing.services.GraphService;
+import org.opentripplanner.routing.services.GraphSource;
 import org.opentripplanner.routing.vertextype.IntersectionVertex;
 import org.opentripplanner.routing.vertextype.StreetVertex;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 
 
 public class GraphServiceTest extends TestCase {
+    private static final String GRAPH_FILENAME = "Graph.obj";
 
     File basePath;
 
@@ -114,42 +110,23 @@ public class GraphServiceTest extends TestCase {
         assertNotNull(graph);
         assertEquals(smallGraph, graph);
         assertEquals("B", graph.routerId);
-
-        graphService.evictRouter("A");
-        assertEquals(1, graphService.getRouterIds().size());
-
-        try {
-            graph = graphService.getRouter("A").graph;
-            assertTrue(false); // Should not be there
-        } catch (GraphNotFoundException e) {
-        }
-        try {
-            graph = graphService.getRouter().graph;
-            assertTrue(false); // Should not be there
-        } catch (GraphNotFoundException e) {
-        }
-
-        graphService.evictAll();
-        assertEquals(0, graphService.getRouterIds().size());
-
     }
 
     @Test
     public final void testGraphServiceFile() throws IOException {
+        new File(basePath, "A").mkdirs();
 
         // Create a GraphService and a GraphSourceFactory
         GraphService graphService = new GraphService();
-        InputStreamGraphSource.FileFactory graphSourceFactory = new InputStreamGraphSource.FileFactory(basePath);
 
-        graphSourceFactory.save("A", new ByteArrayInputStream(emptyGraphData));
+        save("A", new ByteArrayInputStream(emptyGraphData));
 
         // Check if the graph has been saved
-        assertTrue(new File(new File(basePath, "A"), InputStreamGraphSource.GRAPH_FILENAME).canRead());
+        assertTrue(new File(new File(basePath, "A"), GRAPH_FILENAME).canRead());
 
         // Register this empty graph, reloading it from disk
-        boolean registered = graphService.registerGraph("A",
-                graphSourceFactory.createGraphSource("A"));
-        assertTrue(registered);
+        graphService.registerGraph("A",
+                createGraphSource("A"));
 
         // Check if the loaded graph is the one we saved earlier
         Graph graph = graphService.getRouter("A").graph;
@@ -157,92 +134,6 @@ public class GraphServiceTest extends TestCase {
         assertEquals("A", graph.routerId);
         assertEquals(0, graph.getVertices().size());
         assertEquals(1, graphService.getRouterIds().size());
-
-        // Save A again, with more data this time
-        int verticesCount = smallGraph.getVertices().size();
-        int edgesCount = smallGraph.getEdges().size();
-        graphSourceFactory.save("A", new ByteArrayInputStream(smallGraphData));
-
-        // Force a reload, get again the graph
-        graphService.reloadGraphs(false, true);
-        graph = graphService.getRouter("A").graph;
-
-        // Check if loaded graph is the one modified
-        assertEquals(verticesCount, graph.getVertices().size());
-        assertEquals(edgesCount, graph.getEdges().size());
-
-        // Remove the file from disk and reload
-        boolean deleted = new File(new File(basePath, "A"), InputStreamGraphSource.GRAPH_FILENAME)
-                .delete();
-        assertTrue(deleted);
-        graphService.reloadGraphs(false, true);
-
-        // Check that the graph have been evicted
-        assertEquals(0, graphService.getRouterIds().size());
-
-        // Register it manually
-        registered = graphService.registerGraph("A", graphSourceFactory.createGraphSource("A"));
-        // Check that it fails again (file still deleted)
-        assertFalse(registered);
-        assertEquals(0, graphService.getRouterIds().size());
-
-        // Re-save the graph file, register it again
-        graphSourceFactory.save("A", new ByteArrayInputStream(smallGraphData));
-        registered = graphService.registerGraph("A", graphSourceFactory.createGraphSource("A"));
-        // This time registering is OK
-        assertTrue(registered);
-        assertEquals(1, graphService.getRouterIds().size());
-
-        // Evict the graph, should be OK
-        boolean evicted = graphService.evictRouter("A");
-        assertTrue(evicted);
-        assertEquals(0, graphService.getRouterIds().size());
-    }
-
-    @Test
-    public final void testGraphServiceAutoscan() throws IOException {
-
-        // Check for no graphs
-        GraphService graphService = new GraphService(false);
-        GraphScanner graphScanner = new GraphScanner(graphService, basePath, true);
-        graphScanner.startup();
-        assertEquals(0, graphService.getRouterIds().size());
-
-        System.out.println("------------------------------------------");
-        // Add a single default graph
-        InputStreamGraphSource.FileFactory graphSourceFactory = new InputStreamGraphSource.FileFactory(basePath);
-        graphSourceFactory.save("", new ByteArrayInputStream(smallGraphData));
-
-        // Check that the single graph is there
-        graphService = new GraphService(false);
-        graphScanner = new GraphScanner(graphService, basePath, true);
-        graphScanner.startup();
-        assertEquals(1, graphService.getRouterIds().size());
-        assertEquals("", graphService.getRouter().graph.routerId);
-        assertEquals("", graphService.getRouter("").graph.routerId);
-
-        System.out.println("------------------------------------------");
-        // Add another graph in a sub-directory
-        graphSourceFactory.save("A", new ByteArrayInputStream(smallGraphData));
-        graphService = new GraphService(false);
-        graphScanner = new GraphScanner(graphService, basePath, true);
-        graphScanner.startup();
-        assertEquals(2, graphService.getRouterIds().size());
-        assertEquals("", graphService.getRouter().graph.routerId);
-        assertEquals("A", graphService.getRouter("A").graph.routerId);
-
-        System.out.println("------------------------------------------");
-        // Remove default Graph
-        new File(basePath, InputStreamGraphSource.GRAPH_FILENAME).delete();
-
-        // Check that default is A this time
-        graphService = new GraphService(false);
-        graphScanner = new GraphScanner(graphService, basePath, true);
-        graphScanner.startup();
-        assertEquals(1, graphService.getRouterIds().size());
-        assertEquals("A", graphService.getRouter().graph.routerId);
-        assertEquals("A", graphService.getRouter("A").graph.routerId);
-
     }
 
     @Test
@@ -266,5 +157,25 @@ public class GraphServiceTest extends TestCase {
         JsonNode graphRouterConfig = mapper.readTree(graph.routerConfig);
         assertEquals(graphRouterConfig, routerConfig);
         assertEquals(graphRouterConfig.get("timeout"), routerConfig.get("timeout"));
+    }
+
+    private GraphSource createGraphSource(String routerId) {
+        return InputStreamGraphSource.newFileGraphSource(routerId, basePath(routerId));
+    }
+
+    /**
+     * Used for testing.
+     */
+    private void save(String routerId, InputStream is) {
+        try(OutputStream out = new FileOutputStream(new File(basePath(routerId), GRAPH_FILENAME))) {
+            is.transferTo(out);
+        }
+        catch (IOException ex) {
+            throw new RuntimeException(ex.getLocalizedMessage(), ex);
+        }
+    }
+
+    private File basePath(String routerId) {
+        return new File(basePath, routerId);
     }
 }

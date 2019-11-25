@@ -210,8 +210,10 @@ public class Routers {
     public Response reloadGraphs(@QueryParam("path") String path,
             @QueryParam("preEvict") @DefaultValue("true") boolean preEvict,
             @QueryParam("force") @DefaultValue("true") boolean force) {
-        otpServer.getGraphService().reloadGraphs(preEvict, force);
-        return Response.status(Status.OK).build();
+        LOG.debug("DISABLED - Attempting to reload all graphs");
+        return Response.status(Status.BAD_REQUEST).entity(
+                "This endpoint is not supported any more"
+        ).build();
     }
 
     /** 
@@ -224,22 +226,10 @@ public class Routers {
     @PUT @Path("{routerId}") @Produces({ MediaType.TEXT_PLAIN })
     public Response putGraphId(@PathParam("routerId") String routerId,
             @QueryParam("preEvict") @DefaultValue("true") boolean preEvict) {
-        LOG.debug("Attempting to load graph '{}' from server's local filesystem.", routerId);
-        GraphService graphService = otpServer.getGraphService();
-        if (graphService.getRouterIds().contains(routerId)) {
-            boolean success = graphService.reloadGraph(routerId, preEvict, false);
-            if (success)
-                return Response.status(201).entity("graph already registered, reloaded.\n").build();
-            else
-                return Response.status(404).entity("graph already registered, but reload failed.\n").build();
-        } else {
-            boolean success = graphService.registerGraph(routerId, graphService
-                    .getGraphSourceFactory().createGraphSource(routerId));
-            if (success)
-                return Response.status(201).entity("graph registered.\n").build();
-            else
-                return Response.status(404).entity("graph not found or other error.\n").build();
-        }
+        LOG.debug("DISABLED - Attempting to load graph '{}' from server's local filesystem.", routerId);
+        return Response.status(Status.BAD_REQUEST).entity(
+                "This endpoint is not supported any more"
+        ).build();
     }
 
     /** 
@@ -253,20 +243,10 @@ public class Routers {
             @PathParam("routerId") String routerId, 
             @QueryParam("preEvict") @DefaultValue("true") boolean preEvict, 
             InputStream is) {
-        if (preEvict) {
-            LOG.debug("pre-evicting graph");
-            otpServer.getGraphService().evictRouter(routerId);
-        }
-        LOG.debug("deserializing graph from POST data stream...");
-        Graph graph;
-        try {
-            graph = Graph.load(is);
-            GraphService graphService = otpServer.getGraphService();
-            graphService.registerGraph(routerId, new MemoryGraphSource(routerId, graph));
-            return Response.status(Status.CREATED).entity(graph.toString() + "\n").build();
-        } catch (Exception e) {
-            return Response.status(Status.BAD_REQUEST).entity(e.toString() + "\n").build();
-        }
+        LOG.debug("DISABLED - deserializing graph from POST data stream...");
+        return Response.status(Status.BAD_REQUEST).entity(
+                "This endpoint is not supported any more"
+        ).build();
     }
     
     /**
@@ -280,65 +260,10 @@ public class Routers {
             @PathParam("routerId") String routerId,
             @QueryParam("preEvict") @DefaultValue("true") boolean preEvict,
             InputStream input) {
-        // TODO: async processing
-        
-        if (preEvict) {
-            LOG.debug("Pre-evicting graph with routerId {} before building new graph", routerId);
-            otpServer.getGraphService().evictRouter(routerId);
-        }
-        
-        // get a temporary directory, using Google Guava
-        File tempDir = Files.createTempDir();
-        
-        // extract the zip file to the temp dir
-        ZipInputStream zis = new ZipInputStream(input);
-        
-        try {
-            for (ZipEntry entry = zis.getNextEntry(); entry != null; entry = zis.getNextEntry()) {
-                if (entry.isDirectory())
-                    // we only support flat ZIP files
-                    return Response.status(Response.Status.BAD_REQUEST)
-                            .entity("ZIP files containing directories are not supported").build();
-                    
-                File file = new File(tempDir, entry.getName());
-                
-                if (!file.getParentFile().equals(tempDir))
-                    return Response.status(Response.Status.BAD_REQUEST)
-                            .entity("ZIP files containing directories are not supported").build();
-                    
-                OutputStream os = new FileOutputStream(file);
-                ByteStreams.copy(zis, os);
-                os.close();
-            }
-        } catch (Exception ex) {
-            return Response.status(Response.Status.BAD_REQUEST).entity("Could not extract zip file: " + ex.getMessage()).build();
-        }
-
-        // set up the build, using default parameters
-        // this is basically simulating calling otp -b on the command line
-        CommandLineParameters params = otpServer.params.clone();
-        params.build = tempDir;
-        params.inMemory = true;
-
-        GraphBuilder graphBuilder = GraphBuilder.forDirectory(params, tempDir);
-        
-        graphBuilder.run();
-        
-        // remove the temporary directory
-        // this doesn't work for nested directories, but the extract doesn't either,
-        // so we'll crash long before we get here . . .
-        for (File file : tempDir.listFiles()) {
-            file.delete();
-        }
-        
-        tempDir.delete();
-        
-        Graph graph = graphBuilder.getGraph();
-        graph.index(new DefaultStreetVertexIndexFactory());
-        
-        GraphService graphService = otpServer.getGraphService();
-        graphService.registerGraph(routerId, new MemoryGraphSource(routerId, graph));
-        return Response.status(Status.CREATED).entity(graph.toString() + "\n").build();
+        LOG.debug("DISABLED - build graph from POST data stream...");
+        return Response.status(Status.BAD_REQUEST).entity(
+                "This endpoint is not supported any more"
+        ).build();
     }
     
     /** 
@@ -350,27 +275,22 @@ public class Routers {
     @Consumes(MediaType.APPLICATION_OCTET_STREAM)
     public Response saveGraphOverWire (
             @QueryParam("routerId") String routerId,
-            InputStream is) {
-        LOG.debug("save graph from POST data stream...");
-        try {
-            boolean success = otpServer.getGraphService().getGraphSourceFactory().save(routerId, is);
-            if (success) {
-                return Response.status(201).entity("graph saved.\n").build();
-            } else {
-                return Response.status(404).entity("graph not saved or other error.\n").build();
-            }
-        } catch (Exception e) {
-            return Response.status(Status.BAD_REQUEST).entity(e.toString()).build();
-        }
+            InputStream is
+    ) {
+        LOG.debug("DISABLED - save graph from POST data stream...");
+        return Response.status(Status.BAD_REQUEST).entity(
+                "This endpoint is not supported any more"
+        ).build();
     }
 
     /** De-register all registered routerIds, evicting them from memory. */
     @RolesAllowed({ "ROUTERS" })
     @DELETE @Produces({ MediaType.TEXT_PLAIN })
     public Response deleteAll() {
-        int nEvicted = otpServer.getGraphService().evictAll();
-        String message = String.format("%d graphs evicted.\n", nEvicted);
-        return Response.status(200).entity(message).build();
+        LOG.debug("DISABLED - Delete all graphs");
+        return Response.status(Status.BAD_REQUEST).entity(
+                "This endpoint is not supported any more"
+        ).build();
     }
 
     /** 
@@ -381,11 +301,9 @@ public class Routers {
     @RolesAllowed({ "ROUTERS" })
     @DELETE @Path("{routerId}") @Produces({ MediaType.TEXT_PLAIN })
     public Response deleteGraphId(@PathParam("routerId") String routerId) {
-        boolean existed = otpServer.getGraphService().evictRouter(routerId);
-        if (existed)
-            return Response.status(200).entity("graph evicted.\n").build();
-        else
-            return Response.status(404).entity("graph did not exist.\n").build();
+        LOG.debug("DISABLED - Delete graph {}", routerId);
+        return Response.status(Status.BAD_REQUEST).entity(
+                "This endpoint is not supported any more"
+        ).build();
     }
-
 }

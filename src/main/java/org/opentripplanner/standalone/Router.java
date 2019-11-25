@@ -29,11 +29,6 @@ public class Router {
 
     private static final Logger LOG = (Logger) LoggerFactory.getLogger(Router.class);
 
-    /**
-     * @deprecated TODO TGR - Remove this
-     */
-    public static final String ROUTER_CONFIG_FILENAME = "router-config.json";
-
     public String id;
     public Graph graph;
     public double[] timeouts = {5, 4, 2};

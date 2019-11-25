@@ -40,13 +40,13 @@ public class BinaryFileBasedOpenStreetMapProviderImpl implements OpenStreetMapPr
     public void readOSM(OpenStreetMapContentHandler handler) {
         try {
             BinaryOpenStreetMapParser parser = new BinaryOpenStreetMapParser(handler);
-            parse(parser, true, false, false);
+            parseIteration(parser, 1);
             handler.doneFirstPhaseRelations();
 
-            parse(parser, false, true, false);
+            parseIteration(parser, 2);
             handler.doneSecondPhaseWays();
 
-            parse(parser, false, false, true);
+            parseIteration(parser, 3);
             handler.doneThirdPhaseNodes();
         }
         catch (Exception ex) {
@@ -54,15 +54,10 @@ public class BinaryFileBasedOpenStreetMapProviderImpl implements OpenStreetMapPr
         }
     }
 
-    private void parse(
-            BinaryOpenStreetMapParser parser,
-            boolean relations,
-            boolean ways,
-            boolean nodes
-    ) throws IOException {
-        parser.setParseRelations(relations);
-        parser.setParseRelations(ways);
-        parser.setParseRelations(nodes);
+    private void parseIteration(BinaryOpenStreetMapParser parser, int iteration) throws IOException {
+        parser.setParseRelations(iteration == 1);
+        parser.setParseWays(iteration == 2);
+        parser.setParseNodes(iteration == 3);
         try (InputStream in = source.asInputStream()) {
             new BlockInputStream(in, parser).process();
         }

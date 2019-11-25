@@ -1,10 +1,12 @@
 package org.opentripplanner.standalone.datastore.configure;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import org.opentripplanner.standalone.config.GraphBuilderParameters;
 import org.opentripplanner.standalone.datastore.CompositeDataSource;
 import org.opentripplanner.standalone.datastore.FileType;
 import org.opentripplanner.standalone.datastore.OtpDataStore;
 import org.opentripplanner.standalone.datastore.file.DefaultDataStore;
+import org.opentripplanner.standalone.datastore.generic.AbstractDataStore;
 
 import java.io.File;
 
@@ -27,12 +29,16 @@ import static org.opentripplanner.standalone.datastore.file.ConfigLoader.loadRou
  */
 public class DataStoreConfig {
 
-    private boolean skipTransit = false;
-    private File baseDirectory = null;
+    private final File baseDirectory;
 
-
-    public DataStoreConfig() { }
-
+    /**
+     * @param baseDirectory is used by the configuration loader to load all configuration files. It
+     *                      is also used by the default {@link OtpDataStore} to load data from the
+     *                      same directory.
+     */
+    public DataStoreConfig(File baseDirectory) {
+        this.baseDirectory = baseDirectory;
+    }
 
     /* static factory methods, mostly used by tests */
 
@@ -45,29 +51,6 @@ public class DataStoreConfig {
         return DefaultDataStore.compositeSource(file, type);
     }
 
-
-    /* builder methods */
-
-    /**
-     * Use this to build a graph without transit data. The default is to include
-     * transit data in the graph build process.
-     */
-    public DataStoreConfig withSkipTransit(boolean skipTransit) {
-        this.skipTransit = skipTransit;
-        return this;
-    }
-
-    /**
-     * The base directory is used by the configuration loader to load all configuration.
-     * It is also used by the default(only) {@link OtpDataStore} to load input data from the
-     * same directory.
-     */
-    public DataStoreConfig withBaseDirectory(File baseDirectory) {
-        this.baseDirectory = baseDirectory;
-        return this;
-    }
-
-
     /**
      * Connect to data source and prepare to retrieve data.
      */
@@ -78,8 +61,22 @@ public class DataStoreConfig {
         // a router starts up
         JsonNode routerConfig = loadRouterConfig(baseDirectory);
 
-        // Create the default data store and open it. If you implement your own data store,
-        // this is where is should be injected.
-        return new DefaultDataStore(baseDirectory, skipTransit, builderConfig, routerConfig).open();
+        AbstractDataStore store = createDataStore(builderConfig, routerConfig);
+
+        store.open();
+
+        return store;
+    }
+
+    private AbstractDataStore createDataStore(JsonNode builderConfig, JsonNode routerConfig) {
+        GraphBuilderParameters config = new GraphBuilderParameters(builderConfig);
+        // GoogleCloudStorageParameters gcsConfig = config.googleCloudStorage;
+
+        // If you implement your own data store, this is how to inject it.
+        // if (GcsDataStore.isEnabled(gcsConfig)) {
+        //     return new GcsDataStore(gcsConfig, builderConfig, routerConfig);
+        // }
+        // Create the default data store
+        return new DefaultDataStore(baseDirectory, builderConfig, routerConfig);
     }
 }

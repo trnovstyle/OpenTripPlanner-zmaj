@@ -1,15 +1,16 @@
 package org.opentripplanner.graph_builder;
 
 import com.google.common.collect.Lists;
-import org.opentripplanner.standalone.config.GraphBuilderParameters;
-import org.opentripplanner.standalone.datastore.CompositeDataSource;
-import org.opentripplanner.standalone.datastore.DataSource;
-import org.opentripplanner.standalone.datastore.FileType;
-import org.opentripplanner.standalone.datastore.OtpDataStore;
-import org.opentripplanner.standalone.datastore.configure.DataStoreConfig;
+import com.google.common.collect.Multimap;
 import org.opentripplanner.graph_builder.model.GtfsBundle;
-import org.opentripplanner.graph_builder.module.*;
-import org.opentripplanner.netex.loader.NetexBundle;
+import org.opentripplanner.graph_builder.module.DirectTransferAnalyzer;
+import org.opentripplanner.graph_builder.module.DirectTransferGenerator;
+import org.opentripplanner.graph_builder.module.EmbedConfig;
+import org.opentripplanner.graph_builder.module.GtfsModule;
+import org.opentripplanner.graph_builder.module.NetexModule;
+import org.opentripplanner.graph_builder.module.PruneFloatingIslands;
+import org.opentripplanner.graph_builder.module.StreetLinkerModule;
+import org.opentripplanner.graph_builder.module.TransitToTaggedStopsModule;
 import org.opentripplanner.graph_builder.module.map.BusRouteStreetMatcher;
 import org.opentripplanner.graph_builder.module.ned.DegreeGridNEDTileSource;
 import org.opentripplanner.graph_builder.module.ned.ElevationModule;
@@ -19,12 +20,19 @@ import org.opentripplanner.graph_builder.module.osm.OpenStreetMapModule;
 import org.opentripplanner.graph_builder.services.DefaultStreetEdgeFactory;
 import org.opentripplanner.graph_builder.services.GraphBuilderModule;
 import org.opentripplanner.graph_builder.services.ned.ElevationGridCoverageFactory;
+import org.opentripplanner.netex.loader.NetexBundle;
 import org.opentripplanner.openstreetmap.impl.BinaryFileBasedOpenStreetMapProviderImpl;
 import org.opentripplanner.openstreetmap.services.OpenStreetMapProvider;
 import org.opentripplanner.routing.graph.Graph;
 import org.opentripplanner.routing.impl.DefaultStreetVertexIndexFactory;
 import org.opentripplanner.standalone.CommandLineParameters;
+import org.opentripplanner.standalone.config.GraphBuilderParameters;
 import org.opentripplanner.standalone.config.S3BucketConfig;
+import org.opentripplanner.standalone.datastore.CompositeDataSource;
+import org.opentripplanner.standalone.datastore.DataSource;
+import org.opentripplanner.standalone.datastore.FileType;
+import org.opentripplanner.standalone.datastore.OtpDataStore;
+import org.opentripplanner.standalone.datastore.configure.DataStoreConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,6 +43,7 @@ import java.util.List;
 import java.util.Set;
 
 import static org.opentripplanner.standalone.datastore.FileType.DEM;
+import static org.opentripplanner.standalone.datastore.FileType.GRAPH;
 import static org.opentripplanner.standalone.datastore.FileType.GTFS;
 import static org.opentripplanner.standalone.datastore.FileType.NETEX;
 import static org.opentripplanner.standalone.datastore.FileType.OSM;
@@ -44,6 +53,8 @@ import static org.opentripplanner.standalone.datastore.FileType.OSM;
  * It is modular: GraphBuilderModules are placed in a list and run in sequence.
  */
 public class GraphBuilder implements Runnable {
+    public static final String GRAPH_FILENAME = "Graph.obj";
+    public static final String BASE_GRAPH_FILENAME = "baseGraph.obj";
 
     private static Logger LOG = LoggerFactory.getLogger(GraphBuilder.class);
 
@@ -53,11 +64,16 @@ public class GraphBuilder implements Runnable {
 
     private Graph graph = new Graph();
 
+    private String graphFileName;
+
     /** Should the graph be serialized to disk after being created or not? */
     private boolean serializeGraph = true;
 
-    private GraphBuilder(OtpDataStore dataStore) {
+    private GraphBuilder(OtpDataStore dataStore, boolean skipTransit) {
         this.dataStore = dataStore;
+        // If we are skipping transit, then we are only building the street network,
+        // the base for adding transit later.
+        this.graphFileName = skipTransit ? BASE_GRAPH_FILENAME : GRAPH_FILENAME;
     }
 
     private void addModule(GraphBuilderModule loader) {
@@ -66,7 +82,7 @@ public class GraphBuilder implements Runnable {
 
     private Graph loadBaseGraph() {
         try {
-            DataSource graphSource = dataStore.getBaseGraph();
+            DataSource graphSource = dataStore.getSource(BASE_GRAPH_FILENAME, GRAPH);
             graph = Graph.load(graphSource.asInputStream(), graphSource.path());
             return graph;
         } catch (Exception e) {
@@ -78,6 +94,10 @@ public class GraphBuilder implements Runnable {
         return graph;
     }
 
+    public DataSource getGraphSource() {
+        return dataStore.getSource(graphFileName, GRAPH);
+    }
+
     public void run() {
         try {
             /* Record how long it takes to build the graph, purely for informational purposes. */
@@ -85,10 +105,10 @@ public class GraphBuilder implements Runnable {
 
             if (serializeGraph) {
                 // Abort building a graph if the file can not be saved
-                if (!dataStore.getGraph().isWritable()) {
+                DataSource graphSource = getGraphSource();
+                if (!graphSource.isWritable()) {
                     throw new RuntimeException(
-                            "Cannot create or overwrite graph at: "
-                                    + dataStore.getGraph().path()
+                            "Cannot create or write to graph at: " + graphSource.path()
                     );
                 }
             }
@@ -104,9 +124,10 @@ public class GraphBuilder implements Runnable {
                 load.buildGraph(graph, extra);
 
             graph.summarizeBuilderAnnotations();
+
             if (serializeGraph) {
                 try {
-                    graph.save(dataStore.getGraph().asOutputStream(), dataStore.description());
+                    graph.save(getGraphSource().asOutputStream(), dataStore.path());
                 } catch (Exception ex) {
                     throw new IllegalStateException(ex);
                 }
@@ -135,19 +156,25 @@ public class GraphBuilder implements Runnable {
             LOG.info("Wiring up and configuring graph builder task.");
             LOG.info("Searching for graph builder input files in {}", dir);
 
-            OtpDataStore dataStore = new DataStoreConfig()
-                    .withSkipTransit(params.skipTransit)
-                    .withBaseDirectory(dir)
-                    .open();
+            OtpDataStore dataStore = new DataStoreConfig(dir).open();
 
-            if (!checkInputFileTypesIsOk(dataStore.listInputFileTypes(), dataStore.description())) {
-                return null;
-            }
+            // Parse graph build parameters
             GraphBuilderParameters builderParams = new GraphBuilderParameters(
                     dataStore.graphBuilderParameters()
             );
 
-            GraphBuilder graphBuilder = new GraphBuilder(dataStore);
+            // Select witch files to import and log status for each file
+            Multimap<FileType, DataSource> input = new InputDataSourceSelection(dataStore, builderParams)
+                    .selectFilesToImport()
+                    .logSkippedAndSelectedFiles()
+                    .andGetFilesToImport();
+
+            // Check there is at least one file to import
+            if (!checkThereIsAtLeastOneFileToImport(input.keySet(), dataStore.path())) {
+                return null;
+            }
+
+            GraphBuilder graphBuilder = new GraphBuilder(dataStore, params.skipTransit);
             //graphBuilder.statusFile.setInProgress();
 
             if (params.loadBaseGraph) {
@@ -156,14 +183,14 @@ public class GraphBuilder implements Runnable {
             }
 
             if (!params.loadBaseGraph) {
-                if (dataStore.hasInputOf(FileType.OSM)) {
+                if (input.containsKey(FileType.OSM)) {
                     List<OpenStreetMapProvider> osmProviders = Lists.newArrayList();
-                    for (DataSource osmSource : dataStore.listInputFor(FileType.OSM)) {
+                    for (DataSource osmSource : input.get(FileType.OSM)) {
                         osmProviders.add(new BinaryFileBasedOpenStreetMapProviderImpl(osmSource));
                     }
                     OpenStreetMapModule osmModule = new OpenStreetMapModule(osmProviders);
                     DefaultStreetEdgeFactory streetEdgeFactory = new DefaultStreetEdgeFactory();
-                    streetEdgeFactory.useElevationData = dataStore.hasInputOf(DEM);
+                    streetEdgeFactory.useElevationData = input.containsKey(DEM);
                     osmModule.edgeFactory = streetEdgeFactory;
                     osmModule.customNamer = builderParams.customNamer;
                     osmModule.setDefaultWayPropertySetSource(builderParams.wayPropertySet);
@@ -204,9 +231,9 @@ public class GraphBuilder implements Runnable {
                     GraphBuilderModule elevationBuilder = new ElevationModule(
                             gcf, builderParams.distanceBetweenElevationSamples);
                     graphBuilder.addModule(elevationBuilder);
-                } else if (dataStore.hasInputOf(DEM)) {
+                } else if (input.containsKey(DEM)) {
                     // Load the elevation from a file in the graph inputs directory
-                    for (DataSource demSource : dataStore.listInputFor(DEM)) {
+                    for (DataSource demSource : input.get(DEM)) {
                         ElevationGridCoverageFactory gcf = new GeotiffGridCoverageFactoryImpl(demSource);
                         GraphBuilderModule elevationBuilder = new ElevationModule(
                                 gcf, builderParams.distanceBetweenElevationSamples
@@ -217,10 +244,10 @@ public class GraphBuilder implements Runnable {
             }
 
             if (!params.skipTransit) {
-                if (dataStore.hasInputOf(GTFS)) {
+                if (input.containsKey(GTFS)) {
                     List<GtfsBundle> gtfsBundles = new ArrayList<>();
-                    for (CompositeDataSource gtfsSource : dataStore.listCompositeInputFor(GTFS)) {
-                        GtfsBundle gtfsBundle = new GtfsBundle(gtfsSource);
+                    for (DataSource gtfsSource : input.get(GTFS)) {
+                        GtfsBundle gtfsBundle = new GtfsBundle((CompositeDataSource)gtfsSource);
                         gtfsBundle.setTransfersTxtDefinesStationPaths(builderParams.useTransfersTxt);
                         if (builderParams.parentStopLinking) {
                             gtfsBundle.linkStopsToParentStations = true;
@@ -233,21 +260,21 @@ public class GraphBuilder implements Runnable {
                     GtfsModule gtfsModule = new GtfsModule(gtfsBundles);
                     gtfsModule.setFareServiceFactory(builderParams.fareServiceFactory);
                     graphBuilder.addModule(gtfsModule);
-                    if (dataStore.hasInputOf(OSM)) {
+                    if (input.containsKey(OSM)) {
                         if (builderParams.matchBusRoutesToStreets) {
                             graphBuilder.addModule(new BusRouteStreetMatcher());
                         }
                         graphBuilder.addModule(new TransitToTaggedStopsModule());
                     }
-                } else if (dataStore.hasInputOf(NETEX)) {
+                } else if (input.containsKey(NETEX)) {
                     List<NetexBundle> netexBundles = new ArrayList<>();
-                    for (CompositeDataSource netexSource : dataStore.listCompositeInputFor(NETEX)) {
-                        NetexBundle netexBundle = new NetexBundle(netexSource, builderParams);
+                    for (DataSource netexSource : input.get(NETEX)) {
+                        NetexBundle netexBundle = new NetexBundle((CompositeDataSource) netexSource, builderParams);
                         netexBundles.add(netexBundle);
                     }
                     NetexModule netexModule = new NetexModule(dir, netexBundles);
                     graphBuilder.addModule(netexModule);
-                    if (dataStore.hasInputOf(OSM)) {
+                    if (input.containsKey(OSM)) {
                         if (builderParams.matchBusRoutesToStreets) {
                             graphBuilder.addModule(new BusRouteStreetMatcher());
                         }
@@ -259,7 +286,7 @@ public class GraphBuilder implements Runnable {
                 StreetLinkerModule streetLinkerModule = new StreetLinkerModule();
                 streetLinkerModule.setAddExtraEdgesToAreas(builderParams.extraEdgesStopPlatformLink);
                 graphBuilder.addModule(streetLinkerModule);
-                if (dataStore.hasInputOf(GTFS) || dataStore.hasInputOf(NETEX)) {
+                if (input.containsKey(GTFS) || input.containsKey(NETEX)) {
                     if (builderParams.analyzeTransfers) {
                         graphBuilder.addModule(new DirectTransferAnalyzer(builderParams.maxTransferDistance));
                     } else {
@@ -300,7 +327,7 @@ public class GraphBuilder implements Runnable {
         }
     }
 
-    private static boolean checkInputFileTypesIsOk(Set<FileType> fileTypes, String source) {
+    private static boolean checkThereIsAtLeastOneFileToImport(Set<FileType> fileTypes, String source) {
         if(fileTypes.stream().noneMatch(FileType::isInputDataFile)) {
             LOG.error("No input files found, unable to build graph. Source: {}", source);
             return false;
