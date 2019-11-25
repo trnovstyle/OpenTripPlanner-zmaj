@@ -17,6 +17,9 @@ import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.factory.Hints;
 import org.geotools.gce.geotiff.GeoTiffFormat;
 import org.geotools.gce.geotiff.GeoTiffReader;
+import org.opentripplanner.standalone.datastore.DataSource;
+import org.opentripplanner.standalone.datastore.FileType;
+import org.opentripplanner.standalone.datastore.file.FileDataSource;
 import org.opentripplanner.graph_builder.services.ned.ElevationGridCoverageFactory;
 import org.opentripplanner.routing.graph.Graph;
 import org.slf4j.Logger;
@@ -32,11 +35,15 @@ public class GeotiffGridCoverageFactoryImpl implements ElevationGridCoverageFact
 
     private static final Logger LOG = LoggerFactory.getLogger(GeotiffGridCoverageFactoryImpl.class);
 
-    private final File path;
+    private final DataSource input;
     private GridCoverage2D coverage;
 
+    public GeotiffGridCoverageFactoryImpl(DataSource input) {
+        this.input = input;
+    }
+
     public GeotiffGridCoverageFactoryImpl(File path) {
-        this.path = path;
+        this(new FileDataSource(path, FileType.DEM));
     }
 
     @Override
@@ -48,7 +55,7 @@ public class GeotiffGridCoverageFactoryImpl implements ElevationGridCoverageFact
             // for unprojected DEMs assuming coordinates are in (longitude, latitude) order.
             Hints forceLongLat = new Hints(Hints.FORCE_LONGITUDE_FIRST_AXIS_ORDER, Boolean.TRUE);
             GeoTiffFormat format = new GeoTiffFormat();
-            GeoTiffReader reader = format.getReader(path, forceLongLat);
+            GeoTiffReader reader = format.getReader(getSource(), forceLongLat);
             coverage = reader.read(null);
             LOG.info("Elevation model CRS is: {}", coverage.getCoordinateReferenceSystem2D());
         } catch (IOException e) {
@@ -57,10 +64,14 @@ public class GeotiffGridCoverageFactoryImpl implements ElevationGridCoverageFact
         return coverage;
     }
 
+    private Object getSource() {
+        return input.asInputStream();
+    }
+
     @Override
     public void checkInputs() {
-        if (!path.canRead()) {
-            throw new RuntimeException("Can't read elevation path: " + path);
+        if (!input.exist()) {
+            throw new RuntimeException("Can't read elevation path: " + input.path());
         }
     }
 

@@ -33,8 +33,11 @@ import java.nio.charset.StandardCharsets;
 /**
  * The primary implementation of the GraphSource interface. The graph is loaded from a serialized
  * graph from a given source.
- * 
+ *
+ * @deprecated This should be replaced with the more general implementation for not just a graph,
+ *           but all data input files. See {@link org.opentripplanner.standalone.datastore.OtpDataStore}
  */
+@Deprecated
 public class InputStreamGraphSource implements GraphSource {
 
     public static final String GRAPH_FILENAME = "Graph.obj";

@@ -7,6 +7,8 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.opentripplanner.standalone.datastore.FileType;
+import org.opentripplanner.standalone.datastore.configure.DataStoreConfig;
 import org.opentripplanner.model.Agency;
 import org.opentripplanner.model.AgencyAndId;
 import org.opentripplanner.netex.loader.NetexLoader;
@@ -18,8 +20,8 @@ import org.opentripplanner.model.StopTime;
 import org.opentripplanner.model.calendar.ServiceDate;
 import org.opentripplanner.model.impl.OtpTransitBuilder;
 import org.opentripplanner.netex.loader.NetexBundle;
-import org.opentripplanner.standalone.GraphBuilderParameters;
-import org.opentripplanner.standalone.OTPMain;
+import org.opentripplanner.standalone.config.GraphBuilderParameters;
+import org.opentripplanner.standalone.datastore.file.ConfigLoader;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -42,8 +44,11 @@ public class MappingTest {
 
     @BeforeClass
     public static void setUpNetexMapping() throws Exception {
-        JsonNode buildConfig = OTPMain.loadJson(netexConfigFile);
-        NetexBundle netexBundle = new NetexBundle(netexFile, new GraphBuilderParameters(buildConfig));
+        JsonNode buildConfig = ConfigLoader.loadJson(netexConfigFile);
+        NetexBundle netexBundle = new NetexBundle(
+                DataStoreConfig.compositeSource(netexFile, FileType.NETEX),
+                new GraphBuilderParameters(buildConfig)
+        );
 
         otpBuilderFromNetex = new NetexLoader(netexBundle, gba -> {}).loadBundle();
         otpBuilderFromGtfs = GtfsContextBuilder

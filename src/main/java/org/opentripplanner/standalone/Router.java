@@ -29,6 +29,9 @@ public class Router {
 
     private static final Logger LOG = (Logger) LoggerFactory.getLogger(Router.class);
 
+    /**
+     * @deprecated TODO TGR - Remove this
+     */
     public static final String ROUTER_CONFIG_FILENAME = "router-config.json";
 
     public String id;

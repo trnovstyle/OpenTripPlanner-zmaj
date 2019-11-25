@@ -13,6 +13,7 @@ import org.opentripplanner.routing.graph.Graph;
 import org.opentripplanner.routing.impl.DefaultFareServiceFactory;
 import org.opentripplanner.routing.services.FareServiceFactory;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.List;
 
@@ -20,10 +21,13 @@ public class NetexModule implements GraphBuilderModule {
 
     private List<NetexBundle> netexBundles;
 
-    private FareServiceFactory _fareServiceFactory = new DefaultFareServiceFactory();
+    private FareServiceFactory fareServiceFactory = new DefaultFareServiceFactory();
 
-    public NetexModule(List<NetexBundle> netexBundles) {
+    private final File configDirectory;
+
+    public NetexModule(File configDirectory, List<NetexBundle> netexBundles) {
         this.netexBundles = netexBundles;
+        this.configDirectory = configDirectory;
     }
 
     @Override
@@ -37,7 +41,7 @@ public class NetexModule implements GraphBuilderModule {
             for (NetexBundle netexBundle : netexBundles) {
                 OtpTransitBuilder daoBuilder = new NetexLoader(netexBundle,graph).loadBundle();
 
-                TripTransformService.runTripTransform(daoBuilder, netexBundle.fileDir());
+                TripTransformService.runTripTransform(daoBuilder, configDirectory);
 
                 calendarService.addData(daoBuilder);
 
@@ -45,13 +49,12 @@ public class NetexModule implements GraphBuilderModule {
                     daoBuilder.removeStopsNotInUse();
                 }
 
-                TripTransformService.printTimeTable(daoBuilder, netexBundle.fileDir());
+                TripTransformService.printTimeTable(daoBuilder, configDirectory);
 
 
                 PatternHopFactory hf = new PatternHopFactory(
                         new GtfsFeedId.Builder().id(netexBundle.netexParameters.netexFeedId).build(),
-                        daoBuilder.build(),
-                        _fareServiceFactory,
+                        daoBuilder.build(), fareServiceFactory,
                         netexBundle.getMaxStopToShapeSnapDistance(),
                         netexBundle.subwayAccessTime,
                         netexBundle.maxInterlineDistance);

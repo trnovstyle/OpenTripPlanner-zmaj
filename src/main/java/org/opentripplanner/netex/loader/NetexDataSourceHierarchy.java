@@ -14,44 +14,42 @@
 */
 package org.opentripplanner.netex.loader;
 
-import org.opentripplanner.standalone.NetexParameters;
+import org.opentripplanner.standalone.datastore.CompositeDataSource;
+import org.opentripplanner.standalone.datastore.DataSource;
+import org.opentripplanner.standalone.config.NetexParameters;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Enumeration;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
 
-class NetexZipFileHierarchy {
+class NetexDataSourceHierarchy {
     private static final Logger LOG = LoggerFactory
-            .getLogger(NetexZipFileHierarchy.class);
+            .getLogger(NetexDataSourceHierarchy.class);
 
-    private final ZipFile zipFile;
+    private final CompositeDataSource source;
 
     private final NetexParameters config;
 
-    private final List<ZipEntry> sharedEntries = new ArrayList<>();
+    private final List<DataSource> sharedEntries = new ArrayList<>();
 
     private final Map<String, GroupEntries> groupEntries = new TreeMap<>();
 
     private String currentGroup = null;
 
-    NetexZipFileHierarchy(File filename, NetexParameters netexConfig)
+    NetexDataSourceHierarchy(CompositeDataSource source, NetexParameters netexConfig)
             throws IOException {
-        this.zipFile = new ZipFile(filename, ZipFile.OPEN_READ);
+        this.source = source;
         this.config = netexConfig;
         distributeEntries();
     }
 
-    Iterable<ZipEntry> sharedEntries() {
+    Iterable<DataSource> sharedEntries() {
         return sharedEntries;
     }
 
@@ -60,11 +58,8 @@ class NetexZipFileHierarchy {
     }
 
     private void distributeEntries() {
-        Enumeration<? extends ZipEntry> entries = zipFile.entries();
-
-        while (entries.hasMoreElements()) {
-            ZipEntry entry = entries.nextElement();
-            String name = entry.getName();
+        for (DataSource entry : source.content()) {
+            String name = entry.name();
 
             if(ignoredFile(name)) {
                 LOG.debug("Netex file ignored: {}.", name);

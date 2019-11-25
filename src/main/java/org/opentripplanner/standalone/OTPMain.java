@@ -21,6 +21,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.MissingNode;
 import org.opentripplanner.common.MavenVersion;
 import org.opentripplanner.graph_builder.GraphBuilder;
+import org.opentripplanner.standalone.datastore.OtpDataStore;
+import org.opentripplanner.standalone.datastore.file.DefaultDataStore;
 import org.opentripplanner.routing.graph.Graph;
 import org.opentripplanner.routing.impl.DefaultStreetVertexIndexFactory;
 import org.opentripplanner.routing.impl.GraphScanner;
@@ -106,7 +108,8 @@ public class OTPMain {
 
             /* Start graph builder if requested */
             if (params.build != null) {
-                GraphBuilder graphBuilder = GraphBuilder.forDirectory(params, params.build); // TODO multiple directories
+                GraphBuilder graphBuilder = GraphBuilder.forDirectory(params, params.build);
+
                 if (graphBuilder != null) {
                     graphBuilder.run();
                     /* If requested, hand off the graph to the server as the default graph using an in-memory GraphSource. */
@@ -181,33 +184,4 @@ public class OTPMain {
             graphSourceFactory.basePath = params.graphDirectory;
         }
     }
-
-    /**
-     * Open and parse the JSON file at the given path into a Jackson JSON tree. Comments and unquoted keys are allowed.
-     * Returns null if the file does not exist,
-     * Returns null if the file contains syntax errors or cannot be parsed for some other reason.
-     *
-     * We do not require any JSON config files to be present because that would get in the way of the simplest
-     * rapid deployment workflow. Therefore we return an empty JSON node when the file is missing, causing us to fall
-     * back on all the default values as if there was a JSON file present with no fields defined.
-     */
-    public static JsonNode loadJson (File file) {
-        try (FileInputStream jsonStream = new FileInputStream(file)) {
-            ObjectMapper mapper = new ObjectMapper();
-            mapper.configure(JsonParser.Feature.ALLOW_COMMENTS, true);
-            mapper.configure(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES, true);
-            JsonNode config = mapper.readTree(jsonStream);
-            LOG.info("Found and loaded JSON configuration file '{}'", file);
-            return config;
-        } catch (FileNotFoundException ex) {
-            LOG.info("File '{}' is not present. Using default configuration.", file);
-            return MissingNode.getInstance();
-        } catch (Exception ex) {
-            LOG.error("Error while parsing JSON config file '{}': {}", file, ex.getMessage());
-            System.exit(42); // probably "should" be done with an exception
-            return null;
-        }
-    }
-
-
 }

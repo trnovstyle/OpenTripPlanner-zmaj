@@ -12,7 +12,7 @@
  You should have received a copy of the GNU General Public License
  along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-package org.opentripplanner.standalone;
+package org.opentripplanner.standalone.config;
 
 import com.fasterxml.jackson.databind.JsonNode;
 

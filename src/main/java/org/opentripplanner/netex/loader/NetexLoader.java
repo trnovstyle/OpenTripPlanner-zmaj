@@ -19,12 +19,68 @@ import org.apache.commons.io.IOUtils;
 import org.opentripplanner.graph_builder.annotation.FlexibleStopPlaceNotFound;
 import org.opentripplanner.graph_builder.annotation.QuayNotFoundInStopPlaceFile;
 import org.opentripplanner.graph_builder.annotation.StopWithoutQuay;
+import org.opentripplanner.standalone.datastore.DataSource;
 import org.opentripplanner.graph_builder.module.NetexModule;
 import org.opentripplanner.model.impl.OtpTransitBuilder;
 import org.opentripplanner.netex.mapping.NetexMapper;
 import org.opentripplanner.netex.mapping.ServiceIdMapper;
 import org.opentripplanner.routing.graph.AddBuilderAnnotation;
-import org.rutebanken.netex.model.*;
+import org.rutebanken.netex.model.Authority;
+import org.rutebanken.netex.model.Branding;
+import org.rutebanken.netex.model.Common_VersionFrameStructure;
+import org.rutebanken.netex.model.CompositeFrame;
+import org.rutebanken.netex.model.DataManagedObjectStructure;
+import org.rutebanken.netex.model.DayType;
+import org.rutebanken.netex.model.DayTypeAssignment;
+import org.rutebanken.netex.model.DayTypeRefs_RelStructure;
+import org.rutebanken.netex.model.DayTypes_RelStructure;
+import org.rutebanken.netex.model.DestinationDisplay;
+import org.rutebanken.netex.model.FlexibleStopAssignment;
+import org.rutebanken.netex.model.FlexibleStopPlace;
+import org.rutebanken.netex.model.FlexibleStopPlacesInFrame_RelStructure;
+import org.rutebanken.netex.model.GroupOfLines;
+import org.rutebanken.netex.model.GroupOfStopPlaces;
+import org.rutebanken.netex.model.GroupsOfLinesInFrame_RelStructure;
+import org.rutebanken.netex.model.GroupsOfStopPlacesInFrame_RelStructure;
+import org.rutebanken.netex.model.Interchange_VersionStructure;
+import org.rutebanken.netex.model.JourneyPattern;
+import org.rutebanken.netex.model.JourneyPatternsInFrame_RelStructure;
+import org.rutebanken.netex.model.Journey_VersionStructure;
+import org.rutebanken.netex.model.JourneysInFrame_RelStructure;
+import org.rutebanken.netex.model.Line_VersionStructure;
+import org.rutebanken.netex.model.LinesInFrame_RelStructure;
+import org.rutebanken.netex.model.LinkSequence_VersionStructure;
+import org.rutebanken.netex.model.Network;
+import org.rutebanken.netex.model.Notice;
+import org.rutebanken.netex.model.NoticeAssignment;
+import org.rutebanken.netex.model.OperatingPeriod;
+import org.rutebanken.netex.model.OperatingPeriod_VersionStructure;
+import org.rutebanken.netex.model.Operator;
+import org.rutebanken.netex.model.Parking;
+import org.rutebanken.netex.model.ParkingsInFrame_RelStructure;
+import org.rutebanken.netex.model.PassengerStopAssignment;
+import org.rutebanken.netex.model.PointInLinkSequence_VersionedChildStructure;
+import org.rutebanken.netex.model.PublicationDeliveryStructure;
+import org.rutebanken.netex.model.Quay;
+import org.rutebanken.netex.model.ResourceFrame;
+import org.rutebanken.netex.model.Route;
+import org.rutebanken.netex.model.RoutesInFrame_RelStructure;
+import org.rutebanken.netex.model.ServiceCalendarFrame;
+import org.rutebanken.netex.model.ServiceFrame;
+import org.rutebanken.netex.model.ServiceJourney;
+import org.rutebanken.netex.model.ServiceJourneyInterchange;
+import org.rutebanken.netex.model.ServiceLink;
+import org.rutebanken.netex.model.SiteFrame;
+import org.rutebanken.netex.model.StopAssignment_VersionStructure;
+import org.rutebanken.netex.model.StopAssignmentsInFrame_RelStructure;
+import org.rutebanken.netex.model.StopPlace;
+import org.rutebanken.netex.model.StopPlacesInFrame_RelStructure;
+import org.rutebanken.netex.model.StopPointInJourneyPattern;
+import org.rutebanken.netex.model.TariffZone;
+import org.rutebanken.netex.model.TariffZonesInFrame_RelStructure;
+import org.rutebanken.netex.model.TimetableFrame;
+import org.rutebanken.netex.model.TypesOfValueInFrame_RelStructure;
+import org.rutebanken.netex.model.VersionFrameDefaultsStructure;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,8 +93,6 @@ import java.io.IOException;
 import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
 
 public class NetexLoader {
     private static final Logger LOG = LoggerFactory.getLogger(NetexModule.class);
@@ -77,28 +131,33 @@ public class NetexLoader {
     }
 
     private void loadDao() {
-        netexBundle.withZipFile(file -> loadZipFile(file, netexBundle.fileHirarcy()));
+        try (NetexBundle it = netexBundle) {
+            loadDataSource(it.fileHierarchy());
+        }
+        catch (IOException e) {
+            throw new RuntimeException(e.getLocalizedMessage(), e);
+        }
     }
 
-    private void loadZipFile(ZipFile zipFile, NetexZipFileHierarchy entries) {
+    private void loadDataSource(NetexDataSourceHierarchy entries) {
 
-        // Add a global(this zip file) shared NeTEX DAO  
+        // Add a global shared NeTEX DAO
         netexDaoStack.addFirst(new NetexDao());
 
         // Load global shared files
-        loadFiles("shared file", entries.sharedEntries(), zipFile);
+        loadFiles("shared file", entries.sharedEntries());
         mapCurrentNetexEntitiesIntoOtpTransitObjects();
 
         for (GroupEntries group : entries.groups()) {
             newNetexDaoScope(() -> {
                 // Load shared group files
-                loadFiles("shared group file", group.sharedEntries(), zipFile);
+                loadFiles("shared group file", group.sharedEntries());
                 mapCurrentNetexEntitiesIntoOtpTransitObjects();
 
-                for (ZipEntry entry : group.independentEntries()) {
+                for (DataSource entry : group.independentEntries()) {
                     newNetexDaoScope(() -> {
                         // Load each independent file in group
-                        loadFile("group file", entry, zipFile);
+                        loadFile("group file", entry);
                         mapCurrentNetexEntitiesIntoOtpTransitObjects();
                     });
                 }
@@ -130,24 +189,24 @@ public class NetexLoader {
         return jaxbContext.createUnmarshaller();
     }
 
-    private void loadFiles(String fileDescription, Iterable<ZipEntry> entries, ZipFile zipFile) {
-        for (ZipEntry entry : entries) {
-            loadFile(fileDescription, entry, zipFile);
+    private void loadFiles(String fileDescription, Iterable<DataSource> entries) {
+        for (DataSource entry : entries) {
+            loadFile(fileDescription, entry);
         }
     }
 
-    private byte[] entryAsBytes(ZipFile zipFile, ZipEntry entry) {
+    private byte[] entryAsBytes(DataSource source) {
         try {
-            return IOUtils.toByteArray(zipFile.getInputStream(entry));
+            return IOUtils.toByteArray(source.asInputStream());
         } catch (IOException e) {
             throw new RuntimeException(e.getMessage(), e);
         }
     }
 
-    private void loadFile(String fileDescription, ZipEntry entry, ZipFile zipFile) {
+    private void loadFile(String description, DataSource entry) {
         try {
-            LOG.info("Loading {}: {}", fileDescription, entry.getName());
-            byte[] bytesArray = entryAsBytes(zipFile, entry);
+            LOG.info("Loading {}: {}", description, entry.name());
+            byte[] bytesArray = entryAsBytes(entry);
 
 
             PublicationDeliveryStructure value = parseXmlDoc(bytesArray);

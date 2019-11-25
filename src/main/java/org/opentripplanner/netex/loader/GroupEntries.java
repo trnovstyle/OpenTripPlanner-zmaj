@@ -14,15 +14,16 @@
 */
 package org.opentripplanner.netex.loader;
 
+import org.opentripplanner.standalone.datastore.DataSource;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.zip.ZipEntry;
 
 class GroupEntries {
     private String group;
-    private List<ZipEntry> sharedEntries = new ArrayList<>();
-    private List<ZipEntry> entries = new ArrayList<>();
+    private List<DataSource> sharedEntries = new ArrayList<>();
+    private List<DataSource> entries = new ArrayList<>();
 
     GroupEntries(String group) {
         this.group = group;
@@ -32,19 +33,19 @@ class GroupEntries {
         return group;
     }
 
-    void addSharedEntry(ZipEntry entry) {
+    void addSharedEntry(DataSource entry) {
         sharedEntries.add(entry);
     }
 
-    Collection<ZipEntry> sharedEntries() {
+    Collection<DataSource> sharedEntries() {
         return sharedEntries;
     }
 
-    void addIndependentEntries(ZipEntry entry) {
+    void addIndependentEntries(DataSource entry) {
         entries.add(entry);
     }
 
-    Collection<ZipEntry> independentEntries() {
+    Collection<DataSource> independentEntries() {
         return entries;
     }
 }

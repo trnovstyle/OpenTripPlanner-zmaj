@@ -108,9 +108,8 @@ public class GtfsGraphBuilderModuleTest {
     }
 
     private static List<GtfsBundle> getGtfsAsBundleList (MockGtfs gtfs) {
-        GtfsBundle bundle = new GtfsBundle();
+        GtfsBundle bundle = new GtfsBundle(gtfs.getPath());
         bundle.setFeedId(new GtfsFeedId.Builder().id("FEED").build());
-        bundle.setPath(gtfs.getPath());
         List<GtfsBundle> list = Lists.newArrayList();
         list.add(bundle);
         return list;

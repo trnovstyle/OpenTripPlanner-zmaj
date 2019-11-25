@@ -648,8 +648,12 @@ public class Graph implements Serializable, AddBuilderAnnotation {
     /* (de) serialization */
 
     public static Graph load(File file) throws IOException {
-        LOG.info("Reading graph " + file.getAbsolutePath() + " ...");
-        return load(new FileInputStream(file));
+        return load(new FileInputStream(file), file.getAbsolutePath());
+    }
+
+    public static Graph load(InputStream inputStream, String sourceDescription) {
+        LOG.info("Reading graph " + sourceDescription + " ...");
+        return load(inputStream);
     }
 
     /**
@@ -790,17 +794,17 @@ public class Graph implements Serializable, AddBuilderAnnotation {
     }
 
     public void save(File file) throws IOException {
-        LOG.info("Main graph size: |V|={} |E|={}", this.countVertices(), this.countEdges());
-        LOG.info("Writing graph " + file.getAbsolutePath() + " ...");
         try {
-            save(new FileOutputStream(file));
+            save(new FileOutputStream(file), file.getPath());
         } catch (Exception e) {
             file.delete(); // remove half-written file
             throw e;
         }
     }
 
-    public void save(OutputStream outputStream) {
+    public void save(OutputStream outputStream, String pathname) {
+        LOG.info("Main graph size: |V|={} |E|={}", this.countVertices(), this.countEdges());
+        LOG.info("Writing graph " + pathname + " ...");
         Kryo kryo = makeKryo();
         LOG.debug("Consolidating edges...");
         Output output = new Output(outputStream);

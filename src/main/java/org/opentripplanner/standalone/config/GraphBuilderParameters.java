@@ -1,4 +1,4 @@
-package org.opentripplanner.standalone;
+package org.opentripplanner.standalone.config;
 
 import org.opentripplanner.graph_builder.module.osm.WayPropertySetSource;
 import org.opentripplanner.graph_builder.services.osm.CustomNamer;

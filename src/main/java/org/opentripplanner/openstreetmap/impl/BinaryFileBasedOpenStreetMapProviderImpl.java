@@ -13,63 +13,65 @@
 
 package org.opentripplanner.openstreetmap.impl;
 
+import crosby.binary.file.BlockInputStream;
 import org.opentripplanner.openstreetmap.services.OpenStreetMapContentHandler;
 import org.opentripplanner.openstreetmap.services.OpenStreetMapProvider;
+import org.opentripplanner.standalone.datastore.DataSource;
 
-import java.io.File;
-import java.io.FileInputStream;
-
-import crosby.binary.file.BlockInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 
 /**
- * Parser for the OpenStreetMap PBF format. Parses files in three passes:
- * First the relations, then the ways, then the nodes are also loaded.
+ * Parser for the OpenStreetMap PBF format. Parses files in three passes: First the relations, then
+ * the ways, then the nodes are also loaded.
  *
  * @see http://wiki.openstreetmap.org/wiki/PBF_Format
- * @see org.opentripplanner.openstreetmap.services.graph_builder.services.osm.OpenStreetMapContentHandler#biPhase
+ * @see OpenStreetMapContentHandler#biPhase
  * @since 0.4
  */
 public class BinaryFileBasedOpenStreetMapProviderImpl implements OpenStreetMapProvider {
 
-    private File _path;
+    private DataSource source;
+
+    public BinaryFileBasedOpenStreetMapProviderImpl(DataSource source) {
+        this.source = source;
+    }
 
     public void readOSM(OpenStreetMapContentHandler handler) {
         try {
             BinaryOpenStreetMapParser parser = new BinaryOpenStreetMapParser(handler);
-
-            FileInputStream input = new FileInputStream(_path);
-            parser.setParseNodes(false);
-            parser.setParseWays(false);
-            (new BlockInputStream(input, parser)).process();
+            parse(parser, true, false, false);
             handler.doneFirstPhaseRelations();
 
-            input = new FileInputStream(_path);
-            parser.setParseRelations(false);
-            parser.setParseWays(true);
-            (new BlockInputStream(input, parser)).process();
+            parse(parser, false, true, false);
             handler.doneSecondPhaseWays();
 
-            input = new FileInputStream(_path);
-            parser.setParseNodes(true);
-            parser.setParseWays(false);
-            (new BlockInputStream(input, parser)).process();
+            parse(parser, false, false, true);
             handler.doneThirdPhaseNodes();
-        } catch (Exception ex) {
-            throw new IllegalStateException("error loading OSM from path " + _path, ex);        }
+        }
+        catch (Exception ex) {
+            throw new IllegalStateException("error loading OSM from path " + source.path(), ex);
+        }
     }
 
-    public void setPath(File path) {
-        _path = path;
-    }
-
-    public String toString() {
-        return "BinaryFileBasedOpenStreetMapProviderImpl(" + _path + ")";
+    private void parse(
+            BinaryOpenStreetMapParser parser,
+            boolean relations,
+            boolean ways,
+            boolean nodes
+    ) throws IOException {
+        parser.setParseRelations(relations);
+        parser.setParseRelations(ways);
+        parser.setParseRelations(nodes);
+        try (InputStream in = source.asInputStream()) {
+            new BlockInputStream(in, parser).process();
+        }
     }
 
     @Override
-    public void checkInputs() {
-        if (!_path.canRead()) {
-            throw new RuntimeException("Can't read OSM path: " + _path);
-        }
+    public void checkInputs() { }
+
+    public String toString() {
+        return "BinaryFileBasedOpenStreetMapProviderImpl(" + source.path() + ")";
     }
 }

@@ -319,7 +319,7 @@ public class Routers {
         CommandLineParameters params = otpServer.params.clone();
         params.build = tempDir;
         params.inMemory = true;
-        
+
         GraphBuilder graphBuilder = GraphBuilder.forDirectory(params, tempDir);
         
         graphBuilder.run();
