@@ -1,12 +1,11 @@
 package org.opentripplanner.routing.graph;
 
-import com.conveyal.r5.GraphQLSchema;
 import com.conveyal.r5.diff.ObjectDiffer;
-import org.locationtech.jts.geom.LineString;
-import org.locationtech.jts.geom.Polygon;
 import org.geotools.util.WeakValueHashMap;
 import org.jets3t.service.io.TempFile;
 import org.junit.Test;
+import org.locationtech.jts.geom.LineString;
+import org.locationtech.jts.geom.Polygon;
 import org.opentripplanner.ConstantsForTests;
 import org.opentripplanner.common.LuceneIndex;
 import org.opentripplanner.common.geometry.HashGridSpatialIndex;
@@ -14,6 +13,8 @@ import org.opentripplanner.model.AgencyAndId;
 import org.opentripplanner.routing.impl.DefaultStreetVertexIndexFactory;
 import org.opentripplanner.routing.trippattern.Deduplicator;
 import org.opentripplanner.routing.vertextype.TransitStation;
+import org.opentripplanner.standalone.datastore.FileType;
+import org.opentripplanner.standalone.datastore.file.FileDataSource;
 
 import java.io.File;
 import java.util.BitSet;
@@ -53,7 +54,7 @@ public class GraphSerializationTest {
         originalGraph.clearTimeZone();
         // Now round-trip the graph through serialization.
         File tempFile = TempFile.createTempFile("graph", "pdx");
-        originalGraph.save(tempFile);
+        originalGraph.save(new FileDataSource(tempFile, FileType.GRAPH));
         Graph copiedGraph1 = Graph.load(tempFile);
         assertNoDifferences(originalGraph, copiedGraph1);
         Graph copiedGraph2 = Graph.load(tempFile);

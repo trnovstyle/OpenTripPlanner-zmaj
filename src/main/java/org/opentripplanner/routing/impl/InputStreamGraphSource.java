@@ -14,12 +14,10 @@
 package org.opentripplanner.routing.impl;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import org.opentripplanner.graph_builder.GraphBuilder;
 import org.opentripplanner.routing.graph.Graph;
 import org.opentripplanner.routing.services.GraphSource;
 import org.opentripplanner.standalone.Router;
 import org.opentripplanner.standalone.datastore.DataSource;
-import org.opentripplanner.standalone.datastore.FileType;
 import org.opentripplanner.standalone.datastore.OtpDataStore;
 import org.opentripplanner.standalone.datastore.configure.DataStoreConfig;
 import org.slf4j.Logger;
@@ -86,15 +84,15 @@ public class InputStreamGraphSource implements GraphSource {
      */
     private Router loadGraph() {
         final Graph newGraph;
-        DataSource graph = store.getSource(GraphBuilder.GRAPH_FILENAME, FileType.GRAPH);
+        DataSource graph = store.getGraph();
 
-        if(!graph.exist()) {
-            LOG.warn("Graph file not found for routerId '{}': {}", routerId, store.path());
+        if(!graph.exists()) {
+            LOG.warn("Graph file not found for routerId '{}': {}", routerId, graph.path());
             return null;
         }
 
         try (InputStream is = graph.asInputStream()) {
-            LOG.info("Loading graph...");
+            LOG.info("Loading graph from: {}", graph.path());
             try {
                 newGraph = Graph.load(is);
             } catch (Exception ex) {
@@ -104,7 +102,7 @@ public class InputStreamGraphSource implements GraphSource {
 
             newGraph.routerId = (routerId);
         } catch (IOException e) {
-            LOG.warn("Graph file readable for routerId '{}': {}", routerId, store.path(), e);
+            LOG.warn("Graph file is not readable for routerId '{}': {}", routerId, graph.path(), e);
             return null;
         }
 

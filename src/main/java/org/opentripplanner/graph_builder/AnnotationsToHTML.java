@@ -15,22 +15,27 @@ package org.opentripplanner.graph_builder;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.*;
-
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.PrintStream;
-import java.util.*;
-import java.util.logging.Level;
-
-import org.apache.commons.io.FileUtils;
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.HashMultiset;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.Multiset;
 import org.opentripplanner.graph_builder.annotation.GraphBuilderAnnotation;
 import org.opentripplanner.graph_builder.services.GraphBuilderModule;
 import org.opentripplanner.routing.graph.Graph;
+import org.opentripplanner.standalone.datastore.CompositeDataSource;
+import org.opentripplanner.standalone.datastore.DataSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.io.PrintStream;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.logging.Level;
 
 /**
  * This class generates nice HTML graph annotations reports 
@@ -43,7 +48,7 @@ public class AnnotationsToHTML implements GraphBuilderModule {
     private static Logger LOG = LoggerFactory.getLogger(AnnotationsToHTML.class); 
 
     //Path to output folder
-    private File outPath;
+    private CompositeDataSource reportDirectory;
 
     //If there are more then this number annotations are split into multiple files
     //This is because browsers aren't made for giant HTML files which can be made with 500k annotations
@@ -62,44 +67,32 @@ public class AnnotationsToHTML implements GraphBuilderModule {
     //Multimap because there are multiple annotations for each classname
     private Multimap<String, String> annotations;
   
-    public AnnotationsToHTML (File outpath, int maxNumberOfAnnotationsPerFile) {
-        this.outPath = outpath;
-        annotations = ArrayListMultimap.create();
+    public AnnotationsToHTML (CompositeDataSource reportDirectory, int maxNumberOfAnnotationsPerFile) {
+        this.reportDirectory = reportDirectory;
         this.maxNumberOfAnnotationsPerFile = maxNumberOfAnnotationsPerFile;
-        this.writers = new ArrayList<>();
+        this.annotations = ArrayListMultimap.create();
         this.annotationClassOccurences = HashMultiset.create();
+        this.writers = new ArrayList<>();
     }
 
 
     @Override
     public void buildGraph(Graph graph, HashMap<Class<?>, Object> extra) {
 
-        if (outPath == null) {
+        if (reportDirectory == null) {
             LOG.error("Saving folder is empty!");
             return;
         }
 
-        outPath = new File(outPath, "report");
-        if (outPath.exists()) {
+        if (reportDirectory.exists()) {
             //Removes all files from report directory
             try {
-                FileUtils.cleanDirectory(outPath);
+                reportDirectory.delete();
             } catch (IOException e) {
-                LOG.error("Failed to clean HTML report directory: " + outPath.toString() + ". HTML report won't be generated!", e);
-                return;
-            }
-        } else {
-            //Creates report directory if it doesn't exist yet
-            try {
-                FileUtils.forceMkdir(outPath);
-            } catch (IOException e) {
-                e.printStackTrace();
-                LOG.error("Failed to create HTML report directory: " + outPath.toString() + ". HTML report won't be generated!", e);
+                LOG.error("Failed to clean HTML report directory: " + reportDirectory.path() + ". HTML report won't be generated!", e);
                 return;
             }
         }
-
-
 
         //Groups annotations in multimap according to annotation class
         for (GraphBuilderAnnotation annotation : graph.getBuilderAnnotations()) {
@@ -133,13 +126,11 @@ public class AnnotationsToHTML implements GraphBuilderModule {
         try {
             HTMLWriter indexFileWriter = new HTMLWriter("index", (Multimap<String, String>)null);
             indexFileWriter.writeFile(annotationClassOccurences, true);
-        } catch (FileNotFoundException e) {
-            LOG.error("Index file coudn't be created:{}", e);
+        } catch (IOException e) {
+            LOG.error("Index file coudn't be created: {}", e.getLocalizedMessage(), e);
         }
 
-        LOG.info("Annotated logs are in {}", outPath);
-
-
+        LOG.info("Annotated logs are in {}", reportDirectory.path());
     }
 
     /**
@@ -154,7 +145,7 @@ public class AnnotationsToHTML implements GraphBuilderModule {
     private void addAnnotations(String annotationClassName, List<String> annotations) {
         try {
             HTMLWriter file_writer;
-            if (annotations.size() > 1.2*maxNumberOfAnnotationsPerFile) {
+            if (annotations.size() > 1.2 * maxNumberOfAnnotationsPerFile) {
                 LOG.debug("Number of annotations is very large. Splitting: {}", annotationClassName);
                 List<List<String>> partitions = Lists.partition(annotations, maxNumberOfAnnotationsPerFile);
                 for (List<String> partition: partitions) {
@@ -171,8 +162,8 @@ public class AnnotationsToHTML implements GraphBuilderModule {
                     annotations);
                 writers.add(file_writer);
             }
-        } catch (FileNotFoundException ex) {
-            LOG.error("Output folder not found:{} {}", outPath, ex);
+        } catch (IOException ex) {
+            LOG.error("Output folder not found:{} {}", reportDirectory.path(), ex);
         }
     }
 
@@ -201,29 +192,25 @@ public class AnnotationsToHTML implements GraphBuilderModule {
 
         private String annotationClassName;
 
-        public HTMLWriter(String key, Collection<String> annotations) throws FileNotFoundException {
+        public HTMLWriter(String key, Collection<String> annotations) throws IOException {
             LOG.debug("Making file: {}", key);
-            File newFile = new File(outPath, key +".html");
-            FileOutputStream fileOutputStream = new FileOutputStream(newFile);
-            this.out = new PrintStream(fileOutputStream);
+            DataSource target = reportDirectory.entry(key + ".html");
+            this.out = new PrintStream(target.asOutputStream());
             writerAnnotations = ArrayListMultimap.create();
             writerAnnotations.putAll(key, annotations);
             annotationClassName = key;
         }
 
-        public HTMLWriter(String filename, Multimap<String, String> curMap)
-            throws FileNotFoundException {
+        public HTMLWriter(String filename, Multimap<String, String> curMap) throws IOException {
             LOG.debug("Making file: {}", filename);
-            File newFile = new File(outPath, filename +".html");
-            FileOutputStream fileOutputStream = new FileOutputStream(newFile);
-            this.out = new PrintStream(fileOutputStream);
+            DataSource target = reportDirectory.entry(filename + ".html");
+            this.out = new PrintStream(target.asOutputStream());
             writerAnnotations = curMap;
             annotationClassName = filename;
         }
 
         private void writeFile(Multiset<String> classes, boolean isIndexFile) {
-            println("<html><head><title>Graph report for " + outPath.getParentFile()
-                + "Graph.obj</title>");
+            println("<html><head><title>Graph report for Graph.obj</title>");
             println("\t<meta charset=\"utf-8\">");
             println("<meta name='viewport' content='width=device-width, initial-scale=1'>");
             println("<script src='http://code.jquery.com/jquery-1.11.1.js'></script>");
@@ -268,7 +255,7 @@ public class AnnotationsToHTML implements GraphBuilderModule {
             println(css);
             println("</head><body>");
             println(String.format("<h1>OpenTripPlanner annotations log for %s</h1>", annotationClassName));
-            println("<h2>Graph report for " + outPath.getParentFile() + "Graph.obj</h2>");
+            println("<h2>Graph report for Graph.obj</h2>");
             println("<p>");
             //adds links to the other HTML files
             for (Multiset.Entry<String> htmlAnnotationClass : classes.entrySet()) {

@@ -58,7 +58,7 @@ public interface DataSource {
     /**
      * @return true is it exist in the data store; hence calling {@link #asInputStream()} is safe.
      */
-    default boolean exist() { return true; }
+    default boolean exists() { return true; }
 
     /**
      * @return {@code true} if it is possible to write to data source. Also, return {@code true} if
@@ -92,16 +92,17 @@ public interface DataSource {
     /**
      * Return an info string like this:
      * <p>
-     * {@code oslo_norway.osm.pbf, modified: 2018-02-13 22:23:27, size: 57,5M}
+     * {@code [icon] [filename]  [path]  [date time]  [file size]}
      */
     default String detailedInfo() {
-        String info = name();
+        String dir = path().substring(0, path().length() - name().length() - 1);
+        String info = String.format("%s %s  %s", type().icon(), name(), dir);
         if (lastModified() > 0) {
             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-            info += ", modified: " + sdf.format(lastModified());
+            info += "  " + sdf.format(lastModified());
         }
         if (size() > 0) {
-            info += ", size: " + LoggingUtil.human(size());
+            info += "  " + LoggingUtil.human(size());
         }
         return info;
     }

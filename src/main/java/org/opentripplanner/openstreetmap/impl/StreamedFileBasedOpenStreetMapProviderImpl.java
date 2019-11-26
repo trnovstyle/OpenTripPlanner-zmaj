@@ -1,8 +1,8 @@
 package org.opentripplanner.openstreetmap.impl;
 
-import org.opentripplanner.standalone.datastore.DataSource;
 import org.opentripplanner.openstreetmap.services.OpenStreetMapContentHandler;
 import org.opentripplanner.openstreetmap.services.OpenStreetMapProvider;
+import org.opentripplanner.standalone.datastore.DataSource;
 
 /**
  * @author Vincent Privat
@@ -40,7 +40,7 @@ public class StreamedFileBasedOpenStreetMapProviderImpl implements OpenStreetMap
 
     @Override
     public void checkInputs() {
-        if (!dataSource.exist()) {
+        if (!dataSource.exists()) {
             throw new RuntimeException("Can't read OSM path: " + dataSource.path());
         }
     }

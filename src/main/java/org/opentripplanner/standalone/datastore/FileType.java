@@ -5,18 +5,37 @@ import java.util.EnumSet;
 /**
  * Represents the different types of files that might be present in a router / graph build
  * directory. We want to detect even those that are not graph builder inputs so we can effectively
- * warn when unrecognized file types are present. This helps point out when config files have been
+ * warn when unknown file types are present. This helps point out when config files have been
  * misnamed (builder-config vs. build-config).
  */
 public enum FileType {
-  GTFS,
-  OSM,
-  DEM,
-  CONFIG,
-  GRAPH,
-  PARTIAL_GRAPH,
-  NETEX,
-  UNRECOGNIZED;
+  CONFIG( "⚙️", "Config file"),
+  OSM("🌍", "OpenStreetMap data"),
+  DEM("🏔", "Elevation data"),
+  GTFS("🚌", "GTFS data"),
+  NETEX("🚌", "NeTEx data"),
+  GRAPH("🦠", "OTP Graph file"),
+  REPORT("📈", "Issue report"),
+  UNKNOWN("❓", "Unknown file");
+
+  private final String icon;
+  private final String text;
+
+  FileType(String icon, String text) {
+    this.icon = icon;
+    this.text = text;
+  }
+
+  /**
+   * Emoji (icon) for the given type
+   */
+  public String icon() {
+    return icon;
+  }
+
+  public String text() {
+    return text;
+  }
 
   /**
    * Return {@code true} if the the file is an input data file. This is GTFS, Netex, OpenStreetMap,
@@ -33,6 +52,13 @@ public enum FileType {
    * file types will return {@code false}.
    */
   public boolean isCompositeInputDataFile() {
+    return EnumSet.of(GTFS, NETEX, REPORT).contains(this);
+  }
+
+  /**
+   * @return true if GTFS or NETEX file type.
+   */
+  public boolean isTransit() {
     return EnumSet.of(GTFS, NETEX).contains(this);
   }
 }

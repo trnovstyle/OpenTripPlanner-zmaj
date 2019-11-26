@@ -13,22 +13,22 @@
 
 package org.opentripplanner.graph_builder.model;
 
+import org.apache.http.client.ClientProtocolException;
+import org.onebusaway.csv_entities.CsvInputSource;
+import org.opentripplanner.graph_builder.module.GtfsFeedId;
+import org.opentripplanner.standalone.datastore.CompositeDataSource;
+import org.opentripplanner.standalone.datastore.FileType;
+import org.opentripplanner.standalone.datastore.configure.DataStoreConfig;
+import org.opentripplanner.util.HttpUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
-
-import org.apache.http.client.ClientProtocolException;
-import org.onebusaway.csv_entities.CsvInputSource;
-import org.opentripplanner.standalone.datastore.CompositeDataSource;
-import org.opentripplanner.standalone.datastore.FileType;
-import org.opentripplanner.standalone.datastore.configure.DataStoreConfig;
-import org.opentripplanner.graph_builder.module.GtfsFeedId;
-import org.opentripplanner.util.HttpUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class GtfsBundle {
 
@@ -164,7 +164,7 @@ public class GtfsBundle {
             LOG.warn("unknown CSV source type; cannot check inputs");
             return;
         }
-        if (!dataSource.exist()) {
+        if (!dataSource.exists()) {
                 throw new RuntimeException(
                         "GTFS Path " + dataSource.path() + " does not exist or "
                                 + "cannot be read."
@@ -178,7 +178,6 @@ public class GtfsBundle {
                 throw new RuntimeException("GTFS url " + url.toExternalForm() + " cannot be read.\n" + e);
             }
         }
-
     }
 
     public double getMaxStopToShapeSnapDistance() {

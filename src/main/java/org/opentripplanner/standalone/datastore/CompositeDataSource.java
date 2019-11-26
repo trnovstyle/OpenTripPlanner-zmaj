@@ -1,6 +1,7 @@
 package org.opentripplanner.standalone.datastore;
 
 import java.io.Closeable;
+import java.io.IOException;
 import java.util.Collection;
 
 /**
@@ -24,4 +25,14 @@ public interface CompositeDataSource extends DataSource, Closeable {
      * {@code DataSource routesSrc = gtfsSource.entry("routes.txt")}
      */
     DataSource entry(String name);
+
+    /**
+     * Delete content and container in store.
+     */
+    default void delete() throws IOException {
+        throw new UnsupportedOperationException(
+                "This datasource type " + type()
+                + " do not support DELETE. Can not delete: " + path()
+        );
+    }
 }

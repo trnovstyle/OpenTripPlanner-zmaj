@@ -32,7 +32,7 @@ public interface RouterDataStore extends Closeable {
 
 
     /**
-     * Get the graph, the graph may or may not {@link DataSource#exist()}.
+     * Get the graph, the graph may or may not {@link DataSource#exists()}.
      * <p>
      * This method should not be called after this data store is closed. The behavior is undefined.
      */

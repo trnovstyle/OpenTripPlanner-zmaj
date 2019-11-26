@@ -2,13 +2,19 @@ package org.opentripplanner.standalone.datastore.configure;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import org.opentripplanner.standalone.config.GraphBuilderParameters;
+import org.opentripplanner.standalone.config.StorageParameters;
 import org.opentripplanner.standalone.datastore.CompositeDataSource;
 import org.opentripplanner.standalone.datastore.FileType;
 import org.opentripplanner.standalone.datastore.OtpDataStore;
-import org.opentripplanner.standalone.datastore.file.DefaultDataStore;
-import org.opentripplanner.standalone.datastore.generic.AbstractDataStore;
+import org.opentripplanner.standalone.datastore.base.DataSourceRepository;
+import org.opentripplanner.standalone.datastore.file.FileDataSourceRepository;
+import org.opentripplanner.standalone.datastore.gcs.GcsDataSourceRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.opentripplanner.standalone.datastore.file.ConfigLoader.loadBuilderConfig;
 import static org.opentripplanner.standalone.datastore.file.ConfigLoader.loadRouterConfig;
@@ -17,17 +23,19 @@ import static org.opentripplanner.standalone.datastore.file.ConfigLoader.loadRou
  * This is the global access point to create a data store and create datasource objects(tests). It
  * uses a build pattern to configure the data store before creating it.
  * <p>
- * Note that opening a data store should not download or open any data sources, only fetch
- * meta-data to figure out what data is available. A data source is accessed (lazy) using streams.
+ * Note that opening a data store should not download or open any data sources, only fetch meta-data
+ * to figure out what data is available. A data source is accessed (lazy) using streams.
  * <p>
- * The only available data store is using the local file system to fetch data, but it is designed
- * so individual forks of OTP can provide their own implementation to fetch data from the cloud,
- * mixed with file access.
+ * The only available data store is using the local file system to fetch data, but it is designed so
+ * individual forks of OTP can provide their own implementation to fetch data from the cloud, mixed
+ * with file access.
  * <p>
  * Implementation details. This class should contain minimal amount of business logic, delegating
  * all tasks to the underlying implementations.
  */
 public class DataStoreConfig {
+
+    private static final Logger LOG = LoggerFactory.getLogger(DataStoreConfig.class);
 
     private final File baseDirectory;
 
@@ -48,7 +56,7 @@ public class DataStoreConfig {
      * Use this to get a composite data source, bypassing the {@link OtpDataStore}.
      */
     public static CompositeDataSource compositeSource(File file, FileType type) {
-        return DefaultDataStore.compositeSource(file, type);
+        return FileDataSourceRepository.compositeSource(file, type);
     }
 
     /**
@@ -61,22 +69,29 @@ public class DataStoreConfig {
         // a router starts up
         JsonNode routerConfig = loadRouterConfig(baseDirectory);
 
-        AbstractDataStore store = createDataStore(builderConfig, routerConfig);
+        GraphBuilderParameters config = new GraphBuilderParameters(builderConfig);
+        StorageParameters storageConfig = config.storage;
+
+        List<DataSourceRepository> repositories = new ArrayList<>();
+
+        // Adding Google Cloud Storage, if the config file contains URIs with prefix "gs:"
+        if (storageConfig.isGoogleCloudStorageEnabled()) {
+            LOG.info("Google Cloud Store Repository enabled - GCS resources detected.");
+            repositories.add(new GcsDataSourceRepository(storageConfig.gcsCredentials));
+        }
+        // The file data storage repository should be last, to allow
+        // other repositories to "override" and grab files analyzing the
+        // datasource uri passed in
+        repositories.add(new FileDataSourceRepository(baseDirectory));
+
+        OtpDataStore store = new OtpDataStore(
+                storageConfig,
+                builderConfig,
+                routerConfig,
+                repositories
+        );
 
         store.open();
-
         return store;
-    }
-
-    private AbstractDataStore createDataStore(JsonNode builderConfig, JsonNode routerConfig) {
-        GraphBuilderParameters config = new GraphBuilderParameters(builderConfig);
-        // GoogleCloudStorageParameters gcsConfig = config.googleCloudStorage;
-
-        // If you implement your own data store, this is how to inject it.
-        // if (GcsDataStore.isEnabled(gcsConfig)) {
-        //     return new GcsDataStore(gcsConfig, builderConfig, routerConfig);
-        // }
-        // Create the default data store
-        return new DefaultDataStore(baseDirectory, builderConfig, routerConfig);
     }
 }

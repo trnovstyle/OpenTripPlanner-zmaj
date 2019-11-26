@@ -25,7 +25,6 @@ public class ConfigLoader {
     private static final String BUILDER_CONFIG_FILENAME = "build-config.json";
     private static final String ROUTER_CONFIG_FILENAME = "router-config.json";
 
-
     /**
      * Check if a file is a config file using the configuration file name.
      * This method returns {@code true} if the file match {@code (build-config|router-config).json}.
@@ -33,7 +32,6 @@ public class ConfigLoader {
     public static boolean isConfigFile(String filename) {
         return BUILDER_CONFIG_FILENAME.equals(filename) || ROUTER_CONFIG_FILENAME.equals(filename);
     }
-
 
     /**
      * Load the graph builder configuration file as a JsonNode three. An empty node is
@@ -111,6 +109,9 @@ public class ConfigLoader {
      */
     public static JsonNode toJsonNode(String jsonAsString, String source) {
         try {
+            if(jsonAsString == null) {
+                return MissingNode.getInstance();
+            }
             ObjectMapper mapper = new ObjectMapper();
             mapper.configure(JsonParser.Feature.ALLOW_COMMENTS, true);
             mapper.configure(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES, true);

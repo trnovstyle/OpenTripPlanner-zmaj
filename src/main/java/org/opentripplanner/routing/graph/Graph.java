@@ -21,10 +21,14 @@ import com.esotericsoftware.kryo.io.Output;
 import com.esotericsoftware.kryo.serializers.ExternalizableSerializer;
 import com.esotericsoftware.kryo.serializers.JavaSerializer;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.*;
-import org.locationtech.jts.geom.Coordinate;
-import org.locationtech.jts.geom.Envelope;
-import org.locationtech.jts.geom.Geometry;
+import com.google.common.collect.HashBiMap;
+import com.google.common.collect.HashMultiset;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Multiset;
+import com.google.common.collect.Sets;
 import de.javakaffee.kryoserializers.UnmodifiableCollectionsSerializer;
 import gnu.trove.impl.hash.TPrimitiveHash;
 import gnu.trove.list.TDoubleList;
@@ -33,28 +37,31 @@ import gnu.trove.list.linked.TDoubleLinkedList;
 import gnu.trove.map.hash.TIntIntHashMap;
 import org.apache.commons.math3.stat.descriptive.rank.Median;
 import org.joda.time.DateTime;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.Envelope;
+import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.Polygon;
 import org.objenesis.strategy.SerializingInstantiatorStrategy;
 import org.opentripplanner.analyst.request.SampleFactory;
 import org.opentripplanner.calendar.impl.CalendarServiceImpl;
-import org.opentripplanner.graph_builder.linking.SynchronisedSimpleStreetSplitter;
-import org.opentripplanner.model.Agency;
-import org.opentripplanner.model.AgencyAndId;
-import org.opentripplanner.model.Notice;
-import org.opentripplanner.model.Operator;
-import org.opentripplanner.model.Stop;
-import org.opentripplanner.model.FeedInfo;
-import org.opentripplanner.model.TransmodelTransportSubmode;
-import org.opentripplanner.model.calendar.CalendarServiceData;
-import org.opentripplanner.model.calendar.ServiceDate;
-import org.opentripplanner.model.CalendarService;
 import org.opentripplanner.common.MavenVersion;
 import org.opentripplanner.common.TurnRestriction;
 import org.opentripplanner.common.geometry.GraphUtils;
 import org.opentripplanner.graph_builder.annotation.GraphBuilderAnnotation;
 import org.opentripplanner.graph_builder.annotation.NoFutureDates;
+import org.opentripplanner.graph_builder.linking.SynchronisedSimpleStreetSplitter;
 import org.opentripplanner.kryo.HashBiMapSerializer;
+import org.opentripplanner.model.Agency;
+import org.opentripplanner.model.AgencyAndId;
+import org.opentripplanner.model.CalendarService;
+import org.opentripplanner.model.FeedInfo;
 import org.opentripplanner.model.GraphBundle;
+import org.opentripplanner.model.Notice;
+import org.opentripplanner.model.Operator;
+import org.opentripplanner.model.Stop;
+import org.opentripplanner.model.TransmodelTransportSubmode;
+import org.opentripplanner.model.calendar.CalendarServiceData;
+import org.opentripplanner.model.calendar.ServiceDate;
 import org.opentripplanner.routing.alertpatch.AlertPatch;
 import org.opentripplanner.routing.core.TransferTable;
 import org.opentripplanner.routing.core.TraverseMode;
@@ -70,6 +77,7 @@ import org.opentripplanner.routing.trippattern.Deduplicator;
 import org.opentripplanner.routing.vertextype.PatternArriveVertex;
 import org.opentripplanner.routing.vertextype.TemporaryVertex;
 import org.opentripplanner.routing.vertextype.TransitStop;
+import org.opentripplanner.standalone.datastore.DataSource;
 import org.opentripplanner.traffic.StreetSpeedSnapshotSource;
 import org.opentripplanner.updater.GraphUpdaterConfigurator;
 import org.opentripplanner.updater.GraphUpdaterManager;
@@ -78,8 +86,25 @@ import org.opentripplanner.util.WorldEnvelope;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
-import java.util.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.ObjectInputStream;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.BitSet;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.TimeZone;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.prefs.Preferences;
 /**
@@ -793,21 +818,12 @@ public class Graph implements Serializable, AddBuilderAnnotation {
         return kryo;
     }
 
-    public void save(File file) throws IOException {
-        try {
-            save(new FileOutputStream(file), file.getPath());
-        } catch (Exception e) {
-            file.delete(); // remove half-written file
-            throw e;
-        }
-    }
-
-    public void save(OutputStream outputStream, String pathname) {
+    public void save(DataSource graphSource) {
         LOG.info("Main graph size: |V|={} |E|={}", this.countVertices(), this.countEdges());
-        LOG.info("Writing graph " + pathname + " ...");
+        LOG.info("Writing graph " + graphSource.path() + " ...");
         Kryo kryo = makeKryo();
         LOG.debug("Consolidating edges...");
-        Output output = new Output(outputStream);
+        Output output = new Output(graphSource.asOutputStream());
         // this is not space efficient
         List<Edge> edges = new ArrayList<Edge>(this.countEdges());
         for (Vertex v : getVertices()) {
@@ -937,7 +953,7 @@ public class Graph implements Serializable, AddBuilderAnnotation {
         for (Multiset.Entry<Class<? extends GraphBuilderAnnotation>> e : classes.entrySet()) {
             String name = e.getElement().getSimpleName();
             int count = e.getCount();
-            LOG.info("    {} - {}", name, count);
+            LOG.info("  - {}: {}", name, count);
         }
     }
 

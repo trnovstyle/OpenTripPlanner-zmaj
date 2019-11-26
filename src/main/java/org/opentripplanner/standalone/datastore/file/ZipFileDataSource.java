@@ -19,23 +19,17 @@ import java.util.zip.ZipFile;
  * This is a wrapper around a ZipFile, it can be used to read the content, but
  * not write to it. The {@link #asOutputStream()} is throwing an exception.
  */
-public class ZipFileDataSource implements CompositeDataSource {
+public class ZipFileDataSource extends AbstractFileDataSource implements CompositeDataSource {
     private static final Logger LOG = LoggerFactory.getLogger(ZipFileDataSource.class);
 
-    private final ZipFile zipFile;
-    private final FileType type;
-    private final String name;
-    private final long lastModified;
+    private ZipFile zipFile;
     private final Collection<DataSource> content;
-    private boolean closed = false;
 
     ZipFileDataSource(File file, FileType type) {
+        super(file, type);
         try {
-            this.type = type;
             // The get name on ZipFile returns the full path, we want just the name.
-            this.name = file.getName();
             this.zipFile = new ZipFile(file, ZipFile.OPEN_READ);
-            this.lastModified = file.lastModified();
             this.content = retrieveContent(zipFile);
         }
         catch (IOException e) {
@@ -46,10 +40,9 @@ public class ZipFileDataSource implements CompositeDataSource {
     @Override
     public void close() {
         try {
-            if(!closed) {
-                // Only try to close the zip file once.
-                closed = true;
+            if(zipFile != null) {
                 zipFile.close();
+                zipFile = null;
             }
 
         }
@@ -62,32 +55,7 @@ public class ZipFileDataSource implements CompositeDataSource {
      * @return the internal zip file if still open. {@code null} is return if the file is closed.
      */
     ZipFile zipFile() {
-        return closed ? null : zipFile;
-    }
-
-    @Override
-    public String name() {
-        return name;
-    }
-
-    @Override
-    public String path() {
-        return name + " (" + zipFile.getName() + ")";
-    }
-
-    @Override
-    public FileType type() {
-        return type;
-    }
-
-    @Override
-    public long size() {
-        return zipFile.size();
-    }
-
-    @Override
-    public long lastModified() {
-        return lastModified;
+        return zipFile;
     }
 
     @Override

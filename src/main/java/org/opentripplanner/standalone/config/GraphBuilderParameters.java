@@ -1,11 +1,10 @@
 package org.opentripplanner.standalone.config;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import org.opentripplanner.graph_builder.module.osm.WayPropertySetSource;
 import org.opentripplanner.graph_builder.services.osm.CustomNamer;
 import org.opentripplanner.routing.impl.DefaultFareServiceFactory;
 import org.opentripplanner.routing.services.FareServiceFactory;
-
-import com.fasterxml.jackson.databind.JsonNode;
 
 /**
  * These are parameters that when changed, necessitate a Graph rebuild.
@@ -33,11 +32,6 @@ public class GraphBuilderParameters {
      * Since browsers have problems opening large HTML files.
      */
     public final int maxHtmlAnnotationsPerFile;
-
-    /**
-     * Include all transit input files (GTFS) from scanned directory.
-     */
-    public final boolean transit;
 
     /**
      * Create direct transfer edges from transfers.txt in GTFS, instead of based on distance.
@@ -175,6 +169,14 @@ public class GraphBuilderParameters {
     public final NetexParameters netex;
 
     /**
+     * Otp auto detect input and output files using the command line supplied paths. This parameter
+     * make it possible to override this by specifying a path for each file. All parameters in the
+     * storage section is optional, and the fallback is to use the auto detection. It is OK to
+     * autodetect some file and specify the path to other.
+     */
+    public final StorageParameters storage;
+
+    /**
      * Link park and ride elements in transit
      */
 
@@ -198,6 +200,7 @@ public class GraphBuilderParameters {
      */
     public double distanceBetweenElevationSamples;
 
+
     /**
      * Set all parameters from the given Jackson JSON tree, applying defaults.
      * Supplying MissingNode.getInstance() will cause all the defaults to be applied.
@@ -206,7 +209,6 @@ public class GraphBuilderParameters {
      */
     public GraphBuilderParameters(JsonNode config) {
         htmlAnnotations = config.path("htmlAnnotations").asBoolean(false);
-        transit = config.path("transit").asBoolean(true);
         useTransfersTxt = config.path("useTransfersTxt").asBoolean(false);
         parentStopLinking = config.path("parentStopLinking").asBoolean(false);
         stationTransfers = config.path("stationTransfers").asBoolean(false);
@@ -234,10 +236,10 @@ public class GraphBuilderParameters {
         maxTransferDistance = config.path("maxTransferDistance").asDouble(2000);
         extraEdgesStopPlatformLink = config.path("extraEdgesStopPlatformLink").asBoolean(false);
         netex = new NetexParameters(config.path("netex"));
+        storage = new StorageParameters(config.path("storage"));
         parkAndRideFromTransitData = config.path("parkAndRideFromTransitData").asBoolean(false);
         linkMultiModalStopsToParentStations = config.path("linkMultiModalStopsToParentStations").asBoolean(false);
         analyzeTransfers = config.path("analyzeTransfers").asBoolean(false);
         distanceBetweenElevationSamples = config.path("distanceBetweenElevationSamples").asDouble(10);
     }
-
 }

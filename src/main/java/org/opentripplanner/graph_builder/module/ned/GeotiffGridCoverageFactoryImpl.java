@@ -17,11 +17,11 @@ import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.factory.Hints;
 import org.geotools.gce.geotiff.GeoTiffFormat;
 import org.geotools.gce.geotiff.GeoTiffReader;
+import org.opentripplanner.graph_builder.services.ned.ElevationGridCoverageFactory;
+import org.opentripplanner.routing.graph.Graph;
 import org.opentripplanner.standalone.datastore.DataSource;
 import org.opentripplanner.standalone.datastore.FileType;
 import org.opentripplanner.standalone.datastore.file.FileDataSource;
-import org.opentripplanner.graph_builder.services.ned.ElevationGridCoverageFactory;
-import org.opentripplanner.routing.graph.Graph;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -70,7 +70,7 @@ public class GeotiffGridCoverageFactoryImpl implements ElevationGridCoverageFact
 
     @Override
     public void checkInputs() {
-        if (!input.exist()) {
+        if (!input.exists()) {
             throw new RuntimeException("Can't read elevation path: " + input.path());
         }
     }

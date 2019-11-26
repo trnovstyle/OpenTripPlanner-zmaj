@@ -43,7 +43,6 @@ import java.util.List;
 import java.util.Set;
 
 import static org.opentripplanner.standalone.datastore.FileType.DEM;
-import static org.opentripplanner.standalone.datastore.FileType.GRAPH;
 import static org.opentripplanner.standalone.datastore.FileType.GTFS;
 import static org.opentripplanner.standalone.datastore.FileType.NETEX;
 import static org.opentripplanner.standalone.datastore.FileType.OSM;
@@ -64,7 +63,7 @@ public class GraphBuilder implements Runnable {
 
     private Graph graph = new Graph();
 
-    private String graphFileName;
+    private final boolean writeToBaseGraph;
 
     /** Should the graph be serialized to disk after being created or not? */
     private boolean serializeGraph = true;
@@ -73,7 +72,7 @@ public class GraphBuilder implements Runnable {
         this.dataStore = dataStore;
         // If we are skipping transit, then we are only building the street network,
         // the base for adding transit later.
-        this.graphFileName = skipTransit ? BASE_GRAPH_FILENAME : GRAPH_FILENAME;
+        this.writeToBaseGraph = skipTransit;
     }
 
     private void addModule(GraphBuilderModule loader) {
@@ -82,7 +81,7 @@ public class GraphBuilder implements Runnable {
 
     private Graph loadBaseGraph() {
         try {
-            DataSource graphSource = dataStore.getSource(BASE_GRAPH_FILENAME, GRAPH);
+            DataSource graphSource = dataStore.getBaseGraph();
             graph = Graph.load(graphSource.asInputStream(), graphSource.path());
             return graph;
         } catch (Exception e) {
@@ -94,8 +93,8 @@ public class GraphBuilder implements Runnable {
         return graph;
     }
 
-    public DataSource getGraphSource() {
-        return dataStore.getSource(graphFileName, GRAPH);
+    private DataSource getGraphOutputSource() {
+        return writeToBaseGraph ? dataStore.getBaseGraph() : dataStore.getGraph();
     }
 
     public void run() {
@@ -105,10 +104,10 @@ public class GraphBuilder implements Runnable {
 
             if (serializeGraph) {
                 // Abort building a graph if the file can not be saved
-                DataSource graphSource = getGraphSource();
-                if (!graphSource.isWritable()) {
+                DataSource graphOut = getGraphOutputSource();
+                if (!graphOut.isWritable()) {
                     throw new RuntimeException(
-                            "Cannot create or write to graph at: " + graphSource.path()
+                            "Cannot create or write to graph at: " + graphOut.path()
                     );
                 }
             }
@@ -127,7 +126,7 @@ public class GraphBuilder implements Runnable {
 
             if (serializeGraph) {
                 try {
-                    graph.save(getGraphSource().asOutputStream(), dataStore.path());
+                    graph.save(getGraphOutputSource());
                 } catch (Exception ex) {
                     throw new IllegalStateException(ex);
                 }
@@ -142,6 +141,9 @@ public class GraphBuilder implements Runnable {
             // Loading data failed, notify source
             throw e;
         }
+        finally {
+            dataStore.close();
+        }
     }
 
     /**
@@ -151,12 +153,13 @@ public class GraphBuilder implements Runnable {
      * Using command line options: {@code params.inMemory} {@code params.preFlight} and
      * {@code params.build directory}.
      */
-    public static GraphBuilder forDirectory(CommandLineParameters params, File dir) {
+    public static GraphBuilder forDirectory(CommandLineParameters cmdLineParams, File dir) {
+        OtpDataStore dataStore = null;
         try {
             LOG.info("Wiring up and configuring graph builder task.");
             LOG.info("Searching for graph builder input files in {}", dir);
 
-            OtpDataStore dataStore = new DataStoreConfig(dir).open();
+            dataStore = new DataStoreConfig(dir).open();
 
             // Parse graph build parameters
             GraphBuilderParameters builderParams = new GraphBuilderParameters(
@@ -164,25 +167,25 @@ public class GraphBuilder implements Runnable {
             );
 
             // Select witch files to import and log status for each file
-            Multimap<FileType, DataSource> input = new InputDataSourceSelection(dataStore, builderParams)
-                    .selectFilesToImport()
+            Multimap<FileType, DataSource> input = new DataSourceHelper(dataStore)
+                    .findFilesToImport()
                     .logSkippedAndSelectedFiles()
-                    .andGetFilesToImport();
+                    .get();
 
             // Check there is at least one file to import
-            if (!checkThereIsAtLeastOneFileToImport(input.keySet(), dataStore.path())) {
+            if (!checkThereIsAtLeastOneFileToImport(input.keySet())) {
                 return null;
             }
 
-            GraphBuilder graphBuilder = new GraphBuilder(dataStore, params.skipTransit);
+            GraphBuilder graphBuilder = new GraphBuilder(dataStore, cmdLineParams.skipTransit);
             //graphBuilder.statusFile.setInProgress();
 
-            if (params.loadBaseGraph) {
+            if (cmdLineParams.loadBaseGraph) {
                 Graph graph = graphBuilder.loadBaseGraph();
                 graph.index(new DefaultStreetVertexIndexFactory());
             }
 
-            if (!params.loadBaseGraph) {
+            if (!cmdLineParams.loadBaseGraph) {
                 if (input.containsKey(FileType.OSM)) {
                     List<OpenStreetMapProvider> osmProviders = Lists.newArrayList();
                     for (DataSource osmSource : input.get(FileType.OSM)) {
@@ -213,7 +216,7 @@ public class GraphBuilder implements Runnable {
                 if (builderParams.elevationBucket != null) {
                     // Download the elevation tiles from an Amazon S3 bucket
                     S3BucketConfig bucketConfig = builderParams.elevationBucket;
-                    File cacheDirectory = new File(params.cacheDirectory, "ned");
+                    File cacheDirectory = new File(cmdLineParams.cacheDirectory, "ned");
                     DegreeGridNEDTileSource awsTileSource = new DegreeGridNEDTileSource();
                     awsTileSource = new DegreeGridNEDTileSource();
                     awsTileSource.awsAccessKey = bucketConfig.accessKey;
@@ -226,7 +229,7 @@ public class GraphBuilder implements Runnable {
                     graphBuilder.addModule(elevationBuilder);
                 } else if (builderParams.fetchElevationUS) {
                     // Download the elevation tiles from the official web service
-                    File cacheDirectory = new File(params.cacheDirectory, "ned");
+                    File cacheDirectory = new File(cmdLineParams.cacheDirectory, "ned");
                     ElevationGridCoverageFactory gcf = new NEDGridCoverageFactoryImpl(cacheDirectory);
                     GraphBuilderModule elevationBuilder = new ElevationModule(
                             gcf, builderParams.distanceBetweenElevationSamples);
@@ -243,7 +246,7 @@ public class GraphBuilder implements Runnable {
                 }
             }
 
-            if (!params.skipTransit) {
+            if (!cmdLineParams.skipTransit) {
                 if (input.containsKey(GTFS)) {
                     List<GtfsBundle> gtfsBundles = new ArrayList<>();
                     for (DataSource gtfsSource : input.get(GTFS)) {
@@ -309,15 +312,18 @@ public class GraphBuilder implements Runnable {
             if (builderParams.htmlAnnotations) {
                 graphBuilder.addModule(
                         new AnnotationsToHTML(
-                                params.build,
+                                dataStore.getBuildReport(),
                                 builderParams.maxHtmlAnnotationsPerFile)
                 );
             }
-            graphBuilder.serializeGraph = (!params.inMemory) || params.preFlight;
+            graphBuilder.serializeGraph = (!cmdLineParams.inMemory) || cmdLineParams.preFlight;
             return graphBuilder;
         }
         catch (RuntimeException e) {
             try {
+                if(dataStore != null) {
+                    dataStore.close();
+                }
                 // TODO TGR - graphBuilder.statusFile.setFailed();
             }
             catch (Exception e2) {
@@ -327,9 +333,9 @@ public class GraphBuilder implements Runnable {
         }
     }
 
-    private static boolean checkThereIsAtLeastOneFileToImport(Set<FileType> fileTypes, String source) {
+    private static boolean checkThereIsAtLeastOneFileToImport(Set<FileType> fileTypes) {
         if(fileTypes.stream().noneMatch(FileType::isInputDataFile)) {
-            LOG.error("No input files found, unable to build graph. Source: {}", source);
+            LOG.error("No input files found, unable to build graph.");
             return false;
         }
         return true;

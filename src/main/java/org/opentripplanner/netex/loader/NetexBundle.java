@@ -1,9 +1,9 @@
 package org.opentripplanner.netex.loader;
 
 
-import org.opentripplanner.standalone.datastore.CompositeDataSource;
 import org.opentripplanner.standalone.config.GraphBuilderParameters;
 import org.opentripplanner.standalone.config.NetexParameters;
+import org.opentripplanner.standalone.datastore.CompositeDataSource;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -59,7 +59,7 @@ public class NetexBundle implements Closeable {
     }
 
     public void checkInputs() {
-        if (!source.exist()) {
+        if (!source.exists()) {
             throw new RuntimeException("NETEX Path " + source.path() + " does not exist.");
         }
     }
