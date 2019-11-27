@@ -301,10 +301,8 @@ public class TransmodelGraphQLPlanner {
 
         callWith.argument("maximumTransfers", (Integer v) -> request.maxTransfers = v);
 
-        final long NOW_THRESHOLD_MILLIS = 15 * 60 * 60 * 1000;
-        boolean tripPlannedForNow = Math.abs(request.getDateTime().getTime() - new Date().getTime()) < NOW_THRESHOLD_MILLIS;
-        request.useBikeRentalAvailabilityInformation = (tripPlannedForNow); // TODO the same thing for GTFS-RT
-
+        // Do not use bike rental availability information, but let this be handled on the front end
+        request.useBikeRentalAvailabilityInformation = (false);
 
         callWith.argument("ignoreRealtimeUpdates", (Boolean v) -> request.ignoreRealtimeUpdates = v);
         callWith.argument("includePlannedCancellations", (Boolean v) -> request.includePlannedCancellations = v);
