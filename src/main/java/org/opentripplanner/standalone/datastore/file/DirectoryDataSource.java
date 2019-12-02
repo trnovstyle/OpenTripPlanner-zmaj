@@ -48,11 +48,6 @@ public class DirectoryDataSource extends AbstractFileDataSource implements Compo
     }
 
     @Override
-    public void close() {
-        // Nothing to close
-    }
-
-    @Override
     public void delete() throws IOException {
         if(file.exists()) {
             FileUtils.deleteDirectory(file);

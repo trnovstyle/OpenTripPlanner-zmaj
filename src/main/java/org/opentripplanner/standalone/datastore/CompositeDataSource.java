@@ -35,4 +35,9 @@ public interface CompositeDataSource extends DataSource, Closeable {
                 + " do not support DELETE. Can not delete: " + path()
         );
     }
+
+    @Override
+    default void close() {
+        // Do nothing
+    }
 }

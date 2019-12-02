@@ -28,6 +28,7 @@ import static org.opentripplanner.standalone.datastore.FileType.GRAPH;
 import static org.opentripplanner.standalone.datastore.FileType.GTFS;
 import static org.opentripplanner.standalone.datastore.FileType.NETEX;
 import static org.opentripplanner.standalone.datastore.FileType.OSM;
+import static org.opentripplanner.standalone.datastore.FileType.OTP_STATUS;
 import static org.opentripplanner.standalone.datastore.FileType.REPORT;
 import static org.opentripplanner.standalone.datastore.FileType.UNKNOWN;
 
@@ -55,8 +56,8 @@ public class OtpDataStore implements Closeable {
     private static final Logger LOG = LoggerFactory.getLogger(OtpDataStore.class);
 
 
-    private static final String OTP_STATUS_IN_PROGRESS_FILE = "otp-status.inProgress";
-    private static final String ANNOTATION_REPORT_DIR = "report";
+    public static final String OTP_STATUS_FILENAME = "otp-status.inProgress";
+    public static final String BUILD_REPORT_DIR = "report";
 
     private final List<String> repositoryDescriptions = new ArrayList<>();
     private final StorageParameters parameters;
@@ -71,6 +72,10 @@ public class OtpDataStore implements Closeable {
     private DataSource otpStatus;
     private CompositeDataSource buildReport;
 
+    /**
+     * Use the {@link org.opentripplanner.standalone.datastore.configure.DataStoreConfig} to
+     * create a new instance of this class.
+     */
     public OtpDataStore(
             StorageParameters parameters,
             JsonNode builderParams,
@@ -99,9 +104,9 @@ public class OtpDataStore implements Closeable {
 
         baseGraph = findSingleSource(parameters.baseGraph, BASE_GRAPH_FILENAME, GRAPH);
         graph = findSingleSource(parameters.graph, GRAPH_FILENAME, GRAPH);
-        otpStatus = findSingleSource(parameters.otpStatus, OTP_STATUS_IN_PROGRESS_FILE, GRAPH);
+        otpStatus = findSingleSource(parameters.otpStatus, OTP_STATUS_FILENAME, OTP_STATUS);
         buildReport = (CompositeDataSource) findSingleSource(
-                parameters.buildReport, ANNOTATION_REPORT_DIR, REPORT
+                parameters.buildReport, BUILD_REPORT_DIR, REPORT
         );
         addAll(Arrays.asList(baseGraph, graph, otpStatus, buildReport));
 
@@ -146,14 +151,6 @@ public class OtpDataStore implements Closeable {
     @NotNull
     public JsonNode routerConfigParameters() {
         return routerConfigParameters;
-    }
-
-    /**
-     * Return a list of repositories used to access data sources.
-     */
-    @NotNull
-    public List<String> repositoryDescriptions() {
-        return repositoryDescriptions;
     }
 
     @Override

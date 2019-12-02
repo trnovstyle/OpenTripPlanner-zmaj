@@ -46,11 +46,6 @@ class GcsZipFileDataSource extends GcsFileDataSource implements CompositeDataSou
     }
 
     @Override
-    public void close() {
-        /* No need to close the blob */
-    }
-
-    @Override
     public boolean isWritable() {
         return false;
     }

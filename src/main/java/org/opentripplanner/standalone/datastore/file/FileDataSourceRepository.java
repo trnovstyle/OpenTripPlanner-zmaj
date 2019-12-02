@@ -23,8 +23,11 @@ import static org.opentripplanner.standalone.datastore.FileType.GRAPH;
 import static org.opentripplanner.standalone.datastore.FileType.GTFS;
 import static org.opentripplanner.standalone.datastore.FileType.NETEX;
 import static org.opentripplanner.standalone.datastore.FileType.OSM;
+import static org.opentripplanner.standalone.datastore.FileType.OTP_STATUS;
 import static org.opentripplanner.standalone.datastore.FileType.REPORT;
 import static org.opentripplanner.standalone.datastore.FileType.UNKNOWN;
+import static org.opentripplanner.standalone.datastore.OtpDataStore.BUILD_REPORT_DIR;
+import static org.opentripplanner.standalone.datastore.OtpDataStore.OTP_STATUS_FILENAME;
 import static org.opentripplanner.standalone.datastore.file.ConfigLoader.isConfigFile;
 
 
@@ -142,6 +145,8 @@ public class FileDataSourceRepository implements DataSourceRepository {
         if (name.endsWith(".tif") || name.endsWith(".tiff")) { return DEM; }
         if (name.equals(GRAPH_FILENAME)) { return GRAPH; }
         if (name.equals(BASE_GRAPH_FILENAME)) { return GRAPH; }
+        if (name.equals(OTP_STATUS_FILENAME)) { return OTP_STATUS; }
+        if (name.equals(BUILD_REPORT_DIR)) { return REPORT; }
         if (isConfigFile(name)) { return CONFIG;}
         return UNKNOWN;
     }

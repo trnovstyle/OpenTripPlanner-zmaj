@@ -125,7 +125,19 @@ public class StorageParameters {
 
     static List<URI> uris(String name, JsonNode node) {
         List<URI> uris = new ArrayList<>();
-        for (JsonNode it : node.path(name)) {
+        JsonNode array = node.path(name);
+
+        if(array.isMissingNode()) {
+            return uris;
+        }
+        if(!array.isArray()) {
+            throw new IllegalArgumentException(
+                    "Unable to parse 'storage' parameter in 'builder-config.json': "
+                    + "\n\tActual: \"" + name + "\" : \"" + array.asText() + "\""
+                    + "\n\tExpected ARRAY of URIs: [ \"<uri>\", .. ]."
+            );
+        }
+        for (JsonNode it : array) {
             uris.add(uriFromString(name, it.asText()));
         }
         return uris;

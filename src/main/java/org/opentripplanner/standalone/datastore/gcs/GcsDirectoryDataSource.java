@@ -71,11 +71,6 @@ public class GcsDirectoryDataSource implements CompositeDataSource {
     }
 
     @Override
-    public void close() {
-        // Nothing to close
-    }
-
-    @Override
     public void delete() {
         forEachChildBlob(Blob::delete);
     }

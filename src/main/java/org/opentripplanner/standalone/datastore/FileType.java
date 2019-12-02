@@ -16,6 +16,7 @@ public enum FileType {
   NETEX("🚌", "NeTEx data"),
   GRAPH("🦠", "OTP Graph file"),
   REPORT("📈", "Issue report"),
+  OTP_STATUS("⏳", "OTP build status"),
   UNKNOWN("❓", "Unknown file");
 
   private final String icon;
