@@ -92,7 +92,7 @@ public class InputStreamGraphSource implements GraphSource {
         }
 
         try (InputStream is = graph.asInputStream()) {
-            LOG.info("Loading graph from: {}", graph.path());
+            LOG.info("Loading graph from: {}", graph.detailedInfo());
             try {
                 newGraph = Graph.load(is);
             } catch (Exception ex) {

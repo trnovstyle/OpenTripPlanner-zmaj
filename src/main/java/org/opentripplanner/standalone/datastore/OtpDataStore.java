@@ -3,6 +3,7 @@ package org.opentripplanner.standalone.datastore;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.opentripplanner.standalone.config.StorageParameters;
 import org.opentripplanner.standalone.datastore.base.DataSourceRepository;
 import org.slf4j.Logger;
@@ -90,9 +91,9 @@ public class OtpDataStore implements Closeable {
     public void open() {
         repositories.forEach(DataSourceRepository::open);
 
-        addAll(findMultipleSources(null, CONFIG));
-        add(findSingleSource(parameters.osm, null, OSM));
-        add(findSingleSource(parameters.dem, null, DEM));
+        addAll(findMultipleSources(Collections.emptyList(), CONFIG));
+        add(findSingleSource(parameters.osm, OSM));
+        add(findSingleSource(parameters.dem,  DEM));
         addAll(findMultipleSources(parameters.gtfs, GTFS));
         addAll(findMultipleSources(parameters.netex, NETEX));
 
@@ -106,7 +107,7 @@ public class OtpDataStore implements Closeable {
 
         // Also read in unknown sources in case the data input source is miss-spelled,
         // We look for files on the local-file-system, other repositories ignore this call.
-        addAll(findMultipleSources(null, UNKNOWN));
+        addAll(findMultipleSources(Collections.emptyList(), UNKNOWN));
     }
 
     /**
@@ -205,22 +206,26 @@ public class OtpDataStore implements Closeable {
         list.forEach(this::add);
     }
 
-    private DataSource findSingleSource(URI uri, String filename, FileType type) {
-            return uri == null ? findSourceInRepo(filename, type) : findSourceInRepo(uri, type);
+    private DataSource findSingleSource(@Nullable URI uri, @NotNull String filename, @NotNull FileType type) {
+        return uri != null ? findSourceInRepo(uri, type) : findSourceInRepo(filename, type);
     }
 
-    private List<DataSource> findMultipleSources(Collection<URI> uris, FileType type) {
-        if(uris == null || uris.isEmpty()) {
-            return  findSourcesInRepo(type);
+    private DataSource findSingleSource(@Nullable URI uri, @NotNull FileType type) {
+        return uri != null ? findSourceInRepo(uri, type) : findSourceInRepo(type);
+    }
+
+    private List<DataSource> findMultipleSources(@NotNull Collection<URI> uris, @NotNull FileType type) {
+        if(uris.isEmpty()) {
+            return findSourcesInRepo(type);
         }
         else {
             return uris.stream()
-                    .map(uti -> findSourceInRepo(uti, type))
+                    .map(uri -> findSourceInRepo(uri, type))
                     .collect(Collectors.toList());
         }
     }
 
-    private DataSource findSourceInRepo(URI uri, FileType type) {
+    private DataSource findSourceInRepo(@NotNull URI uri, @NotNull FileType type) {
         for (DataSourceRepository it : repositories) {
             DataSource res = it.findSource(uri, type);
             if (res != null) {
@@ -230,7 +235,7 @@ public class OtpDataStore implements Closeable {
         return null;
     }
 
-    private DataSource findSourceInRepo(String filename, FileType type) {
+    private DataSource findSourceInRepo(@NotNull String filename, @NotNull FileType type) {
         for (DataSourceRepository it : repositories) {
             DataSource res = it.findSource(filename, type);
             if (res != null) {
@@ -240,7 +245,18 @@ public class OtpDataStore implements Closeable {
         return null;
     }
 
-    private List<DataSource> findSourcesInRepo(FileType type) {
+    private DataSource findSourceInRepo(@NotNull FileType type) {
+        List<DataSource> res = findSourcesInRepo(type);
+        if(res.isEmpty()) {
+            return null;
+        }
+        if(res.size() == 1) {
+            return res.get(0);
+        }
+        throw new IllegalStateException("More than on source found for " + type + ": " + res);
+    }
+
+    private List<DataSource> findSourcesInRepo(@NotNull FileType type) {
         for (DataSourceRepository it : repositories) {
             List<DataSource> res = it.listSources(type);
             if (!res.isEmpty()) {

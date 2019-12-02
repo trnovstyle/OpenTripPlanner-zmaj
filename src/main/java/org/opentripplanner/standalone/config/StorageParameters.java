@@ -2,6 +2,7 @@ package org.opentripplanner.standalone.config;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
+import javax.validation.constraints.NotNull;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -74,6 +75,7 @@ public class StorageParameters {
      * <p>
      * This parameter is optional.
      */
+    @NotNull
     public final List<URI> gtfs = new ArrayList<>();
 
     /**
@@ -83,6 +85,7 @@ public class StorageParameters {
      * <p>
      * This parameter is optional.
      */
+    @NotNull
     public final List<URI> netex = new ArrayList<>();
 
     /**
