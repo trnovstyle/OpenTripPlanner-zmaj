@@ -51,11 +51,7 @@ public class NetexBundle implements Closeable {
     }
 
     NetexDataSourceHierarchy fileHierarchy(){
-        try {
-            return new NetexDataSourceHierarchy(source, netexParameters);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        return new NetexDataSourceHierarchy(source, netexParameters);
     }
 
     public void checkInputs() {

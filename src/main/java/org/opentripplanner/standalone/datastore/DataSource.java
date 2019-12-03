@@ -1,7 +1,9 @@
 package org.opentripplanner.standalone.datastore;
 
+import org.apache.commons.io.IOUtils;
 import org.opentripplanner.common.LoggingUtil;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.text.SimpleDateFormat;
@@ -80,6 +82,19 @@ public interface DataSource {
                 "This datasource type " + type()
                         + " do not support READING. Can not read from: " + path()
         );
+    }
+
+    /**
+     * Return the content as a byte array. The implementation may chose to implement this in a
+     * more efficient way - not reading the input stream. Do not change the data returned.
+     */
+    default byte[] asBytes() {
+        try {
+            return IOUtils.toByteArray(asInputStream());
+        }
+        catch (IOException e) {
+            throw new RuntimeException(e.getMessage(), e);
+        }
     }
 
     default OutputStream asOutputStream() {

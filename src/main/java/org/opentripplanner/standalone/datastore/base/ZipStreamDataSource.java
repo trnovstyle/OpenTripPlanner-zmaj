@@ -1,10 +1,8 @@
-package org.opentripplanner.standalone.datastore.gcs;
+package org.opentripplanner.standalone.datastore.base;
 
-import com.google.cloud.storage.Blob;
 import org.opentripplanner.standalone.datastore.CompositeDataSource;
 import org.opentripplanner.standalone.datastore.DataSource;
 import org.opentripplanner.standalone.datastore.FileType;
-import org.opentripplanner.standalone.datastore.base.ByteArrayDataSource;
 import org.opentripplanner.standalone.datastore.file.DirectoryDataSource;
 import org.opentripplanner.standalone.datastore.file.ZipFileDataSource;
 
@@ -17,10 +15,20 @@ import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
-import static java.nio.channels.Channels.newInputStream;
+public class ZipStreamDataSource implements CompositeDataSource {
 
-class GcsZipFileDataSource extends GcsFileDataSource implements CompositeDataSource {
+    private final DataSource delegate;
 
+    /**
+     * This store load the zip file into memory; hence we should load the content only once,
+     * even at the risk that the source is changed since last tile a resource is accessed.
+     * To achieve this we use a boolean flag to indicate if the content is loaded or not.
+     */
+    private boolean contentLoaded = false;
+
+    /**
+     * Cache content from first access to this data source is closed.
+     */
     private List<DataSource> content = new ArrayList<>();
 
     /**
@@ -28,26 +36,60 @@ class GcsZipFileDataSource extends GcsFileDataSource implements CompositeDataSou
      * as well as normal files. It does not handle directories({@link DirectoryDataSource}) or
      * zip-files {@link ZipFileDataSource} witch contain multiple files.
      */
-    GcsZipFileDataSource(Blob file, FileType type, String path) {
-        super(file, type, path);
+    public ZipStreamDataSource(DataSource delegate) {
+        this.delegate = delegate;
     }
 
     @Override
-    public Collection<DataSource> content() {
-        if(content.isEmpty()) {
-            loadContent();
-        }
-        return content;
+    public String name() {
+        return delegate.name();
     }
 
     @Override
-    public DataSource entry(String name) {
-        return content.stream().filter(it -> name.equals(it.name())).findFirst().orElse(null);
+    public String path() {
+        return delegate.path();
+    }
+
+    @Override
+    public FileType type() {
+        return delegate.type();
+    }
+
+    @Override
+    public long size() {
+        return delegate.size();
+    }
+
+    @Override
+    public long lastModified() {
+        return delegate.lastModified();
+    }
+
+    @Override
+    public boolean exists() {
+        return delegate.exists();
+    }
+
+    @Override
+    public String detailedInfo() {
+        return delegate.detailedInfo();
     }
 
     @Override
     public boolean isWritable() {
         return false;
+    }
+
+    @Override
+    public Collection<DataSource> content() {
+        loadContent();
+        return content;
+    }
+
+    @Override
+    public DataSource entry(String name) {
+        loadContent();
+        return content.stream().filter(it -> name.equals(it.name())).findFirst().orElse(null);
     }
 
     @Override
@@ -66,11 +108,30 @@ class GcsZipFileDataSource extends GcsFileDataSource implements CompositeDataSou
         );
     }
 
+    @Override
+    public void close() {
+        // Make the content available for GC.
+        content = null;
+    }
+
+    @Override
+    public String toString() {
+        return path();
+    }
+
     private void loadContent() {
+        if(content == null) {
+            throw new NullPointerException(
+                    "The content is accessed after the zip file is closed: " + path()
+            );
+        }
+
+        if(contentLoaded) { return; }
+        contentLoaded = true;
+
         // We support both gzip and unzipped files when reading.
         try(
-                InputStream in = newInputStream(getFile().reader());
-                ZipInputStream zis = new ZipInputStream(in)
+                ZipInputStream zis = new ZipInputStream(delegate.asInputStream())
         ) {
             for (ZipEntry entry = zis.getNextEntry(); entry != null; entry = zis.getNextEntry()) {
                 // we only support flat ZIP files
@@ -82,7 +143,7 @@ class GcsZipFileDataSource extends GcsFileDataSource implements CompositeDataSou
 
                 content.add(
                         new ByteArrayDataSource(
-                            path() + "/" + entry.getName(),
+                            entry.getName() + " (" + path() + ")",
                             entry.getName(),
                             type(),
                             bArray.length,

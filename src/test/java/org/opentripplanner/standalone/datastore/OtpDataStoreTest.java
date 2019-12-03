@@ -63,22 +63,21 @@ public class OtpDataStoreTest {
 
     @Test
     public void readEmptyDir() {
-        try(OtpDataStore store = new DataStoreConfig(tempDir).open()) {
-            assertNoneExistingFile(store.getBaseGraph(), BASE_GRAPH_FILENAME, GRAPH);
-            assertNoneExistingFile(store.getGraph(), GRAPH_FILENAME, GRAPH);
-            assertNoneExistingFile(store.getOtpStatus(), OTP_STATUS_FILENAME, OTP_STATUS);
-            assertNoneExistingFile(store.getBuildReport(), REPORT_FILENAME, REPORT);
+        OtpDataStore store = new DataStoreConfig(tempDir).open();
+        assertNoneExistingFile(store.getBaseGraph(), BASE_GRAPH_FILENAME, GRAPH);
+        assertNoneExistingFile(store.getGraph(), GRAPH_FILENAME, GRAPH);
+        assertNoneExistingFile(store.getOtpStatus(), OTP_STATUS_FILENAME, OTP_STATUS);
+        assertNoneExistingFile(store.getBuildReport(), REPORT_FILENAME, REPORT);
 
-            assertTrue(store.listExistingSourcesFor(CONFIG).isEmpty());
-            assertTrue(store.listExistingSourcesFor(OSM).isEmpty());
-            assertTrue(store.listExistingSourcesFor(DEM).isEmpty());
-            assertTrue(store.listExistingSourcesFor(GTFS).isEmpty());
-            assertTrue(store.listExistingSourcesFor(NETEX).isEmpty());
-            assertTrue(store.listExistingSourcesFor(GRAPH).isEmpty());
-            assertTrue(store.listExistingSourcesFor(OTP_STATUS).isEmpty());
-            assertTrue(store.listExistingSourcesFor(REPORT).isEmpty());
-            assertTrue(store.listExistingSourcesFor(UNKNOWN).isEmpty());
-        }
+        assertTrue(store.listExistingSourcesFor(CONFIG).isEmpty());
+        assertTrue(store.listExistingSourcesFor(OSM).isEmpty());
+        assertTrue(store.listExistingSourcesFor(DEM).isEmpty());
+        assertTrue(store.listExistingSourcesFor(GTFS).isEmpty());
+        assertTrue(store.listExistingSourcesFor(NETEX).isEmpty());
+        assertTrue(store.listExistingSourcesFor(GRAPH).isEmpty());
+        assertTrue(store.listExistingSourcesFor(OTP_STATUS).isEmpty());
+        assertTrue(store.listExistingSourcesFor(REPORT).isEmpty());
+        assertTrue(store.listExistingSourcesFor(UNKNOWN).isEmpty());
     }
 
     @Test
@@ -94,20 +93,19 @@ public class OtpDataStoreTest {
         write(OTP_STATUS_FILENAME, "Data");
         writeToReport();
 
-        try(OtpDataStore store = new DataStoreConfig(tempDir).open()) {
-            assertExistingSource(store.getBaseGraph(), BASE_GRAPH_FILENAME, GRAPH);
-            assertExistingSource(store.getGraph(), GRAPH_FILENAME, GRAPH);
-            assertReportExist(store.getBuildReport());
-            assertExistingSource(store.getOtpStatus(), OTP_STATUS_FILENAME, OTP_STATUS);
+        OtpDataStore store = new DataStoreConfig(tempDir).open();
+        assertExistingSource(store.getBaseGraph(), BASE_GRAPH_FILENAME, GRAPH);
+        assertExistingSource(store.getGraph(), GRAPH_FILENAME, GRAPH);
+        assertReportExist(store.getBuildReport());
+        assertExistingSource(store.getOtpStatus(), OTP_STATUS_FILENAME, OTP_STATUS);
 
-            assertExistingSources(store.listExistingSourcesFor(OSM), OSM_FILENAME);
-            assertExistingSources(store.listExistingSourcesFor(DEM), DEM_FILENAME);
-            assertExistingSources(store.listExistingSourcesFor(GTFS), GTFS_FILENAME);
-            assertExistingSources(store.listExistingSourcesFor(NETEX), NETEX_FILENAME);
-            assertExistingSources(store.listExistingSourcesFor(CONFIG), BUILD_CONFIG_FILENAME, ROUTER_CONFIG_FILENAME);
-            assertExistingSources(store.listExistingSourcesFor(GRAPH), BASE_GRAPH_FILENAME, GRAPH_FILENAME);
-            assertExistingSources(store.listExistingSourcesFor(OTP_STATUS), OTP_STATUS_FILENAME);
-        }
+        assertExistingSources(store.listExistingSourcesFor(OSM), OSM_FILENAME);
+        assertExistingSources(store.listExistingSourcesFor(DEM), DEM_FILENAME);
+        assertExistingSources(store.listExistingSourcesFor(GTFS), GTFS_FILENAME);
+        assertExistingSources(store.listExistingSourcesFor(NETEX), NETEX_FILENAME);
+        assertExistingSources(store.listExistingSourcesFor(CONFIG), BUILD_CONFIG_FILENAME, ROUTER_CONFIG_FILENAME);
+        assertExistingSources(store.listExistingSourcesFor(GRAPH), BASE_GRAPH_FILENAME, GRAPH_FILENAME);
+        assertExistingSources(store.listExistingSourcesFor(OTP_STATUS), OTP_STATUS_FILENAME);
     }
 
 
@@ -155,25 +153,24 @@ public class OtpDataStoreTest {
         write("unknown-2.txt", "Data");
 
         // Open data store using the base-dir
-        try(OtpDataStore store = new DataStoreConfig(baseDir).open()) {
-            List<String> filenames = listFilesByRelativeName(store, baseDir, tempDataDir);
-            filenames.sort(String::compareTo);
-            String result = String.join(", ", filenames);
+        OtpDataStore store = new DataStoreConfig(baseDir).open();
+        List<String> filenames = listFilesByRelativeName(store, baseDir, tempDataDir);
+        filenames.sort(String::compareTo);
+        String result = String.join(", ", filenames);
 
-            // We expect to find all files set in the build-config (URIs) and
-            // the ALL files added in the baseDir, but not the base-graph and unknown file
-            // added to the same temp-data-dir.
-            assertEquals(
-                    "CONFIG base:/build-config.json, "
-                    + "GRAPH data:/Graph.obj, "
-                    + "GTFS data:/gtfs.zip, "
-                    + "OSM data:/osm.pbf, "
-                    + "OTP_STATUS base:/otp-status.inProgress, "
-                    + "REPORT data:/report, "
-                    + "UNKNOWN base:/unknown.txt",
-                    result
-            );
-        }
+        // We expect to find all files set in the build-config (URIs) and
+        // the ALL files added in the baseDir, but not the base-graph and unknown file
+        // added to the same temp-data-dir.
+        assertEquals(
+                "CONFIG base:/build-config.json, "
+                + "GRAPH data:/Graph.obj, "
+                + "GTFS data:/gtfs.zip, "
+                + "OSM data:/osm.pbf, "
+                + "OTP_STATUS base:/otp-status.inProgress, "
+                + "REPORT data:/report, "
+                + "UNKNOWN base:/unknown.txt",
+                result
+        );
     }
 
 

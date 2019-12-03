@@ -8,7 +8,7 @@ import org.opentripplanner.standalone.datastore.FileType;
 import org.opentripplanner.standalone.datastore.OtpDataStore;
 import org.opentripplanner.standalone.datastore.base.DataSourceRepository;
 import org.opentripplanner.standalone.datastore.file.FileDataSourceRepository;
-import org.opentripplanner.standalone.datastore.gcs.GcsDataSourceRepository;
+import org.opentripplanner.standalone.datastore.gcs.GsDataSourceRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -77,7 +77,7 @@ public class DataStoreConfig {
         // Adding Google Cloud Storage, if the config file contains URIs with prefix "gs:"
         if (storageConfig.isGoogleCloudStorageEnabled()) {
             LOG.info("Google Cloud Store Repository enabled - GCS resources detected.");
-            repositories.add(new GcsDataSourceRepository(storageConfig.gsCredentials));
+            repositories.add(new GsDataSourceRepository(storageConfig.gsCredentials));
         }
         // The file data storage repository should be last, to allow
         // other repositories to "override" and grab files analyzing the

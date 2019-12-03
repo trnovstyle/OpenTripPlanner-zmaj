@@ -10,6 +10,7 @@ import com.google.cloud.storage.StorageOptions;
 import org.opentripplanner.standalone.datastore.DataSource;
 import org.opentripplanner.standalone.datastore.FileType;
 import org.opentripplanner.standalone.datastore.base.DataSourceRepository;
+import org.opentripplanner.standalone.datastore.base.ZipStreamDataSource;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -19,11 +20,11 @@ import java.util.Collections;
 /**
  * This data store uses the local file system to access in-/out- data files.
  */
-public class GcsDataSourceRepository implements DataSourceRepository {
+public class GsDataSourceRepository implements DataSourceRepository {
     private final String credentialsFilename;
     private Storage storage;
 
-    public GcsDataSourceRepository(String credentialsFilename) {
+    public GsDataSourceRepository(String credentialsFilename) {
         this.credentialsFilename = credentialsFilename;
     }
 
@@ -44,15 +45,8 @@ public class GcsDataSourceRepository implements DataSourceRepository {
         }
 
         BlobPath path = BlobPath.parse(uri);
-
-        if(path == null) {
-            return null;
-        }
         return createSource(path, type);
     }
-
-    @Override
-    public void close() { /* No need to close anything when accessing local file system. */ }
 
 
     /* private methods */
@@ -67,10 +61,11 @@ public class GcsDataSourceRepository implements DataSourceRepository {
         Blob blob = bucket.get(path.objectName);
 
         if(blob != null) {
+            DataSource gsSource = new GcsFileDataSource(blob, type, path.toString());
             if(blob.getName().endsWith(".zip")) {
-                return new GcsZipFileDataSource(blob, type, path.toString());
+                return new ZipStreamDataSource(gsSource);
             }
-            return new GcsFileDataSource(blob, type, path.toString());
+            return gsSource;
         }
 
         if(type.isCompositeInputDataFile()) {
@@ -78,7 +73,7 @@ public class GcsDataSourceRepository implements DataSourceRepository {
         }
 
         BlobId blobId = BlobId.of(bucket.getName(), path.objectName);
-        return new GcsOutFileDataStore(storage, blobId, type, path.toString());
+        return new GsOutFileDataStore(storage, blobId, type, path.toString());
     }
 
     private Storage connectToStorage() {

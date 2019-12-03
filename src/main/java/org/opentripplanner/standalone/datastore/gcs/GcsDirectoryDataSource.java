@@ -60,7 +60,7 @@ public class GcsDirectoryDataSource implements CompositeDataSource {
         }
         // New file
         BlobId blobId = BlobId.of(path.bucket, childPath(name));
-        return new GcsOutFileDataStore(storage, blobId, type, path());
+        return new GsOutFileDataStore(storage, blobId, type, path());
     }
 
     @Override
@@ -74,6 +74,9 @@ public class GcsDirectoryDataSource implements CompositeDataSource {
     public void delete() {
         forEachChildBlob(Blob::delete);
     }
+
+    @Override
+    public void close() { }
 
     private Bucket getBucket() {
         return storage.get(path.bucket);

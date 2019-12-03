@@ -94,8 +94,4 @@ class GcsFileDataSource implements DataSource {
     public OutputStream asOutputStream() {
         return newOutputStream(file.writer());
     }
-
-    Blob getFile() {
-        return file;
-    }
 }

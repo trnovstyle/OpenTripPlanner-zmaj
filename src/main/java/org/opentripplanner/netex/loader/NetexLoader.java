@@ -19,12 +19,12 @@ import org.apache.commons.io.IOUtils;
 import org.opentripplanner.graph_builder.annotation.FlexibleStopPlaceNotFound;
 import org.opentripplanner.graph_builder.annotation.QuayNotFoundInStopPlaceFile;
 import org.opentripplanner.graph_builder.annotation.StopWithoutQuay;
-import org.opentripplanner.standalone.datastore.DataSource;
 import org.opentripplanner.graph_builder.module.NetexModule;
 import org.opentripplanner.model.impl.OtpTransitBuilder;
 import org.opentripplanner.netex.mapping.NetexMapper;
 import org.opentripplanner.netex.mapping.ServiceIdMapper;
 import org.opentripplanner.routing.graph.AddBuilderAnnotation;
+import org.opentripplanner.standalone.datastore.DataSource;
 import org.rutebanken.netex.model.Authority;
 import org.rutebanken.netex.model.Branding;
 import org.rutebanken.netex.model.Common_VersionFrameStructure;
@@ -206,8 +206,7 @@ public class NetexLoader {
     private void loadFile(String description, DataSource entry) {
         try {
             LOG.info("Loading {}: {}", description, entry.name());
-            byte[] bytesArray = entryAsBytes(entry);
-
+            byte[] bytesArray = entry.asBytes();
 
             PublicationDeliveryStructure value = parseXmlDoc(bytesArray);
             List<JAXBElement<? extends Common_VersionFrameStructure>> compositeFrameOrCommonFrames = value

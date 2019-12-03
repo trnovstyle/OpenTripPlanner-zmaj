@@ -4,7 +4,6 @@ package org.opentripplanner.standalone.datastore.base;
 import org.opentripplanner.standalone.datastore.DataSource;
 import org.opentripplanner.standalone.datastore.FileType;
 
-import java.io.Closeable;
 import java.net.URI;
 import java.util.Collections;
 import java.util.List;
@@ -23,16 +22,8 @@ import java.util.List;
  * <p>
  * Use the {@link org.opentripplanner.standalone.datastore.configure.DataStoreConfig} to obtain a
  * new instance of this interface.
- * <p>
- * This interface extends {@link Closeable} because it might need to access a remote resource.
- * Keeping the connection until the source is read is desirable. For other resources, like the local
- * file system, there is no need to implement the close method.
- * <p>
- * Make sure the {@link #close()} method is called after all data is read. After the {@link
- * #close()} method is called the other methods behavior is undefined. This also propagate to all
- * {@link DataSource} children.
  */
-public interface DataSourceRepository extends Closeable {
+public interface DataSourceRepository {
 
     /**
      * @return a description that identify the datasource witch is helpful to the user in case an
@@ -41,8 +32,8 @@ public interface DataSourceRepository extends Closeable {
     String description();
 
     /**
-     * Open and/or connect to repository/storage. This method is called once, and the session is
-     * terminated calling the {@link #close()} method.
+     * Open a connection to the data repository/storage. This method is called once before any read
+     * operations.
      */
     void open();
 

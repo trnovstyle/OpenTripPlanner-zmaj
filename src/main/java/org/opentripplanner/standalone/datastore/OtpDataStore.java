@@ -10,8 +10,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.validation.constraints.NotNull;
-import java.io.Closeable;
-import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -45,13 +43,8 @@ import static org.opentripplanner.standalone.datastore.FileType.UNKNOWN;
  * <p>
  * Use the {@link org.opentripplanner.standalone.datastore.configure.DataStoreConfig} to obtain a
  * new instance of this class.
- * <p>
- * This class implement {@link Closeable} because it might need to access a remote resource. It
- * might keep a connection to the underlying service until the source is read. Make sure the {@link
- * #close()} method is called after all data is read. After the {@link #close()} method is called
- * the other methods behavior is undefined. This also propagate to all {@link DataSource} children.
  */
-public class OtpDataStore implements Closeable {
+public class OtpDataStore {
 
     private static final Logger LOG = LoggerFactory.getLogger(OtpDataStore.class);
 
@@ -151,18 +144,6 @@ public class OtpDataStore implements Closeable {
     @NotNull
     public JsonNode routerConfigParameters() {
         return routerConfigParameters;
-    }
-
-    @Override
-    public void close() {
-        for (DataSourceRepository it : repositories) {
-            try {
-                it.close();
-            }
-            catch (IOException e) {
-                LOG.error("Failed to close repository: " + it.description());
-            }
-        }
     }
 
     @NotNull

@@ -53,4 +53,7 @@ public class DirectoryDataSource extends AbstractFileDataSource implements Compo
             FileUtils.deleteDirectory(file);
         }
     }
+
+    @Override
+    public void close() { }
 }

@@ -27,12 +27,7 @@ public class ByteArrayDataSource implements DataSource {
     private ByteArrayOutputStream out = null;
     private byte[] buffer;
 
-
-    public ByteArrayDataSource(String path, String name, FileType type) {
-        this(path, name, type, -1, -1);
-    }
-
-    public ByteArrayDataSource(
+    ByteArrayDataSource(
             String path, String name, FileType type, long size, long lastModified
     ) {
         this.path = path;
@@ -79,6 +74,11 @@ public class ByteArrayDataSource implements DataSource {
     @Override
     public InputStream asInputStream() {
         return new ByteArrayInputStream(getBytes());
+    }
+
+    @Override
+    public byte[] asBytes() {
+        return getBytes();
     }
 
     /**

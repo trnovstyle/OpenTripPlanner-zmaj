@@ -12,7 +12,7 @@ import java.io.OutputStream;
 
 import static java.nio.channels.Channels.newOutputStream;
 
-class GcsOutFileDataStore implements DataSource {
+class GsOutFileDataStore implements DataSource {
 
     private final Storage storage;
     private final String source;
@@ -24,7 +24,7 @@ class GcsOutFileDataStore implements DataSource {
      * as well as normal files. It does not handle directories({@link DirectoryDataSource}) or
      * zip-files {@link ZipFileDataSource} witch contain multiple files.
      */
-    GcsOutFileDataStore(Storage storage, BlobId blobId, FileType type, String source) {
+    GsOutFileDataStore(Storage storage, BlobId blobId, FileType type, String source) {
         this.storage = storage;
         this.blobId = blobId;
         this.type = type;

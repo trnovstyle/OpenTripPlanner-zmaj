@@ -13,8 +13,6 @@
 
 package org.opentripplanner.graph_builder;
 
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.HashMultiset;
 import com.google.common.collect.Lists;
@@ -29,13 +27,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.io.PrintStream;
+import java.io.PrintWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
 
 /**
  * This class generates nice HTML graph annotations reports 
@@ -58,16 +56,16 @@ public class AnnotationsToHTML implements GraphBuilderModule {
     //This counts all occurrences of HTML annotations classes
     //If one annotation class is split into two files it has two entries in this Multiset
     //IT is used to show numbers in HTML files name and links
-    Multiset<String> annotationClassOccurences;
+    private Multiset<String> annotationClassOccurences;
 
     //List of writers which are used for actual writing annotations to HTML
-    List<HTMLWriter> writers;
+    private List<HTMLWriter> writers;
 
     //Key is classname, value is annotation message
     //Multimap because there are multiple annotations for each classname
     private Multimap<String, String> annotations;
   
-    public AnnotationsToHTML (CompositeDataSource reportDirectory, int maxNumberOfAnnotationsPerFile) {
+    AnnotationsToHTML(CompositeDataSource reportDirectory, int maxNumberOfAnnotationsPerFile) {
         this.reportDirectory = reportDirectory;
         this.maxNumberOfAnnotationsPerFile = maxNumberOfAnnotationsPerFile;
         this.annotations = ArrayListMultimap.create();
@@ -75,13 +73,73 @@ public class AnnotationsToHTML implements GraphBuilderModule {
         this.writers = new ArrayList<>();
     }
 
+    @Override
+    public void checkInputs() { }
 
     @Override
     public void buildGraph(Graph graph, HashMap<Class<?>, Object> extra) {
+        try {
+            // Delete all files in the report directory if it exist
+            if (!deleteReportDirectoryAndContent()) { return; }
 
+            //Groups annotations in multimap according to annotation class
+            for (GraphBuilderAnnotation annotation : graph.getBuilderAnnotations()) {
+                //writer.println("<p>" + annotation.getHTMLMessage() + "</p>");
+                // writer.println("<small>" + annotation.getClass().getSimpleName()+"</small>");
+                addAnnotation(annotation);
+
+            }
+            LOG.info("Creating Annotations log");
+
+            //Creates list of HTML writers. Each writer has whole class of HTML annotations
+            //Or multiple HTML writers can have parts of one class of HTML annotations if number
+            // of annotations is larger than maxNumberOfAnnotationsPerFile
+            for (Map.Entry<String, Collection<String>> entry : annotations.asMap().entrySet()) {
+                List<String> annotationsList;
+                if (entry.getValue() instanceof List) {
+                    annotationsList = (List<String>) entry.getValue();
+                }
+                else {
+                    annotationsList = new ArrayList<>(entry.getValue());
+                }
+                addAnnotations(entry.getKey(), annotationsList);
+            }
+
+            //Actual writing to the file is made here since
+            // this is the first place where actual number of files is known (because it depends on annotations count)
+            for (HTMLWriter writer : writers) {
+                writer.writeFile(annotationClassOccurences, false);
+            }
+
+            HTMLWriter indexFileWriter = new HTMLWriter(
+                    "index", (Multimap<String, String>) null
+            );
+            indexFileWriter.writeFile(annotationClassOccurences, true);
+
+            LOG.info("Annotated logs are in {}", reportDirectory.path());
+        }
+        finally {
+            try{
+                reportDirectory.close();
+            }
+            catch (IOException e) {
+                LOG.warn(
+                        "Failed to close report directory: " + reportDirectory.path()
+                        + ", details: " + e.getLocalizedMessage(),
+                        e
+                );
+            }
+        }
+    }
+
+    /**
+     * Delete report if it exist, and return true if successful. Return {@code false} if the
+     * {@code reportDirectory} is {@code null} or the directory can NOT be deleted.
+     */
+    private boolean deleteReportDirectoryAndContent() {
         if (reportDirectory == null) {
             LOG.error("Saving folder is empty!");
-            return;
+            return false;
         }
 
         if (reportDirectory.exists()) {
@@ -90,47 +148,10 @@ public class AnnotationsToHTML implements GraphBuilderModule {
                 reportDirectory.delete();
             } catch (IOException e) {
                 LOG.error("Failed to clean HTML report directory: " + reportDirectory.path() + ". HTML report won't be generated!", e);
-                return;
+                return false;
             }
         }
-
-        //Groups annotations in multimap according to annotation class
-        for (GraphBuilderAnnotation annotation : graph.getBuilderAnnotations()) {
-            //writer.println("<p>" + annotation.getHTMLMessage() + "</p>");
-            // writer.println("<small>" + annotation.getClass().getSimpleName()+"</small>");
-            addAnnotation(annotation);
-
-        }
-        LOG.info("Creating Annotations log");
-
-
-        //Creates list of HTML writers. Each writer has whole class of HTML annotations
-        //Or multiple HTML writers can have parts of one class of HTML annotations if number
-        // of annotations is larger than maxNumberOfAnnotationsPerFile
-        for (Map.Entry<String, Collection<String>> entry: annotations.asMap().entrySet()) {
-            List<String> annotationsList;
-            if (entry.getValue() instanceof List) {
-                annotationsList = (List<String>) entry.getValue();
-            } else {
-                annotationsList = new ArrayList<>(entry.getValue());
-            }
-            addAnnotations(entry.getKey(), annotationsList);
-        }
-
-        //Actual writing to the file is made here since
-        // this is the first place where actual number of files is known (because it depends on annotations count)
-        for (HTMLWriter writer : writers) {
-            writer.writeFile(annotationClassOccurences, false);
-        }
-
-        try {
-            HTMLWriter indexFileWriter = new HTMLWriter("index", (Multimap<String, String>)null);
-            indexFileWriter.writeFile(annotationClassOccurences, true);
-        } catch (IOException e) {
-            LOG.error("Index file coudn't be created: {}", e.getLocalizedMessage(), e);
-        }
-
-        LOG.info("Annotated logs are in {}", reportDirectory.path());
+        return true;
     }
 
     /**
@@ -143,33 +164,23 @@ public class AnnotationsToHTML implements GraphBuilderModule {
      * @param annotations list of all annotations with that class
      */
     private void addAnnotations(String annotationClassName, List<String> annotations) {
-        try {
-            HTMLWriter file_writer;
-            if (annotations.size() > 1.2 * maxNumberOfAnnotationsPerFile) {
-                LOG.debug("Number of annotations is very large. Splitting: {}", annotationClassName);
-                List<List<String>> partitions = Lists.partition(annotations, maxNumberOfAnnotationsPerFile);
-                for (List<String> partition: partitions) {
-                    annotationClassOccurences.add(annotationClassName);
-                    int labelCount = annotationClassOccurences.count(annotationClassName);
-                    file_writer =new HTMLWriter(annotationClassName+Integer.toString(labelCount), partition);
-                    writers.add(file_writer);
-                }
-
-            } else {
+        HTMLWriter file_writer;
+        if (annotations.size() > 1.2 * maxNumberOfAnnotationsPerFile) {
+            LOG.debug("Number of annotations is very large. Splitting: {}", annotationClassName);
+            List<List<String>> partitions = Lists.partition(annotations, maxNumberOfAnnotationsPerFile);
+            for (List<String> partition: partitions) {
                 annotationClassOccurences.add(annotationClassName);
                 int labelCount = annotationClassOccurences.count(annotationClassName);
-                file_writer = new HTMLWriter(annotationClassName + Integer.toString(labelCount),
-                    annotations);
+                file_writer = new HTMLWriter(annotationClassName + labelCount, partition);
                 writers.add(file_writer);
             }
-        } catch (IOException ex) {
-            LOG.error("Output folder not found:{} {}", reportDirectory.path(), ex);
+
+        } else {
+            annotationClassOccurences.add(annotationClassName);
+            int labelCount = annotationClassOccurences.count(annotationClassName);
+            file_writer = new HTMLWriter(annotationClassName + labelCount, annotations);
+            writers.add(file_writer);
         }
-    }
-
-    @Override
-    public void checkInputs() {
-
     }
 
     /**
@@ -177,158 +188,124 @@ public class AnnotationsToHTML implements GraphBuilderModule {
      *
      * All annotations are saved together in multimap where key is annotation classname
      * and values are list of annotations with that class
-     * @param annotation
      */
     private void addAnnotation(GraphBuilderAnnotation annotation) {
         String className = annotation.getClass().getSimpleName();
         annotations.put(className, annotation.getHTMLMessage());
-
     }
 
     class HTMLWriter {
-        private PrintStream out;
+        private DataSource target;
 
         private Multimap<String, String> writerAnnotations;
 
         private String annotationClassName;
 
-        public HTMLWriter(String key, Collection<String> annotations) throws IOException {
+        HTMLWriter(String key, Collection<String> annotations) {
             LOG.debug("Making file: {}", key);
-            DataSource target = reportDirectory.entry(key + ".html");
-            this.out = new PrintStream(target.asOutputStream());
-            writerAnnotations = ArrayListMultimap.create();
-            writerAnnotations.putAll(key, annotations);
-            annotationClassName = key;
+            this.target = reportDirectory.entry(key + ".html");
+            this.writerAnnotations = ArrayListMultimap.create();
+            this.writerAnnotations.putAll(key, annotations);
+            this.annotationClassName = key;
         }
 
-        public HTMLWriter(String filename, Multimap<String, String> curMap) throws IOException {
+        HTMLWriter(String filename, Multimap<String, String> curMap) {
             LOG.debug("Making file: {}", filename);
-            DataSource target = reportDirectory.entry(filename + ".html");
-            this.out = new PrintStream(target.asOutputStream());
-            writerAnnotations = curMap;
-            annotationClassName = filename;
+            this.target = reportDirectory.entry(filename + ".html");
+            this.writerAnnotations = curMap;
+            this.annotationClassName = filename;
         }
 
         private void writeFile(Multiset<String> classes, boolean isIndexFile) {
-            println("<html><head><title>Graph report for Graph.obj</title>");
-            println("\t<meta charset=\"utf-8\">");
-            println("<meta name='viewport' content='width=device-width, initial-scale=1'>");
-            println("<script src='http://code.jquery.com/jquery-1.11.1.js'></script>");
-            println(
-                "<link rel='stylesheet' href='http://yui.yahooapis.com/pure/0.5.0/pure-min.css'>");
-            String css = "\t\t<style>\n"
-                + "\n"
-                + "\t\t\tbutton.pure-button {\n"
-                + "\t\t\t\tmargin:5px;\n"
-                + "\t\t\t}\n"
-                + "\n"
-                + "\t\t\tspan.pure-button {\n"
-                + "\t\t\t\tcursor:default;\n"
-                + "\t\t\t}\n"
-                + "\n"
-                + "\t\t\t.button-graphwide,\n"
-                + "\t\t\t.button-parkandrideunlinked,\n"
-                + "\t\t\t.button-graphconnectivity,\n"
-                + "\t\t\t.button-turnrestrictionbad\t{\n"
-                + "\t\t\t\tcolor:white;\n"
-                + "\t\t\t\ttext-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);\n"
-                + "\t\t\t}\n"
-                + "\n"
-                + "\t\t\t.button-graphwide {\n"
-                + "\t\t\t\tbackground: rgb(28, 184, 65); /* this is a green */\n"
-                + "\t\t\t}\n"
-                + "\n"
-                + "\t\t\t.button-parkandrideunlinked {\n"
-                + "\t\t\t\tbackground: rgb(202, 60, 60); /* this is a maroon */\n"
-                + "\t\t\t}\n"
-                + "\n"
-                + "\t\t\t.button-graphconnectivity{\n"
-                + "\t\t\t\tbackground: rgb(223, 117, 20); /* this is an orange */\n"
-                + "\t\t\t}\n"
-                + "\n"
-                + "\t\t\t.button-turnrestrictionbad {\n"
-                + "\t\t\t\tbackground: rgb(66, 184, 221); /* this is a light blue */\n"
-                + "\t\t\t}\n"
-                + "\n"
-                + "\t\t</style>\n"
-                + "";
-            println(css);
-            println("</head><body>");
-            println(String.format("<h1>OpenTripPlanner annotations log for %s</h1>", annotationClassName));
-            println("<h2>Graph report for Graph.obj</h2>");
-            println("<p>");
-            //adds links to the other HTML files
-            for (Multiset.Entry<String> htmlAnnotationClass : classes.entrySet()) {
-                String label_name = htmlAnnotationClass.getElement();
-                String label;
-                int currentCount = 1;
-                //it needs to add link to every file even if they are split
-                while (currentCount <= htmlAnnotationClass.getCount()) {
-                    label = label_name + currentCount;
-                    if (label.equals(annotationClassName)) {
-                        println(String.format("<button class='pure-button pure-button-disabled button-%s'>%s</button>",
-                            label_name.toLowerCase(), label));
-                    } else {
-                        println(String.format("<a class='pure-button button-%s' href=\"%s.html\">%s</a>",
-                            label_name.toLowerCase(), label, label));
+            try(PrintWriter out = new PrintWriter(target.asOutputStream(), true, StandardCharsets.UTF_8)) {
+                out.println("<html><head><title>Graph report for Graph.obj</title>");
+                out.println("\t<meta charset=\"utf-8\">");
+                out.println("<meta name='viewport' content='width=device-width, initial-scale=1'>");
+                out.println("<script src='http://code.jquery.com/jquery-1.11.1.js'></script>");
+                out.println(
+                    "<link rel='stylesheet' href='http://yui.yahooapis.com/pure/0.5.0/pure-min.css'>");
+                String css = "\t\t<style>\n"
+                    + "\n"
+                    + "\t\t\tbutton.pure-button {\n"
+                    + "\t\t\t\tmargin:5px;\n"
+                    + "\t\t\t}\n"
+                    + "\n"
+                    + "\t\t\tspan.pure-button {\n"
+                    + "\t\t\t\tcursor:default;\n"
+                    + "\t\t\t}\n"
+                    + "\n"
+                    + "\t\t\t.button-graphwide,\n"
+                    + "\t\t\t.button-parkandrideunlinked,\n"
+                    + "\t\t\t.button-graphconnectivity,\n"
+                    + "\t\t\t.button-turnrestrictionbad\t{\n"
+                    + "\t\t\t\tcolor:white;\n"
+                    + "\t\t\t\ttext-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);\n"
+                    + "\t\t\t}\n"
+                    + "\n"
+                    + "\t\t\t.button-graphwide {\n"
+                    + "\t\t\t\tbackground: rgb(28, 184, 65); /* this is a green */\n"
+                    + "\t\t\t}\n"
+                    + "\n"
+                    + "\t\t\t.button-parkandrideunlinked {\n"
+                    + "\t\t\t\tbackground: rgb(202, 60, 60); /* this is a maroon */\n"
+                    + "\t\t\t}\n"
+                    + "\n"
+                    + "\t\t\t.button-graphconnectivity{\n"
+                    + "\t\t\t\tbackground: rgb(223, 117, 20); /* this is an orange */\n"
+                    + "\t\t\t}\n"
+                    + "\n"
+                    + "\t\t\t.button-turnrestrictionbad {\n"
+                    + "\t\t\t\tbackground: rgb(66, 184, 221); /* this is a light blue */\n"
+                    + "\t\t\t}\n"
+                    + "\n"
+                    + "\t\t</style>\n"
+                    + "";
+                out.println(css);
+                out.println("</head><body>");
+                out.println(String.format("<h1>OpenTripPlanner annotations log for %s</h1>", annotationClassName));
+                out.println("<h2>Graph report for Graph.obj</h2>");
+                out.println("<p>");
+                //adds links to the other HTML files
+                for (Multiset.Entry<String> htmlAnnotationClass : classes.entrySet()) {
+                    String label_name = htmlAnnotationClass.getElement();
+                    String label;
+                    int currentCount = 1;
+                    //it needs to add link to every file even if they are split
+                    while (currentCount <= htmlAnnotationClass.getCount()) {
+                        label = label_name + currentCount;
+                        if (label.equals(annotationClassName)) {
+                            out.println(String.format(
+                                    "<button class='pure-button pure-button-disabled button-%s'>%s</button>",
+                                    label_name.toLowerCase(), label)
+                            );
+                        } else {
+                            out.println(String.format(
+                                    "<a class='pure-button button-%s' href=\"%s.html\">%s</a>",
+                                    label_name.toLowerCase(), label, label)
+                            );
+                        }
+                        currentCount++;
                     }
-                    currentCount++;
                 }
-            }
-            println("</p>");
-            if (!isIndexFile) {
-                println("<ul id=\"log\">");
-                writeAnnotations();
-                println("</ul>");
-            }
+                out.println("</p>");
+                if (!isIndexFile) {
+                    out.println("<ul id=\"log\">");
+                    writeAnnotations(out);
+                    out.println("</ul>");
+                }
 
-            println("</body></html>");
-
-            close();
+                out.println("</body></html>");
+            }
         }
 
         /**
          * Writes annotations as LI html elements
          */
-        private void writeAnnotations() {
+        private void writeAnnotations(PrintWriter out) {
             String annotationFMT = "<li>%s</li>";
             for (Map.Entry<String, String> annotation: writerAnnotations.entries()) {
-                print(String.format(annotationFMT, annotation.getValue()));
-            }
-        }
-
-        private void println(String bodyhtml) {
-            out.println(bodyhtml);
-        }
-
-        private void print(String bodyhtml) {
-            out.print(bodyhtml);
-        }
-
-        private void close() {
-            out.close();
-        }
-
-
-        
-        /**
-         * Generates JSON from annotations variable which is used by Javascript
-         * to display HTML report
-         */
-        private void writeJson() {
-            try {
- 
-                out.print("\tvar data=");
-                ObjectMapper mapper = new ObjectMapper();
-                JsonGenerator jsonGenerator = mapper.getJsonFactory().createJsonGenerator(out);
-                
-                mapper.writeValue(jsonGenerator, writerAnnotations.asMap());
-                out.println(";");
-
-            } catch (IOException ex) {
-                java.util.logging.Logger.getLogger(AnnotationsToHTML.class.getName()).log(Level.SEVERE, null, ex);
+                out.print(String.format(annotationFMT, annotation.getValue()));
             }
         }
     }
-
 }

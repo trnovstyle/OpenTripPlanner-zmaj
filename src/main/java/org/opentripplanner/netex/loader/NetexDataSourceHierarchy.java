@@ -14,13 +14,12 @@
 */
 package org.opentripplanner.netex.loader;
 
+import org.opentripplanner.standalone.config.NetexParameters;
 import org.opentripplanner.standalone.datastore.CompositeDataSource;
 import org.opentripplanner.standalone.datastore.DataSource;
-import org.opentripplanner.standalone.config.NetexParameters;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -42,8 +41,7 @@ class NetexDataSourceHierarchy {
 
     private String currentGroup = null;
 
-    NetexDataSourceHierarchy(CompositeDataSource source, NetexParameters netexConfig)
-            throws IOException {
+    NetexDataSourceHierarchy(CompositeDataSource source, NetexParameters netexConfig) {
         this.source = source;
         this.config = netexConfig;
         distributeEntries();

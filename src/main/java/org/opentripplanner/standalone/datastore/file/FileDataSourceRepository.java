@@ -61,11 +61,6 @@ public class FileDataSourceRepository implements DataSourceRepository {
     }
 
     @Override
-    public void close() {
-        /* No need to close anything when accessing local file system. */
-    }
-
-    @Override
     public DataSource findSource(URI uri, FileType type) {
         return findOrCreateSource(new File(uri), type);
     }

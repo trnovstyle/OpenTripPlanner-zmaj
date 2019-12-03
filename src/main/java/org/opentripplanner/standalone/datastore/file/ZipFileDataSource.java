@@ -22,19 +22,12 @@ import java.util.zip.ZipFile;
 public class ZipFileDataSource extends AbstractFileDataSource implements CompositeDataSource {
     private static final Logger LOG = LoggerFactory.getLogger(ZipFileDataSource.class);
 
+    private boolean contentLoaded = false;
     private ZipFile zipFile;
-    private final Collection<DataSource> content;
+    private final Collection<DataSource> content = new ArrayList<>();
 
     ZipFileDataSource(File file, FileType type) {
         super(file, type);
-        try {
-            // The get name on ZipFile returns the full path, we want just the name.
-            this.zipFile = new ZipFile(file, ZipFile.OPEN_READ);
-            this.content = retrieveContent(zipFile);
-        }
-        catch (IOException e) {
-            throw new RuntimeException(e.getLocalizedMessage(), e);
-        }
     }
 
     @Override
@@ -44,18 +37,10 @@ public class ZipFileDataSource extends AbstractFileDataSource implements Composi
                 zipFile.close();
                 zipFile = null;
             }
-
         }
         catch (IOException e) {
-            LOG.warn(path() + " close failed. Details: " + e.getLocalizedMessage(), e);
+            LOG.error(path() + " close failed. Details: " + e.getLocalizedMessage(), e);
         }
-    }
-
-    /**
-     * @return the internal zip file if still open. {@code null} is return if the file is closed.
-     */
-    ZipFile zipFile() {
-        return zipFile;
     }
 
     @Override
@@ -65,22 +50,44 @@ public class ZipFileDataSource extends AbstractFileDataSource implements Composi
 
     @Override
     public Collection<DataSource> content() {
+        loadContent();
         return content;
     }
 
     @Override
-    public DataSource entry(String s) {
-        return content.stream().filter(it -> it.name().equals(s)).findFirst().orElse(null);
+    public DataSource entry(String name) {
+        loadContent();
+        return content.stream()
+                .filter(it -> it.name().equals(name))
+                .findFirst()
+                .orElse(null);
     }
 
-    private Collection<DataSource> retrieveContent(ZipFile zipFile) {
-        Collection<DataSource> content = new ArrayList<>();
-        Enumeration<? extends ZipEntry> entries = zipFile.entries();
+    /**
+     * @return the internal zip file if still open. {@code null} is return if the file is closed.
+     */
+    ZipFile zipFile() {
+        return zipFile;
+    }
 
-        while (entries.hasMoreElements()) {
-            ZipEntry entry = entries.nextElement();
-            content.add(new ZipFileEntryDataSource(this, entry));
+    private void loadContent() {
+        // Load content once
+        if(contentLoaded) { return; }
+        contentLoaded = true;
+
+        try {
+            // The get name on ZipFile returns the full path, we want just the name.
+            this.zipFile = new ZipFile(file, ZipFile.OPEN_READ);
+
+            Enumeration<? extends ZipEntry> entries = zipFile.entries();
+
+            while (entries.hasMoreElements()) {
+                ZipEntry entry = entries.nextElement();
+                content.add(new ZipFileEntryDataSource(this, entry));
+            }
         }
-        return content;
+        catch (IOException e) {
+            throw new RuntimeException(e.getLocalizedMessage(), e);
+        }
     }
 }
