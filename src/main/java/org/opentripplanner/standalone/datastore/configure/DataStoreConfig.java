@@ -77,7 +77,7 @@ public class DataStoreConfig {
         // Adding Google Cloud Storage, if the config file contains URIs with prefix "gs:"
         if (storageConfig.isGoogleCloudStorageEnabled()) {
             LOG.info("Google Cloud Store Repository enabled - GCS resources detected.");
-            repositories.add(new GcsDataSourceRepository(storageConfig.gcsCredentials));
+            repositories.add(new GcsDataSourceRepository(storageConfig.gsCredentials));
         }
         // The file data storage repository should be last, to allow
         // other repositories to "override" and grab files analyzing the

@@ -125,7 +125,7 @@ public class OtpDataStoreTest {
         String buildConfigJson = String.format(
                 "{"
                 + "%n  storage: {"
-                + "%n      osm: '%s',"
+                + "%n      osm: ['%s'],"
                 + "%n      gtfs: ['%s'],"
                 + "%n      graph: '%s',"
                 + "%n      buildReport: '%s'"
@@ -165,12 +165,12 @@ public class OtpDataStoreTest {
             // added to the same temp-data-dir.
             assertEquals(
                     "CONFIG base:/build-config.json, "
-                            + "GRAPH data:/Graph.obj, "
-                            + "GTFS data:/gtfs.zip, "
-                            + "OSM data:/osm.pbf, "
-                            + "OTP_STATUS base:/otp-status.inProgress, "
-                            + "REPORT data:/report, "
-                            + "UNKNOWN base:/unknown.txt",
+                    + "GRAPH data:/Graph.obj, "
+                    + "GTFS data:/gtfs.zip, "
+                    + "OSM data:/osm.pbf, "
+                    + "OTP_STATUS base:/otp-status.inProgress, "
+                    + "REPORT data:/report, "
+                    + "UNKNOWN base:/unknown.txt",
                     result
             );
         }

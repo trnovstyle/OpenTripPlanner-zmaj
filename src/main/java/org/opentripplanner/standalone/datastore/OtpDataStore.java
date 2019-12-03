@@ -97,8 +97,8 @@ public class OtpDataStore implements Closeable {
         repositories.forEach(DataSourceRepository::open);
 
         addAll(findMultipleSources(Collections.emptyList(), CONFIG));
-        add(findSingleSource(parameters.osm, OSM));
-        add(findSingleSource(parameters.dem,  DEM));
+        addAll(findMultipleSources(parameters.osm, OSM));
+        addAll(findMultipleSources(parameters.dem,  DEM));
         addAll(findMultipleSources(parameters.gtfs, GTFS));
         addAll(findMultipleSources(parameters.netex, NETEX));
 
