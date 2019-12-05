@@ -9,7 +9,7 @@ metadata:
     type: {{ .Values.type }}
     chart: {{ .Chart.Name }}
     release: {{ .Release.Name }}
-  name: {{ .Release.Name }}
+  name: graph-builder
   namespace: {{ .Release.Namespace }}
 spec:
   concurrencyPolicy: Forbid
