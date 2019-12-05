@@ -96,8 +96,8 @@ spec:
               defaultMode: 420
               name: graph-builder
             name: application-config
-  # the cron job should never run as it is used only as a template for creating new jobs
+  # the cron job should never run as it is used only as a template for creating new jobs.
   schedule: 0 0 1 1 0
   successfulJobsHistoryLimit: 1
-  # the cron job should never run as it is used only as a template for creating new jobs
+  # the cron job should never run as it is used only as a template for creating new jobs.
   suspend: true
