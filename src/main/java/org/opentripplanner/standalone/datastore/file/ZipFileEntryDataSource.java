@@ -55,4 +55,9 @@ public class ZipFileEntryDataSource implements DataSource {
             throw new RuntimeException(e.getLocalizedMessage(), e);
         }
     }
+
+    @Override
+    public String toString() {
+        return type() + " " + path();
+    }
 }

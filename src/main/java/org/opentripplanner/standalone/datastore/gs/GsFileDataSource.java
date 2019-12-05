@@ -1,4 +1,4 @@
-package org.opentripplanner.standalone.datastore.gcs;
+package org.opentripplanner.standalone.datastore.gs;
 
 import com.google.cloud.storage.Blob;
 import org.opentripplanner.standalone.datastore.DataSource;
@@ -20,51 +20,33 @@ import static java.nio.channels.Channels.newOutputStream;
  * <p>
  * Reading compressed blobs is supported. The only format supported is gzip (extension .gz).
  */
-class GcsFileDataSource implements DataSource {
+class GsFileDataSource extends AbstractGsDataSource implements DataSource {
+    private final Blob blob;
 
-    private final String path;
-    private final Blob file;
-    private final FileType type;
 
     /**
      * Create a data source wrapper around a file. This wrapper handles GZIP(.gz) compressed files
      * as well as normal files. It does not handle directories({@link DirectoryDataSource}) or
      * zip-files {@link ZipFileDataSource} witch contain multiple files.
      */
-    GcsFileDataSource(Blob file, FileType type, String path) {
-        this.file = file;
-        this.type = type;
-        this.path = path;
-    }
-
-    @Override
-    public String name() {
-        return file.getName();
-    }
-
-    @Override
-    public String path() {
-        return path;
-    }
-
-    @Override
-    public FileType type() {
-        return type;
+    GsFileDataSource(Blob blob, FileType type) {
+        super(blob.getBlobId(), type);
+        this.blob = blob;
     }
 
     @Override
     public long size() {
-        return file.getSize();
+        return blob.getSize();
     }
 
     @Override
     public long lastModified() {
-        return file.getUpdateTime();
+        return blob.getUpdateTime();
     }
 
     @Override
     public boolean exists() {
-        return file.exists();
+        return blob.exists();
     }
 
     @Override
@@ -74,24 +56,24 @@ class GcsFileDataSource implements DataSource {
 
     @Override
     public InputStream asInputStream() {
-            // We support both gzip and unzipped files when reading.
-            InputStream in = newInputStream(file.reader());
+        // We support both gzip and unzipped files when reading.
+        InputStream in = newInputStream(blob.reader());
 
-            if (file.getName().endsWith(".gz")) {
-                try {
-                    return new GZIPInputStream(in);
-                }
-                catch (IOException e) {
-                    throw new IllegalStateException(e.getLocalizedMessage(), e);
-                }
+        if (blob.getName().endsWith(".gz")) {
+            try {
+                return new GZIPInputStream(in);
             }
-            else {
-                return in;
+            catch (IOException e) {
+                throw new IllegalStateException(e.getLocalizedMessage(), e);
             }
+        }
+        else {
+            return in;
+        }
     }
 
     @Override
     public OutputStream asOutputStream() {
-        return newOutputStream(file.writer());
+        return newOutputStream(blob.writer());
     }
 }

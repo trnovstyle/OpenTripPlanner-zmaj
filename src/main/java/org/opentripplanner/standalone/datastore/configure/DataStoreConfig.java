@@ -8,7 +8,7 @@ import org.opentripplanner.standalone.datastore.FileType;
 import org.opentripplanner.standalone.datastore.OtpDataStore;
 import org.opentripplanner.standalone.datastore.base.DataSourceRepository;
 import org.opentripplanner.standalone.datastore.file.FileDataSourceRepository;
-import org.opentripplanner.standalone.datastore.gcs.GsDataSourceRepository;
+import org.opentripplanner.standalone.datastore.gs.GsDataSourceRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

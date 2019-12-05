@@ -4,7 +4,7 @@ package org.opentripplanner.standalone.datastore.file;
 import org.opentripplanner.standalone.datastore.CompositeDataSource;
 import org.opentripplanner.standalone.datastore.DataSource;
 import org.opentripplanner.standalone.datastore.FileType;
-import org.opentripplanner.standalone.datastore.base.DataSourceRepository;
+import org.opentripplanner.standalone.datastore.base.LocalDataSourceRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,6 +17,7 @@ import java.util.stream.Collectors;
 
 import static org.opentripplanner.graph_builder.GraphBuilder.BASE_GRAPH_FILENAME;
 import static org.opentripplanner.graph_builder.GraphBuilder.GRAPH_FILENAME;
+import static org.opentripplanner.standalone.config.StorageParameters.OTP_STATUS_FILENAME;
 import static org.opentripplanner.standalone.datastore.FileType.CONFIG;
 import static org.opentripplanner.standalone.datastore.FileType.DEM;
 import static org.opentripplanner.standalone.datastore.FileType.GRAPH;
@@ -27,27 +28,29 @@ import static org.opentripplanner.standalone.datastore.FileType.OTP_STATUS;
 import static org.opentripplanner.standalone.datastore.FileType.REPORT;
 import static org.opentripplanner.standalone.datastore.FileType.UNKNOWN;
 import static org.opentripplanner.standalone.datastore.OtpDataStore.BUILD_REPORT_DIR;
-import static org.opentripplanner.standalone.datastore.OtpDataStore.OTP_STATUS_FILENAME;
+import static org.opentripplanner.standalone.datastore.base.LocalDataSourceRepository.isCurrentDir;
 import static org.opentripplanner.standalone.datastore.file.ConfigLoader.isConfigFile;
 
 
 /**
  * This data store uses the local file system to access in-/out- data files.
  */
-public class FileDataSourceRepository implements DataSourceRepository {
+public class FileDataSourceRepository implements LocalDataSourceRepository {
     private static final Logger LOG = LoggerFactory.getLogger(FileDataSourceRepository.class);
 
     private final File baseDir;
-    private final List<AbstractFileDataSource> existingFiles = new ArrayList<>();
 
     public FileDataSourceRepository(File baseDir) {
         this.baseDir = baseDir;
     }
 
+    /**
+     * Use for unit testing
+     */
     @NotNull
     public static CompositeDataSource compositeSource(File file, FileType type) {
         // The cast is safe
-        return (CompositeDataSource) createCompositeSource(file, type);
+        return createCompositeSource(file, type);
     }
 
     @Override
@@ -56,79 +59,87 @@ public class FileDataSourceRepository implements DataSourceRepository {
     }
 
     @Override
-    public void open() {
-        initExistingFiles();
-    }
+    public void open() { /* Nothing to do */ }
 
     @Override
     public DataSource findSource(URI uri, FileType type) {
-        return findOrCreateSource(new File(uri), type);
+        return new FileDataSource(new File(uri), type);
     }
 
     @Override
     public DataSource findSource(String filename, FileType type) {
-        return findOrCreateSource(filename, type);
+        return new FileDataSource(new File(baseDir, filename), type);
     }
 
     @Override
-    public List<DataSource> listSources(FileType type) {
+    public CompositeDataSource findCompositeSource(URI uri, FileType type) {
+        return createCompositeSource(new File(uri), type);
+    }
+
+    @Override
+    public CompositeDataSource findCompositeSource(String localFilename, FileType type) {
+        File file = isCurrentDir(localFilename) ? baseDir : new File(baseDir, localFilename);
+        return createCompositeSource(file, type);
+    }
+
+    @Override
+    public List<DataSource> listExistingSources(FileType type) {
         // Return ALL resources of the given type, this is
         // auto-detecting matching files on the local file system
-        return existingFiles
+        return existingFiles()
                 .stream()
-                .filter(it -> it.type == type)
+                .filter(it -> it.type() == type)
                 .collect(Collectors.toUnmodifiableList());
     }
 
+    @Override
+    public String toString() {
+        return "FileDataSourceRepository{" + "baseDir=" + baseDir + '}';
+    }
 
     /* private methods */
 
-    private void initExistingFiles() {
+    private List<DataSource> existingFiles() {
+        List<DataSource> existingFiles = new ArrayList<>();
         File[] files = baseDir.listFiles();
 
         if (files == null) {
             LOG.error("'{}' is not a readable input directory.", baseDir);
-            return;
+            return existingFiles;
         }
 
         for (File file : files) {
             FileType type = resolveFileType(file.getName());
-            existingFiles.add(createSource(file, type));
-        }
-    }
-
-    private AbstractFileDataSource findOrCreateSource(String filename, FileType type) {
-        return findOrCreateSource(new File(baseDir, filename), type);
-    }
-
-    private AbstractFileDataSource findOrCreateSource(File file, FileType type) {
-        // Lookup existing objects and return if found
-        for (AbstractFileDataSource it : existingFiles) {
-            if(it.type == type && it.sameAs(file)) {
-                return it;
+            if(isCompositeDataSource(file)) {
+                existingFiles.add(createCompositeSource(file, type));
+            }
+            else {
+                existingFiles.add(new FileDataSource(file, type));
             }
         }
-        // Create a new one
-        return createSource(file, type);
+        return existingFiles;
     }
 
-    private AbstractFileDataSource createSource(File file, FileType type) {
-        if (type.isCompositeInputDataFile()) {
-            return createCompositeSource(file, type);
-        }
-        return new FileDataSource(file, type);
+    private boolean isCompositeDataSource(File file) {
+       return file.isDirectory() || file.getName().endsWith(".zip");
     }
 
-    private static AbstractFileDataSource createCompositeSource(File file, FileType type) {
-        if (file.isDirectory() || type == REPORT) {
+    private static CompositeDataSource createCompositeSource(File file, FileType type) {
+        if (file.exists() && file.isDirectory()) {
             return new DirectoryDataSource(file, type);
         }
         if (file.getName().endsWith(".zip")) {
             return new ZipFileDataSource(file, type);
         }
+        // If writing to a none-existing directory
+        if (!file.exists() && type.isOutputDataSource()) {
+            return new DirectoryDataSource(file, type);
+        }
         throw new IllegalArgumentException("The " + file + " is not recognized as a zip-file or "
                 + "directory. Unable to create composite data source for file type " + type + ".");
     }
+
+
 
     private static FileType resolveFileType(String name) {
         if (name.toLowerCase().contains("gtfs")) { return GTFS; }
@@ -140,7 +151,7 @@ public class FileDataSourceRepository implements DataSourceRepository {
         if (name.endsWith(".tif") || name.endsWith(".tiff")) { return DEM; }
         if (name.equals(GRAPH_FILENAME)) { return GRAPH; }
         if (name.equals(BASE_GRAPH_FILENAME)) { return GRAPH; }
-        if (name.equals(OTP_STATUS_FILENAME)) { return OTP_STATUS; }
+        if (name.startsWith(OTP_STATUS_FILENAME)) { return OTP_STATUS; }
         if (name.equals(BUILD_REPORT_DIR)) { return REPORT; }
         if (isConfigFile(name)) { return CONFIG;}
         return UNKNOWN;

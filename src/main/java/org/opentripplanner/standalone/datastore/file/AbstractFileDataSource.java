@@ -59,13 +59,9 @@ public abstract class AbstractFileDataSource implements DataSource {
         return file.getParentFile().exists() && (!file.exists() || file.canWrite());
     }
 
-    boolean sameAs(File otherFile) {
-        return file.equals(otherFile);
-    }
-
     @Override
     public String toString() {
-        return path();
+        return type + " " + path();
     }
 
     @Override

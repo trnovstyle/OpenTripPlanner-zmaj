@@ -42,7 +42,8 @@ public class OtpDataStoreTest {
     private static final String GTFS_FILENAME = "gtfs.zip";
     private static final String BASE_GRAPH_FILENAME = "baseGraph.obj";
     private static final String GRAPH_FILENAME = "Graph.obj";
-    private static final String OTP_STATUS_FILENAME = "otp-status.inProgress";
+    private static final String OTP_STATUS_DIR = "status";
+    private static final String OTP_STATUS_FILENAME = "my-otp-status";
     private static final String REPORT_FILENAME = "report";
     private static final String UTF_8 = "UTF-8";
     private static final long D2000_01_01 = ZonedDateTime.parse("2000-01-01T12:00+01:00")
@@ -63,21 +64,27 @@ public class OtpDataStoreTest {
 
     @Test
     public void readEmptyDir() {
+
         OtpDataStore store = new DataStoreConfig(tempDir).open();
         assertNoneExistingFile(store.getBaseGraph(), BASE_GRAPH_FILENAME, GRAPH);
         assertNoneExistingFile(store.getGraph(), GRAPH_FILENAME, GRAPH);
-        assertNoneExistingFile(store.getOtpStatus(), OTP_STATUS_FILENAME, OTP_STATUS);
-        assertNoneExistingFile(store.getBuildReport(), REPORT_FILENAME, REPORT);
+        assertOtpStatusFile(store.getOtpStatusDir(), tempDir);
+        assertNoneExistingFile(store.getBuildReportDir(), REPORT_FILENAME, REPORT);
 
-        assertTrue(store.listExistingSourcesFor(CONFIG).isEmpty());
-        assertTrue(store.listExistingSourcesFor(OSM).isEmpty());
-        assertTrue(store.listExistingSourcesFor(DEM).isEmpty());
-        assertTrue(store.listExistingSourcesFor(GTFS).isEmpty());
-        assertTrue(store.listExistingSourcesFor(NETEX).isEmpty());
-        assertTrue(store.listExistingSourcesFor(GRAPH).isEmpty());
-        assertTrue(store.listExistingSourcesFor(OTP_STATUS).isEmpty());
-        assertTrue(store.listExistingSourcesFor(REPORT).isEmpty());
-        assertTrue(store.listExistingSourcesFor(UNKNOWN).isEmpty());
+        assertEquals("[]", store.listExistingSourcesFor(CONFIG).toString());
+        assertEquals("[]", store.listExistingSourcesFor(OSM).toString());
+        assertEquals("[]", store.listExistingSourcesFor(DEM).toString());
+        assertEquals("[]", store.listExistingSourcesFor(GTFS).toString());
+        assertEquals("[]", store.listExistingSourcesFor(NETEX).toString());
+        assertEquals("[]", store.listExistingSourcesFor(GRAPH).toString());
+        assertEquals("[]", store.listExistingSourcesFor(REPORT).toString());
+        assertEquals("[]", store.listExistingSourcesFor(UNKNOWN).toString());
+
+        // otp-status defaults to baseDir
+        assertEquals(
+                "[OTP_STATUS " + tempDir.getPath() + "]",
+                store.listExistingSourcesFor(OTP_STATUS).toString()
+        );
     }
 
     @Test
@@ -90,14 +97,13 @@ public class OtpDataStoreTest {
         writeZip(NETEX_FILENAME);
         write(BASE_GRAPH_FILENAME, "Data");
         write(GRAPH_FILENAME, "Data");
-        write(OTP_STATUS_FILENAME, "Data");
-        writeToReport();
+        writeToDir(REPORT_FILENAME, "index.json");
 
         OtpDataStore store = new DataStoreConfig(tempDir).open();
         assertExistingSource(store.getBaseGraph(), BASE_GRAPH_FILENAME, GRAPH);
         assertExistingSource(store.getGraph(), GRAPH_FILENAME, GRAPH);
-        assertReportExist(store.getBuildReport());
-        assertExistingSource(store.getOtpStatus(), OTP_STATUS_FILENAME, OTP_STATUS);
+        assertReportExist(store.getBuildReportDir());
+        assertOtpStatusFile(store.getOtpStatusDir(), tempDir);
 
         assertExistingSources(store.listExistingSourcesFor(OSM), OSM_FILENAME);
         assertExistingSources(store.listExistingSourcesFor(DEM), DEM_FILENAME);
@@ -105,9 +111,7 @@ public class OtpDataStoreTest {
         assertExistingSources(store.listExistingSourcesFor(NETEX), NETEX_FILENAME);
         assertExistingSources(store.listExistingSourcesFor(CONFIG), BUILD_CONFIG_FILENAME, ROUTER_CONFIG_FILENAME);
         assertExistingSources(store.listExistingSourcesFor(GRAPH), BASE_GRAPH_FILENAME, GRAPH_FILENAME);
-        assertExistingSources(store.listExistingSourcesFor(OTP_STATUS), OTP_STATUS_FILENAME);
     }
-
 
     @Test
     public void testResolvingFileUris() throws IOException {
@@ -126,18 +130,21 @@ public class OtpDataStoreTest {
                 + "%n      osm: ['%s'],"
                 + "%n      gtfs: ['%s'],"
                 + "%n      graph: '%s',"
-                + "%n      buildReport: '%s'"
+                + "%n      otpStatusDir: '%s',"
+                + "%n      otpStatusFilename: '%s',"
+                + "%n      buildReportDir: '%s'"
                 + "%n  }"
                 + "%n}",
                 uri + OSM_FILENAME,
                 uri + GTFS_FILENAME,
                 uri + GRAPH_FILENAME,
+                uri + OTP_STATUS_DIR,
+                OTP_STATUS_FILENAME,
                 uri + REPORT_FILENAME
         ).replace('\'', '\"');
 
         // Create build-config, otp-status  and a unknown file in the 'baseDir'
         write(BUILD_CONFIG_FILENAME, buildConfigJson);
-        write(OTP_STATUS_FILENAME, "Data");
         write("unknown.txt", "Data");
 
         // Save osm, gtfs, graph, report, base-graph and unknown-2-file in 'tempDataDir'
@@ -146,7 +153,9 @@ public class OtpDataStoreTest {
         write(OSM_FILENAME, "Data");
         writeZip(GTFS_FILENAME);
         write(GRAPH_FILENAME, "Data");
-        writeToReport();
+        writeToDir(OTP_STATUS_DIR, OTP_STATUS_FILENAME + ".inProgress");
+        writeToDir(REPORT_FILENAME, "index.json");
+
         // We add 2 more files, these are not configured in the build-config, and we expect
         // them to be invisible to the store; hence we won´t find them
         write(BASE_GRAPH_FILENAME, "Data");
@@ -166,13 +175,12 @@ public class OtpDataStoreTest {
                 + "GRAPH data:/Graph.obj, "
                 + "GTFS data:/gtfs.zip, "
                 + "OSM data:/osm.pbf, "
-                + "OTP_STATUS base:/otp-status.inProgress, "
+                + "OTP_STATUS data:/status, "
                 + "REPORT data:/report, "
                 + "UNKNOWN base:/unknown.txt",
                 result
         );
     }
-
 
     /* private helper methods */
 
@@ -197,10 +205,10 @@ public class OtpDataStoreTest {
     }
 
     @SuppressWarnings("ResultOfMethodCallIgnored")
-    private void writeToReport() throws IOException {
-        File reportDir = new File(tempDir, REPORT_FILENAME);
+    private void writeToDir(String dir, String oneFile) throws IOException {
+        File reportDir = new File(tempDir, dir);
         reportDir.mkdirs();
-        FileUtils.write(new File(reportDir, "index.html"), "<html />", UTF_8);
+        FileUtils.write(new File(reportDir, oneFile), "{}", UTF_8);
     }
 
     private void write(String filename, String data) throws IOException {
@@ -246,4 +254,12 @@ public class OtpDataStoreTest {
         assertTrue(report.isWritable());
         assertEquals(report.content().toString(), 1, report.content().size());
     }
+
+    private void assertOtpStatusFile(CompositeDataSource dir, File path) {
+        assertEquals(OTP_STATUS, dir.type());
+        assertEquals(path.getName(), dir.name());
+        assertTrue(dir.exists());
+        assertTrue(dir.isWritable());
+    }
+
 }

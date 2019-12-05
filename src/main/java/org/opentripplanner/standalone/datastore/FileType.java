@@ -39,21 +39,21 @@ public enum FileType {
   }
 
   /**
-   * Return {@code true} if the the file is an input data file. This is GTFS, Netex, OpenStreetMap,
+   * Return {@code true} if the the file is an INPUT data file. This is GTFS, Netex, OpenStreetMap,
    * and elevation data files. Config files and graphs are not considered input data files.
    * <p>
    * At least one input data file must be present to build a graph.
    */
-  public boolean isInputDataFile() {
+  public boolean isInputDataSource() {
     return EnumSet.of(GTFS, NETEX, OSM, DEM).contains(this);
   }
 
   /**
-   * @return {@code true} if the type is a composite type, like zip-files and directories. Normal
-   * file types will return {@code false}.
+   * Return {@code true} if the the file is an OUTPUT data file/directory. This is the graph files,
+   * build-report and the otp-status file. Config files are not considered output data files.
    */
-  public boolean isCompositeInputDataFile() {
-    return EnumSet.of(GTFS, NETEX, REPORT).contains(this);
+  public boolean isOutputDataSource() {
+    return EnumSet.of(GRAPH, REPORT, OTP_STATUS).contains(this);
   }
 
   /**

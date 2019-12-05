@@ -6,8 +6,7 @@ import com.google.common.collect.Multimap;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.opentripplanner.standalone.config.StorageParameters;
 import org.opentripplanner.standalone.datastore.base.DataSourceRepository;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.opentripplanner.standalone.datastore.base.LocalDataSourceRepository;
 
 import javax.validation.constraints.NotNull;
 import java.net.URI;
@@ -16,6 +15,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static org.opentripplanner.graph_builder.GraphBuilder.BASE_GRAPH_FILENAME;
@@ -29,6 +29,7 @@ import static org.opentripplanner.standalone.datastore.FileType.OSM;
 import static org.opentripplanner.standalone.datastore.FileType.OTP_STATUS;
 import static org.opentripplanner.standalone.datastore.FileType.REPORT;
 import static org.opentripplanner.standalone.datastore.FileType.UNKNOWN;
+import static org.opentripplanner.standalone.datastore.base.LocalDataSourceRepository.CURRENT_DIRECTORY;
 
 /**
  * The responsibility of this class is to provide access to all data sources OTP uses like the
@@ -45,25 +46,21 @@ import static org.opentripplanner.standalone.datastore.FileType.UNKNOWN;
  * new instance of this class.
  */
 public class OtpDataStore {
-
-    private static final Logger LOG = LoggerFactory.getLogger(OtpDataStore.class);
-
-
-    public static final String OTP_STATUS_FILENAME = "otp-status.inProgress";
     public static final String BUILD_REPORT_DIR = "report";
 
     private final List<String> repositoryDescriptions = new ArrayList<>();
     private final StorageParameters parameters;
     private final JsonNode graphBuilderParameters;
     private final JsonNode routerConfigParameters;
-    private final List<DataSourceRepository> repositories;
+    private final List<DataSourceRepository> allRepositories;
+    private final LocalDataSourceRepository localRepository;
     private final Multimap<FileType, DataSource> sources = ArrayListMultimap.create();
 
     /* Named resources available for both reading and writing. */
     private DataSource baseGraph;
     private DataSource graph;
-    private DataSource otpStatus;
-    private CompositeDataSource buildReport;
+    private CompositeDataSource otpStatusDir;
+    private CompositeDataSource buildReportDir;
 
     /**
      * Use the {@link org.opentripplanner.standalone.datastore.configure.DataStoreConfig} to
@@ -83,11 +80,12 @@ public class OtpDataStore {
         this.parameters = parameters;
         this.graphBuilderParameters = builderParams;
         this.routerConfigParameters = routerConfig;
-        this.repositories = repositories;
+        this.allRepositories = repositories;
+        this.localRepository = getLocalDataSourceRepo(repositories);
     }
 
     public void open() {
-        repositories.forEach(DataSourceRepository::open);
+        allRepositories.forEach(DataSourceRepository::open);
 
         addAll(findMultipleSources(Collections.emptyList(), CONFIG));
         addAll(findMultipleSources(parameters.osm, OSM));
@@ -97,11 +95,9 @@ public class OtpDataStore {
 
         baseGraph = findSingleSource(parameters.baseGraph, BASE_GRAPH_FILENAME, GRAPH);
         graph = findSingleSource(parameters.graph, GRAPH_FILENAME, GRAPH);
-        otpStatus = findSingleSource(parameters.otpStatus, OTP_STATUS_FILENAME, OTP_STATUS);
-        buildReport = (CompositeDataSource) findSingleSource(
-                parameters.buildReport, BUILD_REPORT_DIR, REPORT
-        );
-        addAll(Arrays.asList(baseGraph, graph, otpStatus, buildReport));
+        otpStatusDir = findCompositeSource(parameters.otpStatusDir, CURRENT_DIRECTORY, OTP_STATUS);
+        buildReportDir = findCompositeSource(parameters.buildReportDir, BUILD_REPORT_DIR, REPORT);
+        addAll(Arrays.asList(baseGraph, graph, otpStatusDir, buildReportDir));
 
         // Also read in unknown sources in case the data input source is miss-spelled,
         // We look for files on the local-file-system, other repositories ignore this call.
@@ -121,9 +117,8 @@ public class OtpDataStore {
      * <p>
      * This method should not be called after this data store is closed. The behavior is undefined.
      *
-     * @return a collection of {@link DataSource} or {@link CompositeDataSource}. If the type is a
-     * {@link FileType#isCompositeInputDataFile()} then it is safe to cast the elements to the sub
-     * type.
+     * @return The collection may contain elements of type {@link DataSource} or
+     * {@link CompositeDataSource}.
      */
     @NotNull
     public Collection<DataSource> listExistingSourcesFor(FileType type) {
@@ -157,90 +152,78 @@ public class OtpDataStore {
     }
 
     @NotNull
-    public DataSource getOtpStatus() {
-        return otpStatus;
+    public CompositeDataSource getOtpStatusDir() {
+        return otpStatusDir;
     }
 
     @NotNull
-    public CompositeDataSource getBuildReport() {
-        return buildReport;
+    public CompositeDataSource getBuildReportDir() {
+        return buildReportDir;
     }
+
 
     /* private methods */
 
-    /**
-     * Add source to internal list of sources
-     */
     private void add(DataSource source) {
         if(source != null) {
             sources.put(source.type(), source);
         }
     }
 
-    /**
-     * Add all sources to internal list of sources
-     */
     private void addAll(List<DataSource> list) {
         list.forEach(this::add);
     }
 
-    private DataSource findSingleSource(@Nullable URI uri, @NotNull String filename, @NotNull FileType type) {
-        return uri != null ? findSourceInRepo(uri, type) : findSourceInRepo(filename, type);
+    private LocalDataSourceRepository getLocalDataSourceRepo(List<DataSourceRepository> repositories) {
+        List<LocalDataSourceRepository> localRepos = repositories
+                .stream()
+                .filter(it -> it instanceof LocalDataSourceRepository)
+                .map(it -> (LocalDataSourceRepository)it)
+                .collect(Collectors.toList());
+        if(localRepos.size() != 1) {
+            throw new IllegalStateException("Only one LocalDataSourceRepository is supported.");
+        }
+        return localRepos.get(0);
     }
 
-    private DataSource findSingleSource(@Nullable URI uri, @NotNull FileType type) {
-        return uri != null ? findSourceInRepo(uri, type) : findSourceInRepo(type);
+    private CompositeDataSource findCompositeSource(@Nullable URI uri, @NotNull String filename, @NotNull FileType type) {
+        if(uri != null) {
+            return findSourceByUri(it -> it.findCompositeSource(uri, type));
+        }
+        else {
+            return localRepository.findCompositeSource(filename, type);
+        }
+    }
+
+    private DataSource findSingleSource(@Nullable URI uri, @NotNull String filename, @NotNull FileType type) {
+        if(uri != null) {
+            return findSourceByUri(uri, type);
+        }
+        return localRepository.findSource(filename, type);
     }
 
     private List<DataSource> findMultipleSources(@NotNull Collection<URI> uris, @NotNull FileType type) {
         if(uris.isEmpty()) {
-            return findSourcesInRepo(type);
+            return localRepository.listExistingSources(type);
         }
         else {
             return uris.stream()
-                    .map(uri -> findSourceInRepo(uri, type))
+                    .map(uri -> findSourceByUri(uri, type))
                     .collect(Collectors.toList());
         }
     }
 
-    private DataSource findSourceInRepo(@NotNull URI uri, @NotNull FileType type) {
-        for (DataSourceRepository it : repositories) {
-            DataSource res = it.findSource(uri, type);
+    private DataSource findSourceByUri(@NotNull URI uri, @NotNull FileType type) {
+        return findSourceByUri(it -> it.findSource(uri, type));
+    }
+
+    private <T> T findSourceByUri(Function<DataSourceRepository, T> repoFindSource) {
+        for (DataSourceRepository it : allRepositories) {
+            T res = repoFindSource.apply(it);
             if (res != null) {
                 return res;
             }
         }
         return null;
-    }
-
-    private DataSource findSourceInRepo(@NotNull String filename, @NotNull FileType type) {
-        for (DataSourceRepository it : repositories) {
-            DataSource res = it.findSource(filename, type);
-            if (res != null) {
-                return res;
-            }
-        }
-        return null;
-    }
-
-    private DataSource findSourceInRepo(@NotNull FileType type) {
-        List<DataSource> res = findSourcesInRepo(type);
-        if(res.isEmpty()) {
-            return null;
-        }
-        if(res.size() == 1) {
-            return res.get(0);
-        }
-        throw new IllegalStateException("More than on source found for " + type + ": " + res);
-    }
-
-    private List<DataSource> findSourcesInRepo(@NotNull FileType type) {
-        for (DataSourceRepository it : repositories) {
-            List<DataSource> res = it.listSources(type);
-            if (!res.isEmpty()) {
-                return res;
-            }
-        }
-        return Collections.emptyList();
     }
 }

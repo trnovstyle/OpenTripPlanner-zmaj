@@ -58,8 +58,8 @@ public class StorageParametersTest {
                 + " dem : [ 'file:/b/dem.tif' ],\n"
                 + " netex : [ 'gs://b/netex.zip' ],\n"
                 + " gtfs : [ 'file:/b/gtfs.zip' ],\n"
-                + " otpStatus : 'gs://b/otp-status',\n"
-                + " buildReport : 'gs://b/report'\n"
+                + " otpStatusDir : 'gs://b/otp-status',\n"
+                + " buildReportDir : 'gs://b/report'\n"
                 + "}");
         StorageParameters c =  new StorageParameters(node);
 
@@ -70,7 +70,7 @@ public class StorageParametersTest {
         assertEquals("[file:/b/dem.tif]", c.dem.toString());
         assertEquals("[gs://b/netex.zip]", c.netex.toString());
         assertEquals("[file:/b/gtfs.zip]", c.gtfs.toString());
-        assertEquals("gs://b/otp-status", c.otpStatus.toString());
-        assertEquals("gs://b/report", c.buildReport.toString());
+        assertEquals("gs://b/otp-status", c.otpStatusDir.toString());
+        assertEquals("gs://b/report", c.buildReportDir.toString());
     }
 }

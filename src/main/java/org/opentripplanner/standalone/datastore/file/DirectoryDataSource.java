@@ -17,7 +17,7 @@ import java.util.Collection;
  */
 public class DirectoryDataSource extends AbstractFileDataSource implements CompositeDataSource {
 
-    DirectoryDataSource(File path, FileType type) {
+    public DirectoryDataSource(File path, FileType type) {
         super(path, type);
     }
 
@@ -48,12 +48,45 @@ public class DirectoryDataSource extends AbstractFileDataSource implements Compo
     }
 
     @Override
-    public void delete() throws IOException {
-        if(file.exists()) {
-            FileUtils.deleteDirectory(file);
+    public void delete() {
+        try {
+            if(file.exists()) {
+                FileUtils.deleteDirectory(file);
+            }
+        }
+        catch (IOException e) {
+            throw new IllegalStateException(e.getLocalizedMessage(), e);
         }
     }
 
     @Override
-    public void close() { }
+    public void delete(String entry) {
+        File file = new File(this.file, entry);
+        if(file.exists()) {
+            if(!file.delete()) {
+                throw new IllegalStateException("Unable to delete file: " + file.getPath());
+            }
+        }
+    }
+
+    @Override
+    public void rename(String currentEntryName, String newEntryName) {
+        File currentFile = new File(file, currentEntryName);
+        File newFileFile = new File(file, newEntryName);
+
+        if(!currentFile.exists()) {
+            throw new IllegalArgumentException(
+                    "Unable to move none existing file " + currentEntryName + " in " + path()
+            );
+        }
+        try {
+            FileUtils.moveFile(currentFile, newFileFile);
+        }
+        catch (IOException e) {
+            throw new IllegalStateException(e.getLocalizedMessage(), e);
+        }
+    }
+
+    @Override
+    public void close() { /* Nothing to close */ }
 }

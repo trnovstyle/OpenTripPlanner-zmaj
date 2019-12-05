@@ -15,6 +15,7 @@ import java.util.stream.Collectors;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.opentripplanner.standalone.datastore.FileType.GTFS;
 
 public class ZipFileDataSourceTest {
@@ -45,7 +46,7 @@ public class ZipFileDataSourceTest {
         // We do not support writing to zip files
         assertFalse(subject.isWritable());
 
-        assertEquals(expectedPath, subject.toString());
+        assertEquals("GTFS " + expectedPath, subject.toString());
         assertEquals(copySubject, subject);
         assertEquals(copySubject.hashCode(), subject.hashCode());
 
@@ -93,5 +94,66 @@ public class ZipFileDataSourceTest {
         assertTrue(entry.exists());
         // We do not support writing to zip entries
         assertFalse(entry.isWritable());
+    }
+
+
+    @Test
+    public void testUnsupportedDelete() {
+        // Given:
+        File target = new File(FILENAME);
+        CompositeDataSource subject = new ZipFileDataSource(target, GTFS);
+
+        // delete entry is not implemented
+        try {
+            // When:
+            subject.delete();
+
+            // Then:
+            fail("Expected delete to throw an exception.");
+        }
+        catch (Exception e) {
+            assertTrue(e.getMessage().contains("ZipFileDataSource"));
+        }
+    }
+
+
+    @Test
+    public void testUnsupportedDeleteEntry() {
+        // Given:
+        File target = new File(FILENAME);
+        CompositeDataSource subject = new ZipFileDataSource(target, GTFS);
+
+        // delete entry is not implemented
+        try {
+            // When:
+            subject.delete("Jalla.txt");
+
+            // Then:
+            fail("Expected delete to throw an exception.");
+        }
+        catch (Exception e) {
+            assertTrue(e.getMessage().contains("ZipFileDataSource"));
+            assertTrue(e.getMessage().contains("Jalla.txt"));
+        }
+    }
+
+    @Test
+    public void testUnsupportedRenameEntry() {
+        // Given:
+        File target = new File(FILENAME);
+        CompositeDataSource subject = new ZipFileDataSource(target, GTFS);
+
+        try {
+            // When:
+            subject.rename("Foo.txt", "Bar.txt");
+
+            // Then:
+            fail("Expected rename to throw an exception.");
+        }
+        catch (Exception e) {
+            String message = e.getMessage();
+            assertTrue(message, message.contains("ZipFileDataSource"));
+            assertTrue(message, message.contains(FILENAME));
+        }
     }
 }

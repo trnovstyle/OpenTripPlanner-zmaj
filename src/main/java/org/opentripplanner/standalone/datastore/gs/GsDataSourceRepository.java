@@ -1,12 +1,12 @@
-package org.opentripplanner.standalone.datastore.gcs;
+package org.opentripplanner.standalone.datastore.gs;
 
 
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.BlobId;
-import com.google.cloud.storage.Bucket;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageOptions;
+import org.opentripplanner.standalone.datastore.CompositeDataSource;
 import org.opentripplanner.standalone.datastore.DataSource;
 import org.opentripplanner.standalone.datastore.FileType;
 import org.opentripplanner.standalone.datastore.base.DataSourceRepository;
@@ -40,40 +40,51 @@ public class GsDataSourceRepository implements DataSourceRepository {
 
     @Override
     public DataSource findSource(URI uri, FileType type) {
-        if(!isGoogleCloudStorageUri(uri)) {
-            return null;
-        }
-
-        BlobPath path = BlobPath.parse(uri);
-        return createSource(path, type);
+        if(skipUri(uri)) { return null; }
+        BlobId blobId = GsHelper.toBlobId(uri);
+        return createSource(blobId, type);
     }
 
+    @Override
+    public CompositeDataSource findCompositeSource(URI uri, FileType type) {
+        if(skipUri(uri)) { return null; }
+        return createCompositeSource(GsHelper.toBlobId(uri), type);
+    }
 
     /* private methods */
 
-    private static boolean isGoogleCloudStorageUri(URI uri) {
-        return "gs".equals(uri.getScheme());
+    private static boolean skipUri(URI uri) {
+        return !"gs".equals(uri.getScheme());
     }
 
-    private DataSource createSource(BlobPath path, FileType type) {
-        Bucket bucket = storage.get(path.bucket);
-
-        Blob blob = bucket.get(path.objectName);
+    private DataSource createSource(BlobId blobId, FileType type) {
+        Blob blob = storage.get(blobId);
 
         if(blob != null) {
-            DataSource gsSource = new GcsFileDataSource(blob, type, path.toString());
-            if(blob.getName().endsWith(".zip")) {
-                return new ZipStreamDataSource(gsSource);
+            return new GsFileDataSource(blob, type);
+        }
+        else {
+            return new GsOutFileDataSource(storage, blobId, type);
+        }
+    }
+
+    private CompositeDataSource createCompositeSource(BlobId blobId, FileType type) {
+        if(GsHelper.isRoot(blobId)) {
+            return new GsDirectoryDataSource(storage, blobId, type);
+        }
+
+        if(blobId.getName().endsWith(".zip")) {
+            Blob blob = storage.get(blobId);
+
+            if(blob == null) {
+                throw new IllegalArgumentException(
+                        type.text() +  " not found: " + GsHelper.toUriString(blobId)
+                );
             }
-            return gsSource;
+            DataSource gsSource = new GsFileDataSource(blob, type);
+            return new ZipStreamDataSource(gsSource);
         }
-
-        if(type.isCompositeInputDataFile()) {
-            return new GcsDirectoryDataSource(storage, path, type);
-        }
-
-        BlobId blobId = BlobId.of(bucket.getName(), path.objectName);
-        return new GsOutFileDataStore(storage, blobId, type, path.toString());
+        return new GsDirectoryDataSource(storage, blobId, type);
     }
 
     private Storage connectToStorage() {

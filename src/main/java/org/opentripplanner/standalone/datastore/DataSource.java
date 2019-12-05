@@ -79,7 +79,7 @@ public interface DataSource {
      */
     default InputStream asInputStream() {
         throw new UnsupportedOperationException(
-                "This datasource type " + type()
+                "This datasource type " + getClass().getSimpleName()
                         + " do not support READING. Can not read from: " + path()
         );
     }
@@ -87,6 +87,8 @@ public interface DataSource {
     /**
      * Return the content as a byte array. The implementation may chose to implement this in a
      * more efficient way - not reading the input stream. Do not change the data returned.
+     * <p/>
+     * Calling this method is the same as reading everything off the {@link #asInputStream()}.
      */
     default byte[] asBytes() {
         try {
@@ -99,7 +101,7 @@ public interface DataSource {
 
     default OutputStream asOutputStream() {
         throw new UnsupportedOperationException(
-                "This datasource type " + type()
+                "This datasource type " + getClass().getSimpleName()
                 + " do not support WRITING. Can not write to: " + path()
         );
     }

@@ -146,7 +146,7 @@ public class AnnotationsToHTML implements GraphBuilderModule {
             //Removes all files from report directory
             try {
                 reportDirectory.delete();
-            } catch (IOException e) {
+            } catch (Exception e) {
                 LOG.error("Failed to clean HTML report directory: " + reportDirectory.path() + ". HTML report won't be generated!", e);
                 return false;
             }

@@ -6,4 +6,4 @@
  * {@link org.opentripplanner.standalone.datastore.file.ConfigLoader}
  * to load config from the local disk.
  */
-package org.opentripplanner.standalone.datastore.gcs;
+package org.opentripplanner.standalone.datastore.gs;

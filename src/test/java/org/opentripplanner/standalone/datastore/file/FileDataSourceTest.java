@@ -47,9 +47,8 @@ public class FileDataSourceTest {
         assertEquals(0L, subject.size());
         assertFalse(subject.exists());
         assertTrue(subject.isWritable());
-        assertTrue(subject.sameAs(copyTarget));
 
-        assertEquals(expectedPath, subject.toString());
+        assertEquals("GRAPH " + expectedPath, subject.toString());
         assertEquals(copySubject, subject);
         assertEquals(copySubject.hashCode(), subject.hashCode());
     }

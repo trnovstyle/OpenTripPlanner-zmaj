@@ -59,6 +59,7 @@ public class GtfsBundle implements Closeable {
     public File cacheDirectory = null; // null means use default from GtfsGB || system temp dir 
 
 
+    /** Used by unit tests */
     public GtfsBundle(File gtfsFile) {
         this(DataStoreConfig.compositeSource(gtfsFile, FileType.GTFS));
     }

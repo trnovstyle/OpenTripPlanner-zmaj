@@ -17,6 +17,7 @@ import com.beust.jcommander.JCommander;
 import com.beust.jcommander.ParameterException;
 import org.opentripplanner.common.MavenVersion;
 import org.opentripplanner.graph_builder.GraphBuilder;
+import org.opentripplanner.graph_builder.OtpStatusFile;
 import org.opentripplanner.routing.graph.Graph;
 import org.opentripplanner.routing.impl.DefaultStreetVertexIndexFactory;
 import org.opentripplanner.routing.impl.GraphScanner;
@@ -73,7 +74,7 @@ public class OTPMain {
 
         OTPMain main = new OTPMain(params);
         main.run();
-
+        OtpStatusFile.exitStatusOk();
     }
 
     /* Constructor. */
@@ -111,6 +112,7 @@ public class OTPMain {
                     }
                 } else {
                     LOG.error("An error occurred while building the graph. Exiting.");
+                    OtpStatusFile.exitStatusFailed();
                     System.exit(-1);
                 }
             }
@@ -138,6 +140,7 @@ public class OTPMain {
         } catch (Throwable throwable) {
             LOG.error("An uncaught {} error occurred during startup. Shutting down.",
                     throwable.getClass().getSimpleName(), throwable);
+            OtpStatusFile.exitStatusFailed();
             System.exit(1);
         }
 
@@ -154,7 +157,6 @@ public class OTPMain {
                 }
             }
         }
-
     }
 
     /**

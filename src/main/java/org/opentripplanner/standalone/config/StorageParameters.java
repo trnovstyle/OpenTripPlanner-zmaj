@@ -31,7 +31,7 @@ import java.util.List;
  *         osm: [ "gs://otp-test-bucket/a/b/osm-oslo-mini.pbf" ],
  *         dem: [ "file:/public/dem/norway.dem.tif" ],
  *         gtfs: ["gs://otp-bucket/rut-gtfs.zip", "gs://otp-bucket/vy-gtfs.zip"],
- *         buildReport: "gs://otp-bucket/build-report"
+ *         buildReportDir: "gs://otp-bucket/build-report"
  *     }
  *  }
  * </pre>
@@ -42,6 +42,7 @@ import java.util.List;
  * base directory - it they exist.
  */
 public class StorageParameters {
+    public static final String OTP_STATUS_FILENAME = "otp-status";
 
     /**
      * Local file system path to Google Cloud Platform service accounts credentials file. The
@@ -118,15 +119,24 @@ public class StorageParameters {
     public final List<URI> netex = new ArrayList<>();
 
     /**
-     * URI to the OTP status file name WITHOUT any extension. When OTP start the file is
-     * created with the extension ".inProgress" and then when OTP exit the file extension is
-     * changed to ".ok" or ".failed".
+     * URI to the OTP status file directory where the opt status file will be created.
      * <p>
-     * Example: {@code "otpStatus" : "file:///Users/kelvin/otp/otp-status" }
+     * Example: {@code "otpStatus" : "file:///Users/kelvin/otp" }
      * <p>
      * This parameter is optional.
      */
-    public final URI otpStatus;
+    public final URI otpStatusDir;
+
+    /**
+     * The otp status "base" filename WITHOUT any extension. When OTP start the file is
+     * created with the extension ".inProgress" and then when OTP exit the file extension is
+     * changed to ".ok" or ".failed".
+     * <p>
+     * Example: {@code "otpStatus" : "otp-status" }
+     * <p>
+     * This parameter is optional. The default value is "otp-status"
+     */
+    public final String otpStatusFilename;
 
 
     /**
@@ -138,7 +148,7 @@ public class StorageParameters {
      * <p>
      * This parameter is optional.
      */
-    public final URI buildReport;
+    public final URI buildReportDir;
 
     StorageParameters(JsonNode node) {
         this.gsCredentials = node.path("gsCredentials").asText(null);
@@ -148,8 +158,9 @@ public class StorageParameters {
         this.dem.addAll(uris("dem", node));
         this.gtfs.addAll(uris("gtfs", node));
         this.netex.addAll(uris("netex", node));
-        this.otpStatus = uriFromJson("otpStatus", node);
-        this.buildReport = uriFromJson("buildReport", node);
+        this.otpStatusDir = uriFromJson("otpStatusDir", node);
+        this.otpStatusFilename = node.path("otpStatusFilename").asText(OTP_STATUS_FILENAME);
+        this.buildReportDir = uriFromJson("buildReportDir", node);
     }
 
     static List<URI> uris(String name, JsonNode node) {
@@ -206,8 +217,8 @@ public class StorageParameters {
         uris.addAll(dem);
         uris.addAll(gtfs);
         uris.addAll(netex);
-        uris.add(otpStatus);
-        uris.add(buildReport);
+        uris.add(otpStatusDir);
+        uris.add(buildReportDir);
         return uris;
     }
 

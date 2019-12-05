@@ -12,10 +12,8 @@ import org.opentripplanner.graph_builder.module.PruneFloatingIslands;
 import org.opentripplanner.graph_builder.module.StreetLinkerModule;
 import org.opentripplanner.graph_builder.module.TransitToTaggedStopsModule;
 import org.opentripplanner.graph_builder.module.map.BusRouteStreetMatcher;
-import org.opentripplanner.graph_builder.module.ned.DegreeGridNEDTileSource;
 import org.opentripplanner.graph_builder.module.ned.ElevationModule;
 import org.opentripplanner.graph_builder.module.ned.GeotiffGridCoverageFactoryImpl;
-import org.opentripplanner.graph_builder.module.ned.NEDGridCoverageFactoryImpl;
 import org.opentripplanner.graph_builder.module.osm.OpenStreetMapModule;
 import org.opentripplanner.graph_builder.services.DefaultStreetEdgeFactory;
 import org.opentripplanner.graph_builder.services.GraphBuilderModule;
@@ -27,7 +25,6 @@ import org.opentripplanner.routing.graph.Graph;
 import org.opentripplanner.routing.impl.DefaultStreetVertexIndexFactory;
 import org.opentripplanner.standalone.CommandLineParameters;
 import org.opentripplanner.standalone.config.GraphBuilderParameters;
-import org.opentripplanner.standalone.config.S3BucketConfig;
 import org.opentripplanner.standalone.datastore.CompositeDataSource;
 import org.opentripplanner.standalone.datastore.DataSource;
 import org.opentripplanner.standalone.datastore.FileType;
@@ -151,16 +148,17 @@ public class GraphBuilder implements Runnable {
      * {@code params.build directory}.
      */
     public static GraphBuilder forDirectory(CommandLineParameters cmdLineParams, File dir) {
-        OtpDataStore dataStore = null;
         LOG.info("Wiring up and configuring graph builder task.");
         LOG.info("Searching for graph builder input files in {}", dir);
 
-        dataStore = new DataStoreConfig(dir).open();
+        OtpDataStore dataStore = new DataStoreConfig(dir).open();
 
         // Parse graph build parameters
         GraphBuilderParameters builderParams = new GraphBuilderParameters(
                 dataStore.graphBuilderParameters()
         );
+
+        OtpStatusFile.start(dataStore.getOtpStatusDir(), builderParams.storage.otpStatusFilename);
 
         // Select witch files to import and log status for each file
         Multimap<FileType, DataSource> input = new DataSourceHelper(dataStore)
@@ -174,7 +172,6 @@ public class GraphBuilder implements Runnable {
         }
 
         GraphBuilder graphBuilder = new GraphBuilder(dataStore, cmdLineParams.skipTransit);
-        //graphBuilder.statusFile.setInProgress();
 
         if (cmdLineParams.loadBaseGraph) {
             Graph graph = graphBuilder.loadBaseGraph();
@@ -209,28 +206,7 @@ public class GraphBuilder implements Runnable {
             // Load elevation data and apply it to the streets.
             // We want to do run this module after loading the OSM street network but before
             // finding transfers.
-            if (builderParams.elevationBucket != null) {
-                // Download the elevation tiles from an Amazon S3 bucket
-                S3BucketConfig bucketConfig = builderParams.elevationBucket;
-                File cacheDirectory = new File(cmdLineParams.cacheDirectory, "ned");
-                DegreeGridNEDTileSource awsTileSource = new DegreeGridNEDTileSource();
-                awsTileSource = new DegreeGridNEDTileSource();
-                awsTileSource.awsAccessKey = bucketConfig.accessKey;
-                awsTileSource.awsSecretKey = bucketConfig.secretKey;
-                awsTileSource.awsBucketName = bucketConfig.bucketName;
-                NEDGridCoverageFactoryImpl gcf = new NEDGridCoverageFactoryImpl(cacheDirectory);
-                gcf.tileSource = awsTileSource;
-                GraphBuilderModule elevationBuilder = new ElevationModule(
-                        gcf, builderParams.distanceBetweenElevationSamples);
-                graphBuilder.addModule(elevationBuilder);
-            } else if (builderParams.fetchElevationUS) {
-                // Download the elevation tiles from the official web service
-                File cacheDirectory = new File(cmdLineParams.cacheDirectory, "ned");
-                ElevationGridCoverageFactory gcf = new NEDGridCoverageFactoryImpl(cacheDirectory);
-                GraphBuilderModule elevationBuilder = new ElevationModule(
-                        gcf, builderParams.distanceBetweenElevationSamples);
-                graphBuilder.addModule(elevationBuilder);
-            } else if (input.containsKey(DEM)) {
+            if (input.containsKey(DEM)) {
                 // Load the elevation from a file in the graph inputs directory
                 for (DataSource demSource : input.get(DEM)) {
                     ElevationGridCoverageFactory gcf = new GeotiffGridCoverageFactoryImpl(demSource);
@@ -246,7 +222,7 @@ public class GraphBuilder implements Runnable {
             if (input.containsKey(GTFS)) {
                 List<GtfsBundle> gtfsBundles = new ArrayList<>();
                 for (DataSource gtfsSource : input.get(GTFS)) {
-                    GtfsBundle gtfsBundle = new GtfsBundle((CompositeDataSource)gtfsSource);
+                    GtfsBundle gtfsBundle = new GtfsBundle((CompositeDataSource) gtfsSource);
                     gtfsBundle.setTransfersTxtDefinesStationPaths(builderParams.useTransfersTxt);
                     if (builderParams.parentStopLinking) {
                         gtfsBundle.linkStopsToParentStations = true;
@@ -265,10 +241,14 @@ public class GraphBuilder implements Runnable {
                     }
                     graphBuilder.addModule(new TransitToTaggedStopsModule());
                 }
-            } else if (input.containsKey(NETEX)) {
+            }
+            else if (input.containsKey(NETEX)) {
                 List<NetexBundle> netexBundles = new ArrayList<>();
                 for (DataSource netexSource : input.get(NETEX)) {
-                    NetexBundle netexBundle = new NetexBundle((CompositeDataSource) netexSource, builderParams);
+                    NetexBundle netexBundle = new NetexBundle(
+                            (CompositeDataSource) netexSource,
+                            builderParams
+                    );
                     netexBundles.add(netexBundle);
                 }
                 NetexModule netexModule = new NetexModule(dir, netexBundles);
@@ -288,7 +268,8 @@ public class GraphBuilder implements Runnable {
             if (input.containsKey(GTFS) || input.containsKey(NETEX)) {
                 if (builderParams.analyzeTransfers) {
                     graphBuilder.addModule(new DirectTransferAnalyzer(builderParams.maxTransferDistance));
-                } else {
+                }
+                else {
                     LOG.info("Analyze transfers skipped");
                 }
                 // The stops can be linked to each other once they are already linked to the street network.
@@ -308,7 +289,7 @@ public class GraphBuilder implements Runnable {
         if (builderParams.htmlAnnotations) {
             graphBuilder.addModule(
                     new AnnotationsToHTML(
-                            dataStore.getBuildReport(),
+                            dataStore.getBuildReportDir(),
                             builderParams.maxHtmlAnnotationsPerFile
                     )
             );
@@ -318,7 +299,7 @@ public class GraphBuilder implements Runnable {
     }
 
     private static boolean checkThereIsAtLeastOneFileToImport(Set<FileType> fileTypes) {
-        if(fileTypes.stream().noneMatch(FileType::isInputDataFile)) {
+        if(fileTypes.stream().noneMatch(FileType::isInputDataSource)) {
             LOG.error("No input files found, unable to build graph.");
             return false;
         }

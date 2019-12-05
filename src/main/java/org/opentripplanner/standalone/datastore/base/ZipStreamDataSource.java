@@ -147,7 +147,8 @@ public class ZipStreamDataSource implements CompositeDataSource {
                             entry.getName(),
                             type(),
                             bArray.length,
-                            entry.getLastModifiedTime().toMillis()
+                            entry.getLastModifiedTime().toMillis(),
+                            false
                         ).withBytes(bArray)
                 );
             }
