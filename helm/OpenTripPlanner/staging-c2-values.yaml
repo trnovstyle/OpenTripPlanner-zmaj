@@ -19,6 +19,10 @@ cronjobRedeployOtp:
   environmentValues:
     cloudsdkCoreProject: radon-1287
 
+cronjobRedeployGraphBuilder:
+  mardukBucket: marduk-stage
+  mardukStorageSecretName: marduk-radon-storage-key
+
 secretMounts:
   - name: marduk-key
     mountPath: /etc/marduk/marduk-blobstore-credentials.json

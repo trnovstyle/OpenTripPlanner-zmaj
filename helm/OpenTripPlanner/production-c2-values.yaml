@@ -19,6 +19,10 @@ cronjobRedeployOtp:
   environmentValues:
     cloudsdkCoreProject: neon-1287
 
+cronjobRedeployGraphBuilder:
+  mardukBucket: marduk-production
+  mardukStorageSecretName: marduk-neon-storage-key
+
 secretMounts:
   - name: marduk-key
     mountPath: /etc/marduk/marduk-blobstore-credentials.json

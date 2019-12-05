@@ -72,6 +72,20 @@ cronjobRedeployOtp:
   environmentValues:
     otpRedeploySlack: slack-url
     cloudsdkCoreProject: carbon-1287
+    
+cronjobRedeployGraphBuilder:
+  image: eu.gcr.io/entur-system-1287/otp
+  imagePullPolicy: Always
+  slack: talk-ror
+  team: ror
+  type: backend
+  app: graph-builder
+  resources:
+    cpuLimit: 3000m
+    memLimit: 20000Mi
+    cpuRequest: 1000m
+    memRequest: 18000Mi
+    xmx: 16g
 
 configuration:
   siriVMUpdater: https://api.dev.entur.io/realtime/v1/services
