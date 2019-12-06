@@ -1,3 +1,4 @@
+{{- if .Values.journeyPlanner.enabled }}
 apiVersion: v1
 data:
   router-config.json: |+
@@ -167,3 +168,4 @@ metadata:
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "common.labels" . | indent 4 }}
+{{- end }}

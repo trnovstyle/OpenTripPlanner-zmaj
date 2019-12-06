@@ -1,3 +1,4 @@
+{{- if .Values.service.enabled}}
 apiVersion: v1
 kind: Service
 metadata:
@@ -15,4 +16,4 @@ spec:
     app: {{ template "otp.name" . }}
   sessionAffinity: None
   type: ClusterIP
-
+{{- end }}

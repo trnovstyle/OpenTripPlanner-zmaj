@@ -2,6 +2,9 @@ env: dev-c2
 
 replicas: 4
 
+journeyPlanner:
+  enabled: true
+
 horizontalPodAutoscaler:
   enabled: true
   maxReplicas: 10
@@ -46,6 +49,7 @@ image:
     name: rutebanken-registry-key
 
 service:
+  enabled: true
   otp:
     externalPort: 8080
     internalPort: 8080
@@ -74,6 +78,7 @@ cronjobRedeployOtp:
     cloudsdkCoreProject: carbon-1287
     
 cronjobRedeployGraphBuilder:
+  enabled: false
   image: eu.gcr.io/entur-system-1287/otp
   imagePullPolicy: Always
   slack: talk-ror

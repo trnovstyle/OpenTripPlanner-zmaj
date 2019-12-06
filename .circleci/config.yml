@@ -52,12 +52,19 @@ aliases:
       sed -i "s/appVersion:.*$/appVersion: '$APP_VERSION'/g"  ./Chart.yaml
       sed -i "s/imageTag:.*$/imageTag: $APP_VERSION/g"  ./values.yaml
       popd
-  - &GCP-auth
+  - &GCP-auth-journey-planner
     name: GCP Authentication for Google Cloud Deploy
     command: |
       echo $GCLOUD_SERVICE_KEY > ${HOME}/account-auth.json
       gcloud auth activate-service-account --key-file ${HOME}/account-auth.json
       gcloud beta container clusters get-credentials $OTP_CONTAINER_CLUSTER --region $OTP_CLUSTER_REGION --project $CLOUDSDK_CORE_PROJECT
+
+  - &GCP-auth-graph-builder
+    name: GCP Authentication for Google Cloud Deploy
+    command: |
+      echo $GCLOUD_SERVICE_KEY > ${HOME}/account-auth.json
+      gcloud auth activate-service-account --key-file ${HOME}/account-auth.json
+      gcloud beta container clusters get-credentials $CLOUDSDK_CONTAINER_CLUSTER --region $CLOUDSDK_COMPUTE_ZONE --project $CLOUDSDK_CORE_PROJECT
 
   - &GCP-docker-auth
     name: GCP Authenticate
@@ -236,7 +243,7 @@ jobs:
     steps:
       - run: *post-hook
 
-  deploy:
+  deploy-journey-planner:
     executor: entur-cci-toolbox
     steps:
       - checkout
@@ -244,10 +251,27 @@ jobs:
           at: .
       - run: *get-app-version-from-file
       - run: *set-versions-to-app-version
-      - run: *GCP-auth
+      - run: *GCP-auth-journey-planner
       - run:
           name: Deploy Helm chart to Kubernetes
           command: helm upgrade --install otp ./helm/$CIRCLE_PROJECT_REPONAME --values=./helm/$CIRCLE_PROJECT_REPONAME/$NAMESPACE-c2-values.yaml --namespace=$NAMESPACE
+      - run:
+          name: Deployed helm chart
+          command: cat ./helm/$CIRCLE_PROJECT_REPONAME/Chart.yaml
+      - slack-status
+
+  deploy-graph-builder:
+    executor: entur-cci-toolbox
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - run: *get-app-version-from-file
+      - run: *set-versions-to-app-version
+      - run: *GCP-auth-graph-builder
+      - run:
+          name: Deploy Helm chart to Kubernetes
+          command: helm upgrade --install otp ./helm/$CIRCLE_PROJECT_REPONAME --values=./helm/$CIRCLE_PROJECT_REPONAME/$NAMESPACE-c2-values.yaml --set cronjobRedeployGraphBuilder.enabled=true --set journeyPlanner.enabled=false --set service.enabled=false --set horizontalPodAutoscaler.enabled=false --set ingress.c2.enabled=false --set cronjobRedeployOtp.enabled=false --namespace=$NAMESPACE
       - run:
           name: Deployed helm chart
           command: cat ./helm/$CIRCLE_PROJECT_REPONAME/Chart.yaml
@@ -307,8 +331,13 @@ workflows:
                 - rutebanken_develop
           requires:
             - publish-docker
-      - deploy:
-          name: deploy-dev-release
+      - deploy-journey-planner:
+          name: deploy-journey-planner-dev-release
+          context: dev
+          requires:
+            - publish-docker
+      - deploy-graph-builder:
+          name: deploy-graph-builder-dev-release
           context: dev
           requires:
             - publish-docker
@@ -319,18 +348,25 @@ workflows:
               only:
                 - rutebanken_develop
           requires:
-            - deploy-dev-release
+            - deploy-journey-planner-dev-release
+            - deploy-graph-builder-dev-release
       - slack-approval:
           name: staging-deploy-message-release
           context: stage
           requires:
-            - deploy-dev-release
+            - deploy-journey-planner-dev-release
+            - deploy-graph-builder-dev-release
       - approve-staging-release:
           type: approval
           requires:
             - staging-deploy-message-release
-      - deploy:
-          name: deploy-staging-release
+      - deploy-journey-planner:
+          name: deploy-journey-planner-staging-release
+          context: stage
+          requires:
+            - approve-staging-release
+      - deploy-graph-builder:
+          name: deploy-graph-builder-staging-release
           context: stage
           requires:
             - approve-staging-release
@@ -338,13 +374,19 @@ workflows:
           name: production-deploy-message-release
           context: production
           requires:
-            - deploy-staging-release
+            - deploy-journey-planner-staging-release
+            - deploy-graph-builder-staging-release
       - approve-production-release:
                 type: approval
                 requires:
                   - production-deploy-message-release
-      - deploy:
-          name: deploy-production-release
+      - deploy-journey-planner:
+          name: deploy-journey-planner-production-release
+          context: production
+          requires:
+              - approve-production-release
+      - deploy-graph-builder:
+          name: deploy-graph-builder-production-release
           context: production
           requires:
               - approve-production-release

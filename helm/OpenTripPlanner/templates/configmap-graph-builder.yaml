@@ -1,3 +1,4 @@
+{{- if .Values.cronjobRedeployGraphBuilder.enabled}}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -54,7 +55,8 @@ data:
           "netex": ["gs://{{ .Values.mardukBucket }}/outbound/netex/rb_norway-aggregated-netex.zip"],
           "baseGraph": "gs://{{ .Values.mardukBucket }}/${OTP_GCS_BASE_GRAPH_DIR}/baseGraph.obj",
           "graph": "gs://{{ .Values.mardukBucket }}/${OTP_GCS_WORK_DIR}/Graph.obj",
-          "buildReportDir": "gs://{{ .Values.mardukBucket }}/${OTP_GCS_WORK_DIR}/report"
+          "buildReportDir": "gs://{{ .Values.mardukBucket }}/${OTP_GCS_WORK_DIR}/report",
+          "otpStatusDir": "gs://{{ .Values.mardukBucket }}/${OTP_GCS_WORK_DIR}"
         },
         "linkMultiModalStopsToParentStations": true,
         "parkAndRideFromTransitData": true,
@@ -62,3 +64,4 @@ data:
         "analyzeTransfers": true,
         "distanceBetweenElevationSamples": 25
       }
+{{end}}
