@@ -50,13 +50,13 @@ data:
         },
         "storage" : {
           "gsCredentials": "/etc/marduk/marduk-blobstore-credentials.json",
-          "osm" : ["gs://{{ .Values.mardukBucket }}/osm/norway-latest.osm.pbf"],
-          "dem" : ["gs://{{ .Values.mardukBucket }}/kartverket/heightData/norge_dem_50m_33.tif"],
-          "netex": ["gs://{{ .Values.mardukBucket }}/outbound/netex/rb_norway-aggregated-netex.zip"],
-          "baseGraph": "gs://{{ .Values.mardukBucket }}/${OTP_GCS_BASE_GRAPH_DIR}/baseGraph.obj",
-          "graph": "gs://{{ .Values.mardukBucket }}/${OTP_GCS_WORK_DIR}/Graph.obj",
-          "buildReportDir": "gs://{{ .Values.mardukBucket }}/${OTP_GCS_WORK_DIR}/report",
-          "otpStatusDir": "gs://{{ .Values.mardukBucket }}/${OTP_GCS_WORK_DIR}"
+          "osm" : ["gs://{{ .Values.cronjobRedeployGraphBuilder.mardukBucket }}/osm/norway-latest.osm.pbf"],
+          "dem" : ["gs://{{ .Values.cronjobRedeployGraphBuilder.mardukBucket }}/kartverket/heightData/norge_dem_50m_33.tif"],
+          "netex": ["gs://{{ .Values.cronjobRedeployGraphBuilder.mardukBucket }}/outbound/netex/rb_norway-aggregated-netex.zip"],
+          "baseGraph": "gs://{{ .Values.cronjobRedeployGraphBuilder.mardukBucket }}/${OTP_GCS_BASE_GRAPH_DIR}/baseGraph.obj",
+          "graph": "gs://{{ .Values.cronjobRedeployGraphBuilder.mardukBucket }}/${OTP_GCS_WORK_DIR}/Graph.obj",
+          "buildReportDir": "gs://{{ .Values.cronjobRedeployGraphBuilder.mardukBucket }}/${OTP_GCS_WORK_DIR}/report",
+          "otpStatusDir": "gs://{{ .Values.cronjobRedeployGraphBuilder.mardukBucket }}/${OTP_GCS_WORK_DIR}"
         },
         "linkMultiModalStopsToParentStations": true,
         "parkAndRideFromTransitData": true,
