@@ -220,7 +220,7 @@ public class TripPattern implements Cloneable, Serializable {
         int i = 0;
         for (Stop stop : stopPattern.stops) {
             // Assume that stops can be boarded with wheelchairs by default (defer to per-trip data)
-            if (stop != null && stop.getWheelchairBoarding() != 2) {
+            if (stop.getWheelchairBoarding() != 2) {
                 perStopFlags[i] |= FLAG_WHEELCHAIR_ACCESSIBLE;
             }
             perStopFlags[i] |= stopPattern.pickups[i] << SHIFT_PICKUP;

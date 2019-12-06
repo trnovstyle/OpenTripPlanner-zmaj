@@ -22,13 +22,7 @@ import org.opentripplanner.updater.bike_rental.BikeRentalUpdater;
 import org.opentripplanner.updater.car_park.CarParkUpdater;
 import org.opentripplanner.updater.example.ExampleGraphUpdater;
 import org.opentripplanner.updater.example.ExamplePollingGraphUpdater;
-import org.opentripplanner.updater.siri.SiriActiveMQUpdater;
-import org.opentripplanner.updater.siri.SiriETUpdater;
-import org.opentripplanner.updater.siri.SiriEstimatedTimetableGooglePubsubUpdater;
-import org.opentripplanner.updater.siri.SiriLiteETUpdater;
-import org.opentripplanner.updater.siri.SiriLiteVMUpdater;
-import org.opentripplanner.updater.siri.SiriVMUpdater;
-import org.opentripplanner.updater.siri.WebsocketEstimatedTimetableUpdater;
+import org.opentripplanner.updater.siri.*;
 import org.opentripplanner.updater.stoptime.PollingStoptimeUpdater;
 import org.opentripplanner.updater.stoptime.WebsocketGtfsRealtimeUpdater;
 import org.opentripplanner.updater.street_notes.WinkkiPollingGraphUpdater;
@@ -131,12 +125,6 @@ public abstract class GraphUpdaterConfigurator {
                 }
                 else if (type.equals("siri-et-updater")) {
                     updater = new SiriETUpdater();
-                }
-                else if (type.equals("websocket-siri-et-updater")) {
-                    updater = new WebsocketEstimatedTimetableUpdater();
-                }
-                else if (type.equals("google-pubsub-siri-et-updater")) {
-                    updater = new SiriEstimatedTimetableGooglePubsubUpdater();
                 }
                 else if (type.equals("siri-activemq-updater-et")) {
                     updater = new SiriActiveMQUpdater();
