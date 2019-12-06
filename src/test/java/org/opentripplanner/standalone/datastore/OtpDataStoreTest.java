@@ -79,12 +79,7 @@ public class OtpDataStoreTest {
         assertEquals("[]", store.listExistingSourcesFor(GRAPH).toString());
         assertEquals("[]", store.listExistingSourcesFor(REPORT).toString());
         assertEquals("[]", store.listExistingSourcesFor(UNKNOWN).toString());
-
-        // otp-status defaults to baseDir
-        assertEquals(
-                "[OTP_STATUS " + tempDir.getPath() + "]",
-                store.listExistingSourcesFor(OTP_STATUS).toString()
-        );
+        assertEquals("[]", store.listExistingSourcesFor(OTP_STATUS).toString());
     }
 
     @Test
@@ -175,7 +170,6 @@ public class OtpDataStoreTest {
                 + "GRAPH data:/Graph.obj, "
                 + "GTFS data:/gtfs.zip, "
                 + "OSM data:/osm.pbf, "
-                + "OTP_STATUS data:/status, "
                 + "REPORT data:/report, "
                 + "UNKNOWN base:/unknown.txt",
                 result

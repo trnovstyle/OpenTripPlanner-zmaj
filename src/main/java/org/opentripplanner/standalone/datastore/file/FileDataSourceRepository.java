@@ -17,7 +17,6 @@ import java.util.stream.Collectors;
 
 import static org.opentripplanner.graph_builder.GraphBuilder.BASE_GRAPH_FILENAME;
 import static org.opentripplanner.graph_builder.GraphBuilder.GRAPH_FILENAME;
-import static org.opentripplanner.standalone.config.StorageParameters.OTP_STATUS_FILENAME;
 import static org.opentripplanner.standalone.datastore.FileType.CONFIG;
 import static org.opentripplanner.standalone.datastore.FileType.DEM;
 import static org.opentripplanner.standalone.datastore.FileType.GRAPH;
@@ -36,6 +35,7 @@ import static org.opentripplanner.standalone.datastore.file.ConfigLoader.isConfi
  * This data store uses the local file system to access in-/out- data files.
  */
 public class FileDataSourceRepository implements LocalDataSourceRepository {
+    private static final String OTP_STATUS_FILENAME = "otp-status";
     private static final Logger LOG = LoggerFactory.getLogger(FileDataSourceRepository.class);
 
     private final File baseDir;

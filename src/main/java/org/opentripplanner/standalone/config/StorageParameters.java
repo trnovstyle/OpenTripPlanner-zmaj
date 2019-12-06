@@ -42,7 +42,6 @@ import java.util.List;
  * base directory - it they exist.
  */
 public class StorageParameters {
-    public static final String OTP_STATUS_FILENAME = "otp-status";
 
     /**
      * Local file system path to Google Cloud Platform service accounts credentials file. The
@@ -134,7 +133,7 @@ public class StorageParameters {
      * <p>
      * Example: {@code "otpStatus" : "otp-status" }
      * <p>
-     * This parameter is optional. The default value is "otp-status"
+     * This parameter is optional. If not set no synchronisation file is created.
      */
     public final String otpStatusFilename;
 
@@ -159,7 +158,7 @@ public class StorageParameters {
         this.gtfs.addAll(uris("gtfs", node));
         this.netex.addAll(uris("netex", node));
         this.otpStatusDir = uriFromJson("otpStatusDir", node);
-        this.otpStatusFilename = node.path("otpStatusFilename").asText(OTP_STATUS_FILENAME);
+        this.otpStatusFilename = node.path("otpStatusFilename").asText(null);
         this.buildReportDir = uriFromJson("buildReportDir", node);
     }
 

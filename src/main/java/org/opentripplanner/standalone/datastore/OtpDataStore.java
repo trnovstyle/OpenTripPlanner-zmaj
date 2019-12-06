@@ -90,14 +90,17 @@ public class OtpDataStore {
         addAll(findMultipleSources(Collections.emptyList(), CONFIG));
         addAll(findMultipleSources(parameters.osm, OSM));
         addAll(findMultipleSources(parameters.dem,  DEM));
-        addAll(findMultipleSources(parameters.gtfs, GTFS));
-        addAll(findMultipleSources(parameters.netex, NETEX));
+        addAll(findMultipleCompositeSources(parameters.gtfs, GTFS));
+        addAll(findMultipleCompositeSources(parameters.netex, NETEX));
 
         baseGraph = findSingleSource(parameters.baseGraph, BASE_GRAPH_FILENAME, GRAPH);
         graph = findSingleSource(parameters.graph, GRAPH_FILENAME, GRAPH);
         otpStatusDir = findCompositeSource(parameters.otpStatusDir, CURRENT_DIRECTORY, OTP_STATUS);
         buildReportDir = findCompositeSource(parameters.buildReportDir, BUILD_REPORT_DIR, REPORT);
-        addAll(Arrays.asList(baseGraph, graph, otpStatusDir, buildReportDir));
+
+        // The 'otp-status-file' is skipped, since we do not know the file, just the directory at
+        // this point.
+        addAll(Arrays.asList(baseGraph, graph, buildReportDir));
 
         // Also read in unknown sources in case the data input source is miss-spelled,
         // We look for files on the local-file-system, other repositories ignore this call.
@@ -170,7 +173,7 @@ public class OtpDataStore {
         }
     }
 
-    private void addAll(List<DataSource> list) {
+    private void addAll(List<? extends DataSource> list) {
         list.forEach(this::add);
     }
 
@@ -186,38 +189,52 @@ public class OtpDataStore {
         return localRepos.get(0);
     }
 
+    private DataSource findSingleSource(@Nullable URI uri, @NotNull String filename, @NotNull FileType type) {
+        if(uri != null) {
+            return findSourceUsingAllRepos(it -> it.findSource(uri, type));
+        }
+        return localRepository.findSource(filename, type);
+    }
+
     private CompositeDataSource findCompositeSource(@Nullable URI uri, @NotNull String filename, @NotNull FileType type) {
         if(uri != null) {
-            return findSourceByUri(it -> it.findCompositeSource(uri, type));
+            return findSourceUsingAllRepos(it -> it.findCompositeSource(uri, type));
         }
         else {
             return localRepository.findCompositeSource(filename, type);
         }
     }
 
-    private DataSource findSingleSource(@Nullable URI uri, @NotNull String filename, @NotNull FileType type) {
-        if(uri != null) {
-            return findSourceByUri(uri, type);
-        }
-        return localRepository.findSource(filename, type);
-    }
-
     private List<DataSource> findMultipleSources(@NotNull Collection<URI> uris, @NotNull FileType type) {
         if(uris.isEmpty()) {
             return localRepository.listExistingSources(type);
         }
-        else {
-            return uris.stream()
-                    .map(uri -> findSourceByUri(uri, type))
+        List<DataSource> result = new ArrayList<>();
+        for (URI uri : uris) {
+            DataSource res = findSourceUsingAllRepos(it -> it.findSource(uri, type));
+            result.add(res);
+        }
+        return result;
+    }
+
+    private List<CompositeDataSource> findMultipleCompositeSources(
+            @NotNull Collection<URI> uris, @NotNull FileType type
+    ) {
+        if(uris.isEmpty()) {
+            return localRepository.listExistingSources(type)
+                    .stream()
+                    .map(it -> (CompositeDataSource)it)
                     .collect(Collectors.toList());
         }
+        List<CompositeDataSource> result = new ArrayList<>();
+        for (URI uri : uris) {
+            CompositeDataSource res = findSourceUsingAllRepos(it -> it.findCompositeSource(uri, type));
+            result.add(res);
+        }
+        return result;
     }
-
-    private DataSource findSourceByUri(@NotNull URI uri, @NotNull FileType type) {
-        return findSourceByUri(it -> it.findSource(uri, type));
-    }
-
-    private <T> T findSourceByUri(Function<DataSourceRepository, T> repoFindSource) {
+   
+    private <T> T findSourceUsingAllRepos(Function<DataSourceRepository, T> repoFindSource) {
         for (DataSourceRepository it : allRepositories) {
             T res = repoFindSource.apply(it);
             if (res != null) {

@@ -55,8 +55,7 @@ data:
           "netex": ["gs://{{ .Values.cronjobRedeployGraphBuilder.mardukBucket }}/outbound/netex/rb_norway-aggregated-netex.zip"],
           "baseGraph": "gs://{{ .Values.cronjobRedeployGraphBuilder.mardukBucket }}/${OTP_GCS_BASE_GRAPH_DIR}/baseGraph.obj",
           "graph": "gs://{{ .Values.cronjobRedeployGraphBuilder.mardukBucket }}/${OTP_GCS_WORK_DIR}/Graph.obj",
-          "buildReportDir": "gs://{{ .Values.cronjobRedeployGraphBuilder.mardukBucket }}/${OTP_GCS_WORK_DIR}/report",
-          "otpStatusDir": "gs://{{ .Values.cronjobRedeployGraphBuilder.mardukBucket }}/${OTP_GCS_WORK_DIR}"
+          "buildReportDir": "gs://{{ .Values.cronjobRedeployGraphBuilder.mardukBucket }}/${OTP_GCS_WORK_DIR}/report"
         },
         "linkMultiModalStopsToParentStations": true,
         "parkAndRideFromTransitData": true,

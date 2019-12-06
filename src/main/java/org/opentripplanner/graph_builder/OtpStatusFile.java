@@ -37,6 +37,10 @@ public class OtpStatusFile extends Thread {
     }
 
     public static void start(CompositeDataSource statusFileDir, String filename) {
+        if(filename == null) {
+            LOG.warn("The otp-status-in-progress file is skipped, the filename is not configured.");
+            return;
+        }
         INSTANCE.doStart(statusFileDir, filename);
     }
 
