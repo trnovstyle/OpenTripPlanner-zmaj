@@ -379,21 +379,30 @@ workflows:
           requires:
             - approve-staging-gb-release
       - slack-approval:
-          name: production-deploy-message-release
+          name: production-deploy-journey-planner-message-release
           context: production
           requires:
             - deploy-journey-planner-staging-release
-      - approve-production-release:
+      - slack-approval:
+          name: production-deploy-graph-builder-message-release
+          context: production
+          requires:
+            - deploy-graph-builder-staging-release
+      - approve-production-jp-release:
           type: approval
           requires:
-            - production-deploy-message-release
+            - production-deploy-journey-planner-message-release
+      - approve-production-gb-release:
+          type: approval
+          requires:
+            - production-deploy-graph-builder-message-release
       - deploy-journey-planner:
           name: deploy-journey-planner-production-release
           context: production
           requires:
-            - approve-production-release
+            - approve-production-jp-release
       - deploy-graph-builder:
           name: deploy-graph-builder-production-release
           context: production
           requires:
-            - approve-production-release
+            - approve-production-gb-release
