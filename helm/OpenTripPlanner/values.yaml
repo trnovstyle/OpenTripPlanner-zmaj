@@ -87,10 +87,10 @@ cronjobRedeployGraphBuilder:
   app: graph-builder
   resources:
     cpuLimit: 3000m
-    memLimit: 20000Mi
+    memLimit: 22000Mi
     cpuRequest: 1000m
-    memRequest: 18000Mi
-    xmx: 16g
+    memRequest: 20000Mi
+    xmx: 18g
 
 configuration:
   siriVMUpdater: https://api.dev.entur.io/realtime/v1/services

@@ -30,7 +30,7 @@ spec:
             args:
               - "-server"
               - "-Xms512m"
-              - "-Xmx16g"
+              - "-Xmx{{ .Values.cronjobRedeployGraphBuilder.resources.xmx }}"
               - "-XX:MaxGCPauseMillis=5000"
               - "-javaagent:/opt/agent-bond/agent-bond.jar=jolokia{{`{{host=0.0.0.0}}`}},jmx_exporter{{`{{9779:/opt/agent-bond/jmx_exporter_config.yml}}`}}"
               - "-Dfile.encoding=UTF-8"
