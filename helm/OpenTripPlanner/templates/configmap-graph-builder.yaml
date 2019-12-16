@@ -50,7 +50,7 @@ data:
         },
         "storage" : {
           "gsCredentials": "/etc/marduk/marduk-blobstore-credentials.json",
-          "osm" : ["gs://{{ .Values.cronjobRedeployGraphBuilder.mardukBucket }}/osm/norway-latest.osm.pbf"],
+          "osm" : ["gs://{{ .Values.cronjobRedeployGraphBuilder.mardukBucket }}/osm/norway-latest.osm.pbf", "gs://{{ .Values.cronjobRedeployGraphBuilder.mardukBucket }}/osm/static/osm_static_sweden_extract.pbf"],
           "dem" : ["gs://{{ .Values.cronjobRedeployGraphBuilder.mardukBucket }}/kartverket/heightData/norge_dem_50m_33.tif"],
           "netex": ["gs://{{ .Values.cronjobRedeployGraphBuilder.mardukBucket }}/outbound/netex/rb_norway-aggregated-netex.zip"],
           "baseGraph": "gs://{{ .Values.cronjobRedeployGraphBuilder.mardukBucket }}/${OTP_GCS_BASE_GRAPH_DIR}/baseGraph.obj",
