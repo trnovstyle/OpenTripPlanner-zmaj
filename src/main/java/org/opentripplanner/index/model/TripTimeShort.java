@@ -51,20 +51,35 @@ public class TripTimeShort {
         stopTimeId         = tt.getStopTimeIdByIndex(i);
         stopIndex          = i;
         stopCount          = tt.getNumStops();
-        scheduledArrival   = tt.getScheduledArrivalTime(i);
-        realtimeArrival    = tt.getArrivalTime(i);
-        arrivalDelay       = tt.getArrivalDelay(i);
-        scheduledDeparture = tt.getScheduledDepartureTime(i);
-        realtimeDeparture  = tt.getDepartureTime(i);
-        departureDelay     = tt.getDepartureDelay(i);
-        isRecordedStop     = tt.isRecordedStop(i);
+
         isCancelledStop    = tt.isCancelledStop(i);
+        realtime           = !tt.isScheduled();
+
+        scheduledArrival   = tt.getScheduledArrivalTime(i);
+        scheduledDeparture = tt.getScheduledDepartureTime(i);
+
+        if (realtime && isCancelledStop) {
+            /*
+             Trips/stops cancelled in realtime should not present "23:59:59, yesterday" as arrival-/departureTime
+             Setting realtime arrival and departure to planned times
+             */
+            realtimeArrival = scheduledArrival;
+            realtimeDeparture = scheduledDeparture;
+            arrivalDelay = 0;
+            departureDelay = 0;
+        } else {
+            realtimeArrival    = tt.getArrivalTime(i);
+            arrivalDelay       = tt.getArrivalDelay(i);
+            realtimeDeparture  = tt.getDepartureTime(i);
+            departureDelay     = tt.getDepartureDelay(i);
+
+        }
+        isRecordedStop     = tt.isRecordedStop(i);
 
         pickupType         = tt.getPickupType(i);
         dropoffType        = tt.getDropoffType(i);
 
         timepoint          = tt.isTimepoint(i);
-        realtime           = !tt.isScheduled();
         tripId             = tt.trip.getId();
         realtimeState      = tt.getRealTimeState();
         blockId            = tt.trip.getBlockId();
