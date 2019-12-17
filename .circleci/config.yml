@@ -83,13 +83,6 @@ aliases:
       docker build -t $IMAGE .
       docker tag $IMAGE "${IMAGE}":"${APP_VERSION}"
       docker push $IMAGE
-  - &post-hook
-    name: Notify about build and docker image pushed
-    command: |
-      echo 'export CIRCLE_PROJECT_REPONAME="otp"' >> $BASH_ENV
-      echo 'export CIRCLE_SHA1="$CIRCLE_SHA1"' >> $BASH_ENV
-      echo 'export BUILD_STATUS_API_KEY="$BUILD_STATUS_API_KEY"' >> $BASH_ENV
-      /tools/build_notify.sh
   - &git-push-next-version-release
     name: Push to repository
     command: |
@@ -238,10 +231,6 @@ jobs:
       - run: *set-versions-to-app-version
       - run: *git-push-next-version-release
       - slack-status
-  notify-build:
-    executor: cci-toolbox-java11
-    steps:
-      - run: *post-hook
 
   deploy-journey-planner:
     executor: entur-cci-toolbox
@@ -322,15 +311,6 @@ workflows:
             - build-release
           post-steps:
             - slack-status
-      - notify-build:
-          name: notify-build-babylon
-          context: org-carbon
-          filters:
-            branches:
-              only:
-                - rutebanken_develop
-          requires:
-            - publish-docker
       - deploy-journey-planner:
           name: deploy-journey-planner-dev-release
           context: dev
