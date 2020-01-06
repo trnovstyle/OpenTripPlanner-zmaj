@@ -1542,11 +1542,6 @@ public class TransmodelIndexGraphQLSchema {
                                 .defaultValue(false)
                                 .build())
                         .argument(GraphQLArgument.newArgument()
-                                .name("includeCancelledTrips")
-                                .type(Scalars.GraphQLBoolean)
-                                .defaultValue(false)
-                                .build())
-                        .argument(GraphQLArgument.newArgument()
                                 .name("whiteListed")
                                 .description("Whitelisted")
                                 .description("Parameters for indicating the only authorities and/or lines or quays to list estimatedCalls for")
@@ -1559,7 +1554,6 @@ public class TransmodelIndexGraphQLSchema {
                                 .build())
                         .dataFetcher(environment -> {
                             boolean omitNonBoarding = environment.getArgument("omitNonBoarding");
-                            boolean includeCancelledTrips = environment.getArgument("includeCancelledTrips");
                             int numberOfDepartures = environment.getArgument("numberOfDepartures");
                             Integer departuresPerLineAndDestinationDisplay = environment.getArgument("numberOfDeparturesPerLineAndDestinationDisplay");
                             int timeRage = environment.getArgument("timeRange");
@@ -1606,7 +1600,6 @@ public class TransmodelIndexGraphQLSchema {
                                                     startTimeSeconds,
                                                     timeRage,
                                                     omitNonBoarding,
-                                                    includeCancelledTrips,
                                                     numberOfDepartures,
                                                     departuresPerLineAndDestinationDisplay,
                                                     authorityIds,
@@ -1723,12 +1716,6 @@ public class TransmodelIndexGraphQLSchema {
                                 .defaultValue(false)
                                 .build())
                         .argument(GraphQLArgument.newArgument()
-                                .name("includeCancelledTrips")
-                                .description("Indicates that realtime-cancelled trips should also be included.")
-                                .type(Scalars.GraphQLBoolean)
-                                .defaultValue(false)
-                                .build())
-                        .argument(GraphQLArgument.newArgument()
                                 .name("whiteListed")
                                 .description("Whitelisted")
                                 .description("Parameters for indicating the only authorities and/or lines or quays to list estimatedCalls for")
@@ -1741,7 +1728,6 @@ public class TransmodelIndexGraphQLSchema {
                                 .build())
                         .dataFetcher(environment -> {
                             boolean omitNonBoarding = environment.getArgument("omitNonBoarding");
-                            boolean includeCancelledTrips = environment.getArgument("includeCancelledTrips");
                             int numberOfDepartures = environment.getArgument("numberOfDepartures");
                             Integer departuresPerLineAndDestinationDisplay = environment.getArgument("numberOfDeparturesPerLineAndDestinationDisplay");
                             int timeRange = environment.getArgument("timeRange");
@@ -1779,7 +1765,6 @@ public class TransmodelIndexGraphQLSchema {
                                     startTimeSeconds,
                                     timeRange,
                                     omitNonBoarding,
-                                    includeCancelledTrips,
                                     numberOfDepartures,
                                     departuresPerLineAndDestinationDisplay,
                                     authorityIds,
@@ -4612,7 +4597,6 @@ public class TransmodelIndexGraphQLSchema {
             Long startTimeSeconds,
             int timeRage,
             boolean omitNonBoarding,
-            boolean includeCancelledTrips,
             int numberOfDepartures,
             Integer departuresPerLineAndDestinationDisplay,
             Set<String> authorityIdsWhiteListed,
@@ -4627,7 +4611,7 @@ public class TransmodelIndexGraphQLSchema {
         int departuresPerTripPattern = limitOnDestinationDisplay ? departuresPerLineAndDestinationDisplay : numberOfDepartures;
 
         List<StopTimesInPattern> stopTimesInPatterns = index.stopTimesForStop(
-                stop, startTimeSeconds, timeRage, departuresPerTripPattern, omitNonBoarding, includeCancelledTrips
+                stop, startTimeSeconds, timeRage, departuresPerTripPattern, omitNonBoarding
         );
 
         Stream<TripTimeShort> tripTimesStream = stopTimesInPatterns.stream().flatMap(p -> p.times.stream());
