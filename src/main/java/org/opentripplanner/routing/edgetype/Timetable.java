@@ -677,11 +677,6 @@ public class Timetable implements Serializable {
         final TripTimes existingTripTimes = getTripTimes(tripIndex);
         TripTimes oldTimes = new TripTimes(existingTripTimes);
 
-        if (journey.isCancellation() != null && journey.isCancellation()) {
-            oldTimes.cancel();
-            return oldTimes;
-        }
-
         EstimatedVehicleJourney.EstimatedCalls journeyEstimatedCalls = journey.getEstimatedCalls();
         EstimatedVehicleJourney.RecordedCalls journeyRecordedCalls = journey.getRecordedCalls();
 
