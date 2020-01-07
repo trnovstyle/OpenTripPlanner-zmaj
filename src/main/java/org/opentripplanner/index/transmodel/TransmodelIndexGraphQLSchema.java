@@ -1897,7 +1897,7 @@ public class TransmodelIndexGraphQLSchema {
                 .field(GraphQLFieldDefinition.newFieldDefinition()
                                .name("expectedArrivalTime")
                                .type(dateTimeScalar)
-                               .description("Expected time of arrival at quay. Updated with real time information if available. Will be null if an actualArrivalTime exists")
+                               .description("Expected time of arrival at quay. Updated with real time information if available.")
                                .dataFetcher(
                                        environment -> {
                                            TripTimeShort tripTimeShort = environment.getSource();
@@ -1930,7 +1930,7 @@ public class TransmodelIndexGraphQLSchema {
                 .field(GraphQLFieldDefinition.newFieldDefinition()
                                .name("expectedDepartureTime")
                                .type(dateTimeScalar)
-                               .description("Expected time of departure from quay. Updated with real time information if available. Will be null if an actualDepartureTime exists")
+                               .description("Expected time of departure from quay. Updated with real time information if available.")
                                .dataFetcher(
                                        environment -> {
                                            TripTimeShort tripTimeShort = environment.getSource();

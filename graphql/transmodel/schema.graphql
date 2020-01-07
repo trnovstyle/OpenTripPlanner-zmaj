@@ -204,7 +204,7 @@ type EstimatedCall {
 
   """
   Expected time of arrival at quay. Updated with real time information if
-  available. Will be null if an actualArrivalTime exists
+  available.
   """
   expectedArrivalTime: DateTime
 
@@ -220,7 +220,7 @@ type EstimatedCall {
 
   """
   Expected time of departure from quay. Updated with real time information if
-  available. Will be null if an actualDepartureTime exists
+  available.
   """
   expectedDepartureTime: DateTime
 
