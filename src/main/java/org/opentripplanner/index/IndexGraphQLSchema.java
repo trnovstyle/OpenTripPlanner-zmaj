@@ -1,25 +1,52 @@
 package org.opentripplanner.index;
 
 import com.google.common.collect.ImmutableMap;
-import org.locationtech.jts.geom.Coordinate;
-import org.locationtech.jts.geom.Envelope;
-import org.locationtech.jts.geom.LineString;
 import graphql.Scalars;
 import graphql.TypeResolutionEnvironment;
 import graphql.relay.DefaultConnection;
 import graphql.relay.DefaultPageInfo;
 import graphql.relay.Relay;
 import graphql.relay.SimpleListConnection;
-import graphql.schema.*;
+import graphql.schema.DataFetcher;
+import graphql.schema.DataFetchingEnvironment;
+import graphql.schema.GraphQLArgument;
+import graphql.schema.GraphQLEnumType;
+import graphql.schema.GraphQLFieldDefinition;
+import graphql.schema.GraphQLInputObjectField;
+import graphql.schema.GraphQLInputObjectType;
+import graphql.schema.GraphQLInterfaceType;
+import graphql.schema.GraphQLList;
+import graphql.schema.GraphQLNonNull;
+import graphql.schema.GraphQLObjectType;
+import graphql.schema.GraphQLOutputType;
+import graphql.schema.GraphQLSchema;
+import graphql.schema.GraphQLType;
+import graphql.schema.GraphQLTypeReference;
+import graphql.schema.PropertyDataFetcher;
+import graphql.schema.TypeResolver;
 import org.apache.commons.collections.CollectionUtils;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.Envelope;
+import org.locationtech.jts.geom.LineString;
 import org.opentripplanner.api.common.Message;
-import org.opentripplanner.api.model.*;
+import org.opentripplanner.api.model.Itinerary;
+import org.opentripplanner.api.model.Leg;
+import org.opentripplanner.api.model.Place;
+import org.opentripplanner.api.model.TripPlan;
+import org.opentripplanner.api.model.VertexType;
 import org.opentripplanner.api.parameter.QualifiedModeSet;
 import org.opentripplanner.gtfs.GtfsLibrary;
 import org.opentripplanner.index.model.StopTimesInPattern;
 import org.opentripplanner.index.model.TripTimeShort;
 import org.opentripplanner.index.util.TripTimeShortHelper;
-import org.opentripplanner.model.*;
+import org.opentripplanner.model.Agency;
+import org.opentripplanner.model.AgencyAndId;
+import org.opentripplanner.model.Notice;
+import org.opentripplanner.model.Operator;
+import org.opentripplanner.model.Route;
+import org.opentripplanner.model.Stop;
+import org.opentripplanner.model.StopPattern;
+import org.opentripplanner.model.Trip;
 import org.opentripplanner.model.calendar.ServiceDate;
 import org.opentripplanner.routing.alertpatch.Alert;
 import org.opentripplanner.routing.alertpatch.AlertPatch;
@@ -28,7 +55,12 @@ import org.opentripplanner.routing.bike_rental.BikeRentalStation;
 import org.opentripplanner.routing.bike_rental.BikeRentalStationService;
 import org.opentripplanner.routing.car_park.CarPark;
 import org.opentripplanner.routing.car_park.CarParkService;
-import org.opentripplanner.routing.core.*;
+import org.opentripplanner.routing.core.Fare;
+import org.opentripplanner.routing.core.FareComponent;
+import org.opentripplanner.routing.core.Money;
+import org.opentripplanner.routing.core.OptimizeType;
+import org.opentripplanner.routing.core.ServiceDay;
+import org.opentripplanner.routing.core.TraverseMode;
 import org.opentripplanner.routing.edgetype.SimpleTransfer;
 import org.opentripplanner.routing.edgetype.Timetable;
 import org.opentripplanner.routing.edgetype.TimetableSnapshot;
@@ -46,7 +78,18 @@ import org.opentripplanner.util.TranslatedString;
 import org.opentripplanner.util.model.EncodedPolylineBean;
 
 import java.text.ParseException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.BitSet;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -1067,7 +1110,8 @@ public class IndexGraphQLSchema {
                         environment.getArgument("startTime"),
                         environment.getArgument("timeRange"),
                         environment.getArgument("numberOfDepartures"),
-                        environment.getArgument("omitNonPickups")))
+                        environment.getArgument("omitNonPickups"),
+                            false))
                 .build())
             .field(GraphQLFieldDefinition.newFieldDefinition()
                 .name("gtfsId")
