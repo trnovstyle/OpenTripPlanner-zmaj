@@ -1055,14 +1055,17 @@ public class Timetable implements Serializable {
             return null;
         }
 
+        EstimatedVehicleJourney.RecordedCalls recordedCallsList = journey.getRecordedCalls();
+
         List<EstimatedCall> estimatedCalls = journeyCalls.getEstimatedCalls();
+        List<RecordedCall> recordedCalls = recordedCallsList != null ? recordedCallsList.getRecordedCalls():new ArrayList<>();
 
         List<Stop> stops = createModifiedStops(journey, graphIndex);
 
         List<StopTime> modifiedStops = new ArrayList<>();
 
         ZonedDateTime departureDate = null;
-        int numberOfRecordedCalls = (journey.getRecordedCalls() != null && journey.getRecordedCalls().getRecordedCalls() != null) ? journey.getRecordedCalls().getRecordedCalls().size() : 0;
+
         Set<Object> alreadyVisited = new HashSet<>();
         // modify updated stop-times
         for (int i = 0; i < stops.size(); i++) {
@@ -1082,7 +1085,41 @@ public class Timetable implements Serializable {
             //stopTime.setId(oldTimes.getStopTimeIdByIndex(i));
 
             boolean foundMatch = false;
-            if (i >= numberOfRecordedCalls) {
+            if (i < recordedCalls.size()) {
+                for (RecordedCall recordedCall : recordedCalls) {
+                    if (alreadyVisited.contains(recordedCall)) {
+                        continue;
+                    }
+                    if (departureDate == null) {
+                        departureDate = (recordedCall.getAimedDepartureTime() != null ? recordedCall.getAimedDepartureTime() : recordedCall.getAimedArrivalTime());
+                    }
+
+                    //Current stop is being updated
+                    boolean stopsMatchById = stop.getId().getId().equals(recordedCall.getStopPointRef().getValue());
+
+                    if (!stopsMatchById && stop.getParentStation() != null) {
+                        Stop alternativeStop = graphIndex.stopForId.get(new AgencyAndId(stop.getId().getAgencyId(), recordedCall.getStopPointRef().getValue()));
+                        if (alternativeStop != null && stop.getParentStation().equals(alternativeStop.getParentStation())) {
+                            stopsMatchById = true;
+                            stopTime.setStop(alternativeStop);
+                        }
+
+                    }
+
+                    if (stopsMatchById) {
+                        foundMatch = true;
+
+                        if (recordedCall.isCancellation() != null && recordedCall.isCancellation()) {
+                            stopTime.setDropOffType(PICKDROP_NONE);
+                            stopTime.setPickupType(PICKDROP_NONE);
+                        }
+
+                        modifiedStops.add(stopTime);
+                        alreadyVisited.add(recordedCall);
+                        break;
+                    }
+                }
+            } else  {
                 for (EstimatedCall estimatedCall : estimatedCalls) {
                     if (alreadyVisited.contains(estimatedCall)) {
                         continue;
