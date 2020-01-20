@@ -814,8 +814,13 @@ public class GraphIndex {
                             stopDepartureTime = triptimes.getScheduledDepartureTime(stopIndex);
                         }
 
-                        boolean includeByCancellation = !triptimes.isCancelledStop(stopIndex) |                   // Stop is NOT cancelled OR
-                                                (includeCancelledTrips && triptimes.isCancelledStop(stopIndex));  // Stop is cancelled, but cancelled stops should be included in this request
+                        // true if a stop is planned, and not cancelled
+                        boolean isScheduledStop = !triptimes.isCancelledStop(stopIndex) & triptimes.getPickupType(stopIndex) == pattern.stopPattern.PICKDROP_SCHEDULED;
+
+                        // true if cancelled trips are requested, and stop is cancelled
+                        boolean isCancelledAndRequested = (includeCancelledTrips && triptimes.isCancelledStop(stopIndex));  // Stop is cancelled, but cancelled stops should be included in this request
+
+                        boolean includeByCancellation = isScheduledStop | isCancelledAndRequested;
 
                         boolean includeByDepartureTime = (stopDepartureTime != -1 && stopDepartureTime >= starttimeSecondsSinceMidnight && stopDepartureTime < starttimeSecondsSinceMidnight + timeRange);
 
