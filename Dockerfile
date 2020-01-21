@@ -23,7 +23,7 @@ RUN wget -nv https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-c
      && tar xzf google-cloud-sdk-226.0.0-linux-x86_64.tar.gz
 
 # Download logback logstash
-RUN wget -nv "https://central.maven.org/maven2/net/logstash/logback/logstash-logback-encoder/4.7/logstash-logback-encoder-4.7.jar" --directory-prefix /code/
+RUN wget -nv "https://repo1.maven.org/maven2/net/logstash/logback/logstash-logback-encoder/4.7/logstash-logback-encoder-4.7.jar" --directory-prefix /code/
 
 # Copy OTP jar file from target
 COPY target/otp-*-shaded.jar /code/otp-shaded.jar
@@ -35,7 +35,7 @@ RUN jar xf /code/logstash-logback-encoder-4.7.jar \
  && jar -uf /code/otp-shaded.jar logback.xml net/
 
 RUN mkdir -p /opt/agent-bond \
-  && curl https://central.maven.org/maven2/io/fabric8/agent-bond-agent/1.0.2/agent-bond-agent-1.0.2.jar \
+  && curl https://repo1.maven.org/maven2/io/fabric8/agent-bond-agent/1.0.2/agent-bond-agent-1.0.2.jar \
          -o /opt/agent-bond/agent-bond.jar \
  && chmod 444 /opt/agent-bond/agent-bond.jar
 ADD docker/jmx_exporter_config.yml /opt/agent-bond/
