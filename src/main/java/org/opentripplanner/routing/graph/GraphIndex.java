@@ -807,25 +807,28 @@ public class GraphIndex {
                             continue;
                         }
 
-                        int stopDepartureTime = triptimes.getDepartureTime(stopIndex);
+                        if (stopIndex < triptimes.getNumStops()-1) {
+                            // Last stop should never be included in a departureboard
+                            int stopDepartureTime = triptimes.getDepartureTime(stopIndex);
 
-                        if (includeCancelledTrips && triptimes.isCancelledStop(stopIndex)) {
-                            // Cancelled trips should be included in this request - use scheduled times for time-verification
-                            stopDepartureTime = triptimes.getScheduledDepartureTime(stopIndex);
-                        }
+                            if (includeCancelledTrips && triptimes.isCancelledStop(stopIndex)) {
+                                // Cancelled trips should be included in this request - use scheduled times for time-verification
+                                stopDepartureTime = triptimes.getScheduledDepartureTime(stopIndex);
+                            }
 
-                        // true if a stop is planned, and not cancelled
-                        boolean isScheduledStop = !triptimes.isCancelledStop(stopIndex) & triptimes.getPickupType(stopIndex) == pattern.stopPattern.PICKDROP_SCHEDULED;
+                            // true if a stop is planned, and not cancelled
+                            boolean isScheduledStop = !triptimes.isCancelledStop(stopIndex) & triptimes.getPickupType(stopIndex) == pattern.stopPattern.PICKDROP_SCHEDULED;
 
-                        // true if cancelled trips are requested, and stop is cancelled
-                        boolean isCancelledAndRequested = (includeCancelledTrips && triptimes.isCancelledStop(stopIndex));  // Stop is cancelled, but cancelled stops should be included in this request
+                            // true if cancelled trips are requested, and stop is cancelled
+                            boolean isCancelledAndRequested = (includeCancelledTrips && triptimes.isCancelledStop(stopIndex));  // Stop is cancelled, but cancelled stops should be included in this request
 
-                        boolean includeByCancellation = isScheduledStop | isCancelledAndRequested;
+                            boolean includeByCancellation = isScheduledStop | isCancelledAndRequested;
 
-                        boolean includeByDepartureTime = (stopDepartureTime != -1 && stopDepartureTime >= starttimeSecondsSinceMidnight && stopDepartureTime < starttimeSecondsSinceMidnight + timeRange);
+                            boolean includeByDepartureTime = (stopDepartureTime != -1 && stopDepartureTime >= starttimeSecondsSinceMidnight && stopDepartureTime < starttimeSecondsSinceMidnight + timeRange);
 
-                        if (includeByCancellation & includeByDepartureTime) {
-                            tripTimesQueue.insertWithOverflow(new TripTimeShort(triptimes, stopIndex, currStop, sd));
+                            if (includeByCancellation & includeByDepartureTime) {
+                                tripTimesQueue.insertWithOverflow(new TripTimeShort(triptimes, stopIndex, currStop, sd));
+                            }
                         }
                     }
 
