@@ -50,7 +50,7 @@ public class TransmodelGraphQLTest extends GtfsTest {
     }
 
     public void testGetQuay() {
-        String quayId = "FEED:T";
+        String quayId = "FEED:V";
         String query =
                 "query Quay {" +
                         "    quay(id: \"" + quayId + "\") {" +
