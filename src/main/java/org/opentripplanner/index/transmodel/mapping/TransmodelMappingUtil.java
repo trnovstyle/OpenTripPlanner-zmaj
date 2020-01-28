@@ -37,6 +37,9 @@ public class TransmodelMappingUtil {
     }
 
     public String toIdString(AgencyAndId agencyAndId) {
+        if (agencyAndId == null) {
+            return null;
+        }
         if (fixedAgencyId != null) {
             return agencyAndId.getId();
         }

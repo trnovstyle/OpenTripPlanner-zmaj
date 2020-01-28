@@ -58,6 +58,7 @@ public class TripPatternCache {
         
         // Create TripPattern if it doesn't exist yet
         if (tripPattern == null) {
+
             tripPattern = new TripPattern(trip.getRoute(), stopPattern, serviceDate);
 
             // Generate unique code for trip pattern
@@ -75,11 +76,15 @@ public class TripPatternCache {
             
             // TODO: Add pattern to graph index?
 
-            // This will copy the geometry from the hopEdges of the old TripPattern to the HopEdges
-            // of the new one. It does a check if the start/end stops are the same per HopEdge
-            // and in the case they are different it defaults to a straight line.
             TripPattern originalTripPattern = graph.index.patternForTrip.get(trip);
+
             if (originalTripPattern != null) {
+                // Set id of new TripPattern to same id as original TripPattern
+                tripPattern.id = originalTripPattern.id;
+
+                // This will copy the geometry from the hopEdges of the old TripPattern to the HopEdges
+                // of the new one. It does a check if the start/end stops are the same per HopEdge
+                // and in the case they are different it defaults to a straight line.
                 for (int i = 0; i < originalTripPattern.hopEdges.length; i++) {
                     if (tripPattern.hopEdges[i].getBeginStop().equals(originalTripPattern.hopEdges[i].getBeginStop())
                             && tripPattern.hopEdges[i].getEndStop().equals(originalTripPattern.hopEdges[i].getEndStop())) {
