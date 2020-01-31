@@ -1558,8 +1558,8 @@ public class TransmodelIndexGraphQLSchema {
                                 .type(GraphQLList.list(modeEnum))
                                 .build())
                         .dataFetcher(environment -> {
-                            boolean omitNonBoarding = environment.getArgument("omitNonBoarding");
-                            boolean includeCancelledTrips = environment.getArgument("includeCancelledTrips");
+                            boolean omitNonBoarding = environment.getArgument("omitNonBoarding") != null ? environment.getArgument("omitNonBoarding"):false;
+                            boolean includeCancelledTrips = environment.getArgument("includeCancelledTrips") != null ? environment.getArgument("includeCancelledTrips"):false;
                             int numberOfDepartures = environment.getArgument("numberOfDepartures");
                             Integer departuresPerLineAndDestinationDisplay = environment.getArgument("numberOfDeparturesPerLineAndDestinationDisplay");
                             int timeRage = environment.getArgument("timeRange");
@@ -1740,8 +1740,8 @@ public class TransmodelIndexGraphQLSchema {
                                 .type(GraphQLList.list(modeEnum))
                                 .build())
                         .dataFetcher(environment -> {
-                            boolean omitNonBoarding = environment.getArgument("omitNonBoarding");
-                            boolean includeCancelledTrips = environment.getArgument("includeCancelledTrips");
+                            boolean omitNonBoarding = environment.getArgument("omitNonBoarding") != null ? environment.getArgument("omitNonBoarding"):false;
+                            boolean includeCancelledTrips = environment.getArgument("includeCancelledTrips") != null ? environment.getArgument("includeCancelledTrips"):false;
                             int numberOfDepartures = environment.getArgument("numberOfDepartures");
                             Integer departuresPerLineAndDestinationDisplay = environment.getArgument("numberOfDeparturesPerLineAndDestinationDisplay");
                             int timeRange = environment.getArgument("timeRange");
