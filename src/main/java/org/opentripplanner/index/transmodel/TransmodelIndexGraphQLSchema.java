@@ -3594,26 +3594,30 @@ public class TransmodelIndexGraphQLSchema {
         AgencyAndId stopId = tripTimeShort.stopId;
 
         Stop stop = index.stopForId.get(stopId);
-        AgencyAndId parentStopId = stop.getParentStationAgencyAndId();
-
 
         Collection<AlertPatch> allAlerts = new HashSet<>();
 
-        // Quay
-        allAlerts.addAll(index.getAlertsForStopId(stopId));
-        allAlerts.addAll(index.getAlertsForStopAndTrip(stopId, tripId));
-        allAlerts.addAll(index.getAlertsForStopAndRoute(stopId, routeId));
-        // StopPlace
-        allAlerts.addAll(index.getAlertsForStopId(parentStopId));
-        allAlerts.addAll(index.getAlertsForStopAndTrip(parentStopId, tripId));
-        allAlerts.addAll(index.getAlertsForStopAndRoute(parentStopId, routeId));
+        if (stop != null) {
+            AgencyAndId parentStopId = stop.getParentStationAgencyAndId();
 
-        if (stop.getMultiModalStation() != null) {
-            // MultimodalStopPlace
-            AgencyAndId multimodalStopId = new AgencyAndId(stopId.getAgencyId(), stop.getMultiModalStation());
-            allAlerts.addAll(index.getAlertsForStopId(multimodalStopId));
-            allAlerts.addAll(index.getAlertsForStopAndTrip(multimodalStopId, tripId));
-            allAlerts.addAll(index.getAlertsForStopAndRoute(multimodalStopId, routeId));
+            // Quay
+            allAlerts.addAll(index.getAlertsForStopId(stopId));
+            allAlerts.addAll(index.getAlertsForStopAndTrip(stopId, tripId));
+            allAlerts.addAll(index.getAlertsForStopAndRoute(stopId, routeId));
+            // StopPlace
+            allAlerts.addAll(index.getAlertsForStopId(parentStopId));
+            allAlerts.addAll(index.getAlertsForStopAndTrip(parentStopId, tripId));
+            allAlerts.addAll(index.getAlertsForStopAndRoute(parentStopId, routeId));
+
+            if (stop.getMultiModalStation() != null) {
+                // MultimodalStopPlace
+                AgencyAndId multimodalStopId = new AgencyAndId(stopId.getAgencyId(),
+                    stop.getMultiModalStation()
+                );
+                allAlerts.addAll(index.getAlertsForStopId(multimodalStopId));
+                allAlerts.addAll(index.getAlertsForStopAndTrip(multimodalStopId, tripId));
+                allAlerts.addAll(index.getAlertsForStopAndRoute(multimodalStopId, routeId));
+            }
         }
 
         // Trip
