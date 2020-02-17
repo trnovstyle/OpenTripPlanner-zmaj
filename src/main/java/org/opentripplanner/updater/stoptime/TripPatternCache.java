@@ -86,9 +86,11 @@ public class TripPatternCache {
                 // of the new one. It does a check if the start/end stops are the same per HopEdge
                 // and in the case they are different it defaults to a straight line.
                 for (int i = 0; i < originalTripPattern.hopEdges.length; i++) {
-                    if (tripPattern.hopEdges[i].getBeginStop().equals(originalTripPattern.hopEdges[i].getBeginStop())
-                            && tripPattern.hopEdges[i].getEndStop().equals(originalTripPattern.hopEdges[i].getEndStop())) {
-                        tripPattern.hopEdges[i].setGeometry(originalTripPattern.hopEdges[i].getGeometry());
+                    if (originalTripPattern.hopEdges[i] != null) {
+                        if (tripPattern.hopEdges[i].getBeginStop().equals(originalTripPattern.hopEdges[i].getBeginStop())
+                                && tripPattern.hopEdges[i].getEndStop().equals(originalTripPattern.hopEdges[i].getEndStop())) {
+                            tripPattern.hopEdges[i].setGeometry(originalTripPattern.hopEdges[i].getGeometry());
+                        }
                     }
                 }
             }
