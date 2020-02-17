@@ -682,6 +682,8 @@ public class TimetableSnapshotSource {
 
             Stop stop = getStopForStopId(SIRI_FEED_ID,estimatedCall.getStopPointRef().getValue());
 
+            Preconditions.checkNotNull(stop, "Unknown stop-id: " + estimatedCall.getStopPointRef().getValue());
+
             StopTime stopTime = new StopTime();
             stopTime.setStop(stop);
             stopTime.setStopSequence(i);
