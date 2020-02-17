@@ -633,6 +633,8 @@ public class TimetableSnapshotSource {
 
             if (estimatedVehicleJourney.getPublishedLineNames() != null && !estimatedVehicleJourney.getPublishedLineNames().isEmpty()) {
                 route.setShortName("" + estimatedVehicleJourney.getPublishedLineNames().get(0).getValue());
+            } else {
+                route.setShortName("");
             }
             LOG.info("Adding route {} to graph.", routeId);
             graph.index.routeForId.put(routeId, route);
