@@ -11,7 +11,7 @@ spec:
     - name: otp
       port: {{ .Values.service.otp.externalPort }}
       protocol: TCP
-      targetPort: {{ .Values.service.otp.nternalPort }}
+      targetPort: {{ .Values.service.otp.internalPort }}
   selector:
     app: {{ template "otp.name" . }}
   sessionAffinity: None
