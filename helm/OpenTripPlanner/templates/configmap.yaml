@@ -134,6 +134,19 @@ data:
               "feedId": "siri-sx",
               "blockReadinessUntilInitialized": true
             },
+    {{- if .Values.configuration.siriETPubsubUpdater.enabled }}
+            // SIRI ET Google Pubsub updater
+            {
+              "type": "google-pubsub-siri-et-updater",
+              "feedId": "RB",
+              "timeoutSec": 30,
+              "reconnectPeriodSec": 5,
+              "projectName": "{{ .Values.configuration.siriETPubsubUpdater.googleProjectName }}",
+              "topicName": "{{ .Values.configuration.siriETPubsubUpdater.pubsubTopicName }}",
+              "dataInitializationUrl": "{{ .Values.configuration.siriETPubsubUpdater.dataInitializationUrl }}",
+              "blockReadinessUntilInitialized": true
+            },
+    {{- else -}}
             // SIRI ET updater
             {
               "type": "siri-et-updater",
@@ -143,6 +156,7 @@ data:
               "feedId": "siri-et",
               "blockReadinessUntilInitialized": true
             },
+    {{- end }}
             // SIRI VM updater
             {
               "type": "siri-vm-updater",

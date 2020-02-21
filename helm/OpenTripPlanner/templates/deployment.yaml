@@ -66,6 +66,10 @@ spec:
               value: {{ .Values.environmentValues.mardukGcpBaseName }}
             - name: ROUTER_CONFIG
               value: {{ .Values.environmentValues.routerConfigName }}
+      {{- if .Values.configuration.siriETPubsubUpdater.enabled }}
+            - name: GOOGLE_APPLICATION_CREDENTIALS
+              value: {{ .Values.environmentValues.googleApplicationCredentialsPath }}
+      {{- end }}
             - name: LILLESTROM_BYSYKKEL_API_KEY
               valueFrom:
                 secretKeyRef:

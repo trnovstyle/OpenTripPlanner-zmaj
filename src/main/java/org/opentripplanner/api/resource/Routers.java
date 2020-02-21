@@ -27,13 +27,23 @@ import org.opentripplanner.standalone.CommandLineParameters;
 import org.opentripplanner.standalone.OTPServer;
 import org.opentripplanner.standalone.Router;
 import org.opentripplanner.updater.GraphUpdater;
-import org.opentripplanner.updater.PollingGraphUpdater;
+import org.opentripplanner.updater.ReadinessBlockingUpdater;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
-import javax.ws.rs.*;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.DefaultValue;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -118,7 +128,7 @@ public class Routers {
     }
 
     /**
-     * Checks that graphs are ready, and that blocking PollingUpdaters reports as initialized
+     * Checks that graphs are ready, and that blocking Updaters reports as initialized
      */
     @GET @Path("/ready")
     @Produces({ MediaType.TEXT_PLAIN})
@@ -134,9 +144,9 @@ public class Routers {
                 isRouterReady = true;
                 if (graph.updaterManager != null && graph.updaterManager.getUpdaterList() != null) {
                     for (GraphUpdater updater : graph.updaterManager.getUpdaterList()) {
-                        if (updater instanceof PollingGraphUpdater) {
-                            if (!((PollingGraphUpdater) updater).isReady()) {
-                                waitingUpdaters.add(((PollingGraphUpdater) updater).getType());
+                        if (updater instanceof ReadinessBlockingUpdater) {
+                            if (!((ReadinessBlockingUpdater) updater).isReady()) {
+                                waitingUpdaters.add(((ReadinessBlockingUpdater) updater).getType());
                             }
                         }
                     }
