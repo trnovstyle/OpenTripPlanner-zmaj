@@ -182,6 +182,9 @@ public class SiriEstimatedTimetableGooglePubsubUpdater extends ReadinessBlocking
                 }
             }
         });
+
+        // TODO: This should probably be on a higher level?
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> teardown()));
     }
 
     @Override
@@ -192,6 +195,8 @@ public class SiriEstimatedTimetableGooglePubsubUpdater extends ReadinessBlocking
         }
 
         Subscription subscription = subscriptionAdminClient.createSubscription(subscriptionName, topic, pushConfig, 10);
+
+        LOG.info("Created subscription {}", subscriptionName);
 
         startTime = now();
 
@@ -226,7 +231,10 @@ public class SiriEstimatedTimetableGooglePubsubUpdater extends ReadinessBlocking
 
     @Override
     public void teardown() {
-        subscriptionAdminClient.deleteSubscription(subscriptionName);
+        if (subscriptionAdminClient != null) {
+            LOG.info("Deleting subscription {}", subscriptionName);
+            subscriptionAdminClient.deleteSubscription(subscriptionName);
+        }
     }
 
     private void initializeData(String dataInitializationUrl, EstimatedTimetableMessageReceiver receiver) throws IOException {
