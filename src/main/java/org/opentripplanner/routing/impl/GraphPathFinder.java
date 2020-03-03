@@ -185,7 +185,8 @@ public class GraphPathFinder {
             // Do a full reversed search to compact the legs
             if(options.compactLegsByReversedSearch) {
                 try {
-                    newPaths = compactLegsByReversedSearch(aStar, originalReq, options, newPaths, timeout, reversedSearchHeuristic);
+                    // Add two extra seconds to make sure the reverse search doesn't time out.
+                    newPaths = compactLegsByReversedSearch(aStar, originalReq, options, newPaths, timeout + 2, reversedSearchHeuristic);
                 } catch (Exception e) {
                     LOG.warn("CompactLegsByReversedSearch failed on request: " + originalReq.toString(), e);
                 }
@@ -315,6 +316,10 @@ public class GraphPathFinder {
             aStar.getShortestPathTree(reversedMainRequest, timeout);
 
             List<GraphPath> newRevPaths = aStar.getPathsToTarget();
+
+            if (reversedMainRequest.rctx.debugOutput.timedOut) {
+                LOG.warn("Reversed transit search timed out." + originalReq);
+            }
 
             // We only want to use the compacted paths if the weight is not higher than the original paths
             newRevPaths = newRevPaths.stream().filter(p -> p.getWeight() <= newPath.getWeight())
