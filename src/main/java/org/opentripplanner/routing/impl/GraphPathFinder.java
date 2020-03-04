@@ -108,7 +108,6 @@ public class GraphPathFinder {
         if (!options.modes.isTransit()) {
             options.numItineraries = 1;
         }
-        options.dominanceFunction = new DominanceFunction.MinimumWeight(); // FORCING the dominance function to weight only
         LOG.debug("rreq={}", options);
 
         // Choose an appropriate heuristic for goal direction.
@@ -370,6 +369,8 @@ public class GraphPathFinder {
                 arrDepTime, new EuclideanRemainingWeightHeuristic(), containsEgress);
 
         request.maxWalkDistance = CLAMP_MAX_WALK;
+
+        request.rctx.remainingWeightHeuristic = remainingWeightHeuristic;
 
         return request;
     }
