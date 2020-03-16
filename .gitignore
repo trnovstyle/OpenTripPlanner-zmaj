@@ -24,7 +24,9 @@ otp-openlayers-client/src/main/webapp/js/otp-min.js
 gen-java/
 gen-javabean/
 gen-py/
+node_modules/
 .idea/
+.venv/
 .sonar
 _site/
 /otp
