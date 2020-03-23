@@ -14,6 +14,7 @@ rollingUpdate:
 
 environmentValues:
   mardukGcpBaseName: "gs://marduk-production/"
+  googleApplicationCredentialsPath: /etc/gcs/otp-realtime-pubsub.json
 
 cronjobRedeployOtp:
   environmentValues:
@@ -29,6 +30,11 @@ secretMounts:
     subPath: marduk-blobstore-credentials.json
     secretName: marduk-neon-storage-key
     readOnly: true
+  - name: otp-realtime-pubsub-key
+    mountPath: /etc/gcs/otp-realtime-pubsub.json
+    subPath: otp-realtime-pubsub.json
+    secretName: otp-realtime-pubsub-key
+    readOnly: true
 
 configuration:
   siriVMUpdater: https://api.entur.io/realtime/v1/services
@@ -36,4 +42,7 @@ configuration:
   siriSXUpdater: https://api.entur.io/realtime/v1/services?maxSize=50
   useFlexService: true
   siriETPubsubUpdater:
-    enabled: false
+    enabled: true
+    googleProjectName: neon-1287
+    pubsubTopicName: protobuf.estimated_timetables
+    dataInitializationUrl: https://api.entur.io/realtime/v1/rest/et-monitored
