@@ -19,7 +19,9 @@ import com.google.cloud.pubsub.v1.MessageReceiver;
 import com.google.cloud.pubsub.v1.Subscriber;
 import com.google.cloud.pubsub.v1.SubscriptionAdminClient;
 import com.google.protobuf.ByteString;
+import com.google.protobuf.Duration;
 import com.google.protobuf.InvalidProtocolBufferException;
+import com.google.pubsub.v1.ExpirationPolicy;
 import com.google.pubsub.v1.ProjectSubscriptionName;
 import com.google.pubsub.v1.ProjectTopicName;
 import com.google.pubsub.v1.PubsubMessage;
@@ -194,7 +196,20 @@ public class SiriEstimatedTimetableGooglePubsubUpdater extends ReadinessBlocking
             throw new RuntimeException("Unable to initialize Google Pubsub-updater: System.getenv('GOOGLE_APPLICATION_CREDENTIALS') = " + System.getenv("GOOGLE_APPLICATION_CREDENTIALS"));
         }
 
-        Subscription subscription = subscriptionAdminClient.createSubscription(subscriptionName, topic, pushConfig, 10);
+
+        Subscription subscription = subscriptionAdminClient.createSubscription(Subscription.newBuilder()
+                .setTopic(topic.toString())
+                .setName(subscriptionName.toString())
+                .setPushConfig(pushConfig)
+                .setMessageRetentionDuration(
+                        // How long will an unprocessed message be kept - minimum 10 minutes
+                        Duration.newBuilder().setSeconds(600).build()
+                )
+                .setExpirationPolicy(ExpirationPolicy.newBuilder()
+                        // How long will the subscription exist when no longer in use - minimum 1 day
+                        .setTtl(Duration.newBuilder().setSeconds(86400).build()).build()
+                )
+                .build());
 
         LOG.info("Created subscription {}", subscriptionName);
 
