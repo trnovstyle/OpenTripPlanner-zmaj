@@ -186,7 +186,13 @@ public class SiriEstimatedTimetableGooglePubsubUpdater extends ReadinessBlocking
         });
 
         // TODO: This should probably be on a higher level?
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> teardown()));
+        try {
+            Runtime.getRuntime().addShutdownHook(new Thread(this::teardown));
+        } catch (IllegalStateException e) {
+            // Handling cornercase when instance is being shut down before it has been initialized
+            LOG.info("Instance is already shutting down - cleaning up immediately.", e);
+            teardown();
+        }
     }
 
     @Override
@@ -249,7 +255,12 @@ public class SiriEstimatedTimetableGooglePubsubUpdater extends ReadinessBlocking
         if (subscriptionAdminClient != null) {
             LOG.info("Deleting subscription {}", subscriptionName);
             subscriptionAdminClient.deleteSubscription(subscriptionName);
+            LOG.info("Subscription deleted {} - time since startup: {}", subscriptionName, getTimeSinceStartupString());
         }
+    }
+
+    private String getTimeSinceStartupString() {
+        return DurationFormatUtils.formatDuration((now() - startTime), "HH:mm:ss");
     }
 
     private void initializeData(String dataInitializationUrl, EstimatedTimetableMessageReceiver receiver) throws IOException {
@@ -274,7 +285,7 @@ public class SiriEstimatedTimetableGooglePubsubUpdater extends ReadinessBlocking
                             messageCounter.get(),
                             updateCounter.get(),
                             FileUtils.byteCountToDisplaySize(sizeCounter.get()),
-                            DurationFormatUtils.formatDuration((now() - startTime), "HH:mm:ss")
+                            getTimeSinceStartupString()
                     );
 
                     isInitialized = true;
@@ -321,7 +332,7 @@ public class SiriEstimatedTimetableGooglePubsubUpdater extends ReadinessBlocking
                 if (numberOfMessages % 1000 == 0) {
                     LOG.info("Pubsub stats: [messages: {},  updates: {}, total size: {}, current delay {} ms, time since startup: {}]", numberOfMessages, numberOfUpdates, FileUtils.byteCountToDisplaySize(sizeCounter.get()),
                             (now() - siri.getServiceDelivery().getResponseTimestamp().toInstant().toEpochMilli()),
-                            DurationFormatUtils.formatDuration((now() - startTime), "HH:mm:ss"));
+                            getTimeSinceStartupString());
                 }
 
                 EstimatedTimetableGraphWriterRunnable runnable =
