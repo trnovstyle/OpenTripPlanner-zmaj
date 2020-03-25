@@ -134,14 +134,6 @@ aliases:
          Version: $APP_VERSION \n
          User: $CIRCLE_USERNAME"
 
-  - &post_build
-    name: Trigger downstream builds
-    command: |
-      echo 'export CIRCLE_SHA1="$CIRCLE_SHA1"' >> $BASH_ENV
-      echo 'export CIRCLE_PROJECT_REPONAME="$CIRCLE_PROJECT_REPONAME"' >> $BASH_ENV
-      echo 'export GITHUB_TOKEN="$GITHUB_TOKEN"' >> $BASH_ENV
-      /tools/trigger_build.sh "entur/marduk.git" "master" "$(git log -1 --pretty=%B)"
-
 commands:
   slack-status:
     parameters:
@@ -275,10 +267,6 @@ jobs:
       - slack/approval:
           webhook: *team-ror-releases-slackhook
           message: *deploy-payload
-  trigger-dependants:
-    executor: cci-toolbox-java11
-    steps:
-      - run: *post_build
 
 workflows:
   version: 2.1
@@ -296,10 +284,6 @@ workflows:
                 - rutebanken_develop
           requires:
             - test-release
-      - trigger-dependants:
-          context: org-carbon
-          requires:
-            - build-release
       - publish-docker:
           name: publish-docker
           context: org-carbon
