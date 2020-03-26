@@ -110,7 +110,7 @@ public class SiriEstimatedTimetableGooglePubsubUpdater extends ReadinessBlocking
     private static transient final AtomicLong messageCounter = new AtomicLong(0);
     private static transient final AtomicLong updateCounter = new AtomicLong(0);
     private static transient final AtomicLong sizeCounter = new AtomicLong(0);
-    private static transient long startTime;
+    private transient long startTime;
 
     public SiriEstimatedTimetableGooglePubsubUpdater() {
 
@@ -124,12 +124,27 @@ public class SiriEstimatedTimetableGooglePubsubUpdater extends ReadinessBlocking
                  */
 
                 subscriptionAdminClient = SubscriptionAdminClient.create();
+
+                addShutdownHook();
+
             } else {
                 throw new RuntimeException("Google Pubsub updater is configured, but environment variable 'GOOGLE_APPLICATION_CREDENTIALS' is not defined. " +
                         "See https://cloud.google.com/docs/authentication/getting-started");
             }
         } catch (IOException e) {
             e.printStackTrace();
+        }
+    }
+
+    private void addShutdownHook() {
+        // TODO: This should probably be on a higher level?
+        try {
+            Runtime.getRuntime().addShutdownHook(new Thread(this::teardown));
+            LOG.info("Shutdown-hook to clean up Google Pubsub subscription has been added.");
+        } catch (IllegalStateException e) {
+            // Handling cornercase when instance is being shut down before it has been initialized
+            LOG.info("Instance is already shutting down - cleaning up immediately.", e);
+            teardown();
         }
     }
 
@@ -184,15 +199,6 @@ public class SiriEstimatedTimetableGooglePubsubUpdater extends ReadinessBlocking
                 }
             }
         });
-
-        // TODO: This should probably be on a higher level?
-        try {
-            Runtime.getRuntime().addShutdownHook(new Thread(this::teardown));
-        } catch (IllegalStateException e) {
-            // Handling cornercase when instance is being shut down before it has been initialized
-            LOG.info("Instance is already shutting down - cleaning up immediately.", e);
-            teardown();
-        }
     }
 
     @Override
@@ -202,6 +208,7 @@ public class SiriEstimatedTimetableGooglePubsubUpdater extends ReadinessBlocking
             throw new RuntimeException("Unable to initialize Google Pubsub-updater: System.getenv('GOOGLE_APPLICATION_CREDENTIALS') = " + System.getenv("GOOGLE_APPLICATION_CREDENTIALS"));
         }
 
+        LOG.info("Creating subscription {}", subscriptionName);
 
         Subscription subscription = subscriptionAdminClient.createSubscription(Subscription.newBuilder()
                 .setTopic(topic.toString())
