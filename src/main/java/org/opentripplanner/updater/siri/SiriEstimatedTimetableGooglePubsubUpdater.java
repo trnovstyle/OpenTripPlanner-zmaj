@@ -262,7 +262,7 @@ public class SiriEstimatedTimetableGooglePubsubUpdater extends ReadinessBlocking
         if (subscriptionAdminClient != null) {
             LOG.info("Deleting subscription {}", subscriptionName);
             subscriptionAdminClient.deleteSubscription(subscriptionName);
-            LOG.info("Subscription deleted {} - time since startup: {}", subscriptionName, getTimeSinceStartupString());
+            LOG.info("Subscription deleted {} - time since startup: {} sec", subscriptionName, ((now() - startTime)/1000));
         }
     }
 
