@@ -5,6 +5,7 @@ import static java.util.Collections.emptySet;
 import au.com.origin.snapshots.junit5.SnapshotExtension;
 import java.util.Set;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.opentripplanner.model.FeedScopedId;
@@ -14,6 +15,7 @@ import org.opentripplanner.routing.api.request.RequestModes;
 import org.opentripplanner.routing.api.request.RoutingRequest;
 import org.opentripplanner.routing.api.request.StreetMode;
 
+@Disabled
 @ExtendWith(SnapshotExtension.class)
 public class TransitSnapshotTest
         extends SnapshotTestBase {
