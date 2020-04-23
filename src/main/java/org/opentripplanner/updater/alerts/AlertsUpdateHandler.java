@@ -38,6 +38,7 @@ import uk.org.ifopt.siri20.StopPlaceRef;
 import uk.org.siri.siri20.*;
 
 import java.io.Serializable;
+import java.text.ParseException;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -112,9 +113,7 @@ public class AlertsUpdateHandler {
 
         //ROR-54
         if (!expireSituation && //If situation is closed, it must be allowed - it will remove already existing alerts
-                ((alert.alertHeaderText == null || alert.alertHeaderText.toString().isEmpty()) &&
-                (alert.alertDescriptionText == null || alert.alertDescriptionText.toString().isEmpty()) &&
-                (alert.alertDetailText == null || alert.alertDetailText.toString().isEmpty()))) {
+                areAllTextsEmpty(alert)) {
             log.debug("Empty Alert - ignoring situationNumber: {}", situation.getSituationNumber() != null ? situation.getSituationNumber().getValue():null);
             return null;
         }
@@ -165,424 +164,49 @@ public class AlertsUpdateHandler {
 
         if (affectsStructure != null) {
 
-            AffectsScopeStructure.Operators operators = affectsStructure.getOperators();
-
-            if (operators != null && !isListNullOrEmpty(operators.getAffectedOperators())) {
-                for (AffectedOperatorStructure affectedOperator : operators.getAffectedOperators()) {
-
-                    OperatorRefStructure operatorRef = affectedOperator.getOperatorRef();
-                    if (operatorRef == null || operatorRef.getValue() == null) {
-                        continue;
-                    }
-
-                    // SIRI Operators are mapped to OTP Agency, this i probably wrong - but
-                    // I leave this for now.
-                    String agencyId = operatorRef.getValue();
-
-                    String id = paddedSituationNumber + agencyId;
-                    if (expireSituation) {
-                        idsToExpire.add(id);
-                    } else {
-                        AlertPatch alertPatch = new AlertPatch();
-                        alertPatch.setAgencyId(agencyId);
-                        alertPatch.setTimePeriods(periods);
-                        alertPatch.setAlert(alert);
-                        alertPatch.setId(id);
-                        patches.add(alertPatch);
-                    }
-                }
-            }
+            final Pair<Set<String>, Set<AlertPatch>> operatorAlerts = createOperatorAlerts(paddedSituationNumber, expireSituation, periods, affectsStructure.getOperators());
+            idsToExpire.addAll(operatorAlerts.getLeft());
+            patches.addAll(operatorAlerts.getRight());
 
             AffectsScopeStructure.Networks networks = affectsStructure.getNetworks();
-            Set<Route> stopRoutes = new HashSet<>();
-            if (networks != null) {
-                for (AffectsScopeStructure.Networks.AffectedNetwork affectedNetwork : networks.getAffectedNetworks()) {
-                    List<AffectedLineStructure> affectedLines = affectedNetwork.getAffectedLines();
-                    if (affectedLines != null && !isListNullOrEmpty(affectedLines)) {
-                        for (AffectedLineStructure line : affectedLines) {
+            Set<Route> stopRoutes = getRoutes(networks);
 
-                            LineRef lineRef = line.getLineRef();
+            final Pair<Set<String>, Set<AlertPatch>> stopAlerts = createStopAlerts(paddedSituationNumber, expireSituation, periods, stopRoutes, affectsStructure.getStopPoints(), affectsStructure.getStopPlaces());
+            idsToExpire.addAll(stopAlerts.getLeft());
+            patches.addAll(stopAlerts.getRight());
 
-                            if (lineRef == null || lineRef.getValue() == null) {
-                                continue;
-                            }
+            final Pair<Set<String>, Set<AlertPatch>> networkAlerts = createNetworkAlerts(paddedSituationNumber, expireSituation, periods, alert, networks);
+            idsToExpire.addAll(networkAlerts.getLeft());
+            patches.addAll(networkAlerts.getRight());
 
-                            stopRoutes.addAll(siriFuzzyTripMatcher.getRoutes(lineRef.getValue()));
-                        }
-                    }
-                }
-            }
 
-            AffectsScopeStructure.StopPoints stopPoints = affectsStructure.getStopPoints();
-            AffectsScopeStructure.StopPlaces stopPlaces = affectsStructure.getStopPlaces();
-
-            if (stopPoints != null && !isListNullOrEmpty(stopPoints.getAffectedStopPoints())) {
-
-                for (AffectedStopPointStructure stopPoint : stopPoints.getAffectedStopPoints()) {
-                    StopPointRef stopPointRef = stopPoint.getStopPointRef();
-                    if (stopPointRef == null || stopPointRef.getValue() == null) {
-                        continue;
-                    }
-
-                    AgencyAndId stopId = siriFuzzyTripMatcher.getStop(stopPointRef.getValue());
-
-                    String id = paddedSituationNumber + stopPointRef.getValue();
-                    if (expireSituation) {
-                        idsToExpire.add(id);
-                    } else {
-                        if (stopId != null) {
-                            if (stopRoutes.isEmpty()) {
-                                AlertPatch stopOnlyAlertPatch = new AlertPatch();
-                                stopOnlyAlertPatch.setStop(stopId);
-                                stopOnlyAlertPatch.setTimePeriods(periods);
-                                stopOnlyAlertPatch.setId(id);
-
-                                updateStopConditions(stopOnlyAlertPatch, stopPoint.getStopConditions());
-
-                                patches.add(stopOnlyAlertPatch);
-                            } else {
-                                //Adding combination of stop & route
-                                for (Route route : stopRoutes) {
-                                    id = paddedSituationNumber + stopPointRef.getValue() + "-" + route.getId().getId();
-
-                                    AlertPatch alertPatch = new AlertPatch();
-                                    alertPatch.setStop(stopId);
-                                    alertPatch.setRoute(route.getId());
-                                    alertPatch.setTimePeriods(periods);
-                                    alertPatch.setId(id);
-
-                                    updateStopConditions(alertPatch, stopPoint.getStopConditions());
-
-                                    patches.add(alertPatch);
-                                }
-                            }
-                        }
-                    }
-                }
-            } else if (stopPlaces != null && !isListNullOrEmpty(stopPlaces.getAffectedStopPlaces())) {
-
-                for (AffectedStopPlaceStructure stopPoint : stopPlaces.getAffectedStopPlaces()) {
-                    StopPlaceRef stopPlace = stopPoint.getStopPlaceRef();
-                    if (stopPlace == null || stopPlace.getValue() == null) {
-                        continue;
-                    }
-
-                    AgencyAndId stopId = siriFuzzyTripMatcher.getStop(stopPlace.getValue());
-
-                    String id = paddedSituationNumber + stopPlace.getValue();
-                    if (expireSituation) {
-                        idsToExpire.add(id);
-                    } else {
-                        if (stopId != null) {
-
-                            if (stopRoutes.isEmpty()) {
-                                AlertPatch stopOnlyAlertPatch = new AlertPatch();
-                                stopOnlyAlertPatch.setStop(stopId);
-                                stopOnlyAlertPatch.setTimePeriods(periods);
-                                stopOnlyAlertPatch.setId(id);
-                                patches.add(stopOnlyAlertPatch);
-                            } else {
-                                //Adding combination of stop & route
-                                for (Route route : stopRoutes) {
-                                    id = paddedSituationNumber + stopPlace.getValue() + "-" + route.getId().getId();
-
-                                    AlertPatch alertPatch = new AlertPatch();
-                                    alertPatch.setStop(stopId);
-                                    alertPatch.setRoute(route.getId());
-                                    alertPatch.setTimePeriods(periods);
-                                    alertPatch.setId(id);
-                                    patches.add(alertPatch);
-                                }
-                            }
-                        }
-                    }
-                }
-            } else if (networks != null && !isListNullOrEmpty(networks.getAffectedNetworks())) {
-
-                for (AffectsScopeStructure.Networks.AffectedNetwork affectedNetwork : networks.getAffectedNetworks()) {
-                    List<AffectedLineStructure> affectedLines = affectedNetwork.getAffectedLines();
-                    if (affectedLines != null && !isListNullOrEmpty(affectedLines)) {
-                        for (AffectedLineStructure line : affectedLines) {
-
-                            LineRef lineRef = line.getLineRef();
-
-                            if (lineRef == null || lineRef.getValue() == null) {
-                                continue;
-                            }
-
-                            List<AffectedStopPointStructure> affectedStops = new ArrayList<>();
-
-                            AffectedLineStructure.Routes routes = line.getRoutes();
-
-                            // Resolve AffectedStop-ids
-                            if (routes != null) {
-                                for (AffectedRouteStructure route : routes.getAffectedRoutes()) {
-                                    if (route.getStopPoints() != null) {
-                                        List<Serializable> stopPointsList = route.getStopPoints().getAffectedStopPointsAndLinkProjectionToNextStopPoints();
-                                        for (Serializable serializable : stopPointsList) {
-                                            if (serializable instanceof AffectedStopPointStructure) {
-                                                AffectedStopPointStructure stopPointStructure = (AffectedStopPointStructure) serializable;
-                                                affectedStops.add(stopPointStructure);
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                            Set<Route> affectedRoutes = siriFuzzyTripMatcher.getRoutes(lineRef.getValue());
-
-                            for (Route route : affectedRoutes) {
-                                if (! affectedStops.isEmpty()) {
-                                    for (AffectedStopPointStructure affectedStop : affectedStops) {
-                                        AgencyAndId stop = siriFuzzyTripMatcher.getStop(affectedStop.getStopPointRef().getValue());
-                                        if (stop == null) {
-                                            continue;
-                                        }
-                                        String id = paddedSituationNumber + route.getId() + "-" + stop.getId();
-                                        if (expireSituation) {
-                                            idsToExpire.add(id);
-                                        } else {
-                                            AlertPatch alertPatch = new AlertPatch();
-                                            alertPatch.setRoute(route.getId());
-                                            alertPatch.setStop(stop);
-                                            alertPatch.setId(id);
-                                            alertPatch.setTimePeriods(periods);
-
-                                            Alert vehicleJourneyAlert = cloneAlertTexts(alert);
-                                            vehicleJourneyAlert.effectiveStartDate = alert.effectiveStartDate;
-                                            vehicleJourneyAlert.effectiveEndDate = alert.effectiveEndDate;
-
-                                            alertPatch.setAlert(vehicleJourneyAlert);
-
-                                            updateStopConditions(alertPatch, affectedStop.getStopConditions());
-                                            patches.add(alertPatch);
-                                        }
-                                    }
-                                } else {
-                                    String id = paddedSituationNumber + route.getId();
-                                    if (expireSituation) {
-                                        idsToExpire.add(id);
-                                    } else {
-                                        AlertPatch alertPatch = new AlertPatch();
-                                        alertPatch.setRoute(route.getId());
-                                        alertPatch.setTimePeriods(periods);
-                                        alertPatch.setId(id);
-                                        patches.add(alertPatch);
-                                    }
-                                }
-                            }
-                        }
-                    } else {
-                        NetworkRefStructure networkRef = affectedNetwork.getNetworkRef();
-                        if (networkRef == null || networkRef.getValue() == null) {
-                            continue;
-                        }
-                        String networkId = networkRef.getValue();
-
-                        String id = paddedSituationNumber + networkId;
-                        if (expireSituation) {
-                            idsToExpire.add(id);
-                        } else {
-                            AlertPatch alertPatch = new AlertPatch();
-                            alertPatch.setId(id);
-                            alertPatch.setTimePeriods(periods);
-                            patches.add(alertPatch);
-                        }
-                    }
-                }
-            }
-
-            AffectsScopeStructure.VehicleJourneys vjs = affectsStructure.getVehicleJourneys();
-            if (vjs != null && !isListNullOrEmpty(vjs.getAffectedVehicleJourneies())) {
-
-                for (AffectedVehicleJourneyStructure affectedVehicleJourney : vjs.getAffectedVehicleJourneies()) {
-
-                    String lineRef = null;
-                    if (affectedVehicleJourney.getLineRef() != null) {
-                        lineRef = affectedVehicleJourney.getLineRef().getValue();
-                    }
-
-                    List<AffectedStopPointStructure> affectedStops = new ArrayList<>();
-
-                    List<AffectedRouteStructure> routes = affectedVehicleJourney.getRoutes();
-                    // Resolve AffectedStop-ids
-                    if (routes != null) {
-                        for (AffectedRouteStructure route : routes) {
-                            if (route.getStopPoints() != null) {
-                                List<Serializable> stopPointsList = route.getStopPoints().getAffectedStopPointsAndLinkProjectionToNextStopPoints();
-                                for (Serializable serializable : stopPointsList) {
-                                    if (serializable instanceof AffectedStopPointStructure) {
-                                        AffectedStopPointStructure stopPointStructure = (AffectedStopPointStructure) serializable;
-                                        affectedStops.add(stopPointStructure);
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    List<VehicleJourneyRef> vehicleJourneyReves = affectedVehicleJourney.getVehicleJourneyReves();
-
-
-                    if (!isListNullOrEmpty(vehicleJourneyReves)) {
-                        for (VehicleJourneyRef vehicleJourneyRef : vehicleJourneyReves) {
-
-                            List<AgencyAndId> tripIds = new ArrayList<>();
-
-                            AgencyAndId tripIdFromVehicleJourney = siriFuzzyTripMatcher.getTripId(vehicleJourneyRef.getValue());
-                            Date effectiveStartDate;
-                            Date effectiveEndDate;
-
-                            // Need to know if validity is set explicitly or calculated based on ServiceDate
-                            boolean effectiveValiditySetExplicitly = false;
-
-                            ZonedDateTime originAimedDepartureTime = (affectedVehicleJourney.getOriginAimedDepartureTime() != null ? affectedVehicleJourney.getOriginAimedDepartureTime():ZonedDateTime.now());
-                            ServiceDate serviceDate = new ServiceDate(originAimedDepartureTime.getYear(), originAimedDepartureTime.getMonthValue(), originAimedDepartureTime.getDayOfMonth());
-
-                            if (tripIdFromVehicleJourney != null) {
-
-                                tripIds.add(tripIdFromVehicleJourney);
-
-                                // ServiceJourneyId matches - use provided validity
-                                effectiveStartDate = alert.effectiveStartDate;
-                                effectiveEndDate = alert.effectiveEndDate;
-
-                                effectiveValiditySetExplicitly = true;
-
-                            } else {
-                                tripIds = siriFuzzyTripMatcher.getTripIdForTripShortNameServiceDateAndMode(vehicleJourneyRef.getValue(),
-                                        serviceDate, TraverseMode.RAIL, TransmodelTransportSubmode.RAIL_REPLACEMENT_BUS);
-
-                                // ServiceJourneyId does NOT match - calculate validity based on originAimedDepartureTime
-                                effectiveStartDate = serviceDate.getAsDate();
-                                effectiveEndDate = serviceDate.next().getAsDate();
-
-                            }
-                            for (AgencyAndId tripId : tripIds) {
-
-                                if (!effectiveValiditySetExplicitly) {
-                                    // Effective validity is set based on ServiceDate - need to calculate correct validity based on departuretimes
-
-                                    // Calculate validity based on actual, planned departure/arrival for trip
-                                    int tripDepartureTime = siriFuzzyTripMatcher.getTripDepartureTime(tripId);
-                                    int tripArrivalTime = siriFuzzyTripMatcher.getTripArrivalTime(tripId);
-
-                                    // ServiceJourneyId does NOT match - calculate validity based on serviceDate (calculated from originalAimedDepartureTime)
-                                    effectiveStartDate = new Date(serviceDate.getAsDate().getTime() + tripDepartureTime * 1000);
-
-                                    // Appending 6 hours to end-validity in case of delays.
-                                    effectiveEndDate = new Date(effectiveStartDate.getTime() + (tripArrivalTime - tripDepartureTime + 6 * 3600) * 1000);
-
-                                    // Verify that calculated validity does not exceed explicitly set validity
-                                    if (effectiveStartDate.before(alert.effectiveStartDate)) {
-                                        effectiveStartDate = alert.effectiveStartDate;
-                                    }
-                                    if (effectiveEndDate.after(alert.effectiveEndDate)) {
-                                        effectiveEndDate = alert.effectiveEndDate;
-                                    }
-
-                                    if (effectiveStartDate.after(effectiveEndDate) | effectiveStartDate.equals(effectiveEndDate)) {
-                                        //Ignore this as situation is no longer valid
-                                        continue;
-                                    }
-                                }
-                                if (effectiveEndDate == null) {
-                                    effectiveEndDate = new Date(Long.MAX_VALUE);
-                                }
-                                if (! affectedStops.isEmpty()) {
-                                    for (AffectedStopPointStructure affectedStop : affectedStops) {
-                                        AgencyAndId stop = siriFuzzyTripMatcher.getStop(affectedStop.getStopPointRef().getValue());
-                                        if (stop == null) {
-                                            continue;
-                                        }
-                                        // Creating unique, deterministic id for the alert
-                                        String id = paddedSituationNumber + tripId.getId() + "-" + new ServiceDate(effectiveStartDate).getAsString() + "-" + stop.getId();
-                                        if (expireSituation) {
-                                            idsToExpire.add(id);
-                                        } else {
-                                            AlertPatch alertPatch = new AlertPatch();
-                                            alertPatch.setTrip(tripId);
-                                            alertPatch.setStop(stop);
-                                            alertPatch.setId(id);
-
-                                            updateStopConditions(alertPatch, affectedStop.getStopConditions());
-
-                                            //  A tripId for a given date may be reused for other dates not affected by this alert.
-                                            List<TimePeriod> timePeriodList = new ArrayList<>();
-                                            timePeriodList.add(new TimePeriod(effectiveStartDate.getTime()/1000, effectiveEndDate.getTime()/1000));
-                                            alertPatch.setTimePeriods(timePeriodList);
-
-
-                                            Alert vehicleJourneyAlert = cloneAlertTexts(alert);
-                                            vehicleJourneyAlert.effectiveStartDate = effectiveStartDate;
-                                            vehicleJourneyAlert.effectiveEndDate = effectiveEndDate;
-
-                                            alertPatch.setAlert(vehicleJourneyAlert);
-
-                                            patches.add(alertPatch);
-                                        }
-                                    }
-                                } else {
-                                    String id = paddedSituationNumber + tripId.getId();
-                                    if (expireSituation) {
-                                        idsToExpire.add(id);
-                                    } else {
-                                        AlertPatch alertPatch = new AlertPatch();
-                                        alertPatch.setTrip(tripId);
-                                        alertPatch.setId(id);
-
-                                        //  A tripId for a given date may be reused for other dates not affected by this alert.
-                                        List<TimePeriod> timePeriodList = new ArrayList<>();
-                                        timePeriodList.add(new TimePeriod(effectiveStartDate.getTime()/1000, effectiveEndDate.getTime()/1000));
-                                        alertPatch.setTimePeriods(timePeriodList);
-
-
-                                        Alert vehicleJourneyAlert = cloneAlertTexts(alert);
-                                        vehicleJourneyAlert.effectiveStartDate = effectiveStartDate;
-                                        vehicleJourneyAlert.effectiveEndDate = effectiveEndDate;
-
-                                        alertPatch.setAlert(vehicleJourneyAlert);
-
-                                        patches.add(alertPatch);
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    if (lineRef != null) {
-
-                        Set<Route> affectedRoutes = siriFuzzyTripMatcher.getRoutes(lineRef);
-                        for (Route route : affectedRoutes) {
-                            String id = paddedSituationNumber + route.getId();
-                            if (expireSituation) {
-                                idsToExpire.add(id);
-                            } else {
-                                AlertPatch alertPatch = new AlertPatch();
-                                alertPatch.setRoute(route.getId());
-                                alertPatch.setTimePeriods(periods);
-                                alertPatch.setId(id);
-                                patches.add(alertPatch);
-                            }
-                        }
-                    }
-                }
-            }
+            final Pair<Set<String>, Set<AlertPatch>> vehicleJourneyAlerts = createVehicleJourneyAlerts(paddedSituationNumber, expireSituation, alert, affectsStructure.getVehicleJourneys());
+            idsToExpire.addAll(vehicleJourneyAlerts.getLeft());
+            patches.addAll(vehicleJourneyAlerts.getRight());
         }
+
 
         // Alerts are not partially updated - cancel ALL current related alerts before adding updated.
         idsToExpire.addAll(alertPatchService.getAllAlertPatches()
             .stream()
             .filter(alertPatch -> alertPatch.getSituationNumber().equals(situationNumber))
-            .map(alertPatch -> alertPatch.getId())
+            .map(AlertPatch::getId)
             .collect(Collectors.toList()));
 
-        if (!patches.isEmpty() | !idsToExpire.isEmpty()) {
+        if (!patches.isEmpty() || !idsToExpire.isEmpty()) {
 
             for (AlertPatch patch : patches) {
                 if (patch.getAlert() == null) {
                     patch.setAlert(alert);
                 }
-                if (patch.getStopConditions().isEmpty()) {
-                    updateStopConditions(patch, null);
+
+                if (patch.getAlert().effectiveStartDate == null) {
+                    patch.getAlert().effectiveStartDate = alert.effectiveStartDate;
                 }
+                if (patch.getAlert().effectiveEndDate == null) {
+                    patch.getAlert().effectiveEndDate = alert.effectiveEndDate;
+                }
+
                 patch.getAlert().alertType = situation.getReportType();
 
                 if (situation.getSeverity() != null) {
@@ -606,6 +230,497 @@ public class AlertsUpdateHandler {
         }
 
         return Pair.of(idsToExpire, patches);
+    }
+
+    private Pair<Set<String>, Set<AlertPatch>> createVehicleJourneyAlerts(String paddedSituationNumber, boolean expireSituation, Alert alert, AffectsScopeStructure.VehicleJourneys vjs) {
+        Set<String> idsToExpire = new HashSet<>();
+        Set<AlertPatch> patches = new HashSet<>();
+
+        if (vjs != null && !isListNullOrEmpty(vjs.getAffectedVehicleJourneies())) {
+            for (AffectedVehicleJourneyStructure affectedVehicleJourney :  vjs.getAffectedVehicleJourneies()) {
+
+                List<AffectedStopPointStructure> affectedStops = getAffectedStopPoints(affectedVehicleJourney);
+
+                List<VehicleJourneyRef> vehicleJourneyReves = affectedVehicleJourney.getVehicleJourneyReves();
+
+                if (!isListNullOrEmpty(vehicleJourneyReves)) {
+                    for (VehicleJourneyRef vehicleJourneyRef : vehicleJourneyReves) {
+
+                        List<AgencyAndId> tripIds = new ArrayList<>();
+
+                        AgencyAndId tripIdFromVehicleJourney = siriFuzzyTripMatcher.getTripId(vehicleJourneyRef.getValue());
+                        Date effectiveStartDate;
+                        Date effectiveEndDate;
+
+                        // Need to know if validity is set explicitly or calculated based on ServiceDate
+                        boolean effectiveValiditySetExplicitly = false;
+
+                        ZonedDateTime originAimedDepartureTime = (affectedVehicleJourney.getOriginAimedDepartureTime() != null ? affectedVehicleJourney.getOriginAimedDepartureTime() : ZonedDateTime.now());
+                        ServiceDate serviceDate = new ServiceDate(originAimedDepartureTime.getYear(), originAimedDepartureTime.getMonthValue(), originAimedDepartureTime.getDayOfMonth());
+
+                        if (tripIdFromVehicleJourney != null) {
+
+                            tripIds.add(tripIdFromVehicleJourney);
+
+                            // ServiceJourneyId matches - use provided validity
+                            effectiveStartDate = alert.effectiveStartDate;
+                            effectiveEndDate = alert.effectiveEndDate;
+
+                            effectiveValiditySetExplicitly = true;
+
+                        } else {
+                            tripIds = siriFuzzyTripMatcher.getTripIdForTripShortNameServiceDateAndMode(vehicleJourneyRef.getValue(),
+                                    serviceDate, TraverseMode.RAIL, TransmodelTransportSubmode.RAIL_REPLACEMENT_BUS);
+
+                            // ServiceJourneyId does NOT match - calculate validity based on originAimedDepartureTime
+                            effectiveStartDate = serviceDate.getAsDate();
+                            effectiveEndDate = serviceDate.next().getAsDate();
+
+                        }
+                        for (AgencyAndId tripId : tripIds) {
+
+                            if (!effectiveValiditySetExplicitly) {
+                                // Effective validity is set based on ServiceDate - need to calculate correct validity based on departuretimes
+
+                                // Calculate validity based on actual, planned departure/arrival for trip
+                                int tripDepartureTime = siriFuzzyTripMatcher.getTripDepartureTime(tripId);
+                                int tripArrivalTime = siriFuzzyTripMatcher.getTripArrivalTime(tripId);
+
+                                // ServiceJourneyId does NOT match - calculate validity based on serviceDate (calculated from originalAimedDepartureTime)
+                                effectiveStartDate = new Date(serviceDate.getAsDate().getTime() + tripDepartureTime * 1000);
+
+                                // Appending 6 hours to end-validity in case of delays.
+                                effectiveEndDate = new Date(effectiveStartDate.getTime() + (tripArrivalTime - tripDepartureTime + 6 * 3600) * 1000);
+
+                                // Verify that calculated validity does not exceed explicitly set validity
+                                if (effectiveStartDate.before(alert.effectiveStartDate)) {
+                                    effectiveStartDate = alert.effectiveStartDate;
+                                }
+                                if (effectiveEndDate.after(alert.effectiveEndDate)) {
+                                    effectiveEndDate = alert.effectiveEndDate;
+                                }
+
+                                if (effectiveStartDate.after(effectiveEndDate) || effectiveStartDate.equals(effectiveEndDate)) {
+                                    //Ignore this as situation is no longer valid
+                                    continue;
+                                }
+                            }
+                            if (effectiveEndDate == null) {
+                                effectiveEndDate = new Date(Long.MAX_VALUE);
+                            }
+                            if (!affectedStops.isEmpty()) {
+                                for (AffectedStopPointStructure affectedStop : affectedStops) {
+                                    AgencyAndId stop = siriFuzzyTripMatcher.getStop(affectedStop.getStopPointRef().getValue());
+                                    if (stop == null) {
+                                        continue;
+                                    }
+                                    // Creating unique, deterministic id for the alert
+                                    String id = paddedSituationNumber + tripId.getId() + "-" + new ServiceDate(effectiveStartDate).getAsString() + "-" + stop.getId();
+                                    if (expireSituation) {
+                                        idsToExpire.add(id);
+                                    } else {
+                                        //  A tripId for a given date may be reused for other dates not affected by this alert.
+                                        List<TimePeriod> timePeriodList = new ArrayList<>();
+                                        timePeriodList.add(new TimePeriod(effectiveStartDate.getTime() / 1000, effectiveEndDate.getTime() / 1000));
+
+                                        AlertPatch alertPatch = createAlertPatch(id, timePeriodList, affectedStop.getStopConditions());
+                                        alertPatch.setTrip(tripId);
+                                        alertPatch.setStop(stop);
+
+                                        Alert vehicleJourneyAlert = cloneAlertTexts(alert);
+                                        vehicleJourneyAlert.effectiveStartDate = effectiveStartDate;
+                                        vehicleJourneyAlert.effectiveEndDate = effectiveEndDate;
+
+                                        alertPatch.setAlert(vehicleJourneyAlert);
+
+                                        patches.add(alertPatch);
+                                    }
+                                }
+                            } else {
+                                String id = paddedSituationNumber + tripId.getId();
+                                if (expireSituation) {
+                                    idsToExpire.add(id);
+                                } else {
+                                    //  A tripId for a given date may be reused for other dates not affected by this alert.
+                                    List<TimePeriod> timePeriodList = new ArrayList<>();
+                                    timePeriodList.add(new TimePeriod(effectiveStartDate.getTime() / 1000, effectiveEndDate.getTime() / 1000));
+
+                                    AlertPatch alertPatch = createAlertPatch(id, timePeriodList, null);
+                                    alertPatch.setTrip(tripId);
+
+                                    Alert vehicleJourneyAlert = cloneAlertTexts(alert);
+                                    vehicleJourneyAlert.effectiveStartDate = effectiveStartDate;
+                                    vehicleJourneyAlert.effectiveEndDate = effectiveEndDate;
+
+                                    alertPatch.setAlert(vehicleJourneyAlert);
+
+                                    patches.add(alertPatch);
+                                }
+                            }
+                        }
+                    }
+                }
+
+                final FramedVehicleJourneyRefStructure framedVehicleJourneyRef = affectedVehicleJourney.getFramedVehicleJourneyRef();
+                if (framedVehicleJourneyRef != null) {
+                    final DataFrameRefStructure dataFrameRef = framedVehicleJourneyRef.getDataFrameRef();
+                    final String datedVehicleJourneyRef = framedVehicleJourneyRef.getDatedVehicleJourneyRef();
+
+                    AgencyAndId tripId = siriFuzzyTripMatcher.getTripId(datedVehicleJourneyRef);
+                    ServiceDate serviceDate = null;
+                    if (dataFrameRef != null && dataFrameRef.getValue() != null) {
+                        try {
+                            serviceDate = ServiceDate.parseString(dataFrameRef.getValue().replace("-", ""));
+                        } catch (ParseException e) {
+                            // Ignore field when not valid
+                        }
+                    }
+                    Date effectiveStartDate;
+                    Date effectiveEndDate;
+                    if (serviceDate != null) {
+                        // Calculate exact from-validity based on actual departure
+                        int tripDepartureTime = siriFuzzyTripMatcher.getTripDepartureTime(tripId);
+                        int tripArrivalTime = siriFuzzyTripMatcher.getTripArrivalTime(tripId);
+
+                        // ServiceJourneyId does NOT match - calculate validity based on serviceDate (calculated from originalAimedDepartureTime)
+                        effectiveStartDate = new Date(serviceDate.getAsDate().getTime() + tripDepartureTime * 1000);
+
+                        // Appending 6 hours to end-validity in case of delays.
+                        effectiveEndDate = new Date(effectiveStartDate.getTime() + (tripArrivalTime - tripDepartureTime + 6 * 3600) * 1000);
+
+                        // Verify that calculated validity does not exceed explicitly set validity
+                        if (effectiveStartDate.before(alert.effectiveStartDate)) {
+                            effectiveStartDate = alert.effectiveStartDate;
+                        }
+                        if (effectiveEndDate.after(alert.effectiveEndDate)) {
+                            effectiveEndDate = alert.effectiveEndDate;
+                        }
+
+                        if (effectiveStartDate.after(effectiveEndDate) || effectiveStartDate.equals(effectiveEndDate)) {
+                            //Ignore this as situation is no longer valid
+                            continue;
+                        }
+                    } else {
+                        effectiveStartDate = alert.effectiveStartDate;
+                        effectiveEndDate = alert.effectiveEndDate;
+                    }
+
+                    if (effectiveEndDate == null) {
+                        effectiveEndDate = new Date(Long.MAX_VALUE);
+                    }
+
+                    if (!affectedStops.isEmpty()) {
+                        for (AffectedStopPointStructure affectedStop : affectedStops) {
+                            AgencyAndId stop = siriFuzzyTripMatcher.getStop(affectedStop.getStopPointRef().getValue());
+                            if (stop == null) {
+                                continue;
+                            }
+                            // Creating unique, deterministic id for the alert
+                            String id = paddedSituationNumber + tripId.getId() + "-" + new ServiceDate(effectiveStartDate).getAsString() + "-" + stop.getId();
+                            if (expireSituation) {
+                                idsToExpire.add(id);
+                            } else {
+                                //  A tripId for a given date may be reused for other dates not affected by this alert.
+                                List<TimePeriod> timePeriodList = new ArrayList<>();
+                                timePeriodList.add(new TimePeriod(effectiveStartDate.getTime() / 1000, effectiveEndDate.getTime() / 1000));
+
+                                AlertPatch alertPatch = createAlertPatch(id, timePeriodList, affectedStop.getStopConditions());
+                                alertPatch.setTrip(tripId);
+                                alertPatch.setStop(stop);
+
+                                Alert vehicleJourneyAlert = cloneAlertTexts(alert);
+                                vehicleJourneyAlert.effectiveStartDate = effectiveStartDate;
+                                vehicleJourneyAlert.effectiveEndDate = effectiveEndDate;
+
+                                alertPatch.setAlert(vehicleJourneyAlert);
+
+                                patches.add(alertPatch);
+                            }
+                        }
+                    } else {
+                        String id = paddedSituationNumber + tripId.getId();
+                        if (expireSituation) {
+                            idsToExpire.add(id);
+                        } else {
+                            //  A tripId for a given date may be reused for other dates not affected by this alert.
+                            List<TimePeriod> timePeriodList = new ArrayList<>();
+                            timePeriodList.add(new TimePeriod(effectiveStartDate.getTime() / 1000, effectiveEndDate.getTime() / 1000));
+
+                            AlertPatch alertPatch = createAlertPatch(id, timePeriodList, null);
+
+                            alertPatch.setTrip(tripId);
+
+                            Alert vehicleJourneyAlert = cloneAlertTexts(alert);
+                            vehicleJourneyAlert.effectiveStartDate = effectiveStartDate;
+                            vehicleJourneyAlert.effectiveEndDate = effectiveEndDate;
+
+                            alertPatch.setAlert(vehicleJourneyAlert);
+
+                            patches.add(alertPatch);
+                        }
+                    }
+
+                }
+            }
+        }
+        return Pair.of(idsToExpire, patches);
+    }
+
+    private Pair<Set<String>, Set<AlertPatch>> createNetworkAlerts(String paddedSituationNumber, boolean expireSituation, ArrayList<TimePeriod> periods, Alert alert, AffectsScopeStructure.Networks networks) {
+        Set<String> idsToExpire = new HashSet<>();
+        Set<AlertPatch> patches = new HashSet<>();
+        if (networks != null && !isListNullOrEmpty(networks.getAffectedNetworks())) {
+
+            for (AffectsScopeStructure.Networks.AffectedNetwork affectedNetwork : networks.getAffectedNetworks()) {
+
+                List<AffectedLineStructure> affectedLines = affectedNetwork.getAffectedLines();
+                if (affectedLines != null && !isListNullOrEmpty(affectedLines)) {
+                    for (AffectedLineStructure line : affectedLines) {
+
+                        LineRef lineRef = line.getLineRef();
+
+                        if (lineRef == null || lineRef.getValue() == null) {
+                            continue;
+                        }
+
+
+                        AffectedLineStructure.Routes routes = line.getRoutes();
+
+                        List<AffectedStopPointStructure> affectedStops = getAffectedStopPointStructures(routes);
+
+                        Set<Route> affectedRoutes = siriFuzzyTripMatcher.getRoutes(lineRef.getValue());
+
+                        for (Route route : affectedRoutes) {
+                            if (!affectedStops.isEmpty()) {
+                                for (AffectedStopPointStructure affectedStop : affectedStops) {
+                                    AgencyAndId stop = siriFuzzyTripMatcher.getStop(affectedStop.getStopPointRef().getValue());
+                                    if (stop == null) {
+                                        continue;
+                                    }
+                                    String id = paddedSituationNumber + route.getId() + "-" + stop.getId();
+                                    if (expireSituation) {
+                                        idsToExpire.add(id);
+                                    } else {
+                                        AlertPatch alertPatch = createAlertPatch(id, periods, affectedStop.getStopConditions());
+                                        alertPatch.setRoute(route.getId());
+                                        alertPatch.setStop(stop);
+
+                                        Alert vehicleJourneyAlert = cloneAlertTexts(alert);
+
+                                        alertPatch.setAlert(vehicleJourneyAlert);
+
+                                        patches.add(alertPatch);
+                                    }
+                                }
+                            } else {
+                                String id = paddedSituationNumber + route.getId();
+                                if (expireSituation) {
+                                    idsToExpire.add(id);
+                                } else {
+                                    AlertPatch alertPatch = createAlertPatch(id, periods, null);
+                                    alertPatch.setRoute(route.getId());
+                                    patches.add(alertPatch);
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    NetworkRefStructure networkRef = affectedNetwork.getNetworkRef();
+                    if (networkRef == null || networkRef.getValue() == null) {
+                        continue;
+                    }
+                    String networkId = networkRef.getValue();
+
+                    String id = paddedSituationNumber + networkId;
+                    if (expireSituation) {
+                        idsToExpire.add(id);
+                    } else {
+                        AlertPatch alertPatch = createAlertPatch(id, periods, null);
+                        // TODO: Add alert for entire network/Operator
+                        patches.add(alertPatch);
+                    }
+                }
+            }
+        }
+        return Pair.of(idsToExpire, patches);
+    }
+
+    private Pair<Set<String>, Set<AlertPatch>> createStopAlerts(String paddedSituationNumber, boolean expireSituation, ArrayList<TimePeriod> periods, Set<Route> stopRoutes, AffectsScopeStructure.StopPoints stopPoints, AffectsScopeStructure.StopPlaces stopPlaces) {
+
+        Set<String> idsToExpire = new HashSet<>();
+        Set<AlertPatch> patches = new HashSet<>();
+
+        HashMap<String, AgencyAndId> situationStopIdMap = new HashMap<>();
+        HashMap<String, List<RoutePointTypeEnumeration>> situationStopConditionsMap = new HashMap<>();
+
+        if (stopPlaces != null && !isListNullOrEmpty(stopPlaces.getAffectedStopPlaces())) {
+
+            for (AffectedStopPlaceStructure stopPoint : stopPlaces.getAffectedStopPlaces()) {
+                StopPlaceRef stopPlace = stopPoint.getStopPlaceRef();
+                if (stopPlace == null || stopPlace.getValue() == null) {
+                    continue;
+                }
+
+                AgencyAndId stopId = siriFuzzyTripMatcher.getStop(stopPlace.getValue());
+
+                String id = paddedSituationNumber + stopPlace.getValue();
+                situationStopIdMap.put(id, stopId);
+            }
+        } else if (stopPoints != null && !isListNullOrEmpty(stopPoints.getAffectedStopPoints())) {
+
+            for (AffectedStopPointStructure stopPoint : stopPoints.getAffectedStopPoints()) {
+                StopPointRef stopPointRef = stopPoint.getStopPointRef();
+                if (stopPointRef == null || stopPointRef.getValue() == null) {
+                    continue;
+                }
+
+                AgencyAndId stopId = siriFuzzyTripMatcher.getStop(stopPointRef.getValue());
+
+                String id = paddedSituationNumber + stopPointRef.getValue();
+                situationStopIdMap.put(id, stopId);
+
+                situationStopConditionsMap.put(id, stopPoint.getStopConditions());
+            }
+        }
+
+
+        if (!situationStopIdMap.isEmpty()) {
+            for (Map.Entry<String, AgencyAndId> agencyAndIdEntry : situationStopIdMap.entrySet()) {
+
+                String id = agencyAndIdEntry.getKey();
+                AgencyAndId stopId = agencyAndIdEntry.getValue();
+
+                List<RoutePointTypeEnumeration> stopConditions = null;
+                if (situationStopConditionsMap.containsKey(id)) {
+                    stopConditions = situationStopConditionsMap.get(id);
+                }
+
+                if (expireSituation) {
+                    idsToExpire.add(id);
+                } else {
+                    if (stopId != null) {
+
+                        if (stopRoutes.isEmpty()) {
+                            AlertPatch stopOnlyAlertPatch = createAlertPatch(id, periods, stopConditions);
+                            stopOnlyAlertPatch.setStop(stopId);
+                            patches.add(stopOnlyAlertPatch);
+                        } else {
+                            //Adding combination of stop & route
+                            for (Route route : stopRoutes) {
+                                id = paddedSituationNumber + stopId.getId() + "-" + route.getId().getId();
+
+                                AlertPatch alertPatch = createAlertPatch(id, periods, stopConditions);
+                                alertPatch.setStop(stopId);
+                                alertPatch.setRoute(route.getId());
+                                patches.add(alertPatch);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return Pair.of(idsToExpire, patches);
+    }
+
+    private Pair<Set<String>, Set<AlertPatch>> createOperatorAlerts(String paddedSituationNumber, boolean expireSituation, ArrayList<TimePeriod> periods, AffectsScopeStructure.Operators operators) {
+        Set<AlertPatch> operatorPatches = new HashSet<>();
+        Set<String> operatorIdsToExpire = new HashSet<>();
+        if (operators != null && !isListNullOrEmpty(operators.getAffectedOperators())) {
+            for (AffectedOperatorStructure affectedOperator : operators.getAffectedOperators()) {
+
+                OperatorRefStructure operatorRef = affectedOperator.getOperatorRef();
+                if (operatorRef == null || operatorRef.getValue() == null) {
+                    continue;
+                }
+
+                // SIRI Operators are mapped to OTP Agency, this i probably wrong - but
+                // I leave this for now.
+                String agencyId = operatorRef.getValue();
+
+                String id = paddedSituationNumber + agencyId;
+                if (expireSituation) {
+                    operatorIdsToExpire.add(id);
+                } else {
+                    AlertPatch alertPatch = createAlertPatch(id, periods, null);
+                    alertPatch.setAgencyId(agencyId);
+                    operatorPatches.add(alertPatch);
+                }
+            }
+        }
+        return  Pair.of(operatorIdsToExpire, operatorPatches);
+    }
+
+    private boolean areAllTextsEmpty(Alert alert) {
+        return (alert.alertHeaderText == null || alert.alertHeaderText.toString().isEmpty()) &&
+        (alert.alertDescriptionText == null || alert.alertDescriptionText.toString().isEmpty()) &&
+        (alert.alertDetailText == null || alert.alertDetailText.toString().isEmpty());
+    }
+
+    private List<AffectedStopPointStructure> getAffectedStopPoints(AffectedVehicleJourneyStructure affectedVehicleJourney) {
+        List<AffectedStopPointStructure> affectedStops = new ArrayList<>();
+
+        List<AffectedRouteStructure> routes = affectedVehicleJourney.getRoutes();
+        // Resolve AffectedStop-ids
+        if (routes != null) {
+            for (AffectedRouteStructure route : routes) {
+                if (route.getStopPoints() != null) {
+                    List<Serializable> stopPointsList = route.getStopPoints().getAffectedStopPointsAndLinkProjectionToNextStopPoints();
+                    for (Serializable serializable : stopPointsList) {
+                        if (serializable instanceof AffectedStopPointStructure) {
+                            AffectedStopPointStructure stopPointStructure = (AffectedStopPointStructure) serializable;
+                            affectedStops.add(stopPointStructure);
+                        }
+                    }
+                }
+            }
+        }
+        return affectedStops;
+    }
+
+    private Set<Route> getRoutes(AffectsScopeStructure.Networks networks) {
+        Set<Route> stopRoutes = new HashSet<>();
+        if (networks != null) {
+            for (AffectsScopeStructure.Networks.AffectedNetwork affectedNetwork : networks.getAffectedNetworks()) {
+                List<AffectedLineStructure> affectedLines = affectedNetwork.getAffectedLines();
+                if (!isListNullOrEmpty(affectedLines)) {
+                    for (AffectedLineStructure line : affectedLines) {
+
+                        LineRef lineRef = line.getLineRef();
+
+                        if (lineRef != null && lineRef.getValue() != null) {
+                            stopRoutes.addAll(siriFuzzyTripMatcher.getRoutes(lineRef.getValue()));
+                        }
+                    }
+                }
+            }
+        }
+        return stopRoutes;
+    }
+
+    private List<AffectedStopPointStructure> getAffectedStopPointStructures(AffectedLineStructure.Routes routes) {
+        List<AffectedStopPointStructure> affectedStopsList = new ArrayList<>();
+        if (routes != null) {
+            for (AffectedRouteStructure route : routes.getAffectedRoutes()) {
+                if (route.getStopPoints() != null) {
+                    List<Serializable> stopPointsList = route.getStopPoints().getAffectedStopPointsAndLinkProjectionToNextStopPoints();
+                    for (Serializable serializable : stopPointsList) {
+                        if (serializable instanceof AffectedStopPointStructure) {
+                            AffectedStopPointStructure stopPointStructure = (AffectedStopPointStructure) serializable;
+                            affectedStopsList.add(stopPointStructure);
+                        }
+                    }
+                }
+            }
+        }
+        return affectedStopsList;
+    }
+
+    private AlertPatch createAlertPatch(String id, List<TimePeriod> periods, List<RoutePointTypeEnumeration> stopConditions) {
+        AlertPatch alertPatch = new AlertPatch();
+        alertPatch.setTimePeriods(periods);
+        alertPatch.setId(id);
+        alertPatch.getStopConditions().addAll(resolveStopConditions(stopConditions));
+        return alertPatch;
     }
 
 
@@ -679,7 +794,7 @@ public class AlertsUpdateHandler {
         return alertUrls;
     }
 
-    private void updateStopConditions(AlertPatch alertPatch, List<RoutePointTypeEnumeration> stopConditions) {
+    private Set<StopCondition> resolveStopConditions(List<RoutePointTypeEnumeration> stopConditions) {
         Set<StopCondition> alertStopConditions = new HashSet<>();
         if (stopConditions != null) {
             for (RoutePointTypeEnumeration stopCondition : stopConditions) {
@@ -699,6 +814,8 @@ public class AlertsUpdateHandler {
                     case START_POINT:
                         alertStopConditions.add(StopCondition.START_POINT);
                         break;
+                    default:
+                        // Ignore
                 }
             }
         }
@@ -708,14 +825,11 @@ public class AlertsUpdateHandler {
             alertStopConditions.add(StopCondition.DESTINATION);
 
         }
-        alertPatch.getStopConditions().addAll(alertStopConditions);
+        return alertStopConditions;
     }
 
     private boolean isListNullOrEmpty(List list) {
-        if (list == null || list.isEmpty()) {
-            return true;
-        }
-        return false;
+        return list == null || list.isEmpty();
     }
 
 
@@ -847,7 +961,7 @@ public class AlertsUpdateHandler {
      */
     private I18NString getTranslatedString(List<DefaultedTextStructure> input) {
         Map<String, String> translations = new HashMap<>();
-        if (input != null && input.size() > 0) {
+        if (input != null && !input.isEmpty()) {
             for (DefaultedTextStructure textStructure : input) {
                 String language = "";
                 String value = "";
@@ -873,6 +987,11 @@ public class AlertsUpdateHandler {
 
     public void setAlertPatchService(AlertPatchService alertPatchService) {
         this.alertPatchService = alertPatchService;
+    }
+
+    // For testing purposes
+    public AlertPatchService getAlertPatchService() {
+        return alertPatchService;
     }
 
     public long getEarlyStart() {
