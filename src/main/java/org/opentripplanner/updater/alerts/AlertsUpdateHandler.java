@@ -149,6 +149,10 @@ public class AlertsUpdateHandler {
             periods.add(new TimePeriod(0, Long.MAX_VALUE));
         }
 
+        if (situation.getPriority() != null && situation.getPriority().intValue() > 0) {
+            alert.priority = situation.getPriority().intValue();
+        }
+
         String situationNumber;
 
         if (situation.getSituationNumber() != null) {

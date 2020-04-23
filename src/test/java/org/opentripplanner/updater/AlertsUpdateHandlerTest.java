@@ -31,6 +31,7 @@ import uk.org.siri.siri20.StopPointRef;
 import uk.org.siri.siri20.VehicleJourneyRef;
 import uk.org.siri.siri20.WorkflowStatusEnumeration;
 
+import java.math.BigInteger;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.Collection;
@@ -64,6 +65,9 @@ public class AlertsUpdateHandlerTest extends GtfsTest {
                 ZonedDateTime.parse("2014-01-01T23:59:59+01:00"),
                 createAffectsStop(stopConditions, stopId));
 
+        long priorityValue = 3;
+        ptSituation.setPriority(BigInteger.valueOf(priorityValue));
+
         InfoLinkStructure infoLink = new InfoLinkStructure();
         final String infoLinkUri = "http://www.test.com";
         final String infoLinkLabel = "testlabel";
@@ -94,6 +98,7 @@ public class AlertsUpdateHandlerTest extends GtfsTest {
         assertEquals(situationNumber, alertPatch.getSituationNumber());
         assertEquals(reportType, alertPatch.getAlert().alertType);
         assertEquals(severity.value(), alertPatch.getAlert().severity);
+        assertEquals(priorityValue, alertPatch.getAlert().priority);
         assertNotNull(alertPatch.getStop());
         assertEquals(stopId, alertPatch.getStop().getId());
 

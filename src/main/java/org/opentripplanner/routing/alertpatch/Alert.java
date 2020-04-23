@@ -43,6 +43,8 @@ public class Alert implements Serializable {
     @XmlElement
     public I18NString alertUrl;
 
+    public int priority;
+
     private List<AlertUrl> alertUrlList = new ArrayList<>();
 
     //null means unknown

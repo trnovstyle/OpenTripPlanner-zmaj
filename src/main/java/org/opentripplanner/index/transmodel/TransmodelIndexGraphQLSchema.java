@@ -1373,6 +1373,12 @@ public class TransmodelIndexGraphQLSchema {
                         .deprecate("Not yet officially supported. May be removed or renamed.")
                         .dataFetcher(environment -> getAgency(((AlertPatch) environment.getSource()).getFeedId()))
                         .build())
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("priority")
+                        .type(Scalars.GraphQLInt)
+                        .description("Priority-level of this situation, 1 is highest priority, 0 means unknown.")
+                        .dataFetcher(environment -> ((AlertPatch) environment.getSource()).getAlert().priority)
+                        .build())
                 .build();
 
 
