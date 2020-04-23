@@ -149,10 +149,6 @@ public class AlertsUpdateHandler {
             periods.add(new TimePeriod(0, Long.MAX_VALUE));
         }
 
-        if (situation.getPriority() != null && situation.getPriority().intValue() > 0) {
-            alert.priority = situation.getPriority().intValue();
-        }
-
         String situationNumber;
 
         if (situation.getSituationNumber() != null) {
@@ -212,6 +208,10 @@ public class AlertsUpdateHandler {
                 }
 
                 patch.getAlert().alertType = situation.getReportType();
+
+                if (situation.getPriority() != null && situation.getPriority().intValue() > 0) {
+                    patch.getAlert().priority = situation.getPriority().intValue();
+                }
 
                 if (situation.getSeverity() != null) {
                     patch.getAlert().severity = situation.getSeverity().value();
