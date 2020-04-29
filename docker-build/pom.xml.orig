@@ -290,9 +290,7 @@
                 <version>2.20</version>
                 <configuration>
                     <useSystemClassLoader>false</useSystemClassLoader>
-                    <!-- <argLine>-Xmx2G</argLine> -->
-					<argLine>${surefireArgLine}</argLine>
-					<!-- <argLine>${surefireArgLine} -Xmx2G</argLine> -->
+                    <argLine>-Xmx2G</argLine>
                     <!-- Jenkins needs XML test reports to determine whether the build is stable. -->
                     <disableXmlReport>false</disableXmlReport>
                 </configuration>
@@ -454,7 +452,7 @@
         <repository>
             <id>osgeo</id>
             <name>Open Source Geospatial Foundation Repository</name>
-            <url>https://repo.osgeo.org/repository/geotools-releases/</url>
+            <url>http://download.osgeo.org/webdav/geotools/</url>
         </repository>
         <repository>
             <id>axis</id>
@@ -471,7 +469,6 @@
             <name>Onebusaway Releases Repo</name>
             <url>http://nexus.onebusaway.org/content/repositories/releases/</url>
         </repository>
-
     </repositories>
 
     <dependencies>
@@ -647,21 +644,10 @@
         <dependency>
             <groupId>org.entur</groupId>
             <artifactId>siri-java-model</artifactId>
-            <version>0.12</version>
+            <version>0.13-SNAPSHOT</version>
         </dependency>
 
-        <dependency>
-            <groupId>org.entur</groupId>
-            <artifactId>siri-protobuf-mapper</artifactId>
-            <version>0.2</version>
-        </dependency>
-
-        <dependency>
-            <groupId>com.google.cloud</groupId>
-            <artifactId>google-cloud-pubsub</artifactId>
-            <version>1.100.0</version>
-        </dependency>
-
+        <!-- SIRI -->
         <dependency>
             <groupId>org.apache.activemq</groupId>
             <artifactId>activemq-client</artifactId>
@@ -952,11 +938,6 @@
             <version>2.3.0</version>
             <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>com.google.cloud</groupId>
-            <artifactId>google-cloud-pubsub</artifactId>
-            <version>1.100.0</version>
-        </dependency>
     </dependencies>
 
     <!--
@@ -970,83 +951,6 @@
   -->
 
     <profiles>
-		<profile>
-			<id>junit-report</id>
-			<build>
-				<plugins>
-
-			<plugin>
-				<groupId>org.jacoco</groupId>
-				<artifactId>jacoco-maven-plugin</artifactId>
-				<version>0.8.5</version>
-		        <executions>
-			        <!--
-			            Prepares the property pointing to the JaCoCo runtime agent which
-			            is passed as VM argument when Maven the Surefire plugin is executed.
-			        -->
-			        <execution>
-			            <id>pre-unit-test</id>
-			            <goals>
-			                <goal>prepare-agent</goal>
-			            </goals>
-			            <configuration>
-			                <!-- Sets the path to the file which contains the execution data. -->
-			                <destFile>${project.build.directory}/coverage-reports/jacoco-ut.exec</destFile>
-			                <!--
-			                    Sets the name of the property containing the settings
-			                    for JaCoCo runtime agent.
-			                -->
-			                <propertyName>surefireArgLine</propertyName>
-			            </configuration>
-			        </execution>
-			        <!--
-			            Ensures that the code coverage report for unit tests is created after
-			            unit tests have been run.
-			        -->
-			        <execution>
-			            <id>post-unit-test</id>
-			            <phase>test</phase>
-			            <goals>
-			                <goal>report</goal>
-			            </goals>
-			            <configuration>
-			                <!-- Sets the path to the file which contains the execution data. -->
-			                <dataFile>${project.build.directory}/coverage-reports/jacoco-ut.exec</dataFile>
-			                <!-- Sets the output directory for the code coverage report. -->
-			                <outputDirectory>${project.reporting.outputDirectory}/jacoco-ut</outputDirectory>
-			            </configuration>
-			        </execution>
-		        </executions>
-			</plugin>
-			<plugin>
-			    <groupId>org.apache.maven.plugins</groupId>
-			    <artifactId>maven-failsafe-plugin</artifactId>
-			    <version>2.15</version>
-			    <executions>
-			        <!--
-			            Ensures that both integration-test and verify goals of the Failsafe Maven
-			            plugin are executed.
-			        -->
-			        <execution>
-			            <id>integration-tests</id>
-			            <goals>
-			                <goal>integration-test</goal>
-			                <goal>verify</goal>
-			            </goals>
-			            <configuration>
-			                <!-- Sets the VM argument line used when integration tests are run. -->
-			                <argLine>${failsafeArgLine}</argLine>
-			                <!--
-			                    Skips integration tests if the value of skip.integration.tests property
-			                    is true
-			                -->
-			            </configuration>
-			        </execution>
-			    </executions>
-			</plugin>
-				</plugins>
-			</build>
-		</profile>
         <profile>
             <id>rutebanken</id>
             <properties>

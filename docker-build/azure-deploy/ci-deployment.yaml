@@ -1,0 +1,19 @@
+trigger:
+  - OTP-*
+pool: 'Tokyo'
+#vmImage: 'ubuntu latest'
+steps:
+  - task: DownloadSecureFile@1
+    name: settingsxml
+    inputs:
+      secureFile: settings.xml
+
+  - bash: cp -p $(settingsxml.secureFilePath) /tmp/settings.xml
+  - task: Maven@3
+    inputs:
+      goals: 'clean package'
+      mavenAuthenticateFeed: true
+      options: '-Pjunit-report --settings /tmp/settings.xml'
+      jdkVersionOption: '1.11'
+      jdkArchitectureOption: 'x64'
+      mavenOptions: '-Xmx6G -DskipTests'

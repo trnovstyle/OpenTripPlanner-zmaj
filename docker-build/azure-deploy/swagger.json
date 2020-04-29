@@ -1,0 +1,133 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "OpenTripPlanner",
+    "description": "API for journey planning",
+    "version": "EnTur 1.0"
+  },
+  "paths": {
+    "/otp": {
+      "get": {
+        "tags": [
+          "Status"
+        ],
+        "summary": "Get server status",
+        "responses": {
+          "200": {
+            "description": "Successful retrieval of server status.",
+            "content": {
+              "text/json": {
+                "schema": {
+                  "type": "object",
+                  "items": {
+                    "$ref": "#/components/schemas/ServerInfo"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {  
+    "schemas": {
+      "serverVersion": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "string",
+            "description": "Gets build id",
+            "nullable": true
+          },
+          "major": {
+            "type": "integer",
+            "description": "Major version id",
+            "format": "int32"
+          },
+          "minor": {
+            "type": "integer",
+            "description": "Minor version id",
+            "format": "int32",
+            "readOnly": true
+          },          
+                                                        "incremental": {
+            "type": "integer",
+            "description": "Minor version id",
+            "format": "int32",
+            "readOnly": true
+          },
+          "qualifier": {
+            "type": "string",
+            "description": "type of build, SNAPSHOT/?",
+            "readOnly": true,
+            "nullable": false
+          },
+          "commit": {
+            "type": "string",
+            "description": "id for commit of build",
+            "readOnly": true,
+            "nullable": false
+          },
+          "describe": {
+            "type": "string",
+            "description": "description of GIT commit for this build",
+            "readOnly": true,
+            "nullable": false
+          },
+          "commit_time": {
+            "type": "string",
+            "description": "when build was commited, datetime",
+            "readOnly": true,
+            "nullable": false
+          },
+          "build_time": {
+            "type": "string",
+            "description": "build_time of build",
+            "readOnly": true,
+            "nullable": false
+          },
+          "longVersionString": {
+            "type": "string",
+            "description": "contains concatinated build info",
+            "readOnly": true,
+            "nullable": false
+          },
+          "shortVersionString": {
+            "type": "string",
+            "description": "contains d build info",
+            "readOnly": true,
+            "nullable": false
+          },
+          "uid": {
+            "type": "string",
+            "description": "uniqueid for build",
+            "readOnly": true,
+            "nullable": false
+                                                                                  }
+        },
+        "description": "Server version data object."
+      },
+                             "ServerInfo": {
+                             "type": "object",
+        "properties": {
+          "value": {
+            "$ref": "#/components/schemas/serverVersion"
+          },
+                                                        "cpuName": {
+            "type": "string",
+            "description": "type of CPU of machine",
+            "readOnly": true,
+            "nullable": false
+                                                                                  },
+                                                       "nCores": {
+            "type": "integer",
+            "description": "Number of cores in machine",
+            "format": "int32",
+            "readOnly": true
+          }
+       }
+                             }
+    }
+  }
+}

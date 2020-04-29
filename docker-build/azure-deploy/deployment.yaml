@@ -1,0 +1,121 @@
+trigger:
+  - OTP-TO_BE_DEFINED
+  -
+pool: 'Tokyo'
+  #vmImage: 'ubuntu latest'
+
+variables:
+  dockerRegistryServiceConnection: 'TJPCRPROD'
+  buildVersion: '0.1.$(Build.BuildId)'
+
+steps:
+  # Put settings with Azure Artifacts repository
+  - task: DownloadSecureFile@1
+    name: settingsxml
+    inputs:
+      secureFile: settings.xml
+
+  - bash: cp -p $(settingsxml.secureFilePath) /tmp/settings.xml
+  # Build Java project
+  - task: Maven@3
+    inputs:
+      goals: 'clean package'
+      mavenAuthenticateFeed: true
+      options: '-Pjunit-report --settings /tmp/settings.xml'
+      jdkVersionOption: '1.11'
+      jdkArchitectureOption: 'x64'
+      mavenOptions: '-Xmx6G'
+  # Publish Code Coverage report
+  - task: PublishCodeCoverageResults@1
+    inputs:
+      codeCoverageTool: 'JaCoCo'
+      reportDirectory: $(System.DefaultWorkingDirectory)/target/site/jacoco-ut/**/*.*
+      summaryFileLocation: $(System.DefaultWorkingDirectory)/target/site/jacoco-ut/jacoco.xml
+  # Copy jar's for Dockerfile to find
+  - task: Bash@3
+    inputs:
+      filePath: docker-build/build-docker-image.sh
+  # Build and push Docker image
+  - task: Docker@2
+    inputs:
+      command: buildAndPush
+      dockerfile: $(System.DefaultWorkingDirectory)/docker-build/Dockerfile
+      buildContext : '$(Build.SourcesDirectory)'
+      containerRegistry: $(dockerRegistryServiceConnection)
+      repository: otp
+      tags: |
+        $(buildVersion)
+        latest
+  # Increment app version in helm chart to match docker app version
+  - task: 'Bash@3'
+    inputs:
+      targetType: 'inline'
+      script: |
+        sed -i 's/appVersion:.*/appVersion: $(buildVersion)/' docker-build/helm/otp/Chart.yaml /
+        sed -i 's/version:.*/version: $(buildVersion)/' docker-build/helm/otp//Chart.yaml /
+        cat docker-build/helm/otp//Chart.yaml
+  # Install the latest version of helm
+  - task: HelmInstaller@1
+    displayName: 'Initialize Helm'
+    inputs:
+      helmVersionToInstall: '3.1.2'
+  # Package the helm chart before it is pushed to the Azure container regristy
+  - task: HelmDeploy@0
+    displayName: 'Package Helm Chart'
+    inputs:
+      command: 'package'
+      chartPath: 'docker-build/helm/otp'
+      chartVersion: $(buildVersion)
+      destination: $(Build.ArtifactStagingDirectory)
+      save: false
+  # Push the package to the Azure container regristy
+  - task: AzureCLI@2
+    displayName: 'Push Helm Chart'
+    inputs:
+      azureSubscription: 'TJPDevOps-CN'
+      scriptType: 'bash'
+      scriptLocation: 'inlineScript'
+      inlineScript: |
+        export HELM_EXPERIMENTAL_OCI=1
+        ls $(Build.ArtifactStagingDirectory)
+        az acr helm push \
+          --name 'TJPCRPROD' \
+          $(Build.ArtifactStagingDirectory)/otp-$(buildVersion).tgz
+  - task: AzureKeyVault@1
+    inputs:
+      azureSubscription: 'TJPDevOps-CN'
+      KeyVaultName: 'TJP-INFRA-KV-DEV'
+      SecretsFilter: '*'
+
+  #upload swagger.json to blobstaorage
+  - task: PowerShell@2
+    inputs:
+      targetType: 'inline'
+      script: |        
+        If(-not(Get-InstalledModule Az -ErrorAction silentlycontinue))
+        {
+          Install-Module -Name Az  -Confirm:$False -Force -AllowClobber
+        } 
+        $ctx = New-AzStorageContext -StorageAccountName "tjpsageo" -StorageAccountKey $(TJPSAGEO-AZURE-BLOB-STORAGE-KEY)         
+        Set-AzStorageBlobContent -File $(Build.Repository.LocalPath)/docker-build/azure-deploy/swagger.json -Container "otp-service" -Blob "$(buildVersion)_swagger.json" -Context $ctx
+        
+  - task: TriggerBuild@3
+    inputs:
+      definitionIsInCurrentTeamProject: true
+      buildDefinition: 'Infra'
+      queueBuildForUserThatTriggeredBuild: true
+      ignoreSslCertificateErrors: false
+      useSameSourceVersion: false
+      useCustomSourceVersion: false
+      useSameBranch: false
+      branchToUse: 'master'
+      waitForQueuedBuildsToFinish: false
+      storeInEnvironmentVariable: true
+      buildParameters: "ServiceName: resesok-otp, ServiceBuildVersion: $(buildVersion), ServiceBranchName: $(Build.SourceBranchName)"
+      authenticationMethod: 'Personal Access Token'
+      password: $(BUILD-TRIGGER-PAT)
+      enableBuildInQueueCondition: false
+      dependentOnSuccessfulBuildCondition: false
+      dependentOnFailedBuildCondition: false
+      checkbuildsoncurrentbranch: false
+      failTaskIfConditionsAreNotFulfilled: false

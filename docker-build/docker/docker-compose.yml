@@ -1,0 +1,13 @@
+version: '3'
+services:
+  resesok-otp:
+    build: .
+    container_name: resesok-otp
+    image: tokyo/resesok-prova
+    environment:
+      - TJPSAGEO_AZURE_BLOB_STORAGE_KEY=${AZ_KEY}
+      - STORAGE_ACCOUNT_NAME=${AZ_USER}
+    ports:
+    - 9001:8080
+    expose:
+      - 9001
