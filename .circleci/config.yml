@@ -134,6 +134,13 @@ aliases:
          Version: $APP_VERSION \n
          User: $CIRCLE_USERNAME"
 
+  - &post_build
+    name: Trigger downstream builds
+    command: |
+      echo 'export CIRCLE_SHA1="$CIRCLE_SHA1"' >> $BASH_ENV
+      echo 'export CIRCLE_PROJECT_REPONAME="$CIRCLE_PROJECT_REPONAME"' >> $BASH_ENV
+      /tools/trigger_build_v2.sh "entur/otp-deployment-config.git" "otp-1" "$(git log -1 --pretty=%B)"
+
 commands:
   slack-status:
     parameters:
@@ -180,6 +187,7 @@ jobs:
       # Cannot use -o because of snapshot dependencies.
       - run: *get-version-git-tag
       - run: mvn deploy -s /tools/m2/settings.xml -DskipTests
+      - run: *post_build
       - persist_to_workspace:
           root: ~/project
           paths:
