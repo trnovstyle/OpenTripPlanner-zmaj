@@ -29,9 +29,222 @@
         }
       }
     }
-  },
+	,"/otp/routers/default/plan": {
+      "get": {
+        "tags": [
+          "Trip planing"
+        ],
+        "summary": "Get journey suggestions between two locations",
+		"parameters" : [ 
+			{
+			  "name" : "fromPlace",
+			  "in" : "query",
+			  "description" : "starting location of trip as long, lat or stop as SAM:SE:276:StopPlace:9021012080032000 or specific quay at stop as SAM:SE:276:Quay:9022012080032002",
+			  "required" : true,
+			  "schema": {
+					"$ref": "#/components/schemas/reqLocation"
+			  }		
+			},
+			{
+			  "name" : "toPlace",
+			  "in" : "query",
+			  "description" : "end location of trip as long, lat or stop",
+			  "required" : true,
+			  "schema": {
+				"$ref": "#/components/schemas/reqLocation"
+				}		   		
+			},
+			{
+			  "name" : "date",
+			  "in" : "query",
+			  "description" : "MM-DD-YYY, date of trip (arrival or departure depending on ArriveBy flag)",
+			  "required" : false,
+			  "schema": {
+				"$ref": "#/components/schemas/reqDate"
+				}	
+			},
+			{
+			  "name" : "time",
+			  "in" : "query",
+			  "description" : "HH:MM(AM/PM), time of trip (arrival or departure depending on ArriveBy flag) AM-morning,PM-afternoon",
+			  "required" : false,
+			  "schema": {
+				"$ref": "#/components/schemas/reqTime"
+				}	
+			},
+			{
+			  "name" : "arriveBy",
+			  "in" : "query",
+			  "description" : "if date and time in query is referring to leave at or arrive by",
+			  "required" : false,
+			  "schema": {
+				"type": "boolean",
+				"default": false
+				}	
+			},
+			{
+			  "name" : "wheelchair",
+			  "in" : "query",
+			  "description" : "if trip should require all legs to allow for wheelchair",
+			  "required" : false,
+			  "schema": {
+				"type": "boolean",
+				"default": false
+				}	
+			},
+			{
+			  "name" : "walkSpeed",
+			  "in" : "query",
+			  "description" : "speed in meters per sec 1.33≈4.8km/h",
+			  "required" : false,
+			  "schema": {
+				"type": "number",
+				"format": "double"
+				}	
+			},
+			{
+			  "name" : "numItineraries",
+			  "in" : "query",
+			  "description" : "requested number of trips in answer",
+			  "required" : false,
+			  "schema": {
+				"type": "integer",
+				"default": 8
+				}	
+			},	
+			{
+			  "name" : "minTransferTime",
+			  "in" : "query",
+			  "description" : "minimum time in seconds to wait on each stop",
+			  "required" : false,
+			  "schema": {
+				"type": "integer"
+				}	
+			},				
+			{
+			  "name" : "mode",
+			  "in" : "query",
+			  "description" : "Mode of travel as comma separated list TRANSIT,WALK,RAIL,BUS",
+			  "required" : false,
+			  "schema": {
+				"type": "string",
+				"default": "TRANSIT"
+				}	
+			  }						
+		],
+        "responses": {
+          "200": {
+            "description": "Successful retrieval of journey suggestions.",
+            "content": {
+              "text/json": {
+                "schema": {
+                  "type": "object",
+                  "items": {
+                    "$ref": "#/components/schemas/ServerInfo"
+                  }
+                }
+              }
+            }
+          }
+        }
+     }
+    }
+  },  	 
   "components": {  
     "schemas": {
+	  "reqLocation": {
+            "type": "string",
+            "description": "Longitude, latitude location of startpoint of journey OR stopid",
+			"example": "55.59386749197575,13.01605224609375 or SE-st:9022012080000001"
+	  },	  
+	  "reqDate": {
+            "type": "string",
+            "description": "MM-DD-YYY, date of trip (arrival or departure depending on ArriveBy flag)",
+			"example": "24-12-2021"
+	  },	  
+	  "reqTime": {
+            "type": "string",
+            "description": "HH:MM(AM/PM), time of trip (arrival or departure depending on ArriveBy flag) AM-morning,PM-afternoon",
+			"example": "11:53AM"
+	  },
+      "requestParameters": {
+            "type": "object",            
+            "description": "listing of the input arguments to the call.",
+            "required": [
+                "fromPlace",
+                "toPlace"
+            ],
+            "properties": {
+                "fromPlace": {
+                    "type": "string",
+                    "description": "Longitude, latitude location of startpoint of journey",
+					"readOnly": true,
+					"example": "55.59386749197575,13.01605224609375",
+					"nullable": false					
+                },
+                "toPlace": {
+                    "type": "string",
+                    "description": "Longitude, latitude location of endpoint of journey",
+					"readOnly": true,
+					"nullable": false					
+                }
+            }
+      },
+	  "elevationMetadata": {
+            "type": "object",
+            "description": "Elevation information, not used.",
+            "properties": {
+                "ellipsoidToGeoidDifference": {
+                    "type": "number",
+                    "description": "Elevation data, not used.",
+                },
+                "geoidElevation": {
+                    "type": "boolean",
+                    "description": "Elevation data, not used",
+                    "default": false
+                }
+            }
+      },
+	  "pathTimes": {
+            "type": "number",
+            "description": "Time in milliseconds to compute a single journey path.",
+	  },	  
+	  "debugOutput": {
+            "type": "object",
+            "description": "Holds information to be included in the REST Response for debugging and profiling purposes. startedCalculating is called in the routingContext constructor. finishedCalculating and finishedRendering are all called in PlanGenerator.generate(). finishedPrecalculating and foundPaths are called in the SPTService implementations.",
+            "properties": {
+                "precalculationTime": {
+                    "type": "number",
+                    "description": "precalculationTime in milliseconds.",
+                },
+                "pathCalculationTime": {
+                    "type": "number",
+                    "description": "precalculationTime in milliseconds.",
+                },     
+                "pathTimes": {
+                    "type": "array",
+                    "description": "list of time in milliseconds for each journey path.",
+					"items": {
+		
+						"$ref": "#/components/schemas/pathTimes"
+					}
+                },     
+				
+				"renderingTime": {
+                    "type": "number",
+                    "description": "renderingTime in milliseconds.",
+                },				
+				"totalTime": {
+                    "type": "number",
+                    "description": "total time pre + path + render time.",
+                },
+                "timedOut": {
+                    "type": "boolean",
+                    "description": "if request did not find trip",
+                    "default": false
+                }
+            }
+      },	  
       "serverVersion": {
         "type": "object",
         "properties": {
@@ -51,7 +264,7 @@
             "format": "int32",
             "readOnly": true
           },          
-                                                        "incremental": {
+		  "incremental": {
             "type": "integer",
             "description": "Minor version id",
             "format": "int32",
@@ -104,30 +317,30 @@
             "description": "uniqueid for build",
             "readOnly": true,
             "nullable": false
-                                                                                  }
+			}
         },
         "description": "Server version data object."
       },
-                             "ServerInfo": {
-                             "type": "object",
+	  "ServerInfo": {
+	  "type": "object",
         "properties": {
           "value": {
             "$ref": "#/components/schemas/serverVersion"
           },
-                                                        "cpuName": {
+		  "cpuName": {
             "type": "string",
             "description": "type of CPU of machine",
             "readOnly": true,
             "nullable": false
-                                                                                  },
-                                                       "nCores": {
+			},
+ 		  "nCores": {
             "type": "integer",
             "description": "Number of cores in machine",
             "format": "int32",
             "readOnly": true
           }
        }
-                             }
+	  }
     }
   }
 }
