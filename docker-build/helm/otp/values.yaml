@@ -70,3 +70,4 @@ affinity: {}
 applicationInsightsKey: ""
 STORAGE_ACCOUNT_NAME: "set by Azure Pipeline"
 TJPSAGEO_AZURE_BLOB_STORAGE_KEY: "set by Azure Pipeline"
+AZ_CONTAINER: ""

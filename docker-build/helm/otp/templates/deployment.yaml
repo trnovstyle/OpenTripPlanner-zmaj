@@ -28,8 +28,8 @@ spec:
           image: "{{ .Values.image.repository }}:{{ .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           env:
-            - name: "envVariable1"
-              value: {{ .Values.envVariable1 }}
+            - name: "AZ_CONTAINER"
+              value: {{ .Values.AZ_CONTAINER }}
             - name: "applicationInsightsKey"
               valueFrom:
                 secretKeyRef:

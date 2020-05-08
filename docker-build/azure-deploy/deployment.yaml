@@ -34,12 +34,12 @@ steps:
   # Copy jar's for Dockerfile to find
   - task: Bash@3
     inputs:
-      filePath: docker-build/build-docker-image.sh
+      filePath: docker-build/docker/copy-docker-data.sh
   # Build and push Docker image
   - task: Docker@2
     inputs:
       command: buildAndPush
-      dockerfile: $(System.DefaultWorkingDirectory)/docker-build/Dockerfile
+      dockerfile: $(System.DefaultWorkingDirectory)/docker-build/docker/Dockerfile
       buildContext : '$(Build.SourcesDirectory)'
       containerRegistry: $(dockerRegistryServiceConnection)
       repository: otp
@@ -53,7 +53,7 @@ steps:
       script: |
         sed -i 's/appVersion:.*/appVersion: $(buildVersion)/' docker-build/helm/otp/Chart.yaml /
         sed -i 's/version:.*/version: $(buildVersion)/' docker-build/helm/otp//Chart.yaml /
-        cat docker-build/helm/otp//Chart.yaml
+        cat docker-build/helm/otp/Chart.yaml
   # Install the latest version of helm
   - task: HelmInstaller@1
     displayName: 'Initialize Helm'

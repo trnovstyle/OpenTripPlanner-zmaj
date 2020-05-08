@@ -1,12 +1,15 @@
 version: '3'
 services:
   resesok-otp:
-    build: .
+    build:
+      context: ../
+      dockerfile: ./docker-local/Dockerfile
     container_name: resesok-otp
-    image: tokyo/resesok-prova
+    image: tokyo/resesok-otp-local
     environment:
       - TJPSAGEO_AZURE_BLOB_STORAGE_KEY=${AZ_KEY}
       - STORAGE_ACCOUNT_NAME=${AZ_USER}
+      - AZ_CONTAINER=otp
     ports:
     - 9001:8080
     expose:
