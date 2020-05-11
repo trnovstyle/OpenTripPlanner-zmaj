@@ -42,12 +42,12 @@ ingress:
     kubernetes.io/ingress.class: nginx
 
   hosts:
-    - host: dev-tjp.int.skanetrafiken.com
+    - host: should-be-set-from-value-file.com
       paths: [/otp]
   tls:
     - secretName: internal-cert
       hosts:
-        - dev-tjp.int.skanetrafiken.com
+        - should-be-set-from-value-file.com
 
 resources: {}
   # We usually recommend not to specify default resources and to leave this as a conscious
