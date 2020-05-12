@@ -1111,7 +1111,7 @@ public class IndexGraphQLSchema {
                         environment.getArgument("timeRange"),
                         environment.getArgument("numberOfDepartures"),
                         environment.getArgument("omitNonPickups"),
-                            false))
+                            false, false))
                 .build())
             .field(GraphQLFieldDefinition.newFieldDefinition()
                 .name("gtfsId")

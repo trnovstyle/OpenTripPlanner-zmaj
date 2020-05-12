@@ -413,7 +413,7 @@ public class GraphIndex {
         }
 
         public Set<TripTimeShort> getStoptimes(GraphIndex index, long startTime, int timeRange, int numberOfDepartures, boolean omitNonPickups) {
-            return index.stopTimesForPattern(stop, pattern, startTime, timeRange, numberOfDepartures, omitNonPickups, false);
+            return index.stopTimesForPattern(stop, pattern, startTime, timeRange, numberOfDepartures, omitNonPickups, false, false);
         }
 
         public static DepartureRow fromId(GraphIndex index, String id) {
@@ -655,12 +655,15 @@ public class GraphIndex {
             realtimePatterns.removeAll(graphPatterns);
         }
 
-        // First, check all TripPatterns without realtime-patterns to get all planned stops.
-        // includeCancelledTrips is always set to false in this step to avoid replaced trips from being included
-        // since a planned trip will be cancelled when it is replaced with a modified stopPattern.
+        /*
+         First, check all TripPatterns without realtime-patterns to get all planned stops.
+         Flag to include realtime-cancelled trips is always set to false in this step to avoid replaced trips from being included
+         since a planned trip will be cancelled when it is replaced with a modified stopPattern.
+         Planned cancellations will be included based on provided parameter
+         */
         for (final TripPattern pattern : graphPatterns) {
 
-            final Set<TripTimeShort> stopTimesForStop = stopTimesForPattern(stop, pattern, startTime, timeRange, numberOfDepartures, omitNonPickups, false);
+            final Set<TripTimeShort> stopTimesForStop = stopTimesForPattern(stop, pattern, startTime, timeRange, numberOfDepartures, omitNonPickups, false, includeCancelledTrips);
 
             if (stopTimesForStop.size() >0) {
                 final StopTimesInPattern stopTimes = new StopTimesInPattern(pattern);
@@ -669,10 +672,13 @@ public class GraphIndex {
             }
         }
 
-        // Second, check realtime-TripPatterns, with the provided value for includeCancelledTrips.
+        /*
+        Second, check realtime-TripPatterns, with the provided value for includeCancelledTrips.
+        Planned cancellations is always set to false in this step.
+         */
         for (final TripPattern pattern : realtimePatterns) {
 
-            final Set<TripTimeShort> stopTimesForStop = stopTimesForPattern(stop, pattern, startTime, timeRange, numberOfDepartures, omitNonPickups, includeCancelledTrips);
+            final Set<TripTimeShort> stopTimesForStop = stopTimesForPattern(stop, pattern, startTime, timeRange, numberOfDepartures, omitNonPickups, includeCancelledTrips, false);
 
             if (stopTimesForStop.size() > 0) {
                 final StopTimesInPattern stopTimes = new StopTimesInPattern(pattern);
@@ -716,10 +722,11 @@ public class GraphIndex {
      *            Number of departures to fetch per stop visits in pattern
      * @param omitNonPickups If true, do not include vehicles that will not pick up passengers.
      *
-     * @param includeCancelledTrips If true realtime-cancelled trips will also be included
+     * @param includeRealtimeCancellations If true, realtime-cancelled trips will also be included
+     * @param includePlannedCancellations If true, planned cancelled trips will also be included (serviceAlteration=cancelled)
      * @return a sorted set of trip times, sorted on depature time.
      */
-    public Set<TripTimeShort> stopTimesForPattern(final Stop stop, final TripPattern pattern, long startTime, final int timeRange, int numberOfDepartures, boolean omitNonPickups, boolean includeCancelledTrips) {
+    public Set<TripTimeShort> stopTimesForPattern(final Stop stop, final TripPattern pattern, long startTime, final int timeRange, int numberOfDepartures, boolean omitNonPickups, boolean includeRealtimeCancellations, boolean includePlannedCancellations) {
         if (pattern == null) {
             return Collections.emptySet();
         }
@@ -772,7 +779,7 @@ public class GraphIndex {
                 tt = pattern.scheduledTimetable;
             }
 
-            if (!includeCancelledTrips && !tt.temporallyViable(sd, startTime, timeRange, true))
+            if (!includeRealtimeCancellations && !tt.temporallyViable(sd, startTime, timeRange, true))
                 continue;
 
             final int starttimeSecondsSinceMidnight = sd.secondsSinceMidnight(startTime);
@@ -782,7 +789,7 @@ public class GraphIndex {
             for (final Stop currStop : tt.pattern.stopPattern.stops) {
                 if (currStop.equals(stop)) {
 
-                    if (!includeCancelledTrips) {
+                    if (!includeRealtimeCancellations) {
                         //Pattern added by realtime should not be checked at this point
                         if (omitNonPickups && pattern.stopPattern.pickups[stopIndex] == pattern.stopPattern.PICKDROP_NONE) {
                             continue;
@@ -791,19 +798,21 @@ public class GraphIndex {
 
                     for (final TripTimes triptimes : tt.tripTimes) {
 
-                        if (!includeCancelledTrips && !sd.serviceRunning(triptimes.serviceCode)) {
+                        if (!includeRealtimeCancellations && !sd.serviceRunning(triptimes.serviceCode)) {
                             continue;
                         }
 
-                        // Check if trip has been cancelled via planned data
-                        if(omitNonPickups && (triptimes.trip.getServiceAlteration() == Trip.ServiceAlteration.cancellation ||
-                                triptimes.trip.getServiceAlteration() == Trip.ServiceAlteration.replaced)) {
-                            continue;
+                        if (!includePlannedCancellations) {
+                            // Check if trip has been cancelled via planned data
+                            if (omitNonPickups && (triptimes.trip.getServiceAlteration() == Trip.ServiceAlteration.cancellation ||
+                                    triptimes.trip.getServiceAlteration() == Trip.ServiceAlteration.replaced)) {
+                                continue;
+                            }
                         }
 
 
                         // Check if pickup has been cancelled via realtime-data, and also NOT wanted in result
-                        if (!includeCancelledTrips && triptimes.getPickupType(stopIndex) == pattern.stopPattern.PICKDROP_NONE) {
+                        if (!includeRealtimeCancellations && triptimes.getPickupType(stopIndex) == pattern.stopPattern.PICKDROP_NONE) {
                             continue;
                         }
 
@@ -811,7 +820,10 @@ public class GraphIndex {
                             // Last stop should never be included in a departureboard
                             int stopDepartureTime = triptimes.getDepartureTime(stopIndex);
 
-                            if (includeCancelledTrips && triptimes.isCancelledStop(stopIndex)) {
+                            // true if cancelled trips are requested, and stop is cancelled
+                            boolean isCancelledAndRequested = ((includePlannedCancellations || includeRealtimeCancellations) && triptimes.isCancelledStop(stopIndex));  // Stop is cancelled, but cancelled stops should be included in this request
+
+                            if (isCancelledAndRequested) {
                                 // Cancelled trips should be included in this request - use scheduled times for time-verification
                                 stopDepartureTime = triptimes.getScheduledDepartureTime(stopIndex);
                             }
@@ -819,8 +831,6 @@ public class GraphIndex {
                             // true if a stop is planned, and not cancelled
                             boolean isScheduledStop = !triptimes.isCancelledStop(stopIndex) & triptimes.getPickupType(stopIndex) == pattern.stopPattern.PICKDROP_SCHEDULED;
 
-                            // true if cancelled trips are requested, and stop is cancelled
-                            boolean isCancelledAndRequested = (includeCancelledTrips && triptimes.isCancelledStop(stopIndex));  // Stop is cancelled, but cancelled stops should be included in this request
 
                             boolean includeByCancellation = isScheduledStop | isCancelledAndRequested;
 
