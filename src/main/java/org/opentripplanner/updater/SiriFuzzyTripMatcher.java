@@ -1,7 +1,11 @@
 package org.opentripplanner.updater;
 
 import org.opentripplanner.gtfs.GtfsLibrary;
-import org.opentripplanner.model.*;
+import org.opentripplanner.model.AgencyAndId;
+import org.opentripplanner.model.Route;
+import org.opentripplanner.model.Stop;
+import org.opentripplanner.model.TransmodelTransportSubmode;
+import org.opentripplanner.model.Trip;
 import org.opentripplanner.model.calendar.ServiceDate;
 import org.opentripplanner.routing.core.TraverseMode;
 import org.opentripplanner.routing.edgetype.TripPattern;
@@ -11,11 +15,18 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.org.siri.siri20.EstimatedCall;
 import uk.org.siri.siri20.EstimatedVehicleJourney;
+import uk.org.siri.siri20.RecordedCall;
 import uk.org.siri.siri20.VehicleActivityStructure;
 import uk.org.siri.siri20.VehicleModesEnumeration;
 
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * This class is used for matching TripDescriptors without trip_ids to scheduled GTFS data and to
@@ -122,12 +133,27 @@ public class SiriFuzzyTripMatcher {
             }
         }
         if (trips == null || trips.isEmpty()) {
-            List<EstimatedCall> estimatedCalls = journey.getEstimatedCalls().getEstimatedCalls();
-            EstimatedCall lastStop = estimatedCalls.get(estimatedCalls.size() - 1);
 
-            String lastStopPoint = lastStop.getStopPointRef().getValue();
+            String lastStopPoint = null;
+            ZonedDateTime arrivalTime = null;
 
-            ZonedDateTime arrivalTime = lastStop.getAimedArrivalTime() != null ? lastStop.getAimedArrivalTime() : lastStop.getAimedDepartureTime();
+            if (journey.getEstimatedCalls() != null && journey.getEstimatedCalls().getEstimatedCalls() != null
+                    && !journey.getEstimatedCalls().getEstimatedCalls().isEmpty()) { // Pick last stop from EstimatedCalls
+                List<EstimatedCall> estimatedCalls = journey.getEstimatedCalls().getEstimatedCalls();
+                EstimatedCall lastStop = estimatedCalls.get(estimatedCalls.size() - 1);
+
+                lastStopPoint = lastStop.getStopPointRef().getValue();
+                arrivalTime = lastStop.getAimedArrivalTime() != null ? lastStop.getAimedArrivalTime() : lastStop.getAimedDepartureTime();
+
+            } else if (journey.getRecordedCalls() != null && journey.getRecordedCalls().getRecordedCalls() != null
+                    && !journey.getRecordedCalls().getRecordedCalls().isEmpty()) { // No EstimatedCalls exist - pick last RecordedCall
+
+                List<RecordedCall> recordedCalls = journey.getRecordedCalls().getRecordedCalls();
+                final RecordedCall lastStop = recordedCalls.get(recordedCalls.size() - 1);
+
+                lastStopPoint = lastStop.getStopPointRef().getValue();
+                arrivalTime = lastStop.getAimedArrivalTime() != null ? lastStop.getAimedArrivalTime() : lastStop.getAimedDepartureTime();
+            }
 
             if (arrivalTime != null) {
                 trips = getMatchingTripsOnStopOrSiblings(lastStopPoint, arrivalTime);
