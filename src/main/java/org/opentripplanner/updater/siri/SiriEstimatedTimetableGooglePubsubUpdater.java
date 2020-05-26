@@ -167,6 +167,8 @@ public class SiriEstimatedTimetableGooglePubsubUpdater extends ReadinessBlocking
 
         blockReadinessUntilInitialized = config.path("blockReadinessUntilInitialized").asBoolean(false);
 
+        type = config.path("type").asText("");
+
         // set subscriber
         String subscriptionId = System.getenv("HOSTNAME");
         if (subscriptionId == null || subscriptionId.isBlank()) {
