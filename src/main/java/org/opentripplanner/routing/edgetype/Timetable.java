@@ -680,11 +680,13 @@ public class Timetable implements Serializable {
         EstimatedVehicleJourney.EstimatedCalls journeyEstimatedCalls = journey.getEstimatedCalls();
         EstimatedVehicleJourney.RecordedCalls journeyRecordedCalls = journey.getRecordedCalls();
 
-        if (journeyEstimatedCalls == null) {
-            return null;
+        List<EstimatedCall> estimatedCalls;
+        if (journeyEstimatedCalls != null) {
+            estimatedCalls = journeyEstimatedCalls.getEstimatedCalls();
+        } else {
+            estimatedCalls = new ArrayList<>();
         }
 
-        List<EstimatedCall> estimatedCalls = journeyEstimatedCalls.getEstimatedCalls();
         List<RecordedCall> recordedCalls;
         if (journeyRecordedCalls != null) {
             recordedCalls = journeyRecordedCalls.getRecordedCalls();
@@ -950,11 +952,12 @@ public class Timetable implements Serializable {
         EstimatedVehicleJourney.EstimatedCalls journeyEstimatedCalls = journey.getEstimatedCalls();
         EstimatedVehicleJourney.RecordedCalls journeyRecordedCalls = journey.getRecordedCalls();
 
-        if (journeyEstimatedCalls == null) {
-            return null;
+        List<EstimatedCall> estimatedCalls;
+        if (journeyEstimatedCalls != null) {
+            estimatedCalls = journeyEstimatedCalls.getEstimatedCalls();
+        } else {
+            estimatedCalls = new ArrayList<>();
         }
-
-        List<EstimatedCall> estimatedCalls = journeyEstimatedCalls.getEstimatedCalls();
 
         List<RecordedCall> recordedCalls;
         if (journeyRecordedCalls != null) {
@@ -1051,13 +1054,9 @@ public class Timetable implements Serializable {
 
         EstimatedVehicleJourney.EstimatedCalls journeyCalls = journey.getEstimatedCalls();
 
-        if (journeyCalls == null) {
-            return null;
-        }
-
         EstimatedVehicleJourney.RecordedCalls recordedCallsList = journey.getRecordedCalls();
 
-        List<EstimatedCall> estimatedCalls = journeyCalls.getEstimatedCalls();
+        List<EstimatedCall> estimatedCalls = journeyCalls != null ? journeyCalls.getEstimatedCalls():new ArrayList<>();
         List<RecordedCall> recordedCalls = recordedCallsList != null ? recordedCallsList.getRecordedCalls():new ArrayList<>();
 
         List<Stop> stops = createModifiedStops(journey, graphIndex);
