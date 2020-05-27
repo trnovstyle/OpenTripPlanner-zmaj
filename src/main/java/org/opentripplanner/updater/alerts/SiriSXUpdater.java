@@ -27,6 +27,9 @@ import org.slf4j.LoggerFactory;
 import uk.org.siri.siri20.ServiceDelivery;
 import uk.org.siri.siri20.Siri;
 
+import javax.xml.bind.JAXBException;
+import javax.xml.stream.XMLStreamException;
+import java.io.IOException;
 import java.io.InputStream;
 import java.time.ZonedDateTime;
 import java.util.HashMap;
@@ -57,6 +60,10 @@ public class SiriSXUpdater extends PollingGraphUpdater {
     private int timeout;
 
     private static Map<String, String> requestHeaders;
+    
+    private long retryIntervalMillis = 5000;
+    private int retryCount = 0;
+    private String originalRequestorRef;
 
     @Override
     public void setGraphUpdaterManager(GraphUpdaterManager updaterManager) {
@@ -77,6 +84,8 @@ public class SiriSXUpdater extends PollingGraphUpdater {
         if (requestorRef == null || requestorRef.isEmpty()) {
             requestorRef = "otp-"+UUID.randomUUID().toString();
         }
+        //Keeping original requestorRef use as base for updated requestorRef to be used in retries
+        this.originalRequestorRef = requestorRef;
 
         this.url = url;// + uniquenessParameter;
         this.earlyStart = config.path("earlyStartSec").asInt(0);
@@ -116,28 +125,47 @@ public class SiriSXUpdater extends PollingGraphUpdater {
 
     @Override
     protected void runPolling() throws Exception {
-        Siri updates = getUpdates();
+        try {
+            Siri updates = getUpdates();
 
-        if (updates != null && updates.getServiceDelivery().getSituationExchangeDeliveries() != null) {
-            // Handle trip updates via graph writer runnable
-            // Handle update in graph writer runnable
-            if (blockReadinessUntilInitialized && !isInitialized) {
-                LOG.info("Execute blocking tripupdates");
-                updaterManager.executeBlocking(graph -> updateHandler.update(updates.getServiceDelivery()));
-            } else {
-                updaterManager.execute(graph -> updateHandler.update(updates.getServiceDelivery()));
+            // Update returned successfully - resetting retry-counter
+            retryCount = 0;
+
+            if (updates != null && updates.getServiceDelivery().getSituationExchangeDeliveries() != null) {
+                // Handle trip updates via graph writer runnable
+                // Handle update in graph writer runnable
+                if (blockReadinessUntilInitialized && !isInitialized) {
+                    LOG.info("Execute blocking tripupdates");
+                    updaterManager.executeBlocking(graph -> updateHandler.update(updates.getServiceDelivery()));
+                } else {
+                    updaterManager.execute(graph -> updateHandler.update(updates.getServiceDelivery()));
+                }
             }
-        }
-        if (updates != null &&
-                updates.getServiceDelivery() != null &&
-                updates.getServiceDelivery().isMoreData() != null &&
-                updates.getServiceDelivery().isMoreData()) {
-            LOG.info("More data is available - fetching immediately");
+            if (updates != null &&
+                    updates.getServiceDelivery() != null &&
+                    updates.getServiceDelivery().isMoreData() != null &&
+                    updates.getServiceDelivery().isMoreData()) {
+                LOG.info("More data is available - fetching immediately");
+                runPolling();
+            }
+
+        } catch (IOException e) {
+
+            final long sleepTime = retryIntervalMillis + retryIntervalMillis * retryCount;
+
+            retryCount++;
+
+            LOG.info("Caught timeout - retry no. {} after {} millis", retryCount, sleepTime);
+
+            Thread.sleep(sleepTime);
+
+            // Creating new requestorRef so all data is refreshed
+            requestorRef = originalRequestorRef + "-retry-" + retryCount;
             runPolling();
         }
     }
 
-    private Siri getUpdates() {
+    private Siri getUpdates() throws JAXBException, IOException, XMLStreamException {
 
         long t1 = System.currentTimeMillis();
         long creating = 0;
@@ -175,10 +203,10 @@ public class SiriSXUpdater extends PollingGraphUpdater {
         } catch (Exception e) {
             LOG.info("Failed after {} ms", (System.currentTimeMillis()-t1));
             LOG.error("Error reading SIRI feed from " + url, e);
+            throw e;
         } finally {
             LOG.info("Updating SX [{}]: Create req: {}, Fetching data: {}, Unmarshalling: {}", requestorRef, creating, fetching, unmarshalling);
         }
-        return null;
     }
 
     @Override
