@@ -128,9 +128,6 @@ public class SiriSXUpdater extends PollingGraphUpdater {
         try {
             Siri updates = getUpdates();
 
-            // Update returned successfully - resetting retry-counter
-            retryCount = 0;
-
             if (updates != null && updates.getServiceDelivery().getSituationExchangeDeliveries() != null) {
                 // Handle trip updates via graph writer runnable
                 // Handle update in graph writer runnable
