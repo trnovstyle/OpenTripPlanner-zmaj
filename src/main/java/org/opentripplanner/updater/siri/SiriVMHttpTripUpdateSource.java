@@ -52,6 +52,11 @@ public class SiriVMHttpTripUpdateSource implements VehicleMonitoringSource, Json
 
     private static Map<String, String> requestHeaders;
 
+
+    private long retryIntervalMillis = 5000;
+    private int retryCount = 0;
+    private String originalRequestorRef;
+
     @Override
     public void configure(Graph graph, JsonNode config) throws Exception {
         String url = config.path("url").asText();
@@ -64,6 +69,9 @@ public class SiriVMHttpTripUpdateSource implements VehicleMonitoringSource, Json
         if (requestorRef == null || requestorRef.isEmpty()) {
             requestorRef = "otp-"+UUID.randomUUID().toString();
         }
+
+        originalRequestorRef = this.requestorRef;
+
         this.feedId = config.path("feedId").asText();
 
         int timeoutSec = config.path("timeoutSec").asInt();
@@ -113,6 +121,24 @@ public class SiriVMHttpTripUpdateSource implements VehicleMonitoringSource, Json
         } catch (Exception e) {
             LOG.info("Failed after {} ms", (System.currentTimeMillis()-t1));
             LOG.warn("Failed to parse SIRI-VM feed from " + url + ":", e);
+
+            final long sleepTime = retryIntervalMillis + retryIntervalMillis * retryCount;
+
+            retryCount++;
+
+            LOG.info("Caught timeout - retry no. {} after {} millis", retryCount, sleepTime);
+
+            try {
+                Thread.sleep(sleepTime);
+            } catch (InterruptedException ex) {
+                // Ignore
+            }
+
+            // Creating new requestorRef so all data is refreshed
+            requestorRef = originalRequestorRef + "-retry-" + retryCount;
+
+            return getUpdates();
+
         } finally {
             LOG.info("Updating VM [{}]: Create req: {}, Fetching data: {}, Unmarshalling: {}", requestorRef, creating, fetching, unmarshalling);
         }
