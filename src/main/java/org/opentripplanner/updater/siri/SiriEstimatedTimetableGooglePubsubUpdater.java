@@ -238,11 +238,11 @@ public class SiriEstimatedTimetableGooglePubsubUpdater extends ReadinessBlocking
             try {
                 initializeData(dataInitializationUrl, receiver);
 
-            } catch (IOException e) {
+            } catch (Exception e) {
 
                 sleepPeriod = sleepPeriod * 2;
 
-                LOG.warn("Caught IOException while initializing data, will retry after {} ms - attempt number {}.", sleepPeriod, attemptCounter++);
+                LOG.warn("Caught Exception while initializing data, will retry after {} ms - attempt number {}. ({})", sleepPeriod, attemptCounter++, e.toString());
 
                 try {
                     Thread.sleep(sleepPeriod);
