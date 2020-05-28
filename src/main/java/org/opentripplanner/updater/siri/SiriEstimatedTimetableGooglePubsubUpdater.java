@@ -232,7 +232,25 @@ public class SiriEstimatedTimetableGooglePubsubUpdater extends ReadinessBlocking
 
         final EstimatedTimetableMessageReceiver receiver = new EstimatedTimetableMessageReceiver();
 
-        initializeData(dataInitializationUrl, receiver);
+        int sleepPeriod = 1000;
+        int attemptCounter = 1;
+        while (!isInitialized) {
+            try {
+                initializeData(dataInitializationUrl, receiver);
+
+            } catch (IOException e) {
+
+                sleepPeriod = sleepPeriod * 2;
+
+                LOG.warn("Caught IOException while initializing data, will retry after {} ms - attempt number {}.", sleepPeriod, attemptCounter++);
+
+                try {
+                    Thread.sleep(sleepPeriod);
+                } catch (InterruptedException interruptedException) {
+                    //Ignore
+                }
+            }
+        }
 
         Subscriber subscriber = null;
         while (true) {
