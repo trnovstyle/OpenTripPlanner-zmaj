@@ -299,10 +299,10 @@ public class TransmodelGraphQLPlanner {
         callWith.argument("minimumTransferTime", (Integer v) -> request.transferSlack = v);
         request.assertSlack();
 
+
         callWith.argument("maximumTransfers", (Integer v) -> request.maxTransfers = v);
 
-        // Do not use bike rental availability information, but let this be handled on the front end
-        request.useBikeRentalAvailabilityInformation = (false);
+        callWith.argument("useBikeRentalAvailabilityInformation", (Boolean v) -> request.useBikeRentalAvailabilityInformation = v);
 
         callWith.argument("ignoreRealtimeUpdates", (Boolean v) -> request.ignoreRealtimeUpdates = v);
         callWith.argument("includePlannedCancellations", (Boolean v) -> request.includePlannedCancellations = v);
