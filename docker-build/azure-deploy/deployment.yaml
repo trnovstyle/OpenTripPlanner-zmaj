@@ -58,7 +58,7 @@ steps:
   - task: HelmInstaller@1
     displayName: 'Initialize Helm'
     inputs:
-      helmVersionToInstall: '3.1.2'
+      helmVersionToInstall: '3.2.1'
   # Package the helm chart before it is pushed to the Azure container regristy
   - task: HelmDeploy@0
     displayName: 'Package Helm Chart'
@@ -111,7 +111,7 @@ steps:
       branchToUse: 'master'
       waitForQueuedBuildsToFinish: false
       storeInEnvironmentVariable: true
-      buildParameters: "ServiceName: resesok-otp, ServiceBuildVersion: $(buildVersion), ServiceBranchName: $(Build.SourceBranchName)"
+      buildParameters: "ServiceName: resesok-otp, ServiceBuildVersion: $(buildVersion), ServiceBranchName: $(Build.SourceBranchName), ServiceSourceVersion: $(Build.SourceVersion), ServiceSourceVersionMessage: $(Build.SourceVersionMessage)"
       authenticationMethod: 'Personal Access Token'
       password: $(BUILD-TRIGGER-PAT)
       enableBuildInQueueCondition: false
