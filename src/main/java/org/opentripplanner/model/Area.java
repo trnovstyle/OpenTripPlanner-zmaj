@@ -2,9 +2,7 @@
 package org.opentripplanner.model;
 
 import org.locationtech.jts.geom.Coordinate;
-import org.locationtech.jts.geom.CoordinateXY;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -45,13 +43,18 @@ public class Area extends IdentityBean<AgencyAndId> {
         this.wkt = wkt;
     }
 
+    /**
+     * Map from OpenGIS LinearRing (lat, lon) to WKT (x, y)
+     *
+     * (https://en.wikipedia.org/wiki/Well-known_text_representation_of_geometry)
+     */
     public void setWkt(List<Double> coordinates) {
         StringBuilder wktPolygon = new StringBuilder();
         wktPolygon.append("POLYGON((");
         for (int i = 0; i < coordinates.size(); i += 2) {
-            wktPolygon.append(coordinates.get(i));
-            wktPolygon.append(" ");
             wktPolygon.append(coordinates.get(i + 1));
+            wktPolygon.append(" ");
+            wktPolygon.append(coordinates.get(i));
             if (i < coordinates.size() - 2) {
                 wktPolygon.append(", ");
             }
