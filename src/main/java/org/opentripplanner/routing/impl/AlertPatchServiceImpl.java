@@ -127,7 +127,7 @@ public class AlertPatchServiceImpl implements AlertPatchService {
     @Override
     public Collection<AlertPatch> getTripPatternPatches(TripPattern pattern) {
         Set<AlertPatch> result = new HashSet<>();
-        if (pattern != null && patchesByTripPattern.containsKey(pattern.code)) {
+        if (pattern != null && pattern.code != null && patchesByTripPattern.containsKey(pattern.code)) {
             result.addAll(patchesByTripPattern.get(pattern.code));
         }
         return result;
