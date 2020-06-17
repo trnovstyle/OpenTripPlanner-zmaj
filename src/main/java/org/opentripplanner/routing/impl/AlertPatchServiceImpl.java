@@ -77,7 +77,7 @@ public class AlertPatchServiceImpl implements AlertPatchService {
     @Override
     public Collection<AlertPatch> getRoutePatches(AgencyAndId route) {
         Set<AlertPatch> result = new HashSet<>();
-        if (patchesByRoute.containsKey(route)) {
+        if (route != null && patchesByRoute.containsKey(route)) {
             result.addAll(patchesByRoute.get(route));
         }
 
@@ -88,7 +88,7 @@ public class AlertPatchServiceImpl implements AlertPatchService {
     @Override
     public Collection<AlertPatch> getTripPatches(AgencyAndId trip) {
         Set<AlertPatch> result = new HashSet<>();
-        if (patchesByTrip.containsKey(trip)) {
+        if (trip != null && patchesByTrip.containsKey(trip)) {
             result.addAll(patchesByTrip.get(trip));
         }
         return result;
@@ -98,7 +98,7 @@ public class AlertPatchServiceImpl implements AlertPatchService {
     @Override
     public Collection<AlertPatch> getAgencyPatches(String agency) {
         Set<AlertPatch> result = new HashSet<>();
-        if (patchesByAgency.containsKey(agency)) {
+        if (agency != null && patchesByAgency.containsKey(agency)) {
             result.addAll(patchesByAgency.get(agency));
         }
         return result;
@@ -127,7 +127,7 @@ public class AlertPatchServiceImpl implements AlertPatchService {
     @Override
     public Collection<AlertPatch> getTripPatternPatches(TripPattern pattern) {
         Set<AlertPatch> result = new HashSet<>();
-        if (patchesByTripPattern.containsKey(pattern.code)) {
+        if (pattern != null && patchesByTripPattern.containsKey(pattern.code)) {
             result.addAll(patchesByTripPattern.get(pattern.code));
         }
         return result;
