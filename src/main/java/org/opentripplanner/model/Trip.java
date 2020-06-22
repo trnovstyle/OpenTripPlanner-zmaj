@@ -83,6 +83,8 @@ public final class Trip extends IdentityBean<AgencyAndId> {
 
     private FlexibleTripTypeEnum flexibleTripType;
 
+    private transient String replacementForTripId; //Transient to be backwards graph-compatible. Will only be used for realtime-data anyway.
+
     public Trip() {
     }
 
@@ -361,4 +363,13 @@ public final class Trip extends IdentityBean<AgencyAndId> {
     public enum FlexibleTripTypeEnum {
         dynamicPassingTimes, fixedHeadwayFrequency, fixedPassingTimes, notFlexible, other
     }
+
+    public void setReplacementForTripId(String replacementForTripId) {
+        this.replacementForTripId = replacementForTripId;
+    }
+
+    public String getReplacementForTripId() {
+        return replacementForTripId;
+    }
+
 }

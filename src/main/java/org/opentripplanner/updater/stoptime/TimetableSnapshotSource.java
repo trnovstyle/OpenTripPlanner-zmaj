@@ -666,6 +666,9 @@ public class TimetableSnapshotSource {
 
         trip.setTripOperator(operator);
 
+        String vehicleJourneyRef = (estimatedVehicleJourney.getVehicleJourneyRef() != null ? estimatedVehicleJourney.getVehicleJourneyRef().getValue() : null);
+        trip.setReplacementForTripId(vehicleJourneyRef);
+
         // TODO: Populate these?
         trip.setShapeId(null);          // Replacement-trip has different shape
         trip.setTripPrivateCode(null);

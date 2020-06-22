@@ -2291,6 +2291,12 @@ public class TransmodelIndexGraphQLSchema {
                         .description("Booking arrangements for flexible services.")
                         .type(bookingArrangementType)
                         .build())
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("replacementForServiceJourneyId")
+                        .type(Scalars.GraphQLString)
+                        .description("When a trip is added using realtime-data, this is a reference to the replaced ServiceJourney.")
+                        .dataFetcher(environment -> (((Trip) environment.getSource()).getReplacementForTripId()))
+                        .build())
                 .build();
 
         journeyPatternType = GraphQLObjectType.newObject()
