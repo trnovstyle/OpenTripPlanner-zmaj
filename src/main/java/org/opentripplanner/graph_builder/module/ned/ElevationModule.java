@@ -451,6 +451,9 @@ public class ElevationModule implements GraphBuilderModule {
             coverage.evaluate(new DirectPosition2D(GeometryUtils.WGS84_XY, x, y), values);
         } catch (org.opengis.coverage.PointOutsideCoverageException e) {
             nPointsOutsideDEM += 1;
+        } catch (NullPointerException e) {
+            log.info("NullPointerException when calculating elevation. "
+                + "Elevation for point {}, {} will be ignored.", x, y, e);
         }
         nPointsEvaluated += 1;
         return values[0];
