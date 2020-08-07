@@ -130,7 +130,7 @@ public class PatternHop extends TablePatternEdge implements OnboardEdge, HopEdge
     
     @Override
     public double weightLowerBound(RoutingRequest options) {
-        return timeLowerBound(options);
+        return options.getModeWeight(getMode()) * timeLowerBound(options) + (options.transitDistanceReluctance * distance);
     }
 
     @Override
