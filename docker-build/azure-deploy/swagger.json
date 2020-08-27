@@ -327,7 +327,7 @@
           "routeId": {
             "type": "string",
             "description": "For transit legs, the ID of the route",
-            "example": "SAM:SE:276:Line:9011012000200000"
+            "example": "ST:SE:276:Line:9011012000200000"
           },
           "routeTextColor": {
             "type": "string",
@@ -584,7 +584,7 @@
           "stopId": {
             "type": "string",
             "description": "ID if location is specific stop",
-            "example": "SAM:SE:276:Quay:9022012080032002"
+            "example": "ST:SE:276:Quay:9022012080032002"
           },
           "platformCode": {
             "type": "string",
