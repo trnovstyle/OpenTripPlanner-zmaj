@@ -18,13 +18,13 @@
             "content": {
               "text/json": {
                 "schema": {
-                    "$ref": "#/components/schemas/ServerInfo"
+                  "$ref": "#/components/schemas/ServerInfo"
                 }
               }
-			  ,
-			"text/xml": {
+            ,
+              "text/xml": {
                 "schema": {
-                    "$ref": "#/components/schemas/ServerInfo"
+                  "$ref": "#/components/schemas/ServerInfo"
                 }
               }
 
@@ -33,651 +33,670 @@
         }
       }
     }
-	,"/otp/routers/default/plan": {
+  ,"/otp/routers/default/plan": {
       "get": {
         "tags": [
           "Trip planing"
         ],
         "summary": "Get journey suggestions between two locations",
-		"parameters" : [ 
-			{
-			  "name" : "fromPlace",
-			  "in" : "query",
-			  "description" : "starting location of trip as long, lat or stop as SAM:SE:276:StopPlace:9021012080032000 or specific quay at stop as SAM:SE:276:Quay:9022012080032002",
-			  "required" : true,
-			  "schema": {
-					"$ref": "#/components/schemas/reqLocation"
-			  }		
-			},
-			{
-			  "name" : "toPlace",
-			  "in" : "query",
-			  "description" : "end location of trip as long, lat or stop",
-			  "required" : true,
-			  "schema": {
-				"$ref": "#/components/schemas/reqLocation"
-				}		   		
-			},
-			{
-			  "name" : "date",
-			  "in" : "query",
-			  "description" : "YYYY-MM-DD, date of trip (arrival or departure depending on ArriveBy flag)",
-			  "required" : false,
-			  "schema": {
-				"$ref": "#/components/schemas/reqDate"
-				}	
-			},
-			{
-			  "name" : "time",
-			  "in" : "query",
-			  "description" : "HH:MM, time of trip (arrival or departure depending on ArriveBy flag)",
-			  "required" : false,
-			  "schema": {
-				"$ref": "#/components/schemas/reqTime"
-				}	
-			},
-			{
-			  "name" : "arriveBy",
-			  "in" : "query",
-			  "description" : "if date and time in query is referring to leave at or arrive by",
-			  "required" : false,
-			  "schema": {
-				"type": "boolean",
-				"default": false
-				}	
-			},
-			{
-			  "name" : "wheelchair",
-			  "in" : "query",
-			  "description" : "if trip should require all legs to allow for wheelchair",
-			  "required" : false,
-			  "schema": {
-				"type": "boolean",
-				"default": false
-				}	
-			},
-			{
-			  "name" : "walkSpeed",
-			  "in" : "query",
-			  "description" : "speed in meters per sec 1.33≈4.8km/h",
-			  "required" : false,
-			  "schema": {
-				"type": "number",
-				"format": "double"
-				}	
-			},
-			{
-			  "name" : "numItineraries",
-			  "in" : "query",
-			  "description" : "requested number of trips in answer",
-			  "required" : false,
-			  "schema": {
-				"type": "integer",
-				"default": 8
-				}	
-			},	
-			{
-			  "name" : "minTransferTime",
-			  "in" : "query",
-			  "description" : "minimum time in seconds to wait on each stop",
-			  "required" : false,
-			  "schema": {
-				"type": "integer"
-				}	
-			},				
-			{
-			  "name" : "mode",
-			  "in" : "query",
-			  "description" : "Mode of travel as comma separated list TRANSIT,WALK,RAIL,BUS",
-			  "required" : false,
-			  "schema": {
-				"type": "string",
-				"default": "TRANSIT"
-				}	
-			  }						
-		],
+        "parameters" : [
+          {
+            "name" : "fromPlace",
+            "in" : "query",
+            "description" : "starting location of trip as lat, long or stop as ST:SE:276:StopPlace:9021012080032000 or specific quay at stop as ST:SE:276:Quay:9022012080032002",
+            "required" : true,
+            "schema": {
+              "$ref": "#/components/schemas/reqLocation"
+            }
+          },
+          {
+            "name" : "toPlace",
+            "in" : "query",
+            "description" : "end location of trip as lat, long or stop",
+            "required" : true,
+            "schema": {
+              "$ref": "#/components/schemas/reqLocation"
+            }
+          },
+          {
+            "name" : "date",
+            "in" : "query",
+            "description" : "YYYY-MM-DD, date of trip (arrival or departure depending on ArriveBy flag)",
+            "required" : false,
+            "schema": {
+              "$ref": "#/components/schemas/reqDate"
+            }
+          },
+          {
+            "name" : "time",
+            "in" : "query",
+            "description" : "HH:MM, time of trip (arrival or departure depending on ArriveBy flag)",
+            "required" : false,
+            "schema": {
+              "$ref": "#/components/schemas/reqTime"
+            }
+          },
+          {
+            "name" : "arriveBy",
+            "in" : "query",
+            "description" : "if date and time in query is referring to leave at or arrive by",
+            "required" : false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          {
+            "name" : "wheelchair",
+            "in" : "query",
+            "description" : "if trip should require all legs to allow for wheelchair",
+            "required" : false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          {
+            "name" : "walkSpeed",
+            "in" : "query",
+            "description" : "speed in meters per sec 1.33≈4.8km/h",
+            "required" : false,
+            "schema": {
+              "type": "number",
+              "format": "double"
+            }
+          },
+          {
+            "name" : "numItineraries",
+            "in" : "query",
+            "description" : "requested number of trips in answer",
+            "required" : false,
+            "schema": {
+              "type": "integer",
+              "default": 8
+            }
+          },
+          {
+            "name" : "minTransferTime",
+            "in" : "query",
+            "description" : "minimum time in seconds to wait on each stop",
+            "required" : false,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name" : "mode",
+            "in" : "query",
+            "description" : "Mode of travel as comma separated list TRANSIT,WALK,RAIL,BUS",
+            "required" : false,
+            "schema": {
+              "type": "string",
+              "default": "TRANSIT"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Successful retrieval of journey suggestions.",
             "content": {
               "text/json": {
                 "schema": {
-                    "$ref": "#/components/schemas/Response"
-                  }
+                  "$ref": "#/components/schemas/Response"
                 }
-              ,
+              }
+            ,
               "text/xml": {
                 "schema": {
-                    "$ref": "#/components/schemas/Response"
-                  }
+                  "$ref": "#/components/schemas/Response"
                 }
-              }			  
+              }
             }
-          }		  
+          }
         }
-     }
-  },  	 
-  "components": {  
+      }
+    }
+  },
+  "components": {
     "schemas": {
-	   "reqLocation": {
-            "type": "string",
-            "description": "Longitude, latitude location of startpoint of journey OR stopid",
-			"example": "55.59386749197575,13.01605224609375 or SAM:SE:276:Quay:9022012080032002"
-	  },	  
-	  "reqDate": {
-            "type": "string",
-            "description": "YYYY-MM-DD, date of trip (arrival or departure depending on ArriveBy flag)",
-			"example": "2021-12-24"
-	  },	  
-	  "reqTime": {
-            "type": "string",
-            "description": "HH:MM, time of trip (arrival or departure depending on ArriveBy flag)",
-			"example": "17:53"
-	  },
+      "reqLocation": {
+        "type": "string",
+        "description": "Latitude, longitude location of startpoint of journey OR stopid",
+        "example": "55.59386749197575,13.01605224609375 or ST:SE:276:Quay:9022012080032002"
+      },
+      "reqDate": {
+        "type": "string",
+        "description": "YYYY-MM-DD, date of trip (arrival or departure depending on ArriveBy flag)",
+        "example": "2021-12-24"
+      },
+      "reqTime": {
+        "type": "string",
+        "description": "HH:MM, time of trip (arrival or departure depending on ArriveBy flag)",
+        "example": "17:53"
+      },
       "requestParameters": {
-            "type": "object",            
-            "description": "listing of the input arguments to the call.",
-            "required": [
-                "fromPlace",
-                "toPlace"
-            ],
-            "properties": {
-                "fromPlace": {
-                    "type": "string",
-                    "description": "Longitude, latitude location of startpoint of journey",
-					"readOnly": true,
-					"example": "55.59386749197575,13.01605224609375 or SAM:SE:276:Quay:9022012080032002",
-					"nullable": false					
-                },
-                "toPlace": {
-                    "type": "string",
-                    "description": "Longitude, latitude location of endpoint of journey",
-					"readOnly": true,
-					"example": "55.60877733213926,13.000216260269747 or SAM:SE:276:Quay:9022012080032002",
-					"nullable": false					
-                }
-            }
+        "type": "object",
+        "description": "listing of the input arguments to the call.",
+        "required": [
+          "fromPlace",
+          "toPlace"
+        ],
+        "properties": {
+          "fromPlace": {
+            "type": "string",
+            "description": "Latitude, longitude location of startpoint of journey",
+            "readOnly": true,
+            "example": "55.59386749197575,13.01605224609375 or ST:SE:276:Quay:9022012080032002",
+            "nullable": false
+          },
+          "toPlace": {
+            "type": "string",
+            "description": "Latitude, longitude location of endpoint of journey",
+            "readOnly": true,
+            "example": "55.60877733213926,13.000216260269747 or ST:SE:276:Quay:9022012080032002",
+            "nullable": false
+          }
+        }
       },
-	  "elevationMetadata": {
-            "type": "object",
-            "description": "Elevation information, not used.",
-            "properties": {
-                "ellipsoidToGeoidDifference": {
-                    "type": "string",
-                    "description": "Elevation data, not used.",
-					"example": "49.83565906820878 not used"
-                },
-                "geoidElevation": {
-                    "type": "boolean",
-                    "description": "Elevation data, not used"
-                }
-            }
+      "elevationMetadata": {
+        "type": "object",
+        "description": "Elevation information, not used.",
+        "properties": {
+          "ellipsoidToGeoidDifference": {
+            "type": "string",
+            "description": "Elevation data, not used.",
+            "example": "49.83565906820878 not used"
+          },
+          "geoidElevation": {
+            "type": "boolean",
+            "description": "Elevation data, not used"
+          }
+        }
       },
-	  "legs": {
-            "type": "object",
-            "description": "leg object contains details for a suggested part of a journey",
-            "properties": {
-                "startTime": {
-                    "type": "number",
-                    "description": "time when trip arrives at location, in seconds since 1970-01-01",
-					"example": 1591165179000
-                }, 
-                "endTime": {
-                    "type": "number",
-                    "description": "time when trip departs location, in seconds since 1970-01-01",
-					"example": 1591165179000
-                }, 
-                "departureDelay": {
-                    "type": "number",
-                    "description": "number of seconds that departure was/will be delayed",
-					"example": 0
-                }, 
-                "arrivalDelay": {
-                    "type": "number",
-                    "description": "number of seconds that arrival was/will be delayed",
-					"example": 0
-                }, 
-                "realTime": {
-                    "type": "boolean",
-                    "description": "if journey has realtime updated times",
-					"example": FALSE
-                }, 
-                "isNonExactFrequency": {
-                    "type": "boolean",
-                    "description": "Is this a frequency-based trip with non-strict departure times",
-					"example": FALSE
-                }, 				
-                "distance": {
-                    "type": "number",
-                    "description": "Total distance for this leg of journey in meters",
-					"example": 1772
-                }, 
-                "pathway": {
-                    "type": "boolean",
-                    "description": "Is this leg a traversing pathways",
-					"example": FALSE
-                }, 
-                 "headway": {
-                    "type": "number",
-                    "description": "The best estimate of the time between two arriving vehicles. This is particularly important for non-strict frequency trips, but could become important for real-time trips, strict frequency trips, and scheduled trips with empirical headways.",
-					"example": 0
-                }, 
- 
-				"mode": {
-                    "type": "string",
-                    "description": "Is this leg a traversing pathways",
-					"example": "BUS"
-                }, 
-                "route": {
-                    "type": "string",
-                    "description": "For transit legs, the route of the bus or train being used. For non-transit legs, the name of the street being traversed.",
-					"example": "2"
-                }, 
-                "agencyName": {
-                    "type": "string",
-                    "description": "Name of agency for the leg",
-					"example": "Skånetrafiken"
-                },                 
-				"agencyUrl": {
-                    "type": "string",
-                    "description": "URL of agency for the leg",
-					"example": "www.skanetrafiken.se"
-                },                
-				"agencyBrandingUrl": {
-                    "type": "string",
-                    "description": "URL of agency brand",
-					"example": ""
-                }, 
-				"routeBrandingUrl": {
-                    "type": "string",
-                    "description": "URL of specific route brand",
-					"example": ""
-                }, 				
-                "agencyTimeZoneOffset": {
-                    "type": "number",
-                    "description": "Offset for time, not used",
-					"example": 0
-                }, 
-                "routeColor": {
-                    "type": "string",
-                    "description": "For transit leg, the route's (background) color (if one exists). For non-transit legs, null.",
-					"example": ""
-                },                 
-				"routeType": {
-                    "type": "number",
-                    "description": "For transit legs, the type of the route. Non transit -1\nWhen 0-7: 0 Tram, 1 Subway, 2 Train, 3 Bus, 4 Ferry, 5 Cable Car, 6 Gondola, 7 Funicular, When equal or highter than 100, it is coded using the Hierarchical Vehicle Type (HVT) codes from the European TPEG standard",
-					"example": 700
-                }, 
-                "routeId": {
-                    "type": "string",
-                    "description": "For transit legs, the ID of the route",
-					"example": "SAM:SE:276:Line:9011012000200000"
-                },                 
-				"routeTextColor": {
-                    "type": "string",
-                    "description": "For transit leg, the route's text color (if one exists). For non-transit legs, null",
-					"example": ""
-                }, 
-                "interlineWithPreviousLeg": {
-                    "type": "boolean",
-                    "description": "For transit legs, if the rider should stay on the vehicle as it changes route names.",
-					"example": FALSE
-                }, 
-                "tripShortName": {
-                    "type": "string",
-                    "description": "For transit leg, the trip's short name (if one exists). For non-transit legs, null",
-					"example": ""
-                }, 
-                "tripBlockId": {
-                    "type": "string",
-                    "description": "For transit leg, the trip's block ID (if one exists). For non-transit legs, null.",
-					"example": ""
-                }, 
-                "headsign": {
-                    "type": "string",
-                    "description": "For transit legs, the headsign of the bus or train being used. For non-transit legs, null",
-					"example": "Kastanjegården"
-                }, 
-                "agencyId": {
-                    "type": "string",
-                    "description": "For transit legs, the ID of the transit agency that operates the service used for this leg.",
-					"example": "SE:276:Authority:9010012000000000"
-                }, 
-                "tripId": {
-                    "type": "string",
-                    "description": "For transit legs, the ID of the trip",
-					"example": "SAM:SE:276:ServiceJourney:121120000230402565"
-                }, 
-                "serviceDate": {
-                    "type": "string",
-                    "description": "For transit legs, the service date of the trip, other=null",
-					"example": "20200603"
-                },
-                "from": {
-                    "$ref": "#/components/schemas/location"
-                },
-                "to": {
-                    "$ref": "#/components/schemas/location"
-                },
-				"routeShortName": {
-                    "type": "string",
-                    "description": "Short name for transit leg For non-transit legs, null.",
-					"example": "2"
-                }, 
-				"routeLongName": {
-                    "type": "string",
-                    "description": "Long name for transit leg For non-transit legs, null.",
-					"example": "HÖRBY NO 2 Satserup,  Månsköp, Svensköp m fl - Hör"
-                }, 
-				"boardRule": {
-                    "type": "string",
-                    "description": "Special rule for boarding, mustPhone=call before, syncWithDriver, etc",
-					"example": "mustPhone"
-                }, 
-				"alightRule": {
-                    "type": "string",
-                    "description": "Special rule for boarding, mustPhone=call before, syncWithDriver, etc",
-					"example": "mustPhone"
-                }, 
-				"rentedBike": {
-                    "type": "string",
-                    "description": "For transit leg, the trip's block ID (if one exists). For non-transit legs, null.",
-					"example": ""
-                }, 
-				"callAndRide": {
-                    "type": "string",
-                    "description": "For transit leg, the trip's block ID (if one exists). For non-transit legs, null.",
-					"example": ""
-                }, 
-				"flexCallAndRideMaxStartTime": {
-                    "type": "string",
-                    "description": "For transit leg, the trip's block ID (if one exists). For non-transit legs, null.",
-					"example": ""
-                }, 
-				"flexCallAndRideMinEndTime": {
-                    "type": "string",
-                    "description": "For transit leg, the trip's block ID (if one exists). For non-transit legs, null.",
-					"example": ""
-                }, 
-				"flexDrtAdvanceBookMin": {
-                    "type": "string",
-                    "description": "For transit leg, the trip's block ID (if one exists). For non-transit legs, null.",
-					"example": ""
-                }, 
-				"flexDrtPickupMessage": {
-                    "type": "string",
-                    "description": "For transit leg, the trip's block ID (if one exists). For non-transit legs, null.",
-					"example": ""
-                }, 
-				"flexDrtDropOffMessage": {
-                    "type": "string",
-                    "description": "For transit leg, the trip's block ID (if one exists). For non-transit legs, null.",
-					"example": ""
-                }, 
-				"flexFlagStopPickupMessage": {
-                    "type": "string",
-                    "description": "For transit leg, the trip's block ID (if one exists). For non-transit legs, null.",
-					"example": ""
-                }, 
-				"flexFlagStopDropOffMessage": {
-                    "type": "string",
-                    "description": "For transit leg, the trip's block ID (if one exists). For non-transit legs, null.",
-					"example": ""
-                }, 
-				"duration": {
-                    "type": "string",
-                    "description": "For transit leg, the trip's block ID (if one exists). For non-transit legs, null.",
-					"example": ""
-                }, 
-				"transitLeg": {
-                    "type": "string",
-                    "description": "For transit leg, the trip's block ID (if one exists). For non-transit legs, null.",
-					"example": ""
-                }
-				
-				
-			}
-	  },
-	  "itineraries": {
-            "type": "object",
-            "description": "Itinerary object contains details for a suggested journey",
-            "properties": {
-                "duration": {
-                    "type": "number",
-                    "description": "time in seconds for entire journey",
-					"example": 654
-                }, 
-                "startTime": {
-                    "type": "number",
-                    "description": "time when trip arrives at location, in seconds since 1970-01-01",
-					"example": 1591165179000
-                }, 
-                "endTime": {
-                    "type": "number",
-                    "description": "time when trip departs location, in seconds since 1970-01-01",
-					"example": 1591165179000
-                }, 
-                "walkTime": {
-                    "type": "number",
-                    "description": "time in seconds walking for parts of journey",
-					"example": 93
-                }, 
-                "transitTime":{
-                    "type": "string",
-                    "description": "How much time is spent on transit, in seconds",
-					"example": 561
-                }, 
-                "waitingTime": {
-                    "type": "number",
-                    "description": "How much time is spent waiting for transit to arrive, in seconds",
-					"example": 0
-                }, 
-                "walkLimitExceeded": {
-                    "type": "boolean",
-                    "description": "Indicates that the walk limit distance has been exceeded for this itinerary when true.",
-					"example": FALSE
-                }, 
-                "distance": {
-                    "type": "number",
-                    "description": "Total distance for this journey in meters",
-					"example": 1993
-                }, 
-                "elevationLost": {
-                    "type": "number",
-                    "description": "How much elevation is lost, in total, over the course of the trip, in meters, eg sum of all downhill parts of trip, not diff startpoint to endpoint. Need altitude data in maps to be used.",
-					"example": 0
-                }, 
-                "elevationGained": {
-                    "type": "number",
-                    "description": "How much elevation is gained, in total, over the course of the trip, in meters. Need altitude data in maps to be used.",
-					"example": 0
-                }, 
-                "transfers": {
-                    "type": "number",
-                    "description": "The number of transfers this trip has.",
-					"example": 1
-                }, 
-                "weight": {
-                    "type": "number",
-                    "description": "Weight of the itinerary, used for debugging",
-					"example": 1324
-                },
-                "legs": {  
-					"type": "array",
-					"description": "array of different parts of the journey",
-                    "items": {
-						"$ref": "#/components/schemas/legs"
-				    }
-				}
-            }
-      },	  
-	  "error": {
-            "type": "object",
-            "description": "Error in calculating journey responses",
-            "properties": {
-                "id": {
-                    "type": "number",
-                    "description": "code of the problem",
-					"example": 460
-                },
-                "msg": {
-                    "type": "string",
-					"description": "Longer description of what the problem was found when trying to calculate journey",
-                    "example": "Both origin and destination are unknown. Can you be a bit more descriptive?"
-                },
-                "message": {
-                    "type": "string",
-					"description": "shorter enum of error",
-                    "example": "GEOCODE_FROM_TO_NOT_FOUND"
-                },
-                "noPath": {
-                    "type": "boolean",
-					"description": "shorter enum of error",
-                    "example": FALSE
-                },
-                "missing": {
-                    "type": "string",
-					"description": "list of missing arguments",
-					"example": "from"
-                }
- 
-            }
-      },	  
-	  "location": {
-            "type": "object",
-            "description": "location of start or en of trip/journey",
-            "properties": {
-                "name": {
-                    "type": "string",
-                    "description": "Elevation data, not used.",
-					"example": "origin"
-                },
-				"lon": {
-                    "type": "string",
-                    "description": "longitude coordinate in WGS84",
-					"example": "13.000216260269747 (malmö c)"
-                },				
-                "lat": {
-                    "type": "string",
-                    "description": "latitude coordinate in WGS84",
-					"example": "55.60877733213926 (malmö c)"
-                },				
-                "stopId": {
-                    "type": "string",
-                    "description": "ID if location is specific stop",
-					"example": "SAM:SE:276:Quay:9022012080032002"
-                },              
-                "platformCode": {
-                    "type": "string",
-                    "description": "The code or name identifying the quay/platform the vehicle will arrive at or depart from",
-					"example": "B"
-                }, 
-                "arrival": {
-                    "type": "number",
-                    "description": "time when trip arrives at location, in seconds since 1970-01-01",
-					"example": 1591165179000
-                }, 
-                "departure": {
-                    "type": "number",
-                    "description": "time when trip departs location, in seconds since 1970-01-01",
-					"example": 1591165179000
-                }, 
-                "orig": {
-                    "type": "string",
-                    "description": "Name of specific stoplocation if location is stop",
-					"example": "B"
-                }, 
-                "stopIndex": {
-                    "type": "number",
-                    "description": "For transit trips, the stop index (numbered from zero from the start of the trip)",
-					"example": 6
-                }, 
-                "stopSequence": {
-                    "type": "number",
-                    "description": "For transit trips, the sequence number of the stop",
-					"example": 6
-                }, 
-                "vertexType": {
-                    "type": "string",
-                    "description": "Type of vertex. (Normal, Bike sharing station, Bike P+R, Transit stop)",
-					"example": "TRANSIT"
-                }, 
-                "boardAlightType": {
-                    "type": "string",
-                    "description": "Board or alight area for flag stops",
-					"example": "DEFAULT"
-                }, 
-				
-                "zoneId": {
-                    "type": "string",
-                    "description": "zone identifier",
-					"example": "B"
-                }
-				
-		
-			}
-	  },
-	  "plan": {
-            "type": "object",
-            "description": "listing of suggested journeys",
-            "properties": {
-                "date": {
-                    "type": "string",
-                    "description": "Elevation data, not used.",
-					"example": "1584614100000 = 2020-03-19 11:35:00 "
-                },
-                "from": {
-                    "$ref": "#/components/schemas/location"
-                },
-                "to": {
-                    "$ref": "#/components/schemas/location"
-                },
-                "itineraries": {  
-					"type": "array",
-					"description": "array of journey suggestions",
-                    "items": {
-						"$ref": "#/components/schemas/itineraries"
-				    }
-				}
-            }
-      },
-	  "pathTimes": {
+      "legGeometry": {
+        "type": "object",
+        "description": "Description of the geometry of the leg in PolyLine format, NOTE must unescape backslash in data, sent as double backslash.",
+        "properties": {
+          "points": {
+            "type": "string",
+            "description": "geometry in PolyLine format",
+            "example": "ujwuIqc_sAZR?CSO@Ge@YDg@Ik@@OGEAHE`@CAADFBAFs@a@"
+          },
+          "length": {
             "type": "number",
-            "description": "Time in milliseconds to compute a single journey path.",
-	  },	  
-	  "debugOutput": {
-            "type": "object",
-            "description": "Holds information to be included in the REST Response for debugging and profiling purposes. startedCalculating is called in the routingContext constructor. finishedCalculating and finishedRendering are all called in PlanGenerator.generate(). finishedPrecalculating and foundPaths are called in the SPTService implementations.",
-            "properties": {
-                "precalculationTime": {
-                    "type": "number",
-                    "description": "precalculationTime in milliseconds.",
-                },
-                "pathCalculationTime": {
-                    "type": "number",
-                    "description": "precalculationTime in milliseconds.",
-                },     
-                "pathTimes": {
-                    "type": "array",
-                    "description": "list of time in milliseconds for each journey path.",
-					"items": {
-						"$ref": "#/components/schemas/pathTimes"
-					}
-                },     				
-				"renderingTime": {
-                    "type": "number",
-                    "description": "renderingTime in milliseconds.",
-                },				
-				"totalTime": {
-                    "type": "number",
-                    "description": "total time pre + path + render time.",
-                },
-                "timedOut": {
-                    "type": "boolean",
-                    "description": "if request did not find trip"
-                }
+            "description": "Number of positions encoded in geometry string",
+            "example": 17
+          }
+        }
+      },
+      "legs": {
+        "type": "object",
+        "description": "leg object contains details for a suggested part of a journey",
+        "properties": {
+          "startTime": {
+            "type": "number",
+            "description": "time when trip arrives at location, in seconds since 1970-01-01",
+            "example": 1591165179000
+          },
+          "endTime": {
+            "type": "number",
+            "description": "time when trip departs location, in seconds since 1970-01-01",
+            "example": 1591165179000
+          },
+          "departureDelay": {
+            "type": "number",
+            "description": "number of seconds that departure was/will be delayed",
+            "example": 0
+          },
+          "arrivalDelay": {
+            "type": "number",
+            "description": "number of seconds that arrival was/will be delayed",
+            "example": 0
+          },
+          "realTime": {
+            "type": "boolean",
+            "description": "if journey has realtime updated times",
+            "example": FALSE
+          },
+          "isNonExactFrequency": {
+            "type": "boolean",
+            "description": "Is this a frequency-based trip with non-strict departure times",
+            "example": FALSE
+          },
+          "distance": {
+            "type": "number",
+            "description": "Total distance for this leg of journey in meters",
+            "example": 1772
+          },
+          "pathway": {
+            "type": "boolean",
+            "description": "Is this leg a traversing pathways",
+            "example": FALSE
+          },
+          "headway": {
+            "type": "number",
+            "description": "The best estimate of the time between two arriving vehicles. This is particularly important for non-strict frequency trips, but could become important for real-time trips, strict frequency trips, and scheduled trips with empirical headways.",
+            "example": 0
+          },
+
+          "mode": {
+            "type": "string",
+            "description": "Is this leg a traversing pathways",
+            "example": "BUS"
+          },
+          "route": {
+            "type": "string",
+            "description": "For transit legs, the route of the bus or train being used. For non-transit legs, the name of the street being traversed.",
+            "example": "2"
+          },
+          "agencyName": {
+            "type": "string",
+            "description": "Name of agency for the leg",
+            "example": "Skånetrafiken"
+          },
+          "agencyUrl": {
+            "type": "string",
+            "description": "URL of agency for the leg",
+            "example": "www.skanetrafiken.se"
+          },
+          "agencyBrandingUrl": {
+            "type": "string",
+            "description": "URL of agency brand",
+            "example": ""
+          },
+          "routeBrandingUrl": {
+            "type": "string",
+            "description": "URL of specific route brand",
+            "example": ""
+          },
+          "agencyTimeZoneOffset": {
+            "type": "number",
+            "description": "Offset for time, not used",
+            "example": 0
+          },
+          "routeColor": {
+            "type": "string",
+            "description": "For transit leg, the route's (background) color (if one exists). For non-transit legs, null.",
+            "example": ""
+          },
+          "routeType": {
+            "type": "number",
+            "description": "For transit legs, the type of the route. Non transit -1\nWhen 0-7: 0 Tram, 1 Subway, 2 Train, 3 Bus, 4 Ferry, 5 Cable Car, 6 Gondola, 7 Funicular, When equal or highter than 100, it is coded using the Hierarchical Vehicle Type (HVT) codes from the European TPEG standard",
+            "example": 700
+          },
+          "routeId": {
+            "type": "string",
+            "description": "For transit legs, the ID of the route",
+            "example": "SAM:SE:276:Line:9011012000200000"
+          },
+          "routeTextColor": {
+            "type": "string",
+            "description": "For transit leg, the route's text color (if one exists). For non-transit legs, null",
+            "example": ""
+          },
+          "interlineWithPreviousLeg": {
+            "type": "boolean",
+            "description": "For transit legs, if the rider should stay on the vehicle as it changes route names.",
+            "example": FALSE
+          },
+          "tripShortName": {
+            "type": "string",
+            "description": "For transit leg, the trip's short name (if one exists). For non-transit legs, null",
+            "example": ""
+          },
+          "tripBlockId": {
+            "type": "string",
+            "description": "For transit leg, the trip's block ID (if one exists). For non-transit legs, null.",
+            "example": ""
+          },
+          "headsign": {
+            "type": "string",
+            "description": "For transit legs, the headsign of the bus or train being used. For non-transit legs, null",
+            "example": "Kastanjegården"
+          },
+          "agencyId": {
+            "type": "string",
+            "description": "For transit legs, the ID of the transit agency that operates the service used for this leg.",
+            "example": "SE:276:Authority:9010012000000000"
+          },
+          "tripId": {
+            "type": "string",
+            "description": "For transit legs, the ID of the trip",
+            "example": "ST:SE:276:ServiceJourney:121120000230402565"
+          },
+          "serviceDate": {
+            "type": "string",
+            "description": "For transit legs, the service date of the trip, other=null",
+            "example": "20200603"
+          },
+          "from": {
+            "$ref": "#/components/schemas/location"
+          },
+          "to": {
+            "$ref": "#/components/schemas/location"
+          },
+          "legGeometry":{
+            "$ref": "#/components/schemas/legGeometry"
+          },
+          "routeShortName": {
+            "type": "string",
+            "description": "Short name for transit leg For non-transit legs, null.",
+            "example": "2"
+          },
+          "routeLongName": {
+            "type": "string",
+            "description": "Long name for transit leg For non-transit legs, null.",
+            "example": "HÖRBY NO 2 Satserup,  Månsköp, Svensköp m fl - Hör"
+          },
+          "boardRule": {
+            "type": "string",
+            "description": "Special rule for boarding, mustPhone=call before, syncWithDriver, etc",
+            "example": "mustPhone"
+          },
+          "alightRule": {
+            "type": "string",
+            "description": "Special rule for boarding, mustPhone=call before, syncWithDriver, etc",
+            "example": "mustPhone"
+          },
+          "rentedBike": {
+            "type": "string",
+            "description": "For transit leg, the trip's block ID (if one exists). For non-transit legs, null.",
+            "example": ""
+          },
+          "callAndRide": {
+            "type": "string",
+            "description": "For transit leg, the trip's block ID (if one exists). For non-transit legs, null.",
+            "example": ""
+          },
+          "flexCallAndRideMaxStartTime": {
+            "type": "string",
+            "description": "For transit leg, the trip's block ID (if one exists). For non-transit legs, null.",
+            "example": ""
+          },
+          "flexCallAndRideMinEndTime": {
+            "type": "string",
+            "description": "For transit leg, the trip's block ID (if one exists). For non-transit legs, null.",
+            "example": ""
+          },
+          "flexDrtAdvanceBookMin": {
+            "type": "string",
+            "description": "For transit leg, the trip's block ID (if one exists). For non-transit legs, null.",
+            "example": ""
+          },
+          "flexDrtPickupMessage": {
+            "type": "string",
+            "description": "For transit leg, the trip's block ID (if one exists). For non-transit legs, null.",
+            "example": ""
+          },
+          "flexDrtDropOffMessage": {
+            "type": "string",
+            "description": "For transit leg, the trip's block ID (if one exists). For non-transit legs, null.",
+            "example": ""
+          },
+          "flexFlagStopPickupMessage": {
+            "type": "string",
+            "description": "For transit leg, the trip's block ID (if one exists). For non-transit legs, null.",
+            "example": ""
+          },
+          "flexFlagStopDropOffMessage": {
+            "type": "string",
+            "description": "For transit leg, the trip's block ID (if one exists). For non-transit legs, null.",
+            "example": ""
+          },
+          "duration": {
+            "type": "string",
+            "description": "For transit leg, the trip's block ID (if one exists). For non-transit legs, null.",
+            "example": ""
+          },
+          "transitLeg": {
+            "type": "string",
+            "description": "For transit leg, the trip's block ID (if one exists). For non-transit legs, null.",
+            "example": ""
+          }
+
+
+        }
+      },
+      "itineraries": {
+        "type": "object",
+        "description": "Itinerary object contains details for a suggested journey",
+        "properties": {
+          "duration": {
+            "type": "number",
+            "description": "time in seconds for entire journey",
+            "example": 654
+          },
+          "startTime": {
+            "type": "number",
+            "description": "time when trip arrives at location, in seconds since 1970-01-01",
+            "example": 1591165179000
+          },
+          "endTime": {
+            "type": "number",
+            "description": "time when trip departs location, in seconds since 1970-01-01",
+            "example": 1591165179000
+          },
+          "walkTime": {
+            "type": "number",
+            "description": "time in seconds walking for parts of journey",
+            "example": 93
+          },
+          "transitTime":{
+            "type": "string",
+            "description": "How much time is spent on transit, in seconds",
+            "example": 561
+          },
+          "waitingTime": {
+            "type": "number",
+            "description": "How much time is spent waiting for transit to arrive, in seconds",
+            "example": 0
+          },
+          "walkLimitExceeded": {
+            "type": "boolean",
+            "description": "Indicates that the walk limit distance has been exceeded for this itinerary when true.",
+            "example": FALSE
+          },
+          "distance": {
+            "type": "number",
+            "description": "Total distance for this journey in meters",
+            "example": 1993
+          },
+          "elevationLost": {
+            "type": "number",
+            "description": "How much elevation is lost, in total, over the course of the trip, in meters, eg sum of all downhill parts of trip, not diff startpoint to endpoint. Need altitude data in maps to be used.",
+            "example": 0
+          },
+          "elevationGained": {
+            "type": "number",
+            "description": "How much elevation is gained, in total, over the course of the trip, in meters. Need altitude data in maps to be used.",
+            "example": 0
+          },
+          "transfers": {
+            "type": "number",
+            "description": "The number of transfers this trip has.",
+            "example": 1
+          },
+          "weight": {
+            "type": "number",
+            "description": "Weight of the itinerary, used for debugging",
+            "example": 1324
+          },
+          "legs": {
+            "type": "array",
+            "description": "array of different parts of the journey",
+            "items": {
+              "$ref": "#/components/schemas/legs"
             }
-      },	  
+          }
+        }
+      },
+      "error": {
+        "type": "object",
+        "description": "Error in calculating journey responses",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "code of the problem",
+            "example": 460
+          },
+          "msg": {
+            "type": "string",
+            "description": "Longer description of what the problem was found when trying to calculate journey",
+            "example": "Both origin and destination are unknown. Can you be a bit more descriptive?"
+          },
+          "message": {
+            "type": "string",
+            "description": "shorter enum of error",
+            "example": "GEOCODE_FROM_TO_NOT_FOUND"
+          },
+          "noPath": {
+            "type": "boolean",
+            "description": "shorter enum of error",
+            "example": FALSE
+          },
+          "missing": {
+            "type": "string",
+            "description": "list of missing arguments",
+            "example": "from"
+          }
+
+        }
+      },
+      "location": {
+        "type": "object",
+        "description": "location of start or en of trip/journey",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Elevation data, not used.",
+            "example": "origin"
+          },
+          "lon": {
+            "type": "string",
+            "description": "longitude coordinate in WGS84",
+            "example": "13.000216260269747 (malmö c)"
+          },
+          "lat": {
+            "type": "string",
+            "description": "latitude coordinate in WGS84",
+            "example": "55.60877733213926 (malmö c)"
+          },
+          "stopId": {
+            "type": "string",
+            "description": "ID if location is specific stop",
+            "example": "SAM:SE:276:Quay:9022012080032002"
+          },
+          "platformCode": {
+            "type": "string",
+            "description": "The code or name identifying the quay/platform the vehicle will arrive at or depart from",
+            "example": "B"
+          },
+          "arrival": {
+            "type": "number",
+            "description": "time when trip arrives at location, in seconds since 1970-01-01",
+            "example": 1591165179000
+          },
+          "departure": {
+            "type": "number",
+            "description": "time when trip departs location, in seconds since 1970-01-01",
+            "example": 1591165179000
+          },
+          "orig": {
+            "type": "string",
+            "description": "Name of specific stoplocation if location is stop",
+            "example": "B"
+          },
+          "stopIndex": {
+            "type": "number",
+            "description": "For transit trips, the stop index (numbered from zero from the start of the trip)",
+            "example": 6
+          },
+          "stopSequence": {
+            "type": "number",
+            "description": "For transit trips, the sequence number of the stop",
+            "example": 6
+          },
+          "vertexType": {
+            "type": "string",
+            "description": "Type of vertex. (Normal, Bike sharing station, Bike P+R, Transit stop)",
+            "example": "TRANSIT"
+          },
+          "boardAlightType": {
+            "type": "string",
+            "description": "Board or alight area for flag stops",
+            "example": "DEFAULT"
+          },
+
+          "zoneId": {
+            "type": "string",
+            "description": "zone identifier",
+            "example": "B"
+          }
+
+
+        }
+      },
+      "plan": {
+        "type": "object",
+        "description": "listing of suggested journeys",
+        "properties": {
+          "date": {
+            "type": "string",
+            "description": "Elevation data, not used.",
+            "example": "1584614100000 = 2020-03-19 11:35:00 "
+          },
+          "from": {
+            "$ref": "#/components/schemas/location"
+          },
+          "to": {
+            "$ref": "#/components/schemas/location"
+          },
+          "itineraries": {
+            "type": "array",
+            "description": "array of journey suggestions",
+            "items": {
+              "$ref": "#/components/schemas/itineraries"
+            }
+          }
+        }
+      },
+      "pathTimes": {
+        "type": "number",
+        "description": "Time in milliseconds to compute a single journey path.",
+      },
+      "debugOutput": {
+        "type": "object",
+        "description": "Holds information to be included in the REST Response for debugging and profiling purposes. startedCalculating is called in the routingContext constructor. finishedCalculating and finishedRendering are all called in PlanGenerator.generate(). finishedPrecalculating and foundPaths are called in the SPTService implementations.",
+        "properties": {
+          "precalculationTime": {
+            "type": "number",
+            "description": "precalculationTime in milliseconds.",
+          },
+          "pathCalculationTime": {
+            "type": "number",
+            "description": "precalculationTime in milliseconds.",
+          },
+          "pathTimes": {
+            "type": "array",
+            "description": "list of time in milliseconds for each journey path.",
+            "items": {
+              "$ref": "#/components/schemas/pathTimes"
+            }
+          },
+          "renderingTime": {
+            "type": "number",
+            "description": "renderingTime in milliseconds.",
+          },
+          "totalTime": {
+            "type": "number",
+            "description": "total time pre + path + render time.",
+          },
+          "timedOut": {
+            "type": "boolean",
+            "description": "if request did not find trip"
+          }
+        }
+      },
       "serverVersion": {
         "type": "object",
         "properties": {
@@ -685,28 +704,28 @@
             "type": "string",
             "description": "Gets build id",
             "nullable": true,
-			"example":"1.3.9.RB-SNAPSHOT"
+            "example":"1.3.9.RB-SNAPSHOT"
           },
           "major": {
             "type": "integer",
             "description": "Major version id",
             "format": "int32",
             "nullable": true,
-			"example":1
+            "example":1
           },
           "minor": {
             "type": "integer",
             "description": "Minor version id",
             "format": "int32",
             "nullable": true,
-			"example":3
-          },          
-		  "incremental": {
+            "example":3
+          },
+          "incremental": {
             "type": "integer",
             "description": "incremental counter",
             "format": "int32",
             "readOnly": true,
-			"example":9
+            "example":9
           },
           "qualifier": {
             "type": "string",
@@ -719,94 +738,94 @@
             "description": "hashid for commit of build",
             "readOnly": true,
             "nullable": false,
-			"example":"441d2bb403626c72936dbfa4bd228d2714c3c6fb"
+            "example":"441d2bb403626c72936dbfa4bd228d2714c3c6fb"
           },
           "describe": {
             "type": "string",
             "description": "description of GIT commit for this build",
             "readOnly": true,
             "nullable": false,
-			"example":"added function XXX"
+            "example":"added function XXX"
           },
           "commit_time": {
             "type": "string",
             "description": "when build was commited, datetime",
             "readOnly": true,
             "nullable": false,
-			"example":"15.05.2020 @ 04:08:20 GMT"
+            "example":"15.05.2020 @ 04:08:20 GMT"
           },
           "build_time": {
             "type": "string",
             "description": "build_time of build",
             "readOnly": true,
             "nullable": false,
-			"example":"15.05.2020 @ 09:40:47 GMT"
+            "example":"15.05.2020 @ 09:40:47 GMT"
           },
           "longVersionString": {
             "type": "string",
             "description": "contains concatinated build info",
             "readOnly": true,
             "nullable": false,
-			"example":"version: 1.3.9.RB-SNAPSHOT\nmajor: 1\nminor: 3\npatch: 9\nqualifier: SNAPSHOT\ncommit: 441d2bb403626c72936dbfa4bd228d2714c3c6fb\n"
+            "example":"version: 1.3.9.RB-SNAPSHOT\nmajor: 1\nminor: 3\npatch: 9\nqualifier: SNAPSHOT\ncommit: 441d2bb403626c72936dbfa4bd228d2714c3c6fb\n"
           },
           "shortVersionString": {
             "type": "string",
             "description": "contains short build info",
             "readOnly": true,
             "nullable": false,
-			"example":"OpenTripPlanner 1.3.9.RB-SNAPSHOT 441d2bb403626c72936dbfa4bd228d2714c3c6fb"
+            "example":"OpenTripPlanner 1.3.9.RB-SNAPSHOT 441d2bb403626c72936dbfa4bd228d2714c3c6fb"
           },
           "uid": {
             "type": "string",
             "description": "uniqueid for build",
             "readOnly": true,
             "nullable": false,
-			"example":"-1003009"
-			}
+            "example":"-1003009"
+          }
         },
         "description": "Server version data object."
       },
-	  "ServerInfo": {
-	  "type": "object",
+      "ServerInfo": {
+        "type": "object",
         "properties": {
           "value": {
             "$ref": "#/components/schemas/serverVersion"
           },
-		  "cpuName": {
+          "cpuName": {
             "type": "string",
             "description": "type of CPU of machine",
             "readOnly": true,
-			"example":"Intel(R) Xeon(R) Platinum 8171M CPU @ 2.60GHz",
+            "example":"Intel(R) Xeon(R) Platinum 8171M CPU @ 2.60GHz",
             "nullable": false
-			},
- 		  "nCores": {
+          },
+          "nCores": {
             "type": "integer",
             "description": "Number of cores in machine",
             "format": "int32",
             "readOnly": true
           }
-       }   
-	  },
-	  "Response": {
-	  "type": "object",
+        }
+      },
+      "Response": {
+        "type": "object",
         "properties": {
           "requestParameters": {
             "$ref": "#/components/schemas/requestParameters"
           },
-		  "plan": {
+          "plan": {
             "$ref": "#/components/schemas/plan"
-		  },		  
-		  "error": {
+          },
+          "error": {
             "$ref": "#/components/schemas/error"
-		  },		  
-		  "elevationMetadata": {
+          },
+          "elevationMetadata": {
             "$ref": "#/components/schemas/elevationMetadata"
-		  },
- 		  "debugOutput": {
+          },
+          "debugOutput": {
             "$ref": "#/components/schemas/debugOutput"
           }
-       }
-	  }		  
+        }
+      }
     }
   }
 }
