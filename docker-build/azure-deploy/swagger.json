@@ -321,7 +321,7 @@
           },
           "routeType": {
             "type": "number",
-            "description": "For transit legs, the type of the route. Non transit -1\nWhen 0-7: 0 Tram, 1 Subway, 2 Train, 3 Bus, 4 Ferry, 5 Cable Car, 6 Gondola, 7 Funicular, When equal or highter than 100, it is coded using the Hierarchical Vehicle Type (HVT) codes from the European TPEG standard",
+            "description": "For transit legs, the type of the route. Non transit -1\nWhen 0-7: 0 Tram, 1 Subway, 2 Train, 3 Bus, 4 Ferry, 5 Cable Car, 6 Gondola, 7 Funicular, When equal or highter than 100, it is coded using the Hierarchical Vehicle Type (HVT) codes from the European TPEG standard\nCurrent mapped codes from transport type and subtype, 100 Tåg, 102 Tåg PågatågExpress, 103 Tåg Öresundståg, 106 Tåg Pågatåg, 700 Buss, 701 Buss Regionbuss, 704 Buss Stadsbuss, 710 Buss Närtrafik, 711 Buss Tågbuss, 714 Buss TEB planerad, ",
             "example": 700
           },
           "routeId": {
