@@ -11,17 +11,17 @@ variables:
 steps:
   # Put settings with Azure Artifacts repository
   - task: DownloadSecureFile@1
-    name: settingsxml
+    name: settingsSecurityxml
     inputs:
-      secureFile: settings.xml
+      secureFile: settings-security.xml
 
-  - bash: cp -p $(settingsxml.secureFilePath) /tmp/settings.xml
+  - bash: cp -p $(settingsSecurityxml.secureFilePath) /tmp/settings-security.xml
   # Build Java project
   - task: Maven@3
     inputs:
       goals: 'clean package'
       mavenAuthenticateFeed: true
-      options: '-Pjunit-report --settings /tmp/settings.xml'
+      options: '-Pjunit-report --settings docker-build/azure-deploy/settings.xml -Dsettings.security=/tmp/settings-security.xml'
       jdkVersionOption: '1.11'
       jdkArchitectureOption: 'x64'
       mavenOptions: '-Xmx6G'
