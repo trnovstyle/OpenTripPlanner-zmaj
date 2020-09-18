@@ -168,14 +168,11 @@ public class AlertsUpdateHandler {
             idsToExpire.addAll(operatorAlerts.getLeft());
             patches.addAll(operatorAlerts.getRight());
 
-            AffectsScopeStructure.Networks networks = affectsStructure.getNetworks();
-            Set<Route> stopRoutes = getRoutes(networks);
-
-            final Pair<Set<String>, Set<AlertPatch>> stopAlerts = createStopAlerts(paddedSituationNumber, expireSituation, periods, stopRoutes, affectsStructure.getStopPoints(), affectsStructure.getStopPlaces());
+            final Pair<Set<String>, Set<AlertPatch>> stopAlerts = createStopAlerts(paddedSituationNumber, expireSituation, periods, affectsStructure.getStopPoints(), affectsStructure.getStopPlaces());
             idsToExpire.addAll(stopAlerts.getLeft());
             patches.addAll(stopAlerts.getRight());
 
-            final Pair<Set<String>, Set<AlertPatch>> networkAlerts = createNetworkAlerts(paddedSituationNumber, expireSituation, periods, alert, networks);
+            final Pair<Set<String>, Set<AlertPatch>> networkAlerts = createNetworkAlerts(paddedSituationNumber, expireSituation, periods, alert, affectsStructure.getNetworks());
             idsToExpire.addAll(networkAlerts.getLeft());
             patches.addAll(networkAlerts.getRight());
 
@@ -549,7 +546,7 @@ public class AlertsUpdateHandler {
         return Pair.of(idsToExpire, patches);
     }
 
-    private Pair<Set<String>, Set<AlertPatch>> createStopAlerts(String paddedSituationNumber, boolean expireSituation, ArrayList<TimePeriod> periods, Set<Route> stopRoutes, AffectsScopeStructure.StopPoints stopPoints, AffectsScopeStructure.StopPlaces stopPlaces) {
+    private Pair<Set<String>, Set<AlertPatch>> createStopAlerts(String paddedSituationNumber, boolean expireSituation, ArrayList<TimePeriod> periods, AffectsScopeStructure.StopPoints stopPoints, AffectsScopeStructure.StopPlaces stopPlaces) {
 
         Set<String> idsToExpire = new HashSet<>();
         Set<AlertPatch> patches = new HashSet<>();
@@ -603,22 +600,9 @@ public class AlertsUpdateHandler {
                     idsToExpire.add(id);
                 } else {
                     if (stopId != null) {
-
-                        if (stopRoutes.isEmpty()) {
-                            AlertPatch stopOnlyAlertPatch = createAlertPatch(id, periods, stopConditions);
-                            stopOnlyAlertPatch.setStop(stopId);
-                            patches.add(stopOnlyAlertPatch);
-                        } else {
-                            //Adding combination of stop & route
-                            for (Route route : stopRoutes) {
-                                id = paddedSituationNumber + stopId.getId() + "-" + route.getId().getId();
-
-                                AlertPatch alertPatch = createAlertPatch(id, periods, stopConditions);
-                                alertPatch.setStop(stopId);
-                                alertPatch.setRoute(route.getId());
-                                patches.add(alertPatch);
-                            }
-                        }
+                        AlertPatch stopOnlyAlertPatch = createAlertPatch(id, periods, stopConditions);
+                        stopOnlyAlertPatch.setStop(stopId);
+                        patches.add(stopOnlyAlertPatch);
                     }
                 }
             }

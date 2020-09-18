@@ -542,11 +542,7 @@ public class AlertsUpdateHandlerTest extends GtfsTest {
 
         assertFalse(alertsUpdateHandler.getAlertPatchService().getAllAlertPatches().isEmpty());
 
-        /*
-         * Line and stop-alerts should result in several AlertPatches. One for each routeId/stop combination
-         */
-
-        assertLineAndStopAlerts(situationNumber, routeId, stopId0, stopId1);
+        assertSeparateLineAndStopAlerts(situationNumber, routeId, stopId0, stopId1);
     }
 
     @Test
@@ -569,7 +565,7 @@ public class AlertsUpdateHandlerTest extends GtfsTest {
         alertsUpdateHandler.update(serviceDelivery);
 
         assertFalse(alertsUpdateHandler.getAlertPatchService().getAllAlertPatches().isEmpty());
-        assertLineAndStopAlerts(situationNumber, routeId, stopId0, stopId1);
+        assertSeparateLineAndStopAlerts(situationNumber, routeId, stopId0, stopId1);
 
     }
 
@@ -595,6 +591,42 @@ public class AlertsUpdateHandlerTest extends GtfsTest {
         assertEquals(1, tripPatches.size());
         alertPatch = tripPatches.iterator().next();
         assertEquals(routeId, alertPatch.getRoute().getId());
+        assertEquals(situationNumber, alertPatch.getSituationNumber());
+        assertNotNull(alertPatch.getStop());
+        assertEquals(stopId1, alertPatch.getStop().getId());
+    }
+
+    private void assertSeparateLineAndStopAlerts(String situationNumber, String routeId, String stopId0, String stopId1) {
+        /*
+         * Line and external stop-alerts should result in several AlertPatches. One for each routeId AND for each stop
+         */
+
+        Collection<AlertPatch> tripPatches = alertsUpdateHandler.getAlertPatchService().getRoutePatches( new AgencyAndId("FEED", routeId));
+
+        assertNotNull(tripPatches);
+        assertEquals(1, tripPatches.size());
+        AlertPatch alertPatch = tripPatches.iterator().next();
+        assertEquals(routeId, alertPatch.getRoute().getId());
+        assertEquals(situationNumber, alertPatch.getSituationNumber());
+        assertNull(alertPatch.getStop());
+
+        tripPatches = alertsUpdateHandler.getAlertPatchService().getStopPatches(new AgencyAndId("FEED", stopId0));
+
+        assertNotNull(tripPatches);
+        assertEquals(1, tripPatches.size());
+        alertPatch = tripPatches.iterator().next();
+        assertNull(alertPatch.getRoute());
+        assertEquals(situationNumber, alertPatch.getSituationNumber());
+        assertNotNull(alertPatch.getStop());
+        assertEquals(stopId0, alertPatch.getStop().getId());
+
+
+        tripPatches = alertsUpdateHandler.getAlertPatchService().getStopPatches(new AgencyAndId("FEED", stopId1));
+
+        assertNotNull(tripPatches);
+        assertEquals(1, tripPatches.size());
+        alertPatch = tripPatches.iterator().next();
+        assertNull(alertPatch.getRoute());
         assertEquals(situationNumber, alertPatch.getSituationNumber());
         assertNotNull(alertPatch.getStop());
         assertEquals(stopId1, alertPatch.getStop().getId());
