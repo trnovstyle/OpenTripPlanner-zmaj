@@ -119,6 +119,11 @@ public class TripTimes implements Serializable, Comparable<TripTimes>, Cloneable
     transient boolean[] isPredictionInaccurate;
 
     /**
+     *  Realtime-reported occupancy per stop. Non-final to allow updates, transient for backwards graph-compatibility.
+     */
+    transient OccupancyStatus[] occupancyStatus;
+
+    /**
      * Flag tho indicate cancellations on each stop. Non-final to allow updates.
      */
     int[] pickups;
@@ -540,6 +545,23 @@ public class TripTimes implements Serializable, Comparable<TripTimes>, Cloneable
     }
 
 
+    public void setOccupancyStatus(OccupancyStatus occupancyStatus) {
+        checkCreateTimesArrays();
+        Arrays.fill(this.occupancyStatus, occupancyStatus);
+    }
+
+    public void setOccupancyStatus(int stop, OccupancyStatus occupancyStatus) {
+        checkCreateTimesArrays();
+        this.occupancyStatus[stop] = occupancyStatus;
+    }
+
+    public OccupancyStatus getOccupancyStatus(int stop) {
+        if (occupancyStatus == null) {
+            return OccupancyStatus.UNKNOWN;
+        }
+        return occupancyStatus[stop];
+    }
+
     //Is prediction for single stop inaccurate
     public void setPredictionInaccurate(int stop, boolean predictionInaccurate) {
         checkCreateTimesArrays();
@@ -691,12 +713,14 @@ public class TripTimes implements Serializable, Comparable<TripTimes>, Cloneable
             isRecordedStop = new boolean[arrivalTimes.length];
             isCancelledStop = new boolean[arrivalTimes.length];
             isPredictionInaccurate = new boolean[arrivalTimes.length];
+            occupancyStatus = new OccupancyStatus[arrivalTimes.length];
             for (int i = 0; i < arrivalTimes.length; i++) {
                 arrivalTimes[i] += timeShift;
                 departureTimes[i] += timeShift;
                 isRecordedStop[i] = false;
                 isCancelledStop[i] = false;
                 isPredictionInaccurate[i] = false;
+                occupancyStatus[i] = OccupancyStatus.UNKNOWN;
             }
 
             // Update the real-time state
