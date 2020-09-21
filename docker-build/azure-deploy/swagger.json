@@ -32,8 +32,8 @@
           }
         }
       }
-    }
-  ,"/otp/routers/default/plan": {
+    },
+    "/otp/routers/default/plan": {
       "get": {
         "tags": [
           "Trip planing"
@@ -256,12 +256,12 @@
           "realTime": {
             "type": "boolean",
             "description": "if journey has realtime updated times",
-            "example": FALSE
+            "example": false
           },
           "isNonExactFrequency": {
             "type": "boolean",
             "description": "Is this a frequency-based trip with non-strict departure times",
-            "example": FALSE
+            "example": false
           },
           "distance": {
             "type": "number",
@@ -271,7 +271,7 @@
           "pathway": {
             "type": "boolean",
             "description": "Is this leg a traversing pathways",
-            "example": FALSE
+            "example": false
           },
           "headway": {
             "type": "number",
@@ -337,7 +337,7 @@
           "interlineWithPreviousLeg": {
             "type": "boolean",
             "description": "For transit legs, if the rider should stay on the vehicle as it changes route names.",
-            "example": FALSE
+            "example": false
           },
           "tripShortName": {
             "type": "string",
@@ -494,7 +494,7 @@
           "walkLimitExceeded": {
             "type": "boolean",
             "description": "Indicates that the walk limit distance has been exceeded for this itinerary when true.",
-            "example": FALSE
+            "example": false
           },
           "distance": {
             "type": "number",
@@ -552,7 +552,7 @@
           "noPath": {
             "type": "boolean",
             "description": "shorter enum of error",
-            "example": FALSE
+            "example": false
           },
           "missing": {
             "type": "string",
@@ -662,7 +662,7 @@
       },
       "pathTimes": {
         "type": "number",
-        "description": "Time in milliseconds to compute a single journey path.",
+        "description": "Time in milliseconds to compute a single journey path."
       },
       "debugOutput": {
         "type": "object",
@@ -670,11 +670,11 @@
         "properties": {
           "precalculationTime": {
             "type": "number",
-            "description": "precalculationTime in milliseconds.",
+            "description": "precalculationTime in milliseconds."
           },
           "pathCalculationTime": {
             "type": "number",
-            "description": "precalculationTime in milliseconds.",
+            "description": "precalculationTime in milliseconds."
           },
           "pathTimes": {
             "type": "array",
@@ -685,11 +685,11 @@
           },
           "renderingTime": {
             "type": "number",
-            "description": "renderingTime in milliseconds.",
+            "description": "renderingTime in milliseconds."
           },
           "totalTime": {
             "type": "number",
-            "description": "total time pre + path + render time.",
+            "description": "total time pre + path + render time."
           },
           "timedOut": {
             "type": "boolean",
