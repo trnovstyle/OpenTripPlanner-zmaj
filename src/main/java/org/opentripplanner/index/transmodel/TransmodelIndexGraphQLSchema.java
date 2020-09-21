@@ -75,6 +75,7 @@ import org.opentripplanner.routing.core.TraverseModeSet;
 import org.opentripplanner.routing.edgetype.TripPattern;
 import org.opentripplanner.routing.error.VertexNotFoundException;
 import org.opentripplanner.routing.graph.GraphIndex;
+import org.opentripplanner.routing.trippattern.OccupancyStatus;
 import org.opentripplanner.routing.trippattern.RealTimeState;
 import org.opentripplanner.routing.vertextype.TransitVertex;
 import org.opentripplanner.standalone.Router;
@@ -171,6 +172,18 @@ public class TransmodelIndexGraphQLSchema {
             .value("canceled", RealTimeState.CANCELED, "The service journey has been canceled by a real-time update.")
             .value("Added", RealTimeState.ADDED, "The service journey has been added using a real-time update, i.e. the service journey was not present in the regular time table.")
             .value("modified", RealTimeState.MODIFIED, "The service journey information has been updated and resulted in a different journey pattern compared to the journey pattern of the scheduled service journey.")
+            .build();
+
+    private static GraphQLEnumType occupancyStatusEnum = GraphQLEnumType.newEnum()
+            .name("Occupancy")
+            .value("unknown", OccupancyStatus.UNKNOWN, "The Occupancy is unknown. DEFAULT.")
+            .value("empty", OccupancyStatus.EMPTY, "The vehicle is considered empty by most measures, and has few or no passengers onboard, but is still accepting passengers.")
+            .value("manySeatsAvailable", OccupancyStatus.MANY_SEATS_AVAILABLE, "The vehicle has a large percentage of seats available. What percentage of free seats out of the total seats available is to be considered large enough to fall into this category is determined at the discretion of the producer.")
+            .value("fewSeatsAvailable", OccupancyStatus.FEW_SEATS_AVAILABLE, "The vehicle has a small percentage of seats available. What percentage of free seats out of the total seats available is to be considered small enough to fall into this category is determined at the discretion of the producer.")
+            .value("standingRoomOnly", OccupancyStatus.STANDING_ROOM_ONLY, "The vehicle can currently accommodate only standing passengers.")
+            .value("crushedStandingRoomOnly", OccupancyStatus.CRUSHED_STANDING_ROOM_ONLY, "The vehicle can currently accommodate only standing passengers and has limited space for them.")
+            .value("full", OccupancyStatus.FULL, "The vehicle is considered full by most measures, but may still be allowing passengers to board.")
+            .value("notAcceptingPassengers", OccupancyStatus.NOT_ACCEPTING_PASSENGERS, "The vehicle can not accept passengers.")
             .build();
 
     private static GraphQLEnumType vertexTypeEnum = GraphQLEnumType.newEnum()
@@ -2034,6 +2047,13 @@ public class TransmodelIndexGraphQLSchema {
                         .name("realtimeState")
                         .type(realtimeStateEnum)
                         .dataFetcher(environment -> ((TripTimeShort) environment.getSource()).realtimeState)
+                        .build())
+                .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("occupancyStatus")
+                        .deprecate("Not yet officially supported.")
+                        .type(occupancyStatusEnum)
+                        .description("OccupancyStatus.")
+                        .dataFetcher(environment -> ((TripTimeShort) environment.getSource()).occupancyStatus)
                         .build())
                 .field(GraphQLFieldDefinition.newFieldDefinition()
                         .name("forBoarding")

@@ -31,6 +31,7 @@ import org.opentripplanner.routing.core.TransferTable;
 import org.opentripplanner.routing.graph.Graph;
 import org.opentripplanner.routing.graph.GraphIndex;
 import org.opentripplanner.routing.trippattern.FrequencyEntry;
+import org.opentripplanner.routing.trippattern.OccupancyStatus;
 import org.opentripplanner.routing.trippattern.RealTimeState;
 import org.opentripplanner.routing.trippattern.TripTimes;
 import org.slf4j.Logger;
@@ -43,6 +44,7 @@ import uk.org.siri.siri20.EstimatedVehicleJourney;
 import uk.org.siri.siri20.MonitoredCallStructure;
 import uk.org.siri.siri20.MonitoredVehicleJourneyStructure;
 import uk.org.siri.siri20.NaturalLanguageStringStructure;
+import uk.org.siri.siri20.OccupancyEnumeration;
 import uk.org.siri.siri20.RecordedCall;
 import uk.org.siri.siri20.VehicleActivityStructure;
 
@@ -709,6 +711,10 @@ public class Timetable implements Serializable {
         //Populate missing data from existing TripTimes
         newTimes.serviceCode = oldTimes.serviceCode;
 
+        if (journey.getOccupancy() != null) {
+            newTimes.setOccupancyStatus(mapOccupancy(journey.getOccupancy()));
+        }
+
         int callCounter = 0;
         ZonedDateTime departureDate = null;
         Set<Object> alreadyVisited = new HashSet<>();
@@ -792,6 +798,8 @@ public class Timetable implements Serializable {
                     lastDepartureDelay = departureDelay;
                     departureFromPreviousStop = newTimes.getDepartureTime(callCounter);
 
+                    newTimes.setOccupancyStatus(callCounter, mapOccupancy(journey.getOccupancy()));
+
                     alreadyVisited.add(recordedCall);
                     break;
                 }
@@ -873,6 +881,8 @@ public class Timetable implements Serializable {
 
                         departureFromPreviousStop = newTimes.getDepartureTime(callCounter);
 
+                        newTimes.setOccupancyStatus(callCounter, mapOccupancy(journey.getOccupancy()));
+
                         alreadyVisited.add(estimatedCall);
                         break;
                     }
@@ -931,6 +941,20 @@ public class Timetable implements Serializable {
 
         LOG.debug("A valid TripUpdate object was applied using the Timetable class update method.");
         return newTimes;
+    }
+
+    private OccupancyStatus mapOccupancy(OccupancyEnumeration occupancy) {
+        if (occupancy != null) {
+            switch (occupancy) {
+                case FULL:
+                    return OccupancyStatus.FULL;
+                case SEATS_AVAILABLE:
+                    return OccupancyStatus.MANY_SEATS_AVAILABLE;
+                case STANDING_AVAILABLE:
+                    return OccupancyStatus.STANDING_ROOM_ONLY;
+            }
+        }
+        return OccupancyStatus.UNKNOWN;
     }
 
 
