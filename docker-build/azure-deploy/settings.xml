@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<settings xmlns="http://maven.apache.org/SETTINGS/1.0.0" 
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+          xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0 http://maven.apache.org/xsd/settings-1.0.0.xsd">
+
+ 
+
+        <proxies/>
+
+ 
+
+
+        <servers>
+                <server>
+                        <id>skanetrafiken</id>
+                        <username>resesok</username>
+                        <password>{/Z5wqq6MdNEHMzIQcYBsFOnuprcc9aLpoV9Vixl/cVo=}</password>
+                </server>
+                <server>
+                        <id>skanetrafiken-releases</id>
+                        <username>resesok</username>
+                        <password>{/Z5wqq6MdNEHMzIQcYBsFOnuprcc9aLpoV9Vixl/cVo=}</password>
+                </server>
+                <server>
+                        <id>skanetrafiken-snapshots</id>
+                        <username>resesok</username>
+                        <password>{/Z5wqq6MdNEHMzIQcYBsFOnuprcc9aLpoV9Vixl/cVo=}</password>
+                </server>
+        </servers>
+
+ 
+
+        <mirrors>
+                <mirror>
+                        <id>skanetrafiken</id>
+                        <url>https://nexus-dev.skanetrafiken.se/repository/maven-public</url>
+                        <mirrorOf>*</mirrorOf>
+                </mirror>
+        </mirrors>
+        <profiles>
+                <profile>
+                        <id>skanetrafiken-repo</id>
+                        <repositories>
+                                <repository>
+                                        <id>skanetrafiken-releases</id>
+                                        <url>https://nexus-dev.skanetrafiken.se/repository/maven-releases</url>
+                                        <releases>
+                                                <enabled>true</enabled>
+                                        </releases>
+                                        <snapshots>
+                                                <enabled>false</enabled>
+                                        </snapshots>
+                                </repository>
+                                <repository>
+                                        <id>skanetrafiken-snapshots</id>
+                                        <url>https://nexus-dev.skanetrafiken.se/repository/maven-snapshots</url>
+                                        <releases>
+                                                <enabled>false</enabled>
+                                        </releases>
+                                        <snapshots>
+                                                <enabled>true</enabled>
+                                        </snapshots>
+                                </repository>
+                        </repositories>
+                </profile>
+        </profiles>
+
+ 
+
+        <activeProfiles>
+                <activeProfile>skanetrafiken-repo</activeProfile>
+        </activeProfiles>
+</settings>
