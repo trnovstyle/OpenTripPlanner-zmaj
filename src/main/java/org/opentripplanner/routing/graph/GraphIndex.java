@@ -31,6 +31,7 @@ import org.opentripplanner.model.Operator;
 import org.opentripplanner.model.Route;
 import org.opentripplanner.model.Stop;
 import org.opentripplanner.model.Trip;
+import org.opentripplanner.model.TripServiceAlteration;
 import org.opentripplanner.model.calendar.ServiceDate;
 import org.opentripplanner.routing.alertpatch.AlertPatch;
 import org.opentripplanner.routing.algorithm.AStar;
@@ -804,8 +805,8 @@ public class GraphIndex {
 
                         if (!includePlannedCancellations) {
                             // Check if trip has been cancelled via planned data
-                            if (omitNonPickups && (triptimes.trip.getServiceAlteration() == Trip.ServiceAlteration.cancellation ||
-                                    triptimes.trip.getServiceAlteration() == Trip.ServiceAlteration.replaced)) {
+                            if (omitNonPickups && (triptimes.trip.getServiceAlteration() == TripServiceAlteration.cancellation ||
+                                    triptimes.trip.getServiceAlteration() == TripServiceAlteration.replaced)) {
                                 continue;
                             }
                         }

@@ -4,9 +4,17 @@ import org.opentripplanner.model.AgencyAndId;
 import org.opentripplanner.model.BookingArrangement;
 import org.opentripplanner.model.Operator;
 import org.opentripplanner.model.Trip;
+import org.opentripplanner.model.TripServiceAlteration;
 import org.opentripplanner.model.impl.OtpTransitBuilder;
 import org.opentripplanner.netex.loader.NetexDao;
-import org.rutebanken.netex.model.*;
+import org.rutebanken.netex.model.FlexibleLine;
+import org.rutebanken.netex.model.FlexibleServiceProperties;
+import org.rutebanken.netex.model.JourneyPattern;
+import org.rutebanken.netex.model.LineRefStructure;
+import org.rutebanken.netex.model.Line_VersionStructure;
+import org.rutebanken.netex.model.Route;
+import org.rutebanken.netex.model.ServiceAlterationEnumeration;
+import org.rutebanken.netex.model.ServiceJourney;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -124,12 +132,12 @@ public class TripMapper {
         otpTrip.setBookingArrangements(otpBookingArrangement);
     }
 
-    private Trip.ServiceAlteration mapServiceAlteration(ServiceAlterationEnumeration netexValue) {
+    private TripServiceAlteration mapServiceAlteration(ServiceAlterationEnumeration netexValue) {
         if (netexValue == null) {
             return null;
         }
         try {
-            return Trip.ServiceAlteration.valueOf(netexValue.value());
+            return TripServiceAlteration.valueOf(netexValue.value());
         } catch (Exception e) {
             LOG.warn("Unable to map unknown ServiceAlterationEnumeration value from NeTEx:" + netexValue);
         }

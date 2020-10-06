@@ -19,8 +19,6 @@ import java.util.List;
 
 public final class Trip extends IdentityBean<AgencyAndId> {
 
-    public enum ServiceAlteration {cancellation, planned, extraJourney, replaced}
-
     private static final long serialVersionUID = 1L;
 
     private AgencyAndId id;
@@ -49,7 +47,7 @@ public final class Trip extends IdentityBean<AgencyAndId> {
 
     private int wheelchairAccessible = 0;
 
-    private ServiceAlteration serviceAlteration;
+    private TripServiceAlteration serviceAlteration;
 
     private List<KeyValue> keyValues;
 
@@ -320,11 +318,11 @@ public final class Trip extends IdentityBean<AgencyAndId> {
         this.continuousDropOffMessage = continuousDropOffMessage;
     }
 
-    public ServiceAlteration getServiceAlteration() {
+    public TripServiceAlteration getServiceAlteration() {
         return serviceAlteration;
     }
 
-    public void setServiceAlteration(ServiceAlteration serviceAlteration) {
+    public void setServiceAlteration(TripServiceAlteration serviceAlteration) {
         this.serviceAlteration = serviceAlteration;
     }
 

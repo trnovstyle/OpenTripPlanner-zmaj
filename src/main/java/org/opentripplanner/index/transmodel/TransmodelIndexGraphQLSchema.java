@@ -58,6 +58,7 @@ import org.opentripplanner.model.TariffZone;
 import org.opentripplanner.model.Transfer;
 import org.opentripplanner.model.TransmodelTransportSubmode;
 import org.opentripplanner.model.Trip;
+import org.opentripplanner.model.TripServiceAlteration;
 import org.opentripplanner.model.calendar.ServiceDate;
 import org.opentripplanner.routing.alertpatch.Alert;
 import org.opentripplanner.routing.alertpatch.AlertPatch;
@@ -197,10 +198,10 @@ public class TransmodelIndexGraphQLSchema {
 
     private static GraphQLEnumType serviceAlterationEnum = GraphQLEnumType.newEnum()
             .name("ServiceAlteration")
-            .value("planned", Trip.ServiceAlteration.planned)
-            .value("cancellation", Trip.ServiceAlteration.cancellation)
-            .value("extraJourney", Trip.ServiceAlteration.extraJourney)
-            .value("replaced", Trip.ServiceAlteration.replaced)
+            .value("planned", TripServiceAlteration.planned)
+            .value("cancellation", TripServiceAlteration.cancellation)
+            .value("extraJourney", TripServiceAlteration.extraJourney)
+            .value("replaced", TripServiceAlteration.replaced)
             .build();
 
     private static GraphQLEnumType modeEnum = GraphQLEnumType.newEnum()
