@@ -21,6 +21,7 @@ import org.opentripplanner.gtfs.BikeAccess;
 import org.opentripplanner.model.AgencyAndId;
 import org.opentripplanner.model.StopTime;
 import org.opentripplanner.model.Trip;
+import org.opentripplanner.model.TripServiceAlteration;
 import org.opentripplanner.routing.core.RoutingRequest;
 import org.opentripplanner.routing.core.ServiceDay;
 import org.opentripplanner.routing.core.State;
@@ -651,8 +652,8 @@ public class TripTimes implements Serializable, Comparable<TripTimes>, Cloneable
         }
 
         if (!options.includePlannedCancellations &&
-                (Trip.ServiceAlteration.cancellation.equals(trip.getServiceAlteration()) ||
-                        Trip.ServiceAlteration.replaced.equals(trip.getServiceAlteration()))) {
+                (TripServiceAlteration.cancellation.equals(trip.getServiceAlteration()) ||
+                        TripServiceAlteration.replaced.equals(trip.getServiceAlteration()))) {
             return false;
         }
 

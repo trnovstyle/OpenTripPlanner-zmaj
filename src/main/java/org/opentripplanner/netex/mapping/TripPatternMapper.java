@@ -5,25 +5,49 @@ import org.opentripplanner.common.geometry.GeometryUtils;
 import org.opentripplanner.graph_builder.annotation.NoPassengerStopAssignment;
 import org.opentripplanner.graph_builder.annotation.NoQuayOrFlexibleStopPlaceForTimetabledPassingTimes;
 import org.opentripplanner.graph_builder.annotation.TimeMissingForTrip;
-import org.opentripplanner.model.*;
+import org.opentripplanner.model.Area;
+import org.opentripplanner.model.BookingArrangement;
+import org.opentripplanner.model.Stop;
+import org.opentripplanner.model.StopPattern;
+import org.opentripplanner.model.StopTime;
+import org.opentripplanner.model.Trip;
+import org.opentripplanner.model.TripServiceAlteration;
 import org.opentripplanner.model.impl.OtpTransitBuilder;
 import org.opentripplanner.netex.loader.NetexDao;
 import org.opentripplanner.routing.edgetype.TripPattern;
 import org.opentripplanner.routing.graph.AddBuilderAnnotation;
 import org.opentripplanner.routing.trippattern.Deduplicator;
 import org.opentripplanner.routing.trippattern.TripTimes;
-import org.rutebanken.netex.model.*;
+import org.rutebanken.netex.model.DestinationDisplay;
+import org.rutebanken.netex.model.FlexibleLine;
+import org.rutebanken.netex.model.JourneyPattern;
+import org.rutebanken.netex.model.Line_VersionStructure;
+import org.rutebanken.netex.model.PointInJourneyPatternRefStructure;
+import org.rutebanken.netex.model.PointInLinkSequence_VersionedChildStructure;
 import org.rutebanken.netex.model.Route;
+import org.rutebanken.netex.model.ScheduledStopPointRefStructure;
+import org.rutebanken.netex.model.ServiceJourney;
+import org.rutebanken.netex.model.StopPointInJourneyPattern;
+import org.rutebanken.netex.model.TimetabledPassingTime;
+import org.rutebanken.netex.model.TimetabledPassingTimes_RelStructure;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.xml.bind.JAXBElement;
 import java.math.BigInteger;
 import java.time.LocalTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
-import static org.opentripplanner.model.StopPattern.*;
+import static org.opentripplanner.model.StopPattern.PICKDROP_COORDINATE_WITH_DRIVER;
+import static org.opentripplanner.model.StopPattern.PICKDROP_NONE;
+import static org.opentripplanner.model.StopPattern.PICKDROP_SCHEDULED;
 
 public class TripPatternMapper {
 
@@ -134,8 +158,8 @@ public class TripPatternMapper {
                 TripTimes tripTimes = new TripTimes(trip,
                         transitBuilder.getStopTimesSortedByTrip().get(trip), deduplicator);
 
-                if (Trip.ServiceAlteration.cancellation.equals(trip.getServiceAlteration()) ||
-                    Trip.ServiceAlteration.replaced.equals(trip.getServiceAlteration())) {
+                if (TripServiceAlteration.cancellation.equals(trip.getServiceAlteration()) ||
+                    TripServiceAlteration.replaced.equals(trip.getServiceAlteration())) {
                     // Trip is cancelled in plan data
                     tripTimes.cancelAllStops();
                 }
