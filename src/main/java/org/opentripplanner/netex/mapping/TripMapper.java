@@ -4,6 +4,7 @@ import org.opentripplanner.model.AgencyAndId;
 import org.opentripplanner.model.BookingArrangement;
 import org.opentripplanner.model.Operator;
 import org.opentripplanner.model.Trip;
+import org.opentripplanner.model.TripServiceAlteration;
 import org.opentripplanner.model.impl.OtpTransitBuilder;
 import org.opentripplanner.netex.loader.NetexDao;
 import org.rutebanken.netex.model.FlexibleLine;
@@ -29,8 +30,11 @@ public class TripMapper {
     private final TransportModeMapper transportModeMapper = new TransportModeMapper();
     private final BookingArrangementMapper bookingArrangementMapper = new BookingArrangementMapper();
 
+
     public Trip mapServiceJourney(
             ServiceJourney serviceJourney,
+            AgencyAndId serviceId,
+            TripServiceAlteration alternation,
             OtpTransitBuilder transitBuilder,
             NetexDao netexDao,
             String defaultFlexMaxTravelTime
@@ -47,12 +51,7 @@ public class TripMapper {
             trip.setTripOperator(operator);
         }
 
-        String serviceId = ServiceIdMapper.mapToServiceId(serviceJourney.getDayTypes());
-
-        // Add all unique service ids to map. Used when mapping calendars later.
-        netexDao.addCalendarServiceId(serviceId);
-
-        trip.setServiceId(AgencyAndIdFactory.createAgencyAndId(serviceId));
+        trip.setServiceId(serviceId);
 
         if (serviceJourney.getPrivateCode() != null) {
             trip.setTripPrivateCode(serviceJourney.getPrivateCode().getValue());
@@ -78,7 +77,12 @@ public class TripMapper {
         }
         trip.setKeyValues(keyValueMapper.mapKeyValues(serviceJourney.getKeyList()));
         trip.setWheelchairAccessible(0); // noInformation
-        trip.setServiceAlteration(TripServiceAlterationMapper.mapAlteration(serviceJourney.getServiceAlteration()));
+
+        // The provided alternation comes from DatedServiceJourney, if it is {@code null} the service journey
+        // should also have a alternation attribute which can then be used. If both are set, they should have the
+        // same value.
+        trip.setServiceAlteration(resolveTripServiceAlteration(serviceJourney, alternation));
+
         trip.setTransportSubmode(transportModeMapper.getTransportSubmode(serviceJourney.getTransportSubmode()));
         if (trip.getTransportSubmode()==null) {
             trip.setTransportSubmode(trip.getRoute().getTransportSubmode());
@@ -157,4 +161,24 @@ public class TripMapper {
     public void setDrtAdvanceBookMin(Trip trip, int defaultMinimumFlexPaddingTime) {
         trip.setDrtAdvanceBookMin(defaultMinimumFlexPaddingTime);
     }
+
+    private static TripServiceAlteration resolveTripServiceAlteration(
+            ServiceJourney sj,
+            TripServiceAlteration alternation
+    ) {
+        TripServiceAlteration sjAlt = TripServiceAlterationMapper.mapAlteration(sj.getServiceAlteration());
+
+        if(alternation == null) {
+            return sjAlt == null ? TripServiceAlteration.planned : sjAlt;
+        }
+        else if(sjAlt == null || sjAlt == alternation) {
+            return alternation;
+        }
+        throw new IllegalStateException(
+                "Trip alternation unambiguous. SJ.id=" + sj.getId()
+                        + ", sj.alt=" + sjAlt
+                        + ", DSJ.alt=" + alternation
+        );
+    }
+
 }
