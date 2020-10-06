@@ -26,6 +26,7 @@ public class TripMapper {
     private final TransportModeMapper transportModeMapper = new TransportModeMapper();
     private final BookingArrangementMapper bookingArrangementMapper = new BookingArrangementMapper();
 
+
     public Trip mapServiceJourney(
             ServiceJourney serviceJourney,
             AgencyAndId serviceId,
