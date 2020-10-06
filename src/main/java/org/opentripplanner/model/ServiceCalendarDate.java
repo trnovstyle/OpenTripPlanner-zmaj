@@ -38,6 +38,15 @@ public final class ServiceCalendarDate implements Serializable, Comparable<Servi
 
     private int exceptionType;
 
+    public ServiceCalendarDate() { }
+
+    public ServiceCalendarDate(AgencyAndId serviceId, ServiceDate date, int exceptionType) {
+        this.serviceId = serviceId;
+        this.date = date;
+        this.exceptionType = exceptionType;
+    }
+
+
     public AgencyAndId getServiceId() {
         return serviceId;
     }
