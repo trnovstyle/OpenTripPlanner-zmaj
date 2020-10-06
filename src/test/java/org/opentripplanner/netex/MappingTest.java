@@ -69,7 +69,7 @@ public class MappingTest {
     @Test
     public void testNetexRoutes() {
         // TODO TGR - fix this test
-        List<Route> routesGtfs = new ArrayList<Route>(otpBuilderFromGtfs.getRoutes().values());
+        List<Route> routesGtfs = new ArrayList<>(otpBuilderFromGtfs.getRoutes().values());
         routesGtfs.removeAll(otpBuilderFromNetex.getRoutes().values());
 
         ArrayList<Route> routesNetex = new ArrayList<>(otpBuilderFromNetex.getRoutes().values());
@@ -96,11 +96,16 @@ public class MappingTest {
     }
 
     @Test
+    @Ignore(
+            "This test is broken. The test convert GTFS ServiceCalDates into the NeTEx dates, but it fails " +
+            "because the id generation is based on a specific way to generate the id. We do not use it anny more."
+    )
     public void testNetexCalendar() {
         Collection<ServiceCalendarDate> serviceCalendarDates = new ArrayList<>();
         Collection<Date> serviceCalendarDatesRemove = otpBuilderFromGtfs.getCalendarDates()
                 .stream().filter(date -> date.getExceptionType() == 2).map(n -> n.getDate()
                 .getAsDate()).collect(Collectors.toList());
+
         for (ServiceCalendar serviceCalendar : otpBuilderFromGtfs.getCalendars()) {
             serviceCalendarDates.addAll(calendarToCalendarDates(serviceCalendar, serviceCalendarDatesRemove));
         }
@@ -127,7 +132,9 @@ public class MappingTest {
     }
 
     private String convertServiceIdFormat(String netexServiceId) {
-        String gtfsServiceId = "";
+        // THIS DOES NOT WORK, THE TEST SHOULD NOT ASSUME IT KNOWS HOW THE
+        // SERVICE ID IS GENERATED.
+        StringBuilder gtfsServiceId = new StringBuilder();
         Boolean first = true;
 
         String[] splitId = netexServiceId.split("\\+");
@@ -135,16 +142,16 @@ public class MappingTest {
 
         for (String singleId : splitId ) {
             if (first) {
-                gtfsServiceId += singleId;
+                gtfsServiceId.append(singleId);
                 first = false;
             }
             else {
-                gtfsServiceId += "-";
-                gtfsServiceId += singleId.split(":")[2];
+                gtfsServiceId.append("-");
+                gtfsServiceId.append(singleId.split(":")[2]);
             }
         }
 
-        return gtfsServiceId;
+        return gtfsServiceId.toString();
     }
 
     public Collection<ServiceCalendarDate> calendarToCalendarDates(ServiceCalendar serviceCalendar, Collection<Date> calendarDatesRemove) {
@@ -154,7 +161,7 @@ public class MappingTest {
         DateTime endDate = new DateTime(serviceCalendar.getEndDate().getAsDate());
 
         for (MutableDateTime date = new MutableDateTime(startDate); date.isBefore(endDate.plusDays(1)); date.addDays(1)) {
-            if (calendarDatesRemove.stream().map(it -> it.toString()).collect(Collectors.toList()).contains(date.toDate().toString())) {
+            if (calendarDatesRemove.stream().map(Date::toString).collect(Collectors.toList()).contains(date.toDate().toString())) {
                 continue;
             }
 

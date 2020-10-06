@@ -7,7 +7,6 @@ import org.opentripplanner.graph_builder.annotation.StopWithoutQuay;
 import org.opentripplanner.graph_builder.module.NetexModule;
 import org.opentripplanner.model.impl.OtpTransitBuilder;
 import org.opentripplanner.netex.mapping.NetexMapper;
-import org.opentripplanner.netex.mapping.ServiceIdMapper;
 import org.opentripplanner.routing.graph.AddBuilderAnnotation;
 import org.opentripplanner.standalone.datastore.DataSource;
 import org.rutebanken.netex.model.Authority;
@@ -15,9 +14,9 @@ import org.rutebanken.netex.model.Branding;
 import org.rutebanken.netex.model.Common_VersionFrameStructure;
 import org.rutebanken.netex.model.CompositeFrame;
 import org.rutebanken.netex.model.DataManagedObjectStructure;
+import org.rutebanken.netex.model.DatedServiceJourney;
 import org.rutebanken.netex.model.DayType;
 import org.rutebanken.netex.model.DayTypeAssignment;
-import org.rutebanken.netex.model.DayTypeRefs_RelStructure;
 import org.rutebanken.netex.model.DayTypes_RelStructure;
 import org.rutebanken.netex.model.DestinationDisplay;
 import org.rutebanken.netex.model.FlexibleStopAssignment;
@@ -32,7 +31,6 @@ import org.rutebanken.netex.model.JourneyInterchangesInFrame_RelStructure;
 import org.rutebanken.netex.model.JourneyPattern;
 import org.rutebanken.netex.model.JourneyPatternsInFrame_RelStructure;
 import org.rutebanken.netex.model.Journey_VersionStructure;
-import org.rutebanken.netex.model.JourneysInFrame_RelStructure;
 import org.rutebanken.netex.model.Line_VersionStructure;
 import org.rutebanken.netex.model.LinesInFrame_RelStructure;
 import org.rutebanken.netex.model.LinkSequence_VersionStructure;
@@ -85,15 +83,15 @@ import java.util.List;
 public class NetexLoader {
     private static final Logger LOG = LoggerFactory.getLogger(NetexModule.class);
 
-    private NetexBundle netexBundle;
+    private final NetexBundle netexBundle;
+
+    private final Deque<NetexDao> netexDaoStack = new LinkedList<>();
+
+    private final AddBuilderAnnotation addBuilderAnnotation;
 
     private Unmarshaller unmarshaller;
 
     private NetexMapper otpMapper;
-
-    private Deque<NetexDao> netexDaoStack = new LinkedList<>();
-
-    private AddBuilderAnnotation addBuilderAnnotation;
 
     public NetexLoader(NetexBundle netexBundle, AddBuilderAnnotation addBuilderAnnotation) {
         this.netexBundle = netexBundle;
@@ -160,7 +158,9 @@ public class NetexLoader {
 
     private void newNetexDaoScope(Runnable task) {
         netexDaoStack.addFirst(new NetexDao(currentNetexDao()));
+        otpMapper.putCache();
         task.run();
+        otpMapper.popCache();
         netexDaoStack.removeFirst();
     }
 
@@ -452,13 +452,17 @@ public class NetexLoader {
         if (commonFrame.getValue() instanceof TimetableFrame) {
             TimetableFrame timetableFrame = (TimetableFrame) commonFrame.getValue();
 
-            JourneysInFrame_RelStructure vehicleJourneys = timetableFrame.getVehicleJourneys();
-            List<Journey_VersionStructure> datedServiceJourneyOrDeadRunOrServiceJourney = vehicleJourneys
+            var datedServiceJourneyOrDeadRunOrServiceJourney = timetableFrame
+                    .getVehicleJourneys()
                     .getVehicleJourneyOrDatedVehicleJourneyOrNormalDatedVehicleJourney();
+
             for (Journey_VersionStructure journey : datedServiceJourneyOrDeadRunOrServiceJourney) {
-                if (journey instanceof ServiceJourney) {
+                if(journey instanceof DatedServiceJourney) {
+                    currentNetexDao().datedServiceJourneyById.add((DatedServiceJourney) journey);
+                }
+                else if (journey instanceof ServiceJourney) {
                     ServiceJourney sj = (ServiceJourney) journey;
-                    loadServiceIds(sj);
+
                     String journeyPatternId = sj.getJourneyPatternRef().getValue().getRef();
 
                     JourneyPattern journeyPattern = currentNetexDao().journeyPatternsById.lookup(journeyPatternId);
@@ -469,6 +473,7 @@ public class NetexLoader {
                                 .size() == sj.getPassingTimes().getTimetabledPassingTime().size()) {
 
                             currentNetexDao().serviceJourneyByPatternId.add(journeyPatternId, sj);
+                            currentNetexDao().serviceJourneyById.add(sj);
                         } else {
                             LOG.warn(
                                     "Mismatch between ServiceJourney and JourneyPattern. ServiceJourney will be skipped. - "
@@ -478,21 +483,12 @@ public class NetexLoader {
                         LOG.warn("JourneyPattern not found. " + journeyPatternId);
                     }
                 }
+                else {
+                    LOG.warn("Type missed: " + journey.getClass());
+                }
             }
-
             loadJourneyInterchanges(timetableFrame.getJourneyInterchanges());
             loadNoticeAssignments(timetableFrame.getNoticeAssignments());
-        }
-    }
-
-
-    private void loadJourneyInterchanges(JourneyInterchangesInFrame_RelStructure interchanges) {
-        if (interchanges == null) { return; }
-        for (Interchange_VersionStructure interchange_versionStructure : interchanges.getServiceJourneyPatternInterchangeOrServiceJourneyInterchange()) {
-            if (interchange_versionStructure instanceof ServiceJourneyInterchange) {
-                ServiceJourneyInterchange interchange = (ServiceJourneyInterchange) interchange_versionStructure;
-                currentNetexDao().interchanges.add(interchange.getId(), interchange);
-            }
         }
     }
 
@@ -507,13 +503,14 @@ public class NetexLoader {
         }
     }
 
-
-
-    private void loadServiceIds(ServiceJourney serviceJourney) {
-        DayTypeRefs_RelStructure dayTypes = serviceJourney.getDayTypes();
-        String serviceId = ServiceIdMapper.mapToServiceId(dayTypes);
-        // Add all unique service ids to map. Used when mapping calendars later.
-        currentNetexDao().addCalendarServiceId(serviceId);
+    private void loadJourneyInterchanges(JourneyInterchangesInFrame_RelStructure interchanges) {
+        if (interchanges == null) { return; }
+        for (Interchange_VersionStructure interchangeVS : interchanges.getServiceJourneyPatternInterchangeOrServiceJourneyInterchange()) {
+            if (interchangeVS instanceof ServiceJourneyInterchange) {
+                var interchange = (ServiceJourneyInterchange) interchangeVS;
+                currentNetexDao().interchanges.add(interchange.getId(), interchange);
+            }
+        }
     }
 
     // ServiceCalendar
@@ -550,14 +547,19 @@ public class NetexLoader {
                 }
             }
 
-            List<DayTypeAssignment> dayTypeAssignments = scf.getDayTypeAssignments().getDayTypeAssignment();
+            if(scf.getDayTypeAssignments() != null) {
+                var dayTypeAssignments = scf.getDayTypeAssignments().getDayTypeAssignment();
 
-            for (DayTypeAssignment dayTypeAssignment : dayTypeAssignments) {
-                String ref = dayTypeAssignment.getDayTypeRef().getValue().getRef();
-                boolean available = dayTypeAssignment.isIsAvailable() == null || dayTypeAssignment.isIsAvailable();
-                currentNetexDao().dayTypeAvailable.add(dayTypeAssignment.getId(), available);
+                for (DayTypeAssignment dayTypeAssignment : dayTypeAssignments) {
+                    String ref = dayTypeAssignment.getDayTypeRef().getValue().getRef();
+                    boolean available = dayTypeAssignment.isIsAvailable() == null || dayTypeAssignment.isIsAvailable();
+                    currentNetexDao().dayTypeAvailable.add(dayTypeAssignment.getId(), available);
+                    currentNetexDao().dayTypeAssignmentByDayTypeId.add(ref, dayTypeAssignment);
+                }
+            }
 
-                currentNetexDao().dayTypeAssignmentByDayTypeId.add(ref, dayTypeAssignment);
+            if(scf.getOperatingDays() != null) {
+                currentNetexDao().operatingDaysById.addAll(scf.getOperatingDays().getOperatingDay());
             }
         }
     }

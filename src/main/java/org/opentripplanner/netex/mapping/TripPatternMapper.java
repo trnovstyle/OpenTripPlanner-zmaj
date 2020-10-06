@@ -5,12 +5,14 @@ import org.opentripplanner.common.geometry.GeometryUtils;
 import org.opentripplanner.graph_builder.annotation.NoPassengerStopAssignment;
 import org.opentripplanner.graph_builder.annotation.NoQuayOrFlexibleStopPlaceForTimetabledPassingTimes;
 import org.opentripplanner.graph_builder.annotation.TimeMissingForTrip;
+import org.opentripplanner.model.AgencyAndId;
 import org.opentripplanner.model.Area;
 import org.opentripplanner.model.BookingArrangement;
 import org.opentripplanner.model.Stop;
 import org.opentripplanner.model.StopPattern;
 import org.opentripplanner.model.StopTime;
 import org.opentripplanner.model.Trip;
+import org.opentripplanner.model.TripServiceAlteration;
 import org.opentripplanner.model.impl.OtpTransitBuilder;
 import org.opentripplanner.netex.loader.NetexDao;
 import org.opentripplanner.routing.edgetype.TripPattern;
@@ -64,6 +66,8 @@ public class TripPatternMapper {
 
     public void mapTripPattern(
             JourneyPattern journeyPattern,
+            Map<String, AgencyAndId> serviceIdsByServiceJourney,
+            Map<String, TripServiceAlteration> alternations,
             OtpTransitBuilder transitBuilder,
             NetexDao netexDao,
             String defaultFlexMaxTravelTime,
@@ -96,13 +100,21 @@ public class TripPatternMapper {
                 }
             }
 
+            AgencyAndId serviceId = serviceIdsByServiceJourney.get(serviceJourney.getId());
+            TripServiceAlteration alternation = alternations.get(serviceJourney.getId());
+
+            if(serviceId == null) {
+                throw new IllegalStateException("No service id found for SJ: " + serviceJourney.getId());
+            }
+
             Trip trip = tripMapper.mapServiceJourney(
                     serviceJourney,
+                    serviceId,
+                    alternation,
                     transitBuilder,
                     netexDao,
                     defaultFlexMaxTravelTime
             );
-
             trips.add(trip);
 
             TimetabledPassingTimes_RelStructure passingTimes = serviceJourney.getPassingTimes();
