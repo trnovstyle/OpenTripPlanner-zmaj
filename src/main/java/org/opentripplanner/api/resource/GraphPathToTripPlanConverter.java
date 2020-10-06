@@ -99,7 +99,7 @@ public abstract class GraphPathToTripPlanConverter {
         for (Itinerary itinerary : itineraries) {
             // If this is a transit option whose walk/bike time is greater than that of the walk/bike-only option,
             // do not include in plan
-            if (itinerary.transitTime > 0 && itinerary.walkTime > bestNonTransitTime) continue;
+            if (itinerary.hasTransit && itinerary.walkTime > bestNonTransitTime) continue;
 
             plan.addItinerary(itinerary);
         }
@@ -605,6 +605,7 @@ public abstract class GraphPathToTripPlanConverter {
             switch (state.getBackMode()) {
                 default:
                     itinerary.transitTime += state.getTimeDeltaSeconds();
+                    itinerary.hasTransit = true;
                     break;
 
                 case LEG_SWITCH:

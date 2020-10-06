@@ -114,6 +114,8 @@ public class Itinerary {
      */
     public boolean tooSloped = false;
 
+    public boolean hasTransit = false;
+
     /** 
      * adds leg to array list
      * @param leg
