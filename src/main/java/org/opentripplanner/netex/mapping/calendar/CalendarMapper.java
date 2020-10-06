@@ -12,13 +12,17 @@
  You should have received a copy of the GNU General Public License
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-package org.opentripplanner.netex.mapping;
+package org.opentripplanner.netex.mapping.calendar;
 
 import org.opentripplanner.model.AgencyAndId;
 import org.opentripplanner.model.ServiceCalendarDate;
 import org.opentripplanner.model.calendar.ServiceDate;
 import org.opentripplanner.netex.loader.NetexDao;
-import org.rutebanken.netex.model.*;
+import org.rutebanken.netex.model.DayOfWeekEnumeration;
+import org.rutebanken.netex.model.DayType;
+import org.rutebanken.netex.model.DayTypeAssignment;
+import org.rutebanken.netex.model.OperatingPeriod;
+import org.rutebanken.netex.model.PropertyOfDay;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
