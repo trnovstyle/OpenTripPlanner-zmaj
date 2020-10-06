@@ -14,7 +14,6 @@ public class DelegateToParentHierarchicalMap<K,V> extends HierarchicalMap<K, V> 
         parent.add(key, value);
     }
 
-
     @Override
     protected V localGet(K key) {
         return null; // parent.localGet(key);
@@ -24,6 +23,5 @@ public class DelegateToParentHierarchicalMap<K,V> extends HierarchicalMap<K, V> 
     protected boolean localContainsKey(K key) {
         return false; // parent.localContainsKey(key);
     }
-
 
 }

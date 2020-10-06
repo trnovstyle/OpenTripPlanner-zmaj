@@ -1,14 +1,12 @@
 package org.opentripplanner.netex.loader.support;
 
-import org.rutebanken.netex.model.EntityStructure;
-
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
 public class HierarchicalMap<K,V> extends AbstractHierarchicalMap<K, V> {
-    private Map<K,V> map  = new HashMap<>();
+    private final Map<K,V> map  = new HashMap<>();
 
     public HierarchicalMap() {
         super(null);

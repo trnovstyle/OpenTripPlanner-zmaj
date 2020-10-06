@@ -7,7 +7,7 @@ import java.util.Collection;
 import java.util.Set;
 
 public class HierarchicalMultimap<K,V> extends AbstractHierarchicalMap<K, Collection<V>> {
-    private Multimap<K,V> map  = ArrayListMultimap.create();
+    private final Multimap<K,V> map  = ArrayListMultimap.create();
 
     public HierarchicalMultimap() {
         super(null);

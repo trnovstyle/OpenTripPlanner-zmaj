@@ -15,7 +15,6 @@
 package org.opentripplanner.netex.loader;
 
 import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.io.IOUtils;
 import org.opentripplanner.graph_builder.annotation.FlexibleStopPlaceNotFound;
 import org.opentripplanner.graph_builder.annotation.QuayNotFoundInStopPlaceFile;
 import org.opentripplanner.graph_builder.annotation.StopWithoutQuay;
@@ -192,14 +191,6 @@ public class NetexLoader {
     private void loadFiles(String fileDescription, Iterable<DataSource> entries) {
         for (DataSource entry : entries) {
             loadFile(fileDescription, entry);
-        }
-    }
-
-    private byte[] entryAsBytes(DataSource source) {
-        try {
-            return IOUtils.toByteArray(source.asInputStream());
-        } catch (IOException e) {
-            throw new RuntimeException(e.getMessage(), e);
         }
     }
 

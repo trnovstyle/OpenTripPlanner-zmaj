@@ -23,6 +23,7 @@ import java.util.Collections;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
 public class ServiceCalendarMapperTest {
@@ -64,7 +65,7 @@ public class ServiceCalendarMapperTest {
         CALENDAR.setEndDate(END_DATE);
     }
 
-    private ServiceCalendarMapper subject = new ServiceCalendarMapper();
+    private final ServiceCalendarMapper subject = new ServiceCalendarMapper();
 
     @Test
     public void testMapCollection() throws Exception {
@@ -111,7 +112,7 @@ public class ServiceCalendarMapperTest {
         org.opentripplanner.model.ServiceCalendar result1 = subject.map(CALENDAR);
         org.opentripplanner.model.ServiceCalendar result2 = subject.map(CALENDAR);
 
-        assertTrue(result1 == result2);
+        assertSame(result1, result2);
     }
 
 }

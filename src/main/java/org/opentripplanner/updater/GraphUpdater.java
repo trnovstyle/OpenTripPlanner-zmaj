@@ -23,9 +23,7 @@ package org.opentripplanner.updater;
  * 
  * Example implementations can be found in ExampleGraphUpdater and ExamplePollingGraphUpdater.
  * 
- * @see ExampleGraphUpdater
- * @see ExamplePollingGraphUpdater
- * @see GraphUpdaterManager.execute
+ * @see GraphUpdaterManager#execute
  * @see GraphUpdaterConfigurator
  */
 public interface GraphUpdater extends JsonConfigurable {
@@ -36,7 +34,7 @@ public interface GraphUpdater extends JsonConfigurable {
      * 
      * @param updaterManager is the parent updater manager
      * @see GraphWriterRunnable
-     * @see GraphUpdaterManager.execute
+     * @see GraphUpdaterManager#execute
      */
     public void setGraphUpdaterManager(GraphUpdaterManager updaterManager);
 

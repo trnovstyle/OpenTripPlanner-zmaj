@@ -14,7 +14,11 @@
 package org.opentripplanner.updater.alerts;
 
 import com.google.transit.realtime.GtfsRealtime;
-import com.google.transit.realtime.GtfsRealtime.*;
+import com.google.transit.realtime.GtfsRealtime.EntitySelector;
+import com.google.transit.realtime.GtfsRealtime.FeedEntity;
+import com.google.transit.realtime.GtfsRealtime.FeedMessage;
+import com.google.transit.realtime.GtfsRealtime.TimeRange;
+import com.google.transit.realtime.GtfsRealtime.TripDescriptor;
 import org.apache.commons.lang3.tuple.Pair;
 import org.opentripplanner.model.AgencyAndId;
 import org.opentripplanner.model.Route;
@@ -35,12 +39,41 @@ import org.opentripplanner.util.TranslatedString;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.org.ifopt.siri20.StopPlaceRef;
-import uk.org.siri.siri20.*;
+import uk.org.siri.siri20.AffectedLineStructure;
+import uk.org.siri.siri20.AffectedOperatorStructure;
+import uk.org.siri.siri20.AffectedRouteStructure;
+import uk.org.siri.siri20.AffectedStopPlaceStructure;
+import uk.org.siri.siri20.AffectedStopPointStructure;
+import uk.org.siri.siri20.AffectedVehicleJourneyStructure;
+import uk.org.siri.siri20.AffectsScopeStructure;
+import uk.org.siri.siri20.DataFrameRefStructure;
+import uk.org.siri.siri20.DefaultedTextStructure;
+import uk.org.siri.siri20.FramedVehicleJourneyRefStructure;
+import uk.org.siri.siri20.HalfOpenTimestampOutputRangeStructure;
+import uk.org.siri.siri20.InfoLinkStructure;
+import uk.org.siri.siri20.LineRef;
+import uk.org.siri.siri20.NaturalLanguageStringStructure;
+import uk.org.siri.siri20.NetworkRefStructure;
+import uk.org.siri.siri20.OperatorRefStructure;
+import uk.org.siri.siri20.PtSituationElement;
+import uk.org.siri.siri20.RoutePointTypeEnumeration;
+import uk.org.siri.siri20.ServiceDelivery;
+import uk.org.siri.siri20.SeverityEnumeration;
+import uk.org.siri.siri20.SituationExchangeDeliveryStructure;
+import uk.org.siri.siri20.StopPointRef;
+import uk.org.siri.siri20.VehicleJourneyRef;
+import uk.org.siri.siri20.WorkflowStatusEnumeration;
 
 import java.io.Serializable;
 import java.text.ParseException;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -257,7 +290,7 @@ public class AlertsUpdateHandler {
                         boolean effectiveValiditySetExplicitly = false;
 
                         ZonedDateTime originAimedDepartureTime = (affectedVehicleJourney.getOriginAimedDepartureTime() != null ? affectedVehicleJourney.getOriginAimedDepartureTime() : ZonedDateTime.now());
-                        ServiceDate serviceDate = new ServiceDate(originAimedDepartureTime.getYear(), originAimedDepartureTime.getMonthValue(), originAimedDepartureTime.getDayOfMonth());
+                        ServiceDate serviceDate = new ServiceDate(originAimedDepartureTime.toLocalDate());
 
                         if (tripIdFromVehicleJourney != null) {
 
