@@ -4,5 +4,9 @@ public enum TripServiceAlteration {
     cancellation,
     planned,
     extraJourney,
-    replaced
+    replaced;
+
+    public boolean isCanceledOrReplaced() {
+        return this == cancellation || this == replaced;
+    }
 }
