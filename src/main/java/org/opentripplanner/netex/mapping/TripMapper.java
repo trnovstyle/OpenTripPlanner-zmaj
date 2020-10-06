@@ -4,7 +4,6 @@ import org.opentripplanner.model.AgencyAndId;
 import org.opentripplanner.model.BookingArrangement;
 import org.opentripplanner.model.Operator;
 import org.opentripplanner.model.Trip;
-import org.opentripplanner.model.TripServiceAlteration;
 import org.opentripplanner.model.impl.OtpTransitBuilder;
 import org.opentripplanner.netex.loader.NetexDao;
 import org.rutebanken.netex.model.FlexibleLine;
@@ -13,7 +12,6 @@ import org.rutebanken.netex.model.JourneyPattern;
 import org.rutebanken.netex.model.LineRefStructure;
 import org.rutebanken.netex.model.Line_VersionStructure;
 import org.rutebanken.netex.model.Route;
-import org.rutebanken.netex.model.ServiceAlterationEnumeration;
 import org.rutebanken.netex.model.ServiceJourney;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -75,7 +73,7 @@ public class TripMapper {
         }
         trip.setKeyValues(keyValueMapper.mapKeyValues(serviceJourney.getKeyList()));
         trip.setWheelchairAccessible(0); // noInformation
-        trip.setServiceAlteration(mapServiceAlteration(serviceJourney.getServiceAlteration()));
+        trip.setServiceAlteration(TripServiceAlterationMapper.mapAlteration(serviceJourney.getServiceAlteration()));
         trip.setTransportSubmode(transportModeMapper.getTransportSubmode(serviceJourney.getTransportSubmode()));
         if (trip.getTransportSubmode()==null) {
             trip.setTransportSubmode(trip.getRoute().getTransportSubmode());
@@ -130,18 +128,6 @@ public class TripMapper {
                 flexibleServiceProperties.getBookingAccess(), flexibleServiceProperties.getBookWhen(), flexibleServiceProperties.getBuyWhen(), flexibleServiceProperties.getBookingMethods(),
                 flexibleServiceProperties.getMinimumBookingPeriod(), flexibleServiceProperties.getLatestBookingTime());
         otpTrip.setBookingArrangements(otpBookingArrangement);
-    }
-
-    private TripServiceAlteration mapServiceAlteration(ServiceAlterationEnumeration netexValue) {
-        if (netexValue == null) {
-            return null;
-        }
-        try {
-            return TripServiceAlteration.valueOf(netexValue.value());
-        } catch (Exception e) {
-            LOG.warn("Unable to map unknown ServiceAlterationEnumeration value from NeTEx:" + netexValue);
-        }
-        return null;
     }
 
     public static Line_VersionStructure lineFromServiceJourney(ServiceJourney serviceJourney, NetexDao netexDao) {
