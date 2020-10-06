@@ -11,7 +11,6 @@ import graphql.GraphQL;
 import graphql.analysis.MaxQueryComplexityInstrumentation;
 import graphql.schema.GraphQLSchema;
 import org.apache.lucene.util.PriorityQueue;
-import org.joda.time.LocalDate;
 import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Geometry;
 import org.opentripplanner.common.LuceneIndex;
@@ -30,6 +29,7 @@ import org.opentripplanner.model.Notice;
 import org.opentripplanner.model.Operator;
 import org.opentripplanner.model.Route;
 import org.opentripplanner.model.Stop;
+import org.opentripplanner.model.StopPattern;
 import org.opentripplanner.model.Trip;
 import org.opentripplanner.model.TripServiceAlteration;
 import org.opentripplanner.model.calendar.ServiceDate;
@@ -73,6 +73,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.attribute.FileAttribute;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.BitSet;
@@ -600,8 +601,8 @@ public class GraphIndex {
      * Wraps the other servicesRunning whose parameter is an OBA ServiceDate.
      * Joda LocalDate is a similar class.
      */
-    public BitSet servicesRunning (LocalDate date) {
-        return servicesRunning(new ServiceDate(date.getYear(), date.getMonthOfYear(), date.getDayOfMonth()));
+    public BitSet servicesRunning(LocalDate date) {
+        return servicesRunning(new ServiceDate(date));
     }
 
     /** Dynamically generate the set of Routes passing though a Stop on demand. */
@@ -642,7 +643,6 @@ public class GraphIndex {
      * @param numberOfDepartures Number of departures to fetch per stop visit in pattern
      * @param omitNonPickups If true, do not include vehicles that will not pick up passengers.
      * @param includeCancelledTrips If true, trips cancelled in realtime-data will be included in result.
-     * @return
      */
     public List<StopTimesInPattern> stopTimesForStop(final Stop stop, final long startTime, final int timeRange, final int numberOfDepartures, final boolean omitNonPickups, final boolean includeCancelledTrips) {
 
@@ -792,7 +792,7 @@ public class GraphIndex {
 
                     if (!includeRealtimeCancellations) {
                         //Pattern added by realtime should not be checked at this point
-                        if (omitNonPickups && pattern.stopPattern.pickups[stopIndex] == pattern.stopPattern.PICKDROP_NONE) {
+                        if (omitNonPickups && pattern.stopPattern.pickups[stopIndex] == StopPattern.PICKDROP_NONE) {
                             continue;
                         }
                     }
@@ -813,7 +813,7 @@ public class GraphIndex {
 
 
                         // Check if pickup has been cancelled via realtime-data, and also NOT wanted in result
-                        if (!includeRealtimeCancellations && triptimes.getPickupType(stopIndex) == pattern.stopPattern.PICKDROP_NONE) {
+                        if (!includeRealtimeCancellations && triptimes.getPickupType(stopIndex) == StopPattern.PICKDROP_NONE) {
                             continue;
                         }
 
@@ -830,7 +830,7 @@ public class GraphIndex {
                             }
 
                             // true if a stop is planned, and not cancelled
-                            boolean isScheduledStop = !triptimes.isCancelledStop(stopIndex) & triptimes.getPickupType(stopIndex) == pattern.stopPattern.PICKDROP_SCHEDULED;
+                            boolean isScheduledStop = !triptimes.isCancelledStop(stopIndex) & triptimes.getPickupType(stopIndex) == StopPattern.PICKDROP_SCHEDULED;
 
 
                             boolean includeByCancellation = isScheduledStop | isCancelledAndRequested;
@@ -878,7 +878,6 @@ public class GraphIndex {
      *
      * @param stop Stop object to perform the search for
      * @param serviceDate Return all departures for the specified date
-     * @return
      */
     public List<StopTimesInPattern> getStopTimesForStop(Stop stop, ServiceDate serviceDate, boolean omitNonPickups) {
         List<StopTimesInPattern> ret = new ArrayList<>();
@@ -899,7 +898,7 @@ public class GraphIndex {
             int sidx = 0;
             for (Stop currStop : pattern.stopPattern.stops) {
                 if (currStop.equals(stop)) {
-                    if(omitNonPickups && pattern.stopPattern.pickups[sidx] == pattern.stopPattern.PICKDROP_NONE) continue;
+                    if(omitNonPickups && pattern.stopPattern.pickups[sidx] == StopPattern.PICKDROP_NONE) continue;
                     for (TripTimes t : tt.tripTimes) {
                         if (!sd.serviceRunning(t.serviceCode)) continue;
                         stopTimes.times.add(new TripTimeShort(t, sidx, stop, sd));

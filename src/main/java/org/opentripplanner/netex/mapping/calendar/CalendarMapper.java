@@ -171,7 +171,7 @@ public class CalendarMapper {
     private static ServiceCalendarDate mapServiceCalendarDate(LocalDateTime date, AgencyAndId serviceId, Integer exceptionType) {
         ServiceCalendarDate serviceCalendarDate = new ServiceCalendarDate();
         serviceCalendarDate.setServiceId(serviceId);
-        serviceCalendarDate.setDate(new ServiceDate(date.getYear(), date.getMonthValue(), date.getDayOfMonth()));
+        serviceCalendarDate.setDate(new ServiceDate(date.toLocalDate()));
         serviceCalendarDate.setExceptionType(exceptionType);
         return serviceCalendarDate;
     }
