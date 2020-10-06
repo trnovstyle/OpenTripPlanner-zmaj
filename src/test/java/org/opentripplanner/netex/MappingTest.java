@@ -7,12 +7,9 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.opentripplanner.standalone.datastore.FileType;
-import org.opentripplanner.standalone.datastore.configure.DataStoreConfig;
+import org.opentripplanner.gtfs.GtfsContextBuilder;
 import org.opentripplanner.model.Agency;
 import org.opentripplanner.model.AgencyAndId;
-import org.opentripplanner.netex.loader.NetexLoader;
-import org.opentripplanner.gtfs.GtfsContextBuilder;
 import org.opentripplanner.model.Route;
 import org.opentripplanner.model.ServiceCalendar;
 import org.opentripplanner.model.ServiceCalendarDate;
@@ -20,7 +17,10 @@ import org.opentripplanner.model.StopTime;
 import org.opentripplanner.model.calendar.ServiceDate;
 import org.opentripplanner.model.impl.OtpTransitBuilder;
 import org.opentripplanner.netex.loader.NetexBundle;
+import org.opentripplanner.netex.loader.NetexLoader;
 import org.opentripplanner.standalone.config.GraphBuilderParameters;
+import org.opentripplanner.standalone.datastore.FileType;
+import org.opentripplanner.standalone.datastore.configure.DataStoreConfig;
 import org.opentripplanner.standalone.datastore.file.ConfigLoader;
 
 import java.io.File;
@@ -161,6 +161,7 @@ public class MappingTest {
             ServiceCalendarDate serviceCalendarDate = new ServiceCalendarDate();
             serviceCalendarDate.setExceptionType(1);
             serviceCalendarDate.setServiceId(serviceCalendar.getServiceId());
+
             switch (date.getDayOfWeek()) {
                 case 1:
                     if (serviceCalendar.getMonday() == 1) {

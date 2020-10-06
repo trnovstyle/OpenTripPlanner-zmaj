@@ -25,20 +25,25 @@ import javax.xml.bind.JAXBElement;
 public class TripMapper {
     private static final Logger LOG = LoggerFactory.getLogger(TripMapper.class);
 
-    private KeyValueMapper keyValueMapper = new KeyValueMapper();
-    private TransportModeMapper transportModeMapper = new TransportModeMapper();
-    private BookingArrangementMapper bookingArrangementMapper = new BookingArrangementMapper();
+    private final KeyValueMapper keyValueMapper = new KeyValueMapper();
+    private final TransportModeMapper transportModeMapper = new TransportModeMapper();
+    private final BookingArrangementMapper bookingArrangementMapper = new BookingArrangementMapper();
 
-    public Trip mapServiceJourney(ServiceJourney serviceJourney, OtpTransitBuilder gtfsDao, NetexDao netexDao, String defaultFlexMaxTravelTime, int defaultMinimumFlexPaddingTime){
+    public Trip mapServiceJourney(
+            ServiceJourney serviceJourney,
+            OtpTransitBuilder transitBuilder,
+            NetexDao netexDao,
+            String defaultFlexMaxTravelTime
+    ){
 
         Line_VersionStructure line = lineFromServiceJourney(serviceJourney, netexDao);
 
         Trip trip = new Trip();
         trip.setId(AgencyAndIdFactory.createAgencyAndId(serviceJourney.getId()));
 
-        trip.setRoute(gtfsDao.getRoutes().get(AgencyAndIdFactory.createAgencyAndId(line.getId())));
+        trip.setRoute(transitBuilder.getRoutes().get(AgencyAndIdFactory.createAgencyAndId(line.getId())));
         if (serviceJourney.getOperatorRef() != null) {
-            Operator operator = gtfsDao.getOperatorsById().get(AgencyAndIdFactory.createAgencyAndId(serviceJourney.getOperatorRef().getRef()));
+            Operator operator = transitBuilder.getOperatorsById().get(AgencyAndIdFactory.createAgencyAndId(serviceJourney.getOperatorRef().getRef()));
             trip.setTripOperator(operator);
         }
 
@@ -82,7 +87,7 @@ public class TripMapper {
         // Map to right shapeId
         JourneyPattern journeyPattern = netexDao.journeyPatternsById.lookup(serviceJourney.getJourneyPatternRef().getValue().getRef());
         AgencyAndId serviceLinkId = AgencyAndIdFactory.createAgencyAndId(journeyPattern.getId().replace("JourneyPattern", "ServiceLink"));
-        if (gtfsDao.getShapePoints().get(serviceLinkId) != null) {
+        if (transitBuilder.getShapePoints().get(serviceLinkId) != null) {
             trip.setShapeId(serviceLinkId);
         }
 
@@ -144,14 +149,11 @@ public class TripMapper {
     }
 
     /**
+     * This sets DrtAdvanceBookMin to a default value, as the concept does not currently exist
+     * in NeTEx.
      *
      * @param trip Trip to be modified
-     * @param bookingArrangements Booking arrangements for StopPointsInJourneyPatterns for this trip
-     *
-     * This sets DrtAdvanceBookMin to a default value, as the concept does not currently exist
-     * in NeTEx
      */
-
     public void setDrtAdvanceBookMin(Trip trip, int defaultMinimumFlexPaddingTime) {
         trip.setDrtAdvanceBookMin(defaultMinimumFlexPaddingTime);
     }

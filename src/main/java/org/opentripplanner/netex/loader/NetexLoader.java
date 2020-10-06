@@ -1,17 +1,3 @@
-/* 
- This program is free software: you can redistribute it and/or
- modify it under the terms of the GNU Lesser General Public License
- as published by the Free Software Foundation, either version 3 of
- the License, or (at your option) any later version.
-
- This program is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
-
- You should have received a copy of the GNU General Public License
- along with this program.  If not, see <http://www.gnu.org/licenses/>. 
-*/
 package org.opentripplanner.netex.loader;
 
 import org.apache.commons.collections.CollectionUtils;
@@ -42,6 +28,7 @@ import org.rutebanken.netex.model.GroupOfStopPlaces;
 import org.rutebanken.netex.model.GroupsOfLinesInFrame_RelStructure;
 import org.rutebanken.netex.model.GroupsOfStopPlacesInFrame_RelStructure;
 import org.rutebanken.netex.model.Interchange_VersionStructure;
+import org.rutebanken.netex.model.JourneyInterchangesInFrame_RelStructure;
 import org.rutebanken.netex.model.JourneyPattern;
 import org.rutebanken.netex.model.JourneyPatternsInFrame_RelStructure;
 import org.rutebanken.netex.model.Journey_VersionStructure;
@@ -52,6 +39,7 @@ import org.rutebanken.netex.model.LinkSequence_VersionStructure;
 import org.rutebanken.netex.model.Network;
 import org.rutebanken.netex.model.Notice;
 import org.rutebanken.netex.model.NoticeAssignment;
+import org.rutebanken.netex.model.NoticeAssignmentsInFrame_RelStructure;
 import org.rutebanken.netex.model.OperatingPeriod;
 import org.rutebanken.netex.model.OperatingPeriod_VersionStructure;
 import org.rutebanken.netex.model.Operator;
@@ -80,6 +68,7 @@ import org.rutebanken.netex.model.TariffZonesInFrame_RelStructure;
 import org.rutebanken.netex.model.TimetableFrame;
 import org.rutebanken.netex.model.TypesOfValueInFrame_RelStructure;
 import org.rutebanken.netex.model.VersionFrameDefaultsStructure;
+import org.rutebanken.netex.model.Zone_VersionStructure;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -184,8 +173,7 @@ public class NetexLoader {
     }
 
     private Unmarshaller createUnmarshaller() throws Exception {
-        JAXBContext jaxbContext = JAXBContext.newInstance(PublicationDeliveryStructure.class);
-        return jaxbContext.createUnmarshaller();
+        return JAXBContext.newInstance(PublicationDeliveryStructure.class).createUnmarshaller();
     }
 
     private void loadFiles(String fileDescription, Iterable<DataSource> entries) {
@@ -202,7 +190,7 @@ public class NetexLoader {
             PublicationDeliveryStructure value = parseXmlDoc(bytesArray);
             List<JAXBElement<? extends Common_VersionFrameStructure>> compositeFrameOrCommonFrames = value
                     .getDataObjects().getCompositeFrameOrCommonFrame();
-            for (JAXBElement frame : compositeFrameOrCommonFrames) {
+            for (JAXBElement<?> frame : compositeFrameOrCommonFrames) {
 
                 if (frame.getValue() instanceof CompositeFrame) {
                     CompositeFrame cf = (CompositeFrame) frame.getValue();
@@ -217,7 +205,7 @@ public class NetexLoader {
 
                     List<JAXBElement<? extends Common_VersionFrameStructure>> commonFrames = cf
                             .getFrames().getCommonFrame();
-                    for (JAXBElement commonFrame : commonFrames) {
+                    for (JAXBElement<?> commonFrame : commonFrames) {
                         loadSiteFrames(commonFrame);
                         loadResourceFrames(commonFrame);
                         loadServiceCalendarFrames(commonFrame);
@@ -243,7 +231,7 @@ public class NetexLoader {
     }
     // Stop places and quays
 
-    private void loadSiteFrames(JAXBElement commonFrame) {
+    private void loadSiteFrames(JAXBElement<?> commonFrame) {
         if (commonFrame.getValue() instanceof SiteFrame) {
             SiteFrame sf = (SiteFrame) commonFrame.getValue();
             StopPlacesInFrame_RelStructure stopPlaces = sf.getStopPlaces();
@@ -296,15 +284,17 @@ public class NetexLoader {
 
             TariffZonesInFrame_RelStructure tariffZones = sf.getTariffZones();
             if (tariffZones != null) {
-                List<TariffZone> tariffZoneList = tariffZones.getTariffZone();
-                for (TariffZone tariffZone : tariffZoneList) {
-                    currentNetexDao().tariffZoneById.add(tariffZone);
+                List<JAXBElement<? extends Zone_VersionStructure>> tariffZoneList = tariffZones.getTariffZone();
+                for (JAXBElement<? extends Zone_VersionStructure> tariffZone : tariffZoneList) {
+                    if(tariffZone.getValue() instanceof TariffZone) {
+                        currentNetexDao().tariffZoneById.add((TariffZone) tariffZone.getValue());
+                    }
                 }
             }
         }
     }
 
-    private void loadServiceFrames(JAXBElement commonFrame) {
+    private void loadServiceFrames(JAXBElement<?> commonFrame) {
         if (commonFrame.getValue() instanceof ServiceFrame) {
             ServiceFrame sf = (ServiceFrame) commonFrame.getValue();
 
@@ -313,7 +303,7 @@ public class NetexLoader {
             if (stopAssignments != null) {
                 List<JAXBElement<? extends StopAssignment_VersionStructure>> assignments = stopAssignments
                         .getStopAssignment();
-                for (JAXBElement assignment : assignments) {
+                for (JAXBElement<?> assignment : assignments) {
                     if (assignment.getValue() instanceof PassengerStopAssignment) {
                         PassengerStopAssignment passengerStopAssignment =
                                 (PassengerStopAssignment) assignment.getValue();
@@ -343,7 +333,7 @@ public class NetexLoader {
             if (routes != null) {
                 List<JAXBElement<? extends LinkSequence_VersionStructure>> route_ = routes
                         .getRoute_();
-                for (JAXBElement element : route_) {
+                for (JAXBElement<?> element : route_) {
                     if (element.getValue() instanceof Route) {
                         Route route = (Route) element.getValue();
                         currentNetexDao().routeById.add(route);
@@ -364,7 +354,7 @@ public class NetexLoader {
             LinesInFrame_RelStructure lines = sf.getLines();
             if(lines != null){
                 List<JAXBElement<? extends DataManagedObjectStructure>> line_ = lines.getLine_();
-                for (JAXBElement element : line_) {
+                for (JAXBElement<?> element : line_) {
                     if (element.getValue() instanceof Line_VersionStructure) {
                         Line_VersionStructure line = (Line_VersionStructure) element.getValue();
                         currentNetexDao().lineById.add(line);
@@ -388,7 +378,7 @@ public class NetexLoader {
             if (journeyPatterns != null) {
                 List<JAXBElement<?>> journeyPattern_orJourneyPatternView = journeyPatterns
                         .getJourneyPattern_OrJourneyPatternView();
-                for (JAXBElement pattern : journeyPattern_orJourneyPatternView) {
+                for (JAXBElement<?> pattern : journeyPattern_orJourneyPatternView) {
                     if (pattern.getValue() instanceof JourneyPattern) {
                         JourneyPattern journeyPattern = (JourneyPattern) pattern.getValue();
                         JourneyPattern journeyPattern1 = (JourneyPattern) pattern.getValue();
@@ -411,16 +401,7 @@ public class NetexLoader {
                 }
             }
 
-            if (sf.getNoticeAssignments() != null) {
-                for (JAXBElement<? extends DataManagedObjectStructure> noticeAssignmentElement : sf.getNoticeAssignments()
-                        .getNoticeAssignment_()) {
-                    NoticeAssignment noticeAssignment = (NoticeAssignment) noticeAssignmentElement.getValue();
-
-                    if (noticeAssignment.getNoticeRef() != null && noticeAssignment.getNoticedObjectRef() != null) {
-                        currentNetexDao().noticeAssignmentById.add(noticeAssignment);
-                    }
-                }
-            }
+            loadNoticeAssignments(sf.getNoticeAssignments());
 
             //destinationDisplays
             if (sf.getDestinationDisplays() != null) {
@@ -467,17 +448,17 @@ public class NetexLoader {
     }
 
     // ServiceJourneys
-    private void loadTimeTableFrames(JAXBElement commonFrame) {
+    private void loadTimeTableFrames(JAXBElement<?> commonFrame) {
         if (commonFrame.getValue() instanceof TimetableFrame) {
             TimetableFrame timetableFrame = (TimetableFrame) commonFrame.getValue();
 
             JourneysInFrame_RelStructure vehicleJourneys = timetableFrame.getVehicleJourneys();
             List<Journey_VersionStructure> datedServiceJourneyOrDeadRunOrServiceJourney = vehicleJourneys
-                    .getDatedServiceJourneyOrDeadRunOrServiceJourney();
-            for (Journey_VersionStructure jStructure : datedServiceJourneyOrDeadRunOrServiceJourney) {
-                if (jStructure instanceof ServiceJourney) {
-                    loadServiceIds((ServiceJourney) jStructure);
-                    ServiceJourney sj = (ServiceJourney) jStructure;
+                    .getVehicleJourneyOrDatedVehicleJourneyOrNormalDatedVehicleJourney();
+            for (Journey_VersionStructure journey : datedServiceJourneyOrDeadRunOrServiceJourney) {
+                if (journey instanceof ServiceJourney) {
+                    ServiceJourney sj = (ServiceJourney) journey;
+                    loadServiceIds(sj);
                     String journeyPatternId = sj.getJourneyPatternRef().getValue().getRef();
 
                     JourneyPattern journeyPattern = currentNetexDao().journeyPatternsById.lookup(journeyPatternId);
@@ -498,27 +479,35 @@ public class NetexLoader {
                     }
                 }
             }
-            if (timetableFrame.getJourneyInterchanges() != null) {
-                for (Interchange_VersionStructure interchange_versionStructure : timetableFrame.getJourneyInterchanges()
-                        .getServiceJourneyPatternInterchangeOrServiceJourneyInterchange()) {
-                    if (interchange_versionStructure instanceof ServiceJourneyInterchange) {
-                        ServiceJourneyInterchange interchange = (ServiceJourneyInterchange) interchange_versionStructure;
-                        currentNetexDao().interchanges.add(interchange.getId(), interchange);
-                    }
-                }
-            }
-            if (timetableFrame.getNoticeAssignments() != null) {
-                for (JAXBElement<? extends DataManagedObjectStructure> noticeAssignmentElement : timetableFrame.getNoticeAssignments()
-                        .getNoticeAssignment_()) {
-                    NoticeAssignment noticeAssignment = (NoticeAssignment) noticeAssignmentElement.getValue();
 
-                    if (noticeAssignment.getNoticeRef() != null && noticeAssignment.getNoticedObjectRef() != null) {
-                        currentNetexDao().noticeAssignmentById.add(noticeAssignment);
-                    }
-                }
+            loadJourneyInterchanges(timetableFrame.getJourneyInterchanges());
+            loadNoticeAssignments(timetableFrame.getNoticeAssignments());
+        }
+    }
+
+
+    private void loadJourneyInterchanges(JourneyInterchangesInFrame_RelStructure interchanges) {
+        if (interchanges == null) { return; }
+        for (Interchange_VersionStructure interchange_versionStructure : interchanges.getServiceJourneyPatternInterchangeOrServiceJourneyInterchange()) {
+            if (interchange_versionStructure instanceof ServiceJourneyInterchange) {
+                ServiceJourneyInterchange interchange = (ServiceJourneyInterchange) interchange_versionStructure;
+                currentNetexDao().interchanges.add(interchange.getId(), interchange);
             }
         }
     }
+
+    private void loadNoticeAssignments(NoticeAssignmentsInFrame_RelStructure noticeAssignments) {
+        if (noticeAssignments == null) { return; }
+        for (JAXBElement<? extends DataManagedObjectStructure> xmlNnotice : noticeAssignments.getNoticeAssignment_()) {
+            NoticeAssignment noticeAssignment = (NoticeAssignment) xmlNnotice.getValue();
+
+            if (noticeAssignment.getNoticeRef() != null && noticeAssignment.getNoticedObjectRef() != null) {
+                currentNetexDao().noticeAssignmentById.add(noticeAssignment);
+            }
+        }
+    }
+
+
 
     private void loadServiceIds(ServiceJourney serviceJourney) {
         DayTypeRefs_RelStructure dayTypes = serviceJourney.getDayTypes();
@@ -528,13 +517,13 @@ public class NetexLoader {
     }
 
     // ServiceCalendar
-    private void loadServiceCalendarFrames(JAXBElement commonFrame) {
+    private void loadServiceCalendarFrames(JAXBElement<?> commonFrame) {
         if (commonFrame.getValue() instanceof ServiceCalendarFrame) {
             ServiceCalendarFrame scf = (ServiceCalendarFrame) commonFrame.getValue();
 
             if (scf.getServiceCalendar() != null) {
                 DayTypes_RelStructure dayTypes = scf.getServiceCalendar().getDayTypes();
-                for (JAXBElement dt : dayTypes.getDayTypeRefOrDayType_()) {
+                for (JAXBElement<?> dt : dayTypes.getDayTypeRefOrDayType_()) {
                     if (dt.getValue() instanceof DayType) {
                         DayType dayType = (DayType) dt.getValue();
                         currentNetexDao().dayTypeById.add(dayType);
@@ -545,7 +534,7 @@ public class NetexLoader {
             if (scf.getDayTypes() != null) {
                 List<JAXBElement<? extends DataManagedObjectStructure>> dayTypes = scf.getDayTypes()
                         .getDayType_();
-                for (JAXBElement dt : dayTypes) {
+                for (JAXBElement<?> dt : dayTypes) {
                     if (dt.getValue() instanceof DayType) {
                         DayType dayType = (DayType) dt.getValue();
                         currentNetexDao().dayTypeById.add(dayType);
@@ -565,9 +554,7 @@ public class NetexLoader {
 
             for (DayTypeAssignment dayTypeAssignment : dayTypeAssignments) {
                 String ref = dayTypeAssignment.getDayTypeRef().getValue().getRef();
-                Boolean available = dayTypeAssignment.isIsAvailable() == null ?
-                        true :
-                        dayTypeAssignment.isIsAvailable();
+                boolean available = dayTypeAssignment.isIsAvailable() == null || dayTypeAssignment.isIsAvailable();
                 currentNetexDao().dayTypeAvailable.add(dayTypeAssignment.getId(), available);
 
                 currentNetexDao().dayTypeAssignmentByDayTypeId.add(ref, dayTypeAssignment);
@@ -576,12 +563,11 @@ public class NetexLoader {
     }
 
     // Authorities and operators
-    private void loadResourceFrames(JAXBElement commonFrame) {
+    private void loadResourceFrames(JAXBElement<?> commonFrame) {
         if (commonFrame.getValue() instanceof ResourceFrame) {
             ResourceFrame resourceFrame = (ResourceFrame) commonFrame.getValue();
-            List<JAXBElement<? extends DataManagedObjectStructure>> organisations = resourceFrame
-                    .getOrganisations().getOrganisation_();
-            for (JAXBElement element : organisations) {
+            var organisations = resourceFrame.getOrganisations().getOrganisation_();
+            for (JAXBElement<?> element : organisations) {
                 if(element.getValue() instanceof Authority){
                     Authority authority = (Authority) element.getValue();
                     currentNetexDao().authoritiesById.add(authority);

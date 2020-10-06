@@ -81,11 +81,7 @@ class TTCalService {
     }
 
     private ServiceCalendarDate newCalDate(AgencyAndId serviceId, ServiceDate date) {
-        ServiceCalendarDate v = new ServiceCalendarDate();
-        v.setExceptionType(ServiceCalendarDate.EXCEPTION_TYPE_ADD);
-        v.setDate(date);
-        v.setServiceId(serviceId);
-        return v;
+        return new ServiceCalendarDate(serviceId, date, ServiceCalendarDate.EXCEPTION_TYPE_ADD);
     }
 
     private AgencyAndId newServiceId(Collection<ServiceDate> dates) {
