@@ -20,6 +20,12 @@ public class HierarchicalMap<K,V> extends AbstractHierarchicalMap<K, V> {
         map.put(key, value);
     }
 
+    public void addAll(Map<K, V> entities) {
+        for (Map.Entry<K, V> e : entities.entrySet()) {
+            add(e.getKey(), e.getValue());
+        }
+    }
+
     public Set<K> keys() {
         return map.keySet();
     }
@@ -38,5 +44,8 @@ public class HierarchicalMap<K,V> extends AbstractHierarchicalMap<K, V> {
         return map.containsKey(key);
     }
 
-
+    @Override
+    protected int localSize() {
+        return map.size();
+    }
 }

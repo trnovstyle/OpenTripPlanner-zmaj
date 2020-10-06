@@ -27,11 +27,24 @@ public abstract class AbstractHierarchicalMap<K,V> {
         return localContainsKey(key) || (isChild() && parent.localContainsKey(key));
     }
 
+    /** The size of the collection including any parent nodes. Returns the number of key-value pairs for a Map. */
+    public int size() {
+        return localSize() + (isChild() ? parent.localSize() : 0);
+    }
+
+    /** Return a reference to the parent. */
+    public AbstractHierarchicalMap<K,V> pop() {
+        return parent;
+    }
+
     /** Get value from 'local' map, parent is not queried. */
     protected abstract V localGet(K key);
 
     /** Check if key exist in 'local' map, parent is not queried. */
     protected abstract boolean localContainsKey(K key);
+
+    /** Return the size of the collection. Returns the number of key-value pairs for a Map. */
+    protected abstract int localSize();
 
     /**
      * Check if a value exist; hence should the value be returned by the {@link #lookup(Object)} method.
@@ -50,6 +63,12 @@ public abstract class AbstractHierarchicalMap<K,V> {
 
     private boolean isChild() {
         return parent != null;
+    }
+
+    @Override
+    public String toString() {
+        // It helps in debugging to se the size before expanding the element
+        return "size = " + size();
     }
 }
 
