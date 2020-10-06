@@ -15,6 +15,7 @@
  */
 package org.opentripplanner.model;
 
+import javax.validation.constraints.NotNull;
 import java.util.List;
 
 public final class Trip extends IdentityBean<AgencyAndId> {
@@ -47,7 +48,8 @@ public final class Trip extends IdentityBean<AgencyAndId> {
 
     private int wheelchairAccessible = 0;
 
-    private TripServiceAlteration serviceAlteration;
+    @NotNull
+    private TripServiceAlteration serviceAlteration = TripServiceAlteration.planned;
 
     private List<KeyValue> keyValues;
 
@@ -323,7 +325,7 @@ public final class Trip extends IdentityBean<AgencyAndId> {
     }
 
     public void setServiceAlteration(TripServiceAlteration serviceAlteration) {
-        this.serviceAlteration = serviceAlteration;
+        this.serviceAlteration = serviceAlteration == null ? TripServiceAlteration.planned : serviceAlteration;
     }
 
     public List<KeyValue> getKeyValues() {

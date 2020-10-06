@@ -152,8 +152,11 @@ public class NetexMapper {
             transitBuilder.getCalendarDates().addAll(mapToCalendarDates(AgencyAndIdFactory.createAgencyAndId(serviceId), netexDao));
         }
 
-        for (String parkingId : netexDao.parkingById.keys()) {
-            transitBuilder.getParkings().add(parkingMapper.mapParking(netexDao.parkingById.lookupLastVersionById(parkingId)));
+        // Parking
+        {
+            for (String parkingId : netexDao.parkingById.keys()) {
+                transitBuilder.getParkings().add(parkingMapper.mapParking(netexDao.parkingById.lookupLastVersionById(parkingId)));
+            }
         }
 
         for (Notice notice : netexDao.noticeById.values()) {

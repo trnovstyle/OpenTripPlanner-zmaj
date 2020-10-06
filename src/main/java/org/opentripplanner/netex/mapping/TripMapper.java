@@ -152,7 +152,7 @@ public class TripMapper {
      * in NeTEx
      */
 
-    public void setdrtAdvanceBookMin(Trip trip, int defaultMinimumFlexPaddingTime) {
+    public void setDrtAdvanceBookMin(Trip trip, int defaultMinimumFlexPaddingTime) {
         trip.setDrtAdvanceBookMin(defaultMinimumFlexPaddingTime);
     }
 }
