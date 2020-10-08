@@ -101,8 +101,10 @@ steps:
         
   - task: TriggerBuild@3
     inputs:
-      definitionIsInCurrentTeamProject: true
-      buildDefinition: 'resesok-infra'
+      definitionIsInCurrentTeamProject: false
+      buildDefinition: 'TokyoResesokInfra'
+      tfsServer: 'https://dev.azure.com/skanetrafiken2/'
+      teamProject: 'Infra'
       queueBuildForUserThatTriggeredBuild: true
       ignoreSslCertificateErrors: false
       useSameSourceVersion: false
