@@ -1,7 +1,7 @@
 trigger:
   - OTP-TO_BE_DEFINED
   -
-pool: 'Tokyo'
+pool: 'TJP'
   #vmImage: 'ubuntu latest'
 
 variables:
