@@ -102,7 +102,7 @@ steps:
   - task: TriggerBuild@3
     inputs:
       definitionIsInCurrentTeamProject: false
-      buildDefinition: 'TokyoResesokInfra'
+      buildDefinition: 'TokyoResesok-CD'
       tfsServer: 'https://dev.azure.com/skanetrafiken2/'
       teamProject: 'Infra'
       queueBuildForUserThatTriggeredBuild: true
