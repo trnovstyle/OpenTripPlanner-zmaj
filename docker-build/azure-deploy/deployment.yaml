@@ -21,10 +21,10 @@ steps:
     inputs:
       goals: 'clean package'
       mavenAuthenticateFeed: true
-      options: '-Pjunit-report --settings docker-build/azure-deploy/settings.xml -Dsettings.security=/tmp/settings-security.xml'
+      options: '-Pjunit-report --settings docker-build/azure-deploy/settings.xml -Dsettings.security=/tmp/settings-security.xml -B -U'
       jdkVersionOption: '1.11'
       jdkArchitectureOption: 'x64'
-      mavenOptions: '-Xmx6G'
+      mavenOptions: '-Xmx2G' # Build agents are limited to 2Gb
   # Publish Code Coverage report
   - task: PublishCodeCoverageResults@1
     inputs:
