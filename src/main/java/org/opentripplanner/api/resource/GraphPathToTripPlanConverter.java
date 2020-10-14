@@ -184,10 +184,19 @@ public abstract class GraphPathToTripPlanConverter {
 
         addWalkSteps(graph, itinerary.legs, legsStates, requestedLocale);
 
-
+        int firstLegDepartureDelay = 0;
+        int lastLegArrivalDelay = 0;
         for (int i = 0; i < itinerary.legs.size(); i++) {
             Leg leg = itinerary.legs.get(i);
             boolean isFirstLeg = i == 0;
+            boolean isLastLeg = i == itinerary.legs.size()-1;
+
+            // Calculating departure-/arrivalDelay for Itinerary
+            if (isFirstLeg) {
+                firstLegDepartureDelay = leg.departureDelay;
+            } else if(isLastLeg) {
+                lastLegArrivalDelay = leg.arrivalDelay;
+            }
 
             addAlertPatchesToLeg(graph, leg, isFirstLeg, requestedLocale);
         }
@@ -201,7 +210,9 @@ public abstract class GraphPathToTripPlanConverter {
         itinerary.duration = lastState.getElapsedTimeSeconds();
         itinerary.distance = itinerary.legs.stream().mapToDouble(l -> l.distance).sum();
         itinerary.startTime = makeCalendar(states[0]);
+        itinerary.departureDelay = firstLegDepartureDelay;
         itinerary.endTime = makeCalendar(lastState);
+        itinerary.arrivalDelay = lastLegArrivalDelay;
         itinerary.weight = lastState.weight;
 
         calculateTimes(itinerary, states);
