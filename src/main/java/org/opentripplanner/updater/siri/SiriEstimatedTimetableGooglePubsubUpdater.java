@@ -113,7 +113,6 @@ public class SiriEstimatedTimetableGooglePubsubUpdater extends ReadinessBlocking
     private transient long startTime;
 
     public SiriEstimatedTimetableGooglePubsubUpdater() {
-
         try {
             if (System.getenv("GOOGLE_APPLICATION_CREDENTIALS") != null &&
                     !System.getenv("GOOGLE_APPLICATION_CREDENTIALS").isEmpty()) {
@@ -154,7 +153,7 @@ public class SiriEstimatedTimetableGooglePubsubUpdater extends ReadinessBlocking
     }
 
     @Override
-    public void configure(Graph graph, JsonNode config) throws Exception {
+    public void configure(Graph graph, JsonNode config) {
 
         /*
            URL that responds to HTTP GET which returns all initial data in protobuf-format.
@@ -204,7 +203,7 @@ public class SiriEstimatedTimetableGooglePubsubUpdater extends ReadinessBlocking
     }
 
     @Override
-    public void run() throws IOException {
+    public void run() {
 
         if (subscriptionAdminClient == null) {
             throw new RuntimeException("Unable to initialize Google Pubsub-updater: System.getenv('GOOGLE_APPLICATION_CREDENTIALS') = " + System.getenv("GOOGLE_APPLICATION_CREDENTIALS"));

@@ -6,6 +6,7 @@ import org.opentripplanner.model.Stop;
 import org.opentripplanner.model.Trip;
 import org.opentripplanner.routing.core.ServiceDay;
 import org.opentripplanner.routing.edgetype.Timetable;
+import org.opentripplanner.routing.trippattern.OccupancyStatus;
 import org.opentripplanner.routing.trippattern.RealTimeState;
 import org.opentripplanner.routing.trippattern.TripTimes;
 
@@ -39,6 +40,7 @@ public class TripTimeShort {
     public boolean isRecordedStop;
     public boolean isCancelledStop;
     public boolean predictionInaccurate;
+    public OccupancyStatus occupancyStatus;
 
     public int pickupType;
     public int dropoffType;
@@ -89,6 +91,8 @@ public class TripTimeShort {
         serviceAreaRadius  = tt.getServiceAreaRadius(i);
         serviceArea        = tt.getServiceArea(i);
         predictionInaccurate = tt.isPredictionInaccurate(i);
+
+        occupancyStatus = tt.getOccupancyStatus(i);
     }
 
     public TripTimeShort(TripTimes tt, int i, Stop stop, ServiceDay sd) {

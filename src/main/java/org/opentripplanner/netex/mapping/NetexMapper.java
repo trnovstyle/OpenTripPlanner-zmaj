@@ -1,20 +1,25 @@
 package org.opentripplanner.netex.mapping;
 
-import org.opentripplanner.model.*;
 import org.opentripplanner.model.NoticeAssignment;
 import org.opentripplanner.model.Route;
+import org.opentripplanner.model.ShapePoint;
+import org.opentripplanner.model.Stop;
+import org.opentripplanner.model.Transfer;
 import org.opentripplanner.model.impl.OtpTransitBuilder;
 import org.opentripplanner.netex.loader.NetexDao;
+import org.opentripplanner.netex.mapping.calendar.ServiceCalendarBuilder;
 import org.opentripplanner.routing.graph.AddBuilderAnnotation;
-import org.rutebanken.netex.model.*;
+import org.rutebanken.netex.model.Authority;
 import org.rutebanken.netex.model.Branding;
+import org.rutebanken.netex.model.FlexibleStopPlace;
+import org.rutebanken.netex.model.GroupOfStopPlaces;
+import org.rutebanken.netex.model.JourneyPattern;
+import org.rutebanken.netex.model.Line_VersionStructure;
 import org.rutebanken.netex.model.Notice;
+import org.rutebanken.netex.model.StopPlace;
 import org.rutebanken.netex.model.TariffZone;
 
-import java.util.AbstractMap;
 import java.util.Collection;
-
-import static org.opentripplanner.netex.mapping.CalendarMapper.mapToCalendarDates;
 
 public class NetexMapper {
 
@@ -46,6 +51,8 @@ public class NetexMapper {
 
     private final TransferMapper transferMapper = new TransferMapper();
 
+    private final ServiceCalendarBuilder serviceCalendarBuilder;
+
     private final String agencyId;
 
     private final String defaultFlexMaxTravelTime;
@@ -68,6 +75,7 @@ public class NetexMapper {
         this.flexibleStopPlaceMapper= new FlexibleStopPlaceMapper(addBuilderAnnotation);
         this.serviceLinkMapper = new ServiceLinkMapper(addBuilderAnnotation);
         this.stopMapper= new StopMapper(addBuilderAnnotation);
+        this.serviceCalendarBuilder = new ServiceCalendarBuilder();
     }
 
     public void mapNetexToOtpEntities(NetexDao netexDao) {
@@ -138,18 +146,30 @@ public class NetexMapper {
             }
         }
 
+        // Create Service Calendar
+        serviceCalendarBuilder.buildCalendar(netexDao);
+        transitBuilder.getCalendarDates().addAll(serviceCalendarBuilder.calendarDates());
+
+        // Parking
+        {
+            for (String parkingId : netexDao.parkingById.keys()) {
+                transitBuilder.getParkings().add(parkingMapper.mapParking(netexDao.parkingById.lookupLastVersionById(parkingId)));
+            }
+        }
+        // Create Trips
         for (JourneyPattern journeyPattern : netexDao.journeyPatternsById.values()) {
-            tripPatternMapper.mapTripPattern(journeyPattern, transitBuilder, netexDao, defaultFlexMaxTravelTime, defaultMinimumFlexPaddingTime);
+            tripPatternMapper.mapTripPattern(
+                    journeyPattern,
+                    serviceCalendarBuilder.serviceIdByServiceJourneyId(),
+                    serviceCalendarBuilder.tripServiceAlterationsBySJId(),
+                    transitBuilder,
+                    netexDao,
+                    defaultFlexMaxTravelTime,
+                    defaultMinimumFlexPaddingTime
+            );
         }
 
-        for (String serviceId : netexDao.getCalendarServiceIds()) {
-            transitBuilder.getCalendarDates().addAll(mapToCalendarDates(AgencyAndIdFactory.createAgencyAndId(serviceId), netexDao));
-        }
-
-        for (String parkingId : netexDao.parkingById.keys()) {
-            transitBuilder.getParkings().add(parkingMapper.mapParking(netexDao.parkingById.lookupLastVersionById(parkingId)));
-        }
-
+        // Notices
         for (Notice notice : netexDao.noticeById.values()) {
             org.opentripplanner.model.Notice otpNotice = noticeMapper.mapNotice(notice);
             transitBuilder.getNoticesById().add(otpNotice);
@@ -187,5 +207,24 @@ public class NetexMapper {
                 }
             }
         }
+    }
+
+    /**
+     * The NeTEx files form a hierarchical tree. When parsed we want to keep all information at the above levels,
+     * but discard all data when a level is mapped. The {@link NetexDao} is implemented the same way. Some of the
+     * data need to be constructed during the mapping phase of a higher level and made available to the mapping
+     * of a lower level. So, we keep a stack of cashed elements. This method clear the last level, and make the
+     * cached elements available for GC.
+     */
+    public void popCache() {
+        serviceCalendarBuilder.popCache();
+    }
+
+    /**
+     * This method create a new cache so the mapper is ready to map a new level. The cached elements are available
+     * until the {@link #popCache()} is called.
+     */
+    public void putCache() {
+        serviceCalendarBuilder.putCache();
     }
 }

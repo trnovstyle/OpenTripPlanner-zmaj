@@ -4,9 +4,16 @@ import org.opentripplanner.model.AgencyAndId;
 import org.opentripplanner.model.BookingArrangement;
 import org.opentripplanner.model.Operator;
 import org.opentripplanner.model.Trip;
+import org.opentripplanner.model.TripServiceAlteration;
 import org.opentripplanner.model.impl.OtpTransitBuilder;
 import org.opentripplanner.netex.loader.NetexDao;
-import org.rutebanken.netex.model.*;
+import org.rutebanken.netex.model.FlexibleLine;
+import org.rutebanken.netex.model.FlexibleServiceProperties;
+import org.rutebanken.netex.model.JourneyPattern;
+import org.rutebanken.netex.model.LineRefStructure;
+import org.rutebanken.netex.model.Line_VersionStructure;
+import org.rutebanken.netex.model.Route;
+import org.rutebanken.netex.model.ServiceJourney;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,29 +26,32 @@ import javax.xml.bind.JAXBElement;
 public class TripMapper {
     private static final Logger LOG = LoggerFactory.getLogger(TripMapper.class);
 
-    private KeyValueMapper keyValueMapper = new KeyValueMapper();
-    private TransportModeMapper transportModeMapper = new TransportModeMapper();
-    private BookingArrangementMapper bookingArrangementMapper = new BookingArrangementMapper();
+    private final KeyValueMapper keyValueMapper = new KeyValueMapper();
+    private final TransportModeMapper transportModeMapper = new TransportModeMapper();
+    private final BookingArrangementMapper bookingArrangementMapper = new BookingArrangementMapper();
 
-    public Trip mapServiceJourney(ServiceJourney serviceJourney, OtpTransitBuilder gtfsDao, NetexDao netexDao, String defaultFlexMaxTravelTime, int defaultMinimumFlexPaddingTime){
+
+    public Trip mapServiceJourney(
+            ServiceJourney serviceJourney,
+            AgencyAndId serviceId,
+            TripServiceAlteration alternation,
+            OtpTransitBuilder transitBuilder,
+            NetexDao netexDao,
+            String defaultFlexMaxTravelTime
+    ){
 
         Line_VersionStructure line = lineFromServiceJourney(serviceJourney, netexDao);
 
         Trip trip = new Trip();
         trip.setId(AgencyAndIdFactory.createAgencyAndId(serviceJourney.getId()));
 
-        trip.setRoute(gtfsDao.getRoutes().get(AgencyAndIdFactory.createAgencyAndId(line.getId())));
+        trip.setRoute(transitBuilder.getRoutes().get(AgencyAndIdFactory.createAgencyAndId(line.getId())));
         if (serviceJourney.getOperatorRef() != null) {
-            Operator operator = gtfsDao.getOperatorsById().get(AgencyAndIdFactory.createAgencyAndId(serviceJourney.getOperatorRef().getRef()));
+            Operator operator = transitBuilder.getOperatorsById().get(AgencyAndIdFactory.createAgencyAndId(serviceJourney.getOperatorRef().getRef()));
             trip.setTripOperator(operator);
         }
 
-        String serviceId = ServiceIdMapper.mapToServiceId(serviceJourney.getDayTypes());
-
-        // Add all unique service ids to map. Used when mapping calendars later.
-        netexDao.addCalendarServiceId(serviceId);
-
-        trip.setServiceId(AgencyAndIdFactory.createAgencyAndId(serviceId));
+        trip.setServiceId(serviceId);
 
         if (serviceJourney.getPrivateCode() != null) {
             trip.setTripPrivateCode(serviceJourney.getPrivateCode().getValue());
@@ -67,7 +77,12 @@ public class TripMapper {
         }
         trip.setKeyValues(keyValueMapper.mapKeyValues(serviceJourney.getKeyList()));
         trip.setWheelchairAccessible(0); // noInformation
-        trip.setServiceAlteration(mapServiceAlteration(serviceJourney.getServiceAlteration()));
+
+        // The provided alternation comes from DatedServiceJourney, if it is {@code null} the service journey
+        // should also have a alternation attribute which can then be used. If both are set, they should have the
+        // same value.
+        trip.setServiceAlteration(resolveTripServiceAlteration(serviceJourney, alternation));
+
         trip.setTransportSubmode(transportModeMapper.getTransportSubmode(serviceJourney.getTransportSubmode()));
         if (trip.getTransportSubmode()==null) {
             trip.setTransportSubmode(trip.getRoute().getTransportSubmode());
@@ -76,7 +91,7 @@ public class TripMapper {
         // Map to right shapeId
         JourneyPattern journeyPattern = netexDao.journeyPatternsById.lookup(serviceJourney.getJourneyPatternRef().getValue().getRef());
         AgencyAndId serviceLinkId = AgencyAndIdFactory.createAgencyAndId(journeyPattern.getId().replace("JourneyPattern", "ServiceLink"));
-        if (gtfsDao.getShapePoints().get(serviceLinkId) != null) {
+        if (transitBuilder.getShapePoints().get(serviceLinkId) != null) {
             trip.setShapeId(serviceLinkId);
         }
 
@@ -124,18 +139,6 @@ public class TripMapper {
         otpTrip.setBookingArrangements(otpBookingArrangement);
     }
 
-    private Trip.ServiceAlteration mapServiceAlteration(ServiceAlterationEnumeration netexValue) {
-        if (netexValue == null) {
-            return null;
-        }
-        try {
-            return Trip.ServiceAlteration.valueOf(netexValue.value());
-        } catch (Exception e) {
-            LOG.warn("Unable to map unknown ServiceAlterationEnumeration value from NeTEx:" + netexValue);
-        }
-        return null;
-    }
-
     public static Line_VersionStructure lineFromServiceJourney(ServiceJourney serviceJourney, NetexDao netexDao) {
         JAXBElement<? extends LineRefStructure> lineRefStruct = serviceJourney.getLineRef();
         String lineRef = null;
@@ -150,15 +153,32 @@ public class TripMapper {
     }
 
     /**
+     * This sets DrtAdvanceBookMin to a default value, as the concept does not currently exist
+     * in NeTEx.
      *
      * @param trip Trip to be modified
-     * @param bookingArrangements Booking arrangements for StopPointsInJourneyPatterns for this trip
-     *
-     * This sets DrtAdvanceBookMin to a default value, as the concept does not currently exist
-     * in NeTEx
      */
-
-    public void setdrtAdvanceBookMin(Trip trip, int defaultMinimumFlexPaddingTime) {
+    public void setDrtAdvanceBookMin(Trip trip, int defaultMinimumFlexPaddingTime) {
         trip.setDrtAdvanceBookMin(defaultMinimumFlexPaddingTime);
     }
+
+    private static TripServiceAlteration resolveTripServiceAlteration(
+            ServiceJourney sj,
+            TripServiceAlteration alternation
+    ) {
+        TripServiceAlteration sjAlt = TripServiceAlterationMapper.mapAlteration(sj.getServiceAlteration());
+
+        if(alternation == null) {
+            return sjAlt == null ? TripServiceAlteration.planned : sjAlt;
+        }
+        else if(sjAlt == null || sjAlt == alternation) {
+            return alternation;
+        }
+        throw new IllegalStateException(
+                "Trip alternation unambiguous. SJ.id=" + sj.getId()
+                        + ", sj.alt=" + sjAlt
+                        + ", DSJ.alt=" + alternation
+        );
+    }
+
 }

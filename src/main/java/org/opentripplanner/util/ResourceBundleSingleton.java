@@ -55,15 +55,11 @@ public enum ResourceBundleSingleton {
             } else {
                 resourceBundle = ResourceBundle.getBundle("WayProperties", locale);
             }
-            String val = resourceBundle.getString(key);
-            String retval = new String(val.getBytes("ISO-8859-1"), "UTF-8");
-            //LOG.debug(String.format("Localized '%s' using '%s'", key, retval));
+            String retval = resourceBundle.getString(key);
+            LOG.debug(String.format("Localized '%s' using '%s'", key, retval));
             return retval;
         } catch (MissingResourceException e) {
             //LOG.debug("Missing translation for key: " + key);
-            return key;
-        } catch (UnsupportedEncodingException e) {
-            LOG.debug("Unsupported encoding");
             return key;
         }
     }

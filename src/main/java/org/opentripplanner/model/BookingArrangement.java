@@ -146,24 +146,29 @@ public class BookingArrangement implements Serializable {
         other,
     }
 
-
     public enum PurchaseWhenEnum {
-        timeOfTravelOnly,
-        dayOfTravelOnly,
-        untilPreviousDay,
         advanceOnly,
+        untilPreviousDay,
+        dayOfTravelOnly,
         advanceAndDayOfTravel,
+        timeOfTravelOnly,
+        subscriptionChargeMoment,
         other
     }
 
     public enum PurchaseMomentEnum {
         onReservation,
+        inAdvance,
+        inAdvanceOnly,
         beforeBoarding,
+        beforeBoardingOnly,
         onBoarding,
+        onBoardingOnly,
         afterBoarding,
+        onCheckIn,
         onCheckOut,
+        subscriptionOnly,
         other
-
     }
 
     public enum BookingMethodEnum {

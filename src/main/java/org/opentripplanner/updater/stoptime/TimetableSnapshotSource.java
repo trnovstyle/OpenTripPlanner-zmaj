@@ -968,7 +968,7 @@ public class TimetableSnapshotSource {
         }
 
 
-        return new ServiceDate(date.getYear(), date.getMonthValue(), date.getDayOfMonth());
+        return new ServiceDate(date.toLocalDate());
     }
 
     private int calculateSecondsSinceMidnight(ZonedDateTime dateTime) {
@@ -1702,7 +1702,7 @@ public class TimetableSnapshotSource {
             //If no date is set - assume Realtime-data is reported for 'today'.
             date = ZonedDateTime.now();
         }
-        ServiceDate realTimeReportedServiceDate = new ServiceDate(date.getYear(), date.getMonthValue(), date.getDayOfMonth());
+        ServiceDate realTimeReportedServiceDate = new ServiceDate(date.toLocalDate());
 
         Set<TripPattern> patterns = new HashSet<>();
         for (Iterator<Trip> iterator = matches.iterator(); iterator.hasNext(); ) {
@@ -1860,7 +1860,7 @@ public class TimetableSnapshotSource {
             //If no date is set - assume Realtime-data is reported for 'today'.
             date = ZonedDateTime.now();
         }
-        ServiceDate serviceDate = new ServiceDate(date.getYear(), date.getMonthValue(), date.getDayOfMonth());
+        ServiceDate serviceDate = new ServiceDate(date.toLocalDate());
 
         List<Trip> results = new ArrayList<>();
         for (Iterator<Trip> iterator = trips.iterator(); iterator.hasNext(); ) {
@@ -1933,7 +1933,7 @@ public class TimetableSnapshotSource {
             //If no date is set - assume Realtime-data is reported for 'today'.
             date = ZonedDateTime.now();
         }
-        ServiceDate serviceDate = new ServiceDate(date.getYear(), date.getMonthValue(), date.getDayOfMonth());
+        ServiceDate serviceDate = new ServiceDate(date.toLocalDate());
 
         int departureInSecondsSinceMidnight = calculateSecondsSinceMidnight(date);
         Set<Trip> result = new HashSet<>();

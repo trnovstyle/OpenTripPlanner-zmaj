@@ -1,25 +1,10 @@
-/*
- * Copyright (C) 2011 Brian Ferris <bdferris@onebusaway.org>
- * Copyright (C) 2011 Google, Inc.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package org.opentripplanner.model.calendar;
 
 import java.io.Serializable;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.text.ParseException;
+import java.time.LocalDate;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.TimeZone;
@@ -70,9 +55,12 @@ public class ServiceDate implements Serializable, Comparable<ServiceDate> {
         this(o.year, o.month, o.day);
     }
 
+    public ServiceDate(LocalDate o) {
+        this(o.getYear(), o.getMonthValue(), o.getDayOfMonth());
+    }
+
     public ServiceDate(Calendar calendar) {
-        this(calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH) + 1,
-                calendar.get(Calendar.DAY_OF_MONTH));
+        this(calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH) + 1, calendar.get(Calendar.DAY_OF_MONTH));
     }
 
     /**
@@ -230,7 +218,7 @@ public class ServiceDate implements Serializable, Comparable<ServiceDate> {
 
     @Override
     public String toString() {
-        return "ServiceIdDate(" + year + "-" + month + "-" + day + ")";
+        return year + "-" + toStr00(month) + "-" + toStr00(day);
     }
 
     @Override
@@ -290,10 +278,13 @@ public class ServiceDate implements Serializable, Comparable<ServiceDate> {
      * Private Methods
      ****/
 
-    private static final Calendar getCalendarForDate(Date date) {
+    private static Calendar getCalendarForDate(Date date) {
         Calendar c = Calendar.getInstance();
         c.setTime(date);
         return c;
     }
 
+    private static String toStr00(int v) {
+        return v < 10 ?  "0" + v : Integer.toString(v);
+    }
 }
