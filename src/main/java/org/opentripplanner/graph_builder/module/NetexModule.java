@@ -3,6 +3,7 @@ package org.opentripplanner.graph_builder.module;
 import org.opentripplanner.calendar.impl.MultiCalendarServiceImpl;
 import org.opentripplanner.graph_builder.services.GraphBuilderModule;
 import org.opentripplanner.graph_builder.triptransformer.TripTransformService;
+import org.opentripplanner.model.OtpTransitService;
 import org.opentripplanner.model.calendar.CalendarServiceData;
 import org.opentripplanner.model.impl.OtpTransitBuilder;
 import org.opentripplanner.netex.loader.NetexBundle;
@@ -51,13 +52,16 @@ public class NetexModule implements GraphBuilderModule {
 
                 TripTransformService.printTimeTable(daoBuilder, configDirectory);
 
+                OtpTransitService otpTransitService = daoBuilder.build();
 
                 PatternHopFactory hf = new PatternHopFactory(
                         new GtfsFeedId.Builder().id(netexBundle.netexParameters.netexFeedId).build(),
-                        daoBuilder.build(), fareServiceFactory,
+                        otpTransitService,
+                        fareServiceFactory,
                         netexBundle.getMaxStopToShapeSnapDistance(),
                         netexBundle.subwayAccessTime,
-                        netexBundle.maxInterlineDistance);
+                        netexBundle.maxInterlineDistance
+                );
                 hf.setStopContext(stopContext);
                 hf.run(graph);
 
