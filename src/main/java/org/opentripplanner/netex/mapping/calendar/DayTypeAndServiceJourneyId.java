@@ -3,11 +3,11 @@ package org.opentripplanner.netex.mapping.calendar;
 import javax.validation.constraints.NotNull;
 import java.util.Objects;
 
-class DayTypeAndServiceJourneyIds {
+class DayTypeAndServiceJourneyId {
     private final String dayTypeId;
     private final String sjId;
 
-    public DayTypeAndServiceJourneyIds(@NotNull String dayTypeId, @NotNull String sjId) {
+    public DayTypeAndServiceJourneyId(@NotNull String dayTypeId, @NotNull String sjId) {
         this.dayTypeId = dayTypeId;
         this.sjId = sjId;
     }
@@ -29,7 +29,7 @@ class DayTypeAndServiceJourneyIds {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        DayTypeAndServiceJourneyIds that = (DayTypeAndServiceJourneyIds) o;
+        DayTypeAndServiceJourneyId that = (DayTypeAndServiceJourneyId) o;
         return dayTypeId.equals(that.dayTypeId) &&
                 sjId.equals(that.sjId);
     }
