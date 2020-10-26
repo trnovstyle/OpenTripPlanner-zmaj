@@ -187,4 +187,11 @@ public class NetexDao {
         this.timeZone = timeZone;
     }
 
+    /**
+     * This is used to be able to create a NetexDao outside the package.
+     * SHOULD ONLY BE USED IN UNIT TESTS.
+     */
+    public static NetexDao createForTest(NetexDao parent) {
+        return parent == null ? new NetexDao() : new NetexDao(parent);
+    }
 }

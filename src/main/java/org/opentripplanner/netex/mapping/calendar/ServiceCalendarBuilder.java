@@ -20,34 +20,39 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 
 /**
- * This class is responsible for creating a OTP service calendar from NeTEx data. It uses the calendar mappers to map
- * from the Netex domain, and keep calendar information in an internal structure until the mapping is complete. It keeps
- * the mapping between a {@code ServiceJourney}, {@code DayType}, {@code DatedServiceJourney} and {@code ServiceDay}
- * until the entire calendar can be build and OTP serviceIds is possible to generate.
+ * This class is responsible for creating a OTP service calendar from NeTEx data. It uses the
+ * calendar mappers to map from the Netex domain, and keep calendar information in an internal
+ * structure until the mapping is complete. It keeps the mapping between a {@code ServiceJourney},
+ * {@code DayType}, {@code DatedServiceJourney} and {@code ServiceDay} until the entire calendar
+ * can be build and OTP serviceIds is possible to generate.
  * <p>
- * This class keep the internal data in a hierarchy to match the input file hierarchy. The lifecycle methods
- * {@link #putCache()} and {@link #popCache()} must be called by the "controlling" class, the navigating up and down
- * in the hierarchy. The caller must grab the result after each invocation of the {@link #buildCalendar(NetexDao)}
- * method by getting the {@link #calendarDates()} and {@link #serviceIdByServiceJourneyId()}. The result is
- * cleared between each call to the {@link #buildCalendar(NetexDao)}.
+ * This class keep the internal data in a hierarchy to match the input file hierarchy. The
+ * lifecycle methods {@link #pushCache()} and {@link #popCache()} must be called by the
+ * "controlling" class, the navigating up and down in the hierarchy. The caller must grab the
+ * result after each invocation of the {@link #buildCalendar(NetexDao)} method by getting the
+ * {@link #calendarDates()} and {@link #serviceIdByServiceJourneyId()}. The result is cleared
+ * between each call to the {@link #buildCalendar(NetexDao)}.
  */
 public class ServiceCalendarBuilder {
     private static final Logger LOG = LoggerFactory.getLogger(ServiceCalendarBuilder.class);
 
-    private static long serviceIdCounter = 0;
+    private static final AtomicLong serviceIdCounter = new AtomicLong(0);
 
     // Cached elements available when mapping at "lower" levels
     private HierarchicalMap<String, Set<ServiceDate>> calendarByDayTypeId = new HierarchicalMap<>();
 
 
-    // The result is stored in the following collections
-
+    // The result is stored in the following collections (cleared before each calendar build)
     private final List<ServiceCalendarDate> calendarDates = new ArrayList<>();
     private final Map<String, AgencyAndId> calendarIdBySJId = new HashMap<>();
 
+    /** The current netexDao */
     private NetexDao netexDao;
 
 
@@ -60,7 +65,7 @@ public class ServiceCalendarBuilder {
     }
 
     public Map<String, TripServiceAlteration> tripServiceAlterationsBySJId() {
-        return CalendarMapper.tripServiceAlterationsBySJId(netexDao);
+        return CalendarMapper.tripServiceAlterationsBySJId(netexDao.datedServiceJourneyById);
     }
 
     public void buildCalendar(NetexDao netexDao) {
@@ -88,21 +93,22 @@ public class ServiceCalendarBuilder {
     }
 
     /**
-     * The NeTEx files form a hierarchical tree. When parsed we want to keep all information at the above levels,
-     * but discard all data when a level is mapped. The {@link NetexDao} is implemented the same way. Some of the
-     * data need to be constructed during the mapping phase of a higher level and made available to the mapping
-     * of a lower level. So, we keep a stack of cashed elements. This method clear the last level, and make the
-     * cached elements available for GC.
+     * The NeTEx files form a hierarchical tree. When parsed we want to keep all information at the
+     * above levels, but discard all data when a level is mapped. The {@link NetexDao} is
+     * implemented the same way. Some of the data need to be constructed during the mapping phase
+     * of a higher level and made available to the mapping of a lower level. So, we keep a stack of
+     * cashed elements. This method clear the last level, and make the cached elements available
+     * for GC.
      */
     public void popCache() {
         calendarByDayTypeId = (HierarchicalMap<String, Set<ServiceDate>>) calendarByDayTypeId.pop();
     }
 
     /**
-     * This method create a new cache so the mapper is ready to map a new level. The cached elements are available
-     * until the {@link #popCache()} is called.
+     * This method create a new cache so the mapper is ready to map a new level. The cached
+     * elements are available until the {@link #popCache()} is called.
      */
-    public void putCache() {
+    public void pushCache() {
         calendarByDayTypeId = new HierarchicalMap<>(calendarByDayTypeId);
     }
 
@@ -113,24 +119,39 @@ public class ServiceCalendarBuilder {
         final Map<String, Set<ServiceDate>> result;
 
         // Map DatedServiceJourney
-        result = CalendarMapper.createDatedServiceJourneyCalendar(netexDao);
+        result = CalendarMapper.createDatedServiceJourneyCalendar(
+            netexDao.datedServiceJourneyById,
+            netexDao.operatingDaysById
+        );
 
         // Map ServiceJourney DayTypeAssignments and add to result
         {
-            calendarByDayTypeId.addAll(CalendarMapper.mapDayTypesToLocalDates(netexDao));
+            calendarByDayTypeId.addAll(
+                CalendarMapper.mapDayTypesToLocalDates(
+                    netexDao.dayTypeById,
+                    netexDao.dayTypeAssignmentByDayTypeId,
+                    netexDao.operatingPeriodById
+                )
+            );
 
 
             // Combine the results
-            List<DayTypeAndServiceJourneyIds> dayTypeAndSJIds = dayTypeAndServiceJourneyIds(netexDao);
+            List<DayTypeAndServiceJourneyId> dayTypeAndSJIds = dayTypeAndServiceJourneyIds(netexDao);
 
-            for (DayTypeAndServiceJourneyIds it : dayTypeAndSJIds) {
+            for (DayTypeAndServiceJourneyId it : dayTypeAndSJIds) {
 
                 Set<ServiceDate> dates = calendarByDayTypeId.lookup(it.dayTypeId());
 
                 if (dates == null) {
                     LOG.error("No calendar dates found for dayType: " + it.dayTypeId());
                 } else {
-                    result.merge(it.serviceJourneyId(), dates,  (l, r) -> { l.addAll(r); return l; });
+                    var existing = result.get(it.serviceJourneyId());
+                    var merged = existing == null
+                        ? dates
+                        : Stream.of(existing, dates)
+                            .flatMap(Collection::stream)
+                            .collect(Collectors.toUnmodifiableSet());
+                    result.put(it.serviceJourneyId(), merged);
                 }
             }
         }
@@ -146,17 +167,17 @@ public class ServiceCalendarBuilder {
     }
 
     private AgencyAndId createServiceId() {
-        return AgencyAndIdFactory.createAgencyAndId(String.format("%06d", ++serviceIdCounter));
+        return AgencyAndIdFactory.createAgencyAndId(String.format("%06d", serviceIdCounter.incrementAndGet()));
     }
 
-    private static List<DayTypeAndServiceJourneyIds> dayTypeAndServiceJourneyIds(NetexDao netexDao) {
-        List<DayTypeAndServiceJourneyIds> result = new ArrayList<>();
+    private static List<DayTypeAndServiceJourneyId> dayTypeAndServiceJourneyIds(NetexDao netexDao) {
+        List<DayTypeAndServiceJourneyId> result = new ArrayList<>();
         for (ServiceJourney sj : netexDao.serviceJourneyById.values()) {
             DayTypeRefs_RelStructure dayTypes = sj.getDayTypes();
             if (dayTypes != null) {
                 for (JAXBElement<? extends DayTypeRefStructure> dt : dayTypes.getDayTypeRef()) {
                     result.add(
-                            new DayTypeAndServiceJourneyIds(
+                            new DayTypeAndServiceJourneyId(
                                     dt.getValue().getRef(),
                                     sj.getId()
                             )

@@ -135,13 +135,13 @@ public class NetexLoader {
         mapCurrentNetexEntitiesIntoOtpTransitObjects();
 
         for (GroupEntries group : entries.groups()) {
-            newNetexDaoScope(() -> {
+            newDataScope(() -> {
                 // Load shared group files
                 loadFiles("shared group file", group.sharedEntries());
                 mapCurrentNetexEntitiesIntoOtpTransitObjects();
 
                 for (DataSource entry : group.independentEntries()) {
-                    newNetexDaoScope(() -> {
+                    newDataScope(() -> {
                         // Load each independent file in group
                         loadFile("group file", entry);
                         mapCurrentNetexEntitiesIntoOtpTransitObjects();
@@ -156,9 +156,9 @@ public class NetexLoader {
         return netexDaoStack.peekFirst();
     }
 
-    private void newNetexDaoScope(Runnable task) {
+    private void newDataScope(Runnable task) {
         netexDaoStack.addFirst(new NetexDao(currentNetexDao()));
-        otpMapper.putCache();
+        otpMapper.pushCache();
         task.run();
         otpMapper.popCache();
         netexDaoStack.removeFirst();

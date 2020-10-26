@@ -178,6 +178,9 @@ public class TripTimes implements Serializable, Comparable<TripTimes>, Cloneable
      * The non-interpolated stoptimes should already be marked at timepoints by a previous filtering step.
      */
     public TripTimes(final Trip trip, final Collection<StopTime> stopTimes, final Deduplicator deduplicator) {
+        if(trip == null || stopTimes == null) {
+            throw new IllegalStateException();
+        }
         this.trip = trip;
         final int nStops = stopTimes.size();
         final int[] departures = new int[nStops];
@@ -293,6 +296,9 @@ public class TripTimes implements Serializable, Comparable<TripTimes>, Cloneable
      * stops and have the same schedule, but depart relative to the original.
      */
     public TripTimes(Trip newTrip, int relativeTimeshift,  TripTimes source) {
+        if(newTrip == null) {
+            throw new IllegalArgumentException();
+        }
         this.trip = newTrip;
         this.serviceCode = source.serviceCode;
         this.timeShift = source.timeShift + relativeTimeshift;
