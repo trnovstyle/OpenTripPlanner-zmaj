@@ -114,12 +114,14 @@ public class CalendarMapperTest {
     }
 
     // WHEN - create calendar
-    var result = CalendarMapper.mapDayTypesToLocalDates(dayTypes, assignments, periods);
+    Map<String, Set<ServiceDate>> result = CalendarMapper.mapDayTypesToLocalDates(
+        dayTypes,
+        assignments,
+        periods
+    );
 
 
     // THEN - verify
-    System.out.println(result);
-
     assertEquals("[2020-10-21]", toStr(result, DAY_TYPE_1));
     assertEquals("[]", toStr(result, DAY_TYPE_2));
     assertEquals(
