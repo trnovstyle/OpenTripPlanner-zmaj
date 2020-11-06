@@ -73,7 +73,17 @@ tolerations: []
 
 affinity: {}
 
-applicationInsightsKey: "set by Azure Pipeline"
-STORAGE_ACCOUNT_NAME: "set by Azure Pipeline"
-TJPSAGEO_AZURE_BLOB_STORAGE_KEY: "set by Azure Pipeline"
+#Parameters set in values files for each environment
 AZ_CONTAINER: "set by Azure Pipeline"
+
+# Managed identities
+ResesokOtpKeyVaultUrl: "This secret should be set from build pipeline"
+
+azureIdentity:
+  bindingName: "resesok-proxy-service-azure-identity-binding"
+  name: "resesok-proxy-service-azure-identity"
+
+manageIdentity:
+  clientId: "This secret should be set from build pipeline"
+  resourceId: "This secret should be set from build pipeline"
+

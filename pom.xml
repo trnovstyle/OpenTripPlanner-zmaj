@@ -490,7 +490,7 @@
         <dependency>
             <groupId>com.conveyal</groupId>
             <artifactId>jackson2-geojson</artifactId>
-            <version>0.8</version>
+            <version>0.9</version>
         </dependency>
 
         <!-- SIRI -->
@@ -762,6 +762,10 @@
                 <exclusion>
                     <artifactId>slf4j-simple</artifactId>
                     <groupId>org.slf4j</groupId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.graphql-java</groupId>
+                    <artifactId>graphql-java</artifactId>
                 </exclusion>
             </exclusions>
         </dependency>
