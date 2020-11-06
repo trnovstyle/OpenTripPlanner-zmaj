@@ -5,7 +5,7 @@ RUN mkdir -p /code/otpdata/malmo
 
 WORKDIR /code
 
-COPY target/otp-*-shaded.jar /code/otp-shaded.jar
+COPY target/resesok-otp-*-shaded.jar /code/otp-shaded.jar
 COPY docker-build/docker/services/entrypoint.sh /code/entrypoint.sh
 RUN chmod a+x /code/entrypoint.sh
 
