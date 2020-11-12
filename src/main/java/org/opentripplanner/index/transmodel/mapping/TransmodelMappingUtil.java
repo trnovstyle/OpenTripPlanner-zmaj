@@ -2,7 +2,6 @@ package org.opentripplanner.index.transmodel.mapping;
 
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
-import org.checkerframework.checker.nullness.qual.Nullable;
 import org.opentripplanner.common.model.GenericLocation;
 import org.opentripplanner.gtfs.GtfsLibrary;
 import org.opentripplanner.index.transmodel.model.TransmodelPlaceType;
@@ -11,6 +10,7 @@ import org.opentripplanner.model.Route;
 import org.opentripplanner.model.calendar.ServiceDate;
 import org.opentripplanner.routing.graph.GraphIndex;
 
+import javax.annotation.Nullable;
 import java.time.LocalDate;
 import java.util.Collection;
 import java.util.Date;

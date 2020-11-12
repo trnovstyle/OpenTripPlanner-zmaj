@@ -3,11 +3,11 @@ package org.opentripplanner.standalone.datastore;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
-import org.checkerframework.checker.nullness.qual.Nullable;
 import org.opentripplanner.standalone.config.StorageParameters;
 import org.opentripplanner.standalone.datastore.base.DataSourceRepository;
 import org.opentripplanner.standalone.datastore.base.LocalDataSourceRepository;
 
+import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 import java.net.URI;
 import java.util.ArrayList;
