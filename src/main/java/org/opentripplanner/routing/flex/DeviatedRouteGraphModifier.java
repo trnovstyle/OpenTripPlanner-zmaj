@@ -64,7 +64,7 @@ public class DeviatedRouteGraphModifier extends GtfsFlexGraphModifier {
         LengthIndexedLine line = new LengthIndexedLine(hop.getGeometry());
         double startIndex = line.getStartIndex();
         double endIndex = line.project(state.getBackEdge().getToVertex().getCoordinate());
-        System.out.println(hop.getStopIndex());
+
         if (hop.getStopIndex() == 0 && tooLittleOnRoute(hop, line, startIndex, endIndex)) {
             StreetVertex toVertex = findFirstStreetVertex(opt.rctx, true);
             TemporaryTransitStop toTempStop = getTemporaryStop(toVertex, null, opt.rctx, opt);
