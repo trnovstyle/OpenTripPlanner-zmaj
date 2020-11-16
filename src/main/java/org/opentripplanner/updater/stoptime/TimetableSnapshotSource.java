@@ -671,6 +671,11 @@ public class TimetableSnapshotSource {
             trip.setRouteShortName("" + estimatedVehicleJourney.getPublishedLineNames().get(0).getValue());
         }
 
+        // Use destinationName as default headsign - if proved
+        if (estimatedVehicleJourney.getDestinationNames() != null && !estimatedVehicleJourney.getDestinationNames().isEmpty()) {
+            trip.setTripHeadsign("" + estimatedVehicleJourney.getDestinationNames().get(0).getValue());
+        }
+
         trip.setTripOperator(operator);
 
         String vehicleJourneyRef = (estimatedVehicleJourney.getVehicleJourneyRef() != null ? estimatedVehicleJourney.getVehicleJourneyRef().getValue() : null);
@@ -682,7 +687,6 @@ public class TimetableSnapshotSource {
         trip.setTripPublicCode(null);
         trip.setBlockId(null);
         trip.setTripShortName(null);
-        trip.setTripHeadsign(null);
         trip.setKeyValues(null);
 
         List<Stop> addedStops = new ArrayList<>();
@@ -732,6 +736,9 @@ public class TimetableSnapshotSource {
             if (estimatedCall.getDestinationDisplaies() != null && !estimatedCall.getDestinationDisplaies().isEmpty()) {
                 NaturalLanguageStringStructure destinationDisplay = estimatedCall.getDestinationDisplaies().get(0);
                 stopTime.setStopHeadsign(destinationDisplay.getValue());
+            } else if (trip.getTripHeadsign() == null) {
+                // Fallback to empty string
+                stopTime.setStopHeadsign("");
             }
 
             if (i == 0) {
