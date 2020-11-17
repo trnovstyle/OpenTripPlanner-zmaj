@@ -9,7 +9,7 @@ services:
     environment:
       - TJPSAGEO_AZURE_BLOB_STORAGE_KEY=${AZ_KEY}
       - STORAGE_ACCOUNT_NAME=${AZ_USER}
-      - AZ_CONTAINER=otp
+      - ENVIRONMENT=dev
     ports:
     - 9001:8080
     expose:
