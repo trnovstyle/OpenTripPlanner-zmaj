@@ -12,7 +12,7 @@ import java.util.Set;
  * "collection" type elements like WEEKDAYS, WEEKEND, EVERYDAY and NONE. Beacuse of this, the
  * mapping is not ono-to-one, but rather one-to-many.
  */
-public class DayOfWeekMapper {
+class DayOfWeekMapper {
 
     /** Utility class with static methods, prevent instantiation with private constructor */
     private DayOfWeekMapper() {}
@@ -23,7 +23,7 @@ public class DayOfWeekMapper {
      * <p>
      * [MONDAY, SATURDAY, WEEKEND] => [MONDAY, SATURDAY, SUNDAY]
      */
-    static Set<DayOfWeek> mapDayOfWeek(Collection<DayOfWeekEnumeration> values) {
+    static Set<DayOfWeek> mapDayOfWeeks(Collection<DayOfWeekEnumeration> values) {
         EnumSet<DayOfWeek> result = EnumSet.noneOf(DayOfWeek.class);
         for (DayOfWeekEnumeration it : values) {
             result.addAll(mapDayOfWeek(it));

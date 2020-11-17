@@ -44,6 +44,17 @@ public class Itinerary {
     public Calendar endTime = null;
 
     /**
+     * Reflects the departureDelay on the first Leg
+     * "scheduled time of departure from origin" = startTime - departureDelay
+     */
+    public int departureDelay = 0;
+    /**
+     * Reflects the departureDelay on the last Leg
+     * "scheduled time of arrival at final destination" = endTime - arrivalDelay
+     */
+    public int arrivalDelay = 0;
+
+    /**
      * How much time is spent walking, in seconds.
      */
     public long walkTime = 0;

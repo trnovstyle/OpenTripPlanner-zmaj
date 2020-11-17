@@ -49,6 +49,7 @@ Selector labels
 {{- define "otp.selectorLabels" -}}
 app.kubernetes.io/name: {{ include "otp.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
+aadpodidbinding: {{ .Values.azureIdentity.bindingName  }}
 {{- end -}}
 
 {{/*

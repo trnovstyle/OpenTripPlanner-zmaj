@@ -224,7 +224,7 @@ public class NetexMapper {
      * This method create a new cache so the mapper is ready to map a new level. The cached elements are available
      * until the {@link #popCache()} is called.
      */
-    public void putCache() {
-        serviceCalendarBuilder.putCache();
+    public void pushCache() {
+        serviceCalendarBuilder.pushCache();
     }
 }

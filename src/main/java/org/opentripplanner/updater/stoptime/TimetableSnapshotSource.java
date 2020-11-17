@@ -600,7 +600,13 @@ public class TimetableSnapshotSource {
 //        String groupOfLines = estimatedVehicleJourney.getGroupOfLinesRef().getValue();
 
 //        Preconditions.checkNotNull(estimatedVehicleJourney.getExternalLineRef(), "ExternalLineRef is required");
-        String externalLineRef = estimatedVehicleJourney.getExternalLineRef().getValue();
+
+        String externalLineRef;
+        if (estimatedVehicleJourney.getExternalLineRef() != null) {
+            externalLineRef = estimatedVehicleJourney.getExternalLineRef().getValue();
+        } else {
+            externalLineRef = lineRef;
+        }
 
         Operator operator = graphIndex.operatorForId.get(new AgencyAndId(SIRI_FEED_ID, operatorRef));
         Preconditions.checkNotNull(operator, "Operator " + operatorRef + " is unknown");

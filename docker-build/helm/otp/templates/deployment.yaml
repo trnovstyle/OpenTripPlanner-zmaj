@@ -30,20 +30,10 @@ spec:
           env:
             - name: "AZ_CONTAINER"
               value: {{ .Values.AZ_CONTAINER }}
-            - name: "applicationInsightsKey"
+            - name: "ResesokOtpKeyVaultUrl"
               valueFrom:
                 secretKeyRef:
-                  key:  applicationInsightsKey
-                  name: {{ .Release.Name }}-auth
-            - name: "TJPSAGEO_AZURE_BLOB_STORAGE_KEY"
-              valueFrom:
-                secretKeyRef:
-                  key: TJPSAGEO_AZURE_BLOB_STORAGE_KEY
-                  name: {{ .Release.Name }}-auth
-            - name: "STORAGE_ACCOUNT_NAME"
-              valueFrom:
-                secretKeyRef:
-                  key: STORAGE_ACCOUNT_NAME
+                  key:  ResesokOtpKeyVaultUrl
                   name: {{ .Release.Name }}-auth
           ports:
             - name: http
