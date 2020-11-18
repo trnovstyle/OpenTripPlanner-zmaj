@@ -74,14 +74,14 @@ tolerations: []
 affinity: {}
 
 #Parameters set in values files for each environment
-AZ_CONTAINER: "set by Azure Pipeline"
+ENVIRONMENT: "set by Azure Pipeline"
 
 # Managed identities
 ResesokOtpKeyVaultUrl: "This secret should be set from build pipeline"
 
 azureIdentity:
-  bindingName: "resesok-proxy-service-azure-identity-binding"
-  name: "resesok-proxy-service-azure-identity"
+  bindingName: "resesok-otp-service-azure-identity-binding"
+  name: "resesok-otp-service-azure-identity"
 
 manageIdentity:
   clientId: "This secret should be set from build pipeline"
