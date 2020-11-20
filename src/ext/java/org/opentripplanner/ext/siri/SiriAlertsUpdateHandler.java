@@ -3,6 +3,7 @@ package org.opentripplanner.ext.siri;
 import org.opentripplanner.model.FeedScopedId;
 import org.opentripplanner.model.Route;
 import org.opentripplanner.model.calendar.ServiceDate;
+import org.opentripplanner.model.modes.TransitMainMode;
 import org.opentripplanner.routing.alertpatch.AlertUrl;
 import org.opentripplanner.routing.alertpatch.EntitySelector;
 import org.opentripplanner.routing.alertpatch.StopCondition;
@@ -313,13 +314,10 @@ public class SiriAlertsUpdateHandler {
 
                             FeedScopedId tripIdFromVehicleJourney = siriFuzzyTripMatcher.getTripId(vehicleJourneyRef.getValue());
 
-                            ZonedDateTime originAimedDepartureTime = affectedVehicleJourney.getOriginAimedDepartureTime();
+                            ZonedDateTime originAimedDepartureTime = (affectedVehicleJourney.getOriginAimedDepartureTime() != null ? affectedVehicleJourney.getOriginAimedDepartureTime():ZonedDateTime.now());
+                            ZonedDateTime startOfService = DateMapper.asStartOfService(originAimedDepartureTime);
 
-                            ServiceDate serviceDate = null;
-                            if (originAimedDepartureTime != null) {
-                                serviceDate = new ServiceDate(DateMapper.asStartOfService(originAimedDepartureTime)
-                                    .toLocalDate());
-                            }
+                            ServiceDate serviceDate = new ServiceDate(startOfService.toLocalDate());
 
                             if (tripIdFromVehicleJourney != null) {
 
@@ -327,11 +325,12 @@ public class SiriAlertsUpdateHandler {
 
                             } else {
 
-//                                Commented out for now
-//
-//                                // TODO - SIRI: Support submode when fuzzy-searching for trips
-//                                tripIds = siriFuzzyTripMatcher.getTripIdForTripShortNameServiceDateAndMode(vehicleJourneyRef.getValue(),
-//                                        serviceDate, TraverseMode.RAIL/*, TransmodelTransportSubmode.RAIL_REPLACEMENT_BUS*/);
+                                tripIds = siriFuzzyTripMatcher.getTripIdForInternalPlanningCodeServiceDateAndMode(
+                                    vehicleJourneyRef.getValue(),
+                                    serviceDate,
+                                    TransitMainMode.RAIL,
+                                    "railReplacementBus"
+                                );
                             }
 
                             for (FeedScopedId tripId : tripIds) {
