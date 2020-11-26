@@ -14,6 +14,8 @@ import org.rutebanken.netex.model.OperatingDay;
 import org.rutebanken.netex.model.OperatingPeriod;
 import org.rutebanken.netex.model.PropertyOfDay;
 import org.rutebanken.netex.model.ServiceAlterationEnumeration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.DayOfWeek;
 import java.time.LocalDateTime;
@@ -27,6 +29,8 @@ import java.util.stream.Collectors;
 
 
 class CalendarMapper {
+    private static final Logger LOG = LoggerFactory.getLogger(CalendarMapper.class);
+
     static Map<String, Set<ServiceDate>> mapDayTypesToLocalDates(
         HierarchicalMapById<DayType> dayTypeById,
         HierarchicalMultimap<String, DayTypeAssignment> dayTypeAssignmentByDayTypeId,
@@ -131,11 +135,11 @@ class CalendarMapper {
 
             if(alternations.containsKey(sjId)) {
                 if(alternations.get(sjId) != alt) {
-                    throw new IllegalStateException(
-                            "ERROR! Service alternation miss-match for SJ=" + sjId
-                                    + "(" + alt + "), expected: " + alternations.get(sjId)
+                    LOG.error(
+                        "ERROR! Service alternation miss-match for SJ=" + sjId
+                            + "(" + alt + "), expected: " + alternations.get(sjId)
                     );
-        }
+                }
             }
             else {
                 alternations.put(sjId, alt == null ? TripServiceAlteration.planned : alt);
