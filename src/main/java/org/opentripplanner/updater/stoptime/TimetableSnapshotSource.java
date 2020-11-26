@@ -53,6 +53,7 @@ import uk.org.siri.siri20.VehicleMonitoringDeliveryStructure;
 
 import java.text.ParseException;
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.BitSet;
@@ -670,6 +671,11 @@ public class TimetableSnapshotSource {
             trip.setRouteShortName("" + estimatedVehicleJourney.getPublishedLineNames().get(0).getValue());
         }
 
+        // Use destinationName as default headsign - if proved
+        if (estimatedVehicleJourney.getDestinationNames() != null && !estimatedVehicleJourney.getDestinationNames().isEmpty()) {
+            trip.setTripHeadsign("" + estimatedVehicleJourney.getDestinationNames().get(0).getValue());
+        }
+
         trip.setTripOperator(operator);
 
         String vehicleJourneyRef = (estimatedVehicleJourney.getVehicleJourneyRef() != null ? estimatedVehicleJourney.getVehicleJourneyRef().getValue() : null);
@@ -681,13 +687,13 @@ public class TimetableSnapshotSource {
         trip.setTripPublicCode(null);
         trip.setBlockId(null);
         trip.setTripShortName(null);
-        trip.setTripHeadsign(null);
         trip.setKeyValues(null);
 
         List<Stop> addedStops = new ArrayList<>();
         List<StopTime> aimedStopTimes = new ArrayList<>();
 
         List<EstimatedCall> estimatedCalls = estimatedVehicleJourney.getEstimatedCalls().getEstimatedCalls();
+        ZonedDateTime departureDate = null;
         for (int i = 0; i < estimatedCalls.size(); i++) {
             EstimatedCall estimatedCall = estimatedCalls.get(i);
 
@@ -703,11 +709,16 @@ public class TimetableSnapshotSource {
             ZonedDateTime aimedArrivalTime = estimatedCall.getAimedArrivalTime();
             ZonedDateTime aimedDepartureTime = estimatedCall.getAimedDepartureTime();
 
+            if (departureDate == null) {
+                // Need to set departureDate from first stop to calculate correct ServiceDate when trip passes midnight
+                departureDate = aimedDepartureTime;
+            }
+
             if (aimedArrivalTime != null) {
-                stopTime.setArrivalTime(calculateSecondsSinceMidnight(aimedArrivalTime));
+                stopTime.setArrivalTime(calculateSecondsSinceMidnight(departureDate, aimedArrivalTime));
             }
             if (aimedDepartureTime != null) {
-                stopTime.setDepartureTime(calculateSecondsSinceMidnight(aimedDepartureTime));
+                stopTime.setDepartureTime(calculateSecondsSinceMidnight(departureDate, aimedDepartureTime));
             }
 
             if (estimatedCall.getArrivalBoardingActivity() == ArrivalBoardingActivityEnumeration.ALIGHTING) {
@@ -725,6 +736,9 @@ public class TimetableSnapshotSource {
             if (estimatedCall.getDestinationDisplaies() != null && !estimatedCall.getDestinationDisplaies().isEmpty()) {
                 NaturalLanguageStringStructure destinationDisplay = estimatedCall.getDestinationDisplaies().get(0);
                 stopTime.setStopHeadsign(destinationDisplay.getValue());
+            } else if (trip.getTripHeadsign() == null) {
+                // Fallback to empty string
+                stopTime.setStopHeadsign("");
             }
 
             if (i == 0) {
@@ -756,11 +770,11 @@ public class TimetableSnapshotSource {
             int aimedDepartureTime = aimedStopTimes.get(i).getDepartureTime();
 
             if (expectedArrival != null) {
-                int expectedArrivalTime = calculateSecondsSinceMidnight(expectedArrival);
+                int expectedArrivalTime = calculateSecondsSinceMidnight(departureDate, expectedArrival);
                 tripTimes.updateArrivalDelay(i, expectedArrivalTime - aimedArrivalTime);
             }
             if (expectedDeparture != null) {
-                int expectedDepartureTime = calculateSecondsSinceMidnight(expectedDeparture);
+                int expectedDepartureTime = calculateSecondsSinceMidnight(departureDate, expectedDeparture);
                 tripTimes.updateDepartureDelay(i, expectedDepartureTime - aimedDepartureTime);
             }
 
@@ -978,7 +992,21 @@ public class TimetableSnapshotSource {
     }
 
     private int calculateSecondsSinceMidnight(ZonedDateTime dateTime) {
-        return dateTime.toLocalTime().toSecondOfDay();
+        return calculateSecondsSinceMidnight(dateTime, dateTime);
+    }
+
+    private int calculateSecondsSinceMidnight(ZonedDateTime departureDate, ZonedDateTime dateTime) {
+
+        int daysBetween = 0;
+        if (departureDate.getDayOfMonth() != dateTime.getDayOfMonth()) {
+            ZonedDateTime midnightOnDepartureDate = departureDate.withHour(12).withMinute(0).withSecond(0).minusHours(12);
+            ZonedDateTime midnightOnCurrentStop = dateTime.withHour(12).withMinute(0).withSecond(0).minusHours(12);
+            daysBetween = (int) ChronoUnit.DAYS.between(midnightOnDepartureDate, midnightOnCurrentStop);
+        }
+        // If first departure was 'yesterday' - add 24h
+        int daysSinceDeparture = daysBetween * (24 * 60 * 60);
+
+        return dateTime.toLocalTime().toSecondOfDay() + daysSinceDeparture;
     }
 
     /**

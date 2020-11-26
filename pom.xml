@@ -8,7 +8,7 @@
 
     <groupId>se.skanetrafiken</groupId>
     <artifactId>resesok-otp</artifactId>
-    <version>1.2.0-SNAPSHOT</version>
+    <version>1.1.1</version>
     <packaging>jar</packaging>
 
     <licenses>
@@ -324,6 +324,19 @@
         </plugins>
     </reporting>
 
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <!-- This make sure all google libraries are using compatible versions. -->
+                <groupId>com.google.cloud</groupId>
+                <artifactId>libraries-bom</artifactId>
+                <version>14.4.1</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
     <dependencies>
         <dependency>
             <groupId>com.sun.activation</groupId>
@@ -356,19 +369,34 @@
             <artifactId>aws-java-sdk-sqs</artifactId>
             <version>${aws.version}</version>
         </dependency>
-
-        <dependency>
-            <groupId>com.google.cloud</groupId>
-            <artifactId>google-cloud-storage</artifactId>
-            <version>1.113.2</version>
-        </dependency>
-
         <!-- Kryo serialization, used to save graphs to disk. -->
         <dependency>
             <groupId>com.esotericsoftware</groupId>
             <artifactId>kryo</artifactId>
             <version>4.0.2</version>
         </dependency>
+
+        <!-- Google dependencies are sett in the dependency managment section using a BOM. -->
+
+        <!-- Guava provides improved collections, among other things. -->
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.google.cloud</groupId>
+            <artifactId>google-cloud-storage</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.google.cloud</groupId>
+            <artifactId>google-cloud-pubsub</artifactId>
+        </dependency>
+        <!-- Google Protocol Buffers compact binary serialization format -->
+        <dependency>
+            <groupId>com.google.protobuf</groupId>
+            <artifactId>protobuf-java</artifactId>
+        </dependency>
+
         <!-- Extra serializers for Kryo -->
         <dependency>
             <groupId>de.ruedigermoeller</groupId>
@@ -404,12 +432,6 @@
             <groupId>org.slf4j</groupId>
             <artifactId>jcl-over-slf4j</artifactId>
             <version>1.7.6</version>
-        </dependency>
-        <!-- Guava provides improved collections, among other things. -->
-        <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
-            <version>26.0-jre</version>
         </dependency>
         <!-- Trove provides optimized map/set collections for native types (int, long...) -->
         <dependency>
@@ -504,12 +526,6 @@
             <groupId>org.entur</groupId>
             <artifactId>siri-protobuf-mapper</artifactId>
             <version>0.2</version>
-        </dependency>
-
-        <dependency>
-            <groupId>com.google.cloud</groupId>
-            <artifactId>google-cloud-pubsub</artifactId>
-            <version>1.100.0</version>
         </dependency>
 
         <dependency>
@@ -617,14 +633,6 @@
             <groupId>org.processing</groupId>
             <artifactId>core</artifactId>
             <version>1.0.7</version>
-        </dependency>
-        <!-- Google Protocol Buffers compact binary serialization format -->
-        <dependency>
-            <groupId>com.google.protobuf</groupId>
-            <artifactId>protobuf-java</artifactId>
-            <version>3.8.0</version>
-            <type>jar</type>
-            <scope>compile</scope>
         </dependency>
         <!-- Joda Time is a widely used replacement for flaky Java time classes. -->
         <dependency>
@@ -790,11 +798,6 @@
             <artifactId>json-path</artifactId>
             <version>2.3.0</version>
             <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.google.cloud</groupId>
-            <artifactId>google-cloud-pubsub</artifactId>
-            <version>1.100.0</version>
         </dependency>
     </dependencies>
 

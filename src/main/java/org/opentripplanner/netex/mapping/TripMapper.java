@@ -1,6 +1,10 @@
 package org.opentripplanner.netex.mapping;
 
-import org.opentripplanner.model.*;
+import org.opentripplanner.model.AgencyAndId;
+import org.opentripplanner.model.BookingArrangement;
+import org.opentripplanner.model.Operator;
+import org.opentripplanner.model.Trip;
+import org.opentripplanner.model.TripServiceAlteration;
 import org.opentripplanner.model.impl.OtpTransitBuilder;
 import org.opentripplanner.netex.loader.NetexDao;
 import org.rutebanken.netex.model.FlexibleLine;
