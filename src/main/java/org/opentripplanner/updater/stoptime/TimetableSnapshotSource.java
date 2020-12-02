@@ -52,6 +52,7 @@ import uk.org.siri.siri20.VehicleModesEnumeration;
 import uk.org.siri.siri20.VehicleMonitoringDeliveryStructure;
 
 import java.text.ParseException;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -988,7 +989,7 @@ public class TimetableSnapshotSource {
         }
 
 
-        return new ServiceDate(date.toLocalDate());
+        return new ServiceDate(date.withZoneSameInstant(timeZone.toZoneId()).toLocalDate());
     }
 
     private int calculateSecondsSinceMidnight(ZonedDateTime dateTime) {
@@ -999,14 +1000,14 @@ public class TimetableSnapshotSource {
 
         int daysBetween = 0;
         if (departureDate.getDayOfMonth() != dateTime.getDayOfMonth()) {
-            ZonedDateTime midnightOnDepartureDate = departureDate.withHour(12).withMinute(0).withSecond(0).minusHours(12);
-            ZonedDateTime midnightOnCurrentStop = dateTime.withHour(12).withMinute(0).withSecond(0).minusHours(12);
-            daysBetween = (int) ChronoUnit.DAYS.between(midnightOnDepartureDate, midnightOnCurrentStop);
+            ZonedDateTime midnightOnDepartureDate = departureDate.withZoneSameInstant(timeZone.toZoneId()).withHour(12).withMinute(0).withSecond(0).minusHours(12);
+            ZonedDateTime midnightOnCurrentStop = dateTime.withZoneSameInstant(timeZone.toZoneId()).withHour(12).withMinute(0).withSecond(0).minusHours(12);
+            daysBetween = (int) ChronoUnit.DAYS.between(midnightOnDepartureDate.withZoneSameInstant(timeZone.toZoneId()), midnightOnCurrentStop.withZoneSameInstant(ZoneId.systemDefault()));
         }
         // If first departure was 'yesterday' - add 24h
         int daysSinceDeparture = daysBetween * (24 * 60 * 60);
 
-        return dateTime.toLocalTime().toSecondOfDay() + daysSinceDeparture;
+        return dateTime.withZoneSameInstant(timeZone.toZoneId()).toLocalTime().toSecondOfDay() + daysSinceDeparture;
     }
 
     /**
