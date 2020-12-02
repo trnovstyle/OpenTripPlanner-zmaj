@@ -674,7 +674,7 @@
         <dependency>
             <groupId>org.entur</groupId>
             <artifactId>siri-protobuf-mapper</artifactId>
-            <version>0.2</version>
+            <version>0.6</version>
         </dependency>
 
         <dependency>
