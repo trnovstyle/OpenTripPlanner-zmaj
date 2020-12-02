@@ -1,7 +1,7 @@
 FROM openjdk:11.0.1-jdk
 
 RUN curl -sL https://aka.ms/InstallAzureCLIDeb | bash
-RUN mkdir -p /code/otpdata/malmo
+RUN apt-get -y install zip unzip
 
 WORKDIR /code
 
