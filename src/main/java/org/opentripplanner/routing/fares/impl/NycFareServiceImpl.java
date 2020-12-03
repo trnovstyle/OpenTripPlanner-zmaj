@@ -6,6 +6,7 @@ import java.util.Currency;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import org.opentripplanner.api.mapping.RouteTypeMapper;
 import org.opentripplanner.model.FeedScopedId;
 import org.opentripplanner.model.Route;
 import org.opentripplanner.model.plan.Itinerary;
@@ -326,7 +327,7 @@ public class NycFareServiceImpl implements FareService {
 
 			Ride ride = RideMapper.rideForTransitPathLeg(leg);
 			Route route = leg.getRoute();
-			int routeType = route.getType();
+			int routeType = RouteTypeMapper.mapToApi(route.getMode());
 
 			// Note the old implementation directly used the ints as classifiers here.
 			if (routeType == 1) {

@@ -3,6 +3,7 @@ package org.opentripplanner.ext.transmodelapi.model.stop;
 import graphql.Scalars;
 import graphql.schema.DataFetchingEnvironment;
 import graphql.schema.GraphQLArgument;
+import graphql.schema.GraphQLEnumType;
 import graphql.schema.GraphQLFieldDefinition;
 import graphql.schema.GraphQLInterfaceType;
 import graphql.schema.GraphQLList;
@@ -11,7 +12,6 @@ import graphql.schema.GraphQLObjectType;
 import graphql.schema.GraphQLOutputType;
 import graphql.schema.GraphQLTypeReference;
 import org.opentripplanner.ext.transmodelapi.model.EnumTypes;
-import org.opentripplanner.ext.transmodelapi.model.TransmodelTransportSubmode;
 import org.opentripplanner.ext.transmodelapi.model.plan.JourneyWhiteListed;
 import org.opentripplanner.ext.transmodelapi.support.GqlUtil;
 import org.opentripplanner.model.FeedScopedId;
@@ -21,8 +21,9 @@ import org.opentripplanner.model.Stop;
 import org.opentripplanner.model.StopCollection;
 import org.opentripplanner.model.StopLocation;
 import org.opentripplanner.model.StopTimesInPattern;
-import org.opentripplanner.model.TransitMode;
 import org.opentripplanner.model.Trip;
+import org.opentripplanner.model.modes.TransitMainMode;
+import org.opentripplanner.model.modes.TransitMode;
 import org.opentripplanner.model.TripTimeOnDate;
 import org.opentripplanner.routing.RoutingService;
 import org.opentripplanner.routing.stoptimes.ArrivalDeparture;
@@ -37,7 +38,6 @@ import java.util.stream.Stream;
 
 import static java.lang.Boolean.TRUE;
 import static org.opentripplanner.ext.transmodelapi.model.EnumTypes.TRANSPORT_MODE;
-import static org.opentripplanner.ext.transmodelapi.model.EnumTypes.TRANSPORT_SUBMODE;
 
 public class StopPlaceType {
   public static final String NAME = "StopPlace";
@@ -48,6 +48,7 @@ public class StopPlaceType {
       GraphQLOutputType quayType,
       GraphQLOutputType tariffZoneType,
       GraphQLOutputType estimatedCallType,
+      GraphQLEnumType transportSubMode,
       GqlUtil gqlUtil
   ) {
     return GraphQLObjectType.newObject()
@@ -92,15 +93,18 @@ public class StopPlaceType {
             .type(new GraphQLList(TRANSPORT_MODE))
             .dataFetcher(environment ->
                 ((MonoOrMultiModalStation) environment.getSource()).getChildStops()
-                    .stream().map(StopLocation::getVehicleType).collect(Collectors.toSet())
+                    .stream()
+                      .map(StopLocation::getVehicleType)
+                      .map(TransitMode::getMainMode)
+                      .collect(Collectors.toSet())
                 )
             .build())
         .field(GraphQLFieldDefinition.newFieldDefinition()
             .name("transportSubmode")
             .description("The transport submode serviced by this stop place. NOT IMPLEMENTED")
             .deprecate("Submodes not implemented")
-            .type(TRANSPORT_SUBMODE)
-            .dataFetcher(environment -> TransmodelTransportSubmode.UNDEFINED)
+            .type(transportSubMode)
+            .dataFetcher(environment -> null)
             .build())
         //                .field(GraphQLFieldDefinition.newFieldDefinition()
         //                        .name("adjacentSites")
@@ -211,7 +215,7 @@ public class StopPlaceType {
 
               MonoOrMultiModalStation monoOrMultiModalStation = environment.getSource();
               JourneyWhiteListed whiteListed = new JourneyWhiteListed(environment);
-              Collection<TransitMode> transitModes = environment.getArgument("whiteListedModes");
+              Collection<TransitMainMode> transitModes = environment.getArgument("whiteListedModes");
 
               Long startTimeMs = environment.getArgument("startTime") == null ? 0L : environment.getArgument("startTime");
               Long startTimeSeconds = startTimeMs / 1000;
@@ -252,7 +256,7 @@ public class StopPlaceType {
       Integer departuresPerLineAndDestinationDisplay,
       Collection<FeedScopedId> authorityIdsWhiteListed,
       Collection<FeedScopedId> lineIdsWhiteListed,
-      Collection<TransitMode> transitModes,
+      Collection<TransitMainMode> transitModes,
       DataFetchingEnvironment environment
   ) {
     RoutingService routingService = GqlUtil.getRoutingService(environment);
@@ -280,7 +284,7 @@ public class StopPlaceType {
     Stream<StopTimesInPattern> stopTimesStream = stopTimesInPatterns.stream();
 
     if(transitModes != null && !transitModes.isEmpty()) {
-      stopTimesStream = stopTimesStream.filter(it -> transitModes.contains(it.pattern.getMode()));
+      stopTimesStream = stopTimesStream.filter(it -> transitModes.contains(it.pattern.getMode().getMainMode()));
     }
 
     Stream<TripTimeOnDate> tripTimesStream = stopTimesStream

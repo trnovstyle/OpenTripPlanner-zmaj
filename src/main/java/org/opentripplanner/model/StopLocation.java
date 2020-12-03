@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.TimeZone;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryCollection;
+import org.opentripplanner.model.modes.TransitMode;
 
 /**
  * A StopLocation describes a place where a vehicle can be boarded or alighted, which is not

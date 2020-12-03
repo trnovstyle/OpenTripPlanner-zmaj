@@ -47,7 +47,8 @@ public class RouteMapperTest {
                 new EntityById<>(),
                 netexEntityIndex.readOnlyView(),
                 TimeZone.getDefault().toString(),
-                EMPTY_FERRY_WITHOUT_BICYCLE_IDS
+                EMPTY_FERRY_WITHOUT_BICYCLE_IDS,
+                null
         );
 
         Route route = routeMapper.mapRoute(line);
@@ -82,7 +83,8 @@ public class RouteMapperTest {
                 transitBuilder.getOperatorsById(),
                 netexIndex.readOnlyView(),
                 TIME_ZONE,
-                EMPTY_FERRY_WITHOUT_BICYCLE_IDS
+                EMPTY_FERRY_WITHOUT_BICYCLE_IDS,
+                null
         );
 
         Route route = routeMapper.mapRoute(line);
@@ -108,7 +110,8 @@ public class RouteMapperTest {
                 new EntityById<>(),
                 netexEntityIndex.readOnlyView(),
                 TimeZone.getDefault().toString(),
-                EMPTY_FERRY_WITHOUT_BICYCLE_IDS
+                EMPTY_FERRY_WITHOUT_BICYCLE_IDS,
+                null
         );
 
         Route route = routeMapper.mapRoute(line);
@@ -130,7 +133,8 @@ public class RouteMapperTest {
                 new EntityById<>(),
                 netexEntityIndex.readOnlyView(),
                 TimeZone.getDefault().toString(),
-                ImmutableSet.of(RUT_FERRY_WITHOUT_BICYCLES_ID)
+                ImmutableSet.of(RUT_FERRY_WITHOUT_BICYCLES_ID),
+                null
         );
 
         Route ferryWithBicycles = routeMapper.mapRoute(lineWithBicycles);

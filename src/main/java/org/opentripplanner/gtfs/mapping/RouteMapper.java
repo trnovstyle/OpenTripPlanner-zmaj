@@ -2,7 +2,8 @@ package org.opentripplanner.gtfs.mapping;
 
 import org.opentripplanner.graph_builder.DataImportIssueStore;
 import org.opentripplanner.model.Route;
-import org.opentripplanner.model.TransitMode;
+import org.opentripplanner.model.modes.TransitMode;
+import org.opentripplanner.model.modes.TransitModeService;
 import org.opentripplanner.util.MapUtils;
 
 import java.util.Collection;
@@ -13,12 +14,19 @@ import java.util.Map;
 class RouteMapper {
     private final AgencyMapper agencyMapper;
 
+    private final TransitModeService transitModeService;
+
     private final DataImportIssueStore issueStore;
 
     private final Map<org.onebusaway.gtfs.model.Route, Route> mappedRoutes = new HashMap<>();
 
-    RouteMapper(AgencyMapper agencyMapper, DataImportIssueStore issueStore) {
+    RouteMapper(
+        AgencyMapper agencyMapper,
+        TransitModeService transitModeService,
+        DataImportIssueStore issueStore
+    ) {
         this.agencyMapper = agencyMapper;
+        this.transitModeService = transitModeService;
         this.issueStore = issueStore;
     }
 
@@ -38,8 +46,7 @@ class RouteMapper {
         lhs.setShortName(rhs.getShortName());
         lhs.setLongName(rhs.getLongName());
         int routeType = rhs.getType();
-        lhs.setType(routeType);
-        TransitMode mode = TransitModeMapper.mapMode(routeType);
+        TransitMode mode = TransitModeMapper.mapMode(routeType, transitModeService);
         if (mode == null) {
             issueStore.add(
                     "RouteMapper", "Treating %s route type for route %s as BUS.", routeType,

@@ -158,7 +158,7 @@ public class LegacyGraphQLStopImpl implements LegacyGraphQLDataFetchers.LegacyGr
     return environment -> getValue(
         environment,
         stop -> {
-          if (stop.getVehicleType() != null) { return stop.getVehicleType().name(); }
+          if (stop.getVehicleType() != null) { return stop.getVehicleType().getMainMode().name(); }
           return getRoutingService(environment).getPatternsForStop(stop)
               .stream()
               .map(TripPattern::getMode)
@@ -167,7 +167,7 @@ public class LegacyGraphQLStopImpl implements LegacyGraphQLDataFetchers.LegacyGr
               .stream()
               .max(Map.Entry.comparingByValue())
               .map(Map.Entry::getKey)
-              .map(Enum::toString)
+              .map(p -> p.getMainMode().name())
               .orElse(null);
         },
         station -> {
@@ -182,7 +182,7 @@ public class LegacyGraphQLStopImpl implements LegacyGraphQLDataFetchers.LegacyGr
               .stream()
               .max(Map.Entry.comparingByValue())
               .map(Map.Entry::getKey)
-              .map(Enum::toString)
+              .map(p -> p.getMainMode().name())
               .orElse(null);
         }
     );
