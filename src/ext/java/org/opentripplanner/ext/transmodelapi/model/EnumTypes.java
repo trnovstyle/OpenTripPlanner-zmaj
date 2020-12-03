@@ -1,8 +1,6 @@
 package org.opentripplanner.ext.transmodelapi.model;
 
 import graphql.schema.GraphQLEnumType;
-import java.util.Arrays;
-import java.util.function.Function;
 import org.opentripplanner.model.BookingMethod;
 import org.opentripplanner.model.Direction;
 import org.opentripplanner.model.modes.TransitMainMode;
