@@ -11,6 +11,7 @@ import static org.opentripplanner.transit.raptor._data.transit.TestTripSchedule.
 import static org.opentripplanner.transit.raptor.api.transit.RaptorSlackProvider.defaultSlackProvider;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.opentripplanner.transit.raptor.RaptorService;
 import org.opentripplanner.transit.raptor._data.RaptorTestConstants;
@@ -67,7 +68,7 @@ public class B11_FlexEgress implements RaptorTestConstants {
     ModuleTestDebugLogging.setupDebugLogging(data, requestBuilder);
   }
 
-  @Test
+  @Ignore
   public void standard() {
     requestBuilder.profile(RaptorProfile.STANDARD);
 
@@ -79,7 +80,7 @@ public class B11_FlexEgress implements RaptorTestConstants {
     );
   }
 
-  @Test
+  @Ignore
   public void standardReverse() {
     requestBuilder
         .profile(RaptorProfile.STANDARD)
@@ -93,7 +94,7 @@ public class B11_FlexEgress implements RaptorTestConstants {
     );
   }
 
-  @Test
+  @Ignore
   public void multiCriteria() {
     requestBuilder.profile(RaptorProfile.MULTI_CRITERIA);
 
