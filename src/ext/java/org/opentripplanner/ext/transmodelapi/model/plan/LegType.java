@@ -3,6 +3,7 @@ package org.opentripplanner.ext.transmodelapi.model.plan;
 import static org.opentripplanner.ext.transmodelapi.model.EnumTypes.MODE;
 
 import graphql.Scalars;
+import graphql.schema.GraphQLEnumType;
 import graphql.schema.DataFetchingEnvironment;
 import graphql.schema.GraphQLFieldDefinition;
 import graphql.schema.GraphQLList;
@@ -13,7 +14,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import org.opentripplanner.ext.transmodelapi.model.EnumTypes;
-import org.opentripplanner.ext.transmodelapi.model.TransmodelTransportSubmode;
 import org.opentripplanner.ext.transmodelapi.model.TripTimeShortHelper;
 import org.opentripplanner.ext.transmodelapi.support.GqlUtil;
 import org.opentripplanner.model.plan.Leg;
@@ -33,6 +33,7 @@ public class LegType {
       GraphQLOutputType ptSituationElementType,
       GraphQLObjectType placeType,
       GraphQLObjectType pathGuidanceType,
+      GraphQLEnumType transportSubMode,
       GqlUtil gqlUtil
 
   ) {
@@ -76,18 +77,20 @@ public class LegType {
         .field(GraphQLFieldDefinition
             .newFieldDefinition()
             .name("mode")
-            .description(
-                "The mode of transport or access (e.g., foot) used when traversing this leg.")
+            .description("The mode of transport or access (e.g., foot) used when traversing this leg.")
             .type(MODE)
             .dataFetcher(env -> leg(env).mode)
             .build())
-        .field(GraphQLFieldDefinition
-            .newFieldDefinition()
+        .field(GraphQLFieldDefinition.newFieldDefinition()
             .name("transportSubmode")
-            .description(
-                "The transport sub mode (e.g., localBus or expressBus) used when traversing this leg. Null if leg is not a ride")
-            .type(EnumTypes.TRANSPORT_SUBMODE)
-            .dataFetcher(environment -> TransmodelTransportSubmode.UNDEFINED)
+            .description("The transport sub mode (e.g., localBus or expressBus) used when traversing this leg. Null if leg is not a ride")
+            .type(transportSubMode)
+            .dataFetcher(environment ->
+                ((Leg) environment.getSource()).getTrip() != null &&
+                    ((Leg) environment.getSource()).getTrip().getMode().getNetexOutputSubmode() != null
+                    ? ((Leg) environment.getSource()).getTrip().getMode()
+                    : null
+            )
             .build())
         .field(GraphQLFieldDefinition
             .newFieldDefinition()
@@ -302,7 +305,7 @@ public class LegType {
             .build())
         .build();
   }
-  
+
   private static Leg leg(DataFetchingEnvironment environment) {
       return environment.getSource();
   }
