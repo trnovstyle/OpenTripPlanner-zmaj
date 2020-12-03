@@ -4,12 +4,12 @@ import java.util.Set;
 import javax.annotation.Nullable;
 import javax.xml.bind.annotation.adapters.HexBinaryAdapter;
 import org.opentripplanner.graph_builder.DataImportIssueStore;
-import org.opentripplanner.gtfs.mapping.TransitModeMapper;
 import org.opentripplanner.model.Agency;
 import org.opentripplanner.model.BikeAccess;
 import org.opentripplanner.model.Operator;
-import org.opentripplanner.model.TransitMode;
 import org.opentripplanner.model.impl.EntityById;
+import org.opentripplanner.model.modes.TransitMode;
+import org.opentripplanner.model.modes.TransitModeService;
 import org.opentripplanner.netex.index.api.NetexEntityIndexReadOnlyView;
 import org.opentripplanner.netex.mapping.support.FeedScopedIdFactory;
 import org.rutebanken.netex.model.AllVehicleModesOfTransportEnumeration;
@@ -26,7 +26,7 @@ class RouteMapper {
 
     private final DataImportIssueStore issueStore;
     private final HexBinaryAdapter hexBinaryAdapter = new HexBinaryAdapter();
-    private final TransportModeMapper transportModeMapper = new TransportModeMapper();
+    private final TransportModeMapper transportModeMapper;
 
     private final FeedScopedIdFactory idFactory;
     private final EntityById<Agency> agenciesById;
@@ -42,7 +42,8 @@ class RouteMapper {
             EntityById<Operator> operatorsById,
             NetexEntityIndexReadOnlyView netexIndex,
             String timeZone,
-            Set<String> ferryIdsNotAllowedForBicycle
+            Set<String> ferryIdsNotAllowedForBicycle,
+            TransitModeService transitModeService
     ) {
         this.issueStore = issueStore;
         this.idFactory = idFactory;
@@ -51,6 +52,7 @@ class RouteMapper {
         this.netexIndex = netexIndex;
         this.authorityMapper = new AuthorityToAgencyMapper(idFactory, timeZone);
         this.ferryIdsNotAllowedForBicycle = ferryIdsNotAllowedForBicycle;
+        this.transportModeMapper = new TransportModeMapper(transitModeService);
     }
 
     org.opentripplanner.model.Route mapRoute(Line_VersionStructure line){
@@ -61,13 +63,11 @@ class RouteMapper {
         otpRoute.setOperator(findOperator(line));
         otpRoute.setLongName(line.getName().getValue());
         otpRoute.setShortName(line.getPublicCode());
-        int transportType = transportModeMapper.getTransportMode(
+        TransitMode routeMode = transportModeMapper.map(
                 line.getTransportMode(),
                 line.getTransportSubmode()
         );
-        otpRoute.setType(transportType);
-        TransitMode mode = TransitModeMapper.mapMode(transportType);
-        otpRoute.setMode(mode);
+        otpRoute.setMode(routeMode);
         if (line instanceof FlexibleLine_VersionStructure) {
             otpRoute.setFlexibleLineType(((FlexibleLine_VersionStructure) line)
                 .getFlexibleLineType().value());

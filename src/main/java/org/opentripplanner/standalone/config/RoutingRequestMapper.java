@@ -1,12 +1,13 @@
 package org.opentripplanner.standalone.config;
 
-import org.opentripplanner.model.TransitMode;
+import org.opentripplanner.model.modes.TransitMainMode;
 import org.opentripplanner.routing.api.request.RequestModes;
 import org.opentripplanner.routing.api.request.RoutingRequest;
 import org.opentripplanner.routing.api.request.StreetMode;
 import org.opentripplanner.routing.api.request.TransferOptimizationRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 
 public class RoutingRequestMapper {
 
@@ -23,7 +24,7 @@ public class RoutingRequestMapper {
         // Keep this alphabetically sorted so it is easy to check if a parameter is missing from the
         // mapping or duplicate exist.
         request.alightSlack = c.asInt("alightSlack", dft.alightSlack);
-        request.alightSlackForMode = c.asEnumMap("alightSlackForMode", TransitMode.class, NodeAdapter::asInt);
+        request.alightSlackForMode = c.asEnumMap("alightSlackForMode", TransitMainMode.class, NodeAdapter::asInt);
         request.bikeRental = c.asBoolean("allowBikeRental", dft.bikeRental);
         request.arriveBy = c.asBoolean("arriveBy", dft.arriveBy);
         request.bikeBoardCost = c.asInt("bikeBoardCost", dft.bikeBoardCost);
@@ -46,7 +47,7 @@ public class RoutingRequestMapper {
         request.allowKeepingRentedVehicleAtDestination = c.asBoolean("allowKeepingRentedBicycleAtDestination", dft.allowKeepingRentedVehicleAtDestination);
         request.keepingRentedVehicleAtDestinationCost = c.asDouble("keepingRentedBicycleAtDestinationCost", dft.keepingRentedVehicleAtDestinationCost);
         request.boardSlack = c.asInt("boardSlack", dft.boardSlack);
-        request.boardSlackForMode = c.asEnumMap("boardSlackForMode", TransitMode.class, NodeAdapter::asInt);
+        request.boardSlackForMode = c.asEnumMap("boardSlackForMode", TransitMainMode.class, NodeAdapter::asInt);
         request.maxAccessEgressDurationSecondsForMode = c.asEnumMap("maxAccessEgressDurationSecondsForMode", StreetMode.class, NodeAdapter::asDouble);
         request.carAccelerationSpeed = c.asDouble("carAccelerationSpeed", dft.carAccelerationSpeed);
         request.carDecelerationSpeed = c.asDouble("carDecelerationSpeed", dft.carDecelerationSpeed);
@@ -82,7 +83,7 @@ public class RoutingRequestMapper {
         request.startingTransitTripId = c.asFeedScopedId("startingTransitTripId", dft.startingTransitTripId);
         request.transferCost = c.asInt("transferPenalty", dft.transferCost);
         request.transferSlack = c.asInt("transferSlack", dft.transferSlack);
-        request.setTransitReluctanceForMode(c.asEnumMap("transitReluctanceForMode", TransitMode.class, NodeAdapter::asDouble));
+        request.setTransitReluctanceForMode(c.asEnumMap("transitReluctanceForMode", TransitMainMode.class, NodeAdapter::asDouble));
         request.turnReluctance = c.asDouble("turnReluctance", dft.turnReluctance);
         request.useVehicleRentalAvailabilityInformation = c.asBoolean("useBikeRentalAvailabilityInformation", dft.useVehicleRentalAvailabilityInformation);
         request.useUnpreferredRoutesPenalty = c.asInt("useUnpreferredRoutesPenalty", dft.useUnpreferredRoutesPenalty);
