@@ -6,9 +6,10 @@ import org.opentripplanner.model.FeedScopedId;
 import org.opentripplanner.model.Route;
 import org.opentripplanner.model.StopPattern;
 import org.opentripplanner.model.StopTime;
-import org.opentripplanner.model.TransitMode;
 import org.opentripplanner.model.Trip;
 import org.opentripplanner.model.TripPattern;
+import org.opentripplanner.model.modes.TransitMainMode;
+import org.opentripplanner.model.modes.TransitMode;
 import org.opentripplanner.routing.algorithm.raptor.transit.TripPatternForDate;
 import org.opentripplanner.routing.algorithm.raptor.transit.TripPatternWithRaptorStopIndexes;
 import org.opentripplanner.routing.algorithm.raptor.transit.mappers.DateMapper;
@@ -38,7 +39,7 @@ public class RaptorRoutingRequestTransitDataCreatorTest {
 
   @Before
   public void setup() {
-    TP.route.setMode(TransitMode.BUS);
+    TP.route.setMode(TransitMode.fromMainModeEnum(TransitMainMode.BUS));
   }
 
 
