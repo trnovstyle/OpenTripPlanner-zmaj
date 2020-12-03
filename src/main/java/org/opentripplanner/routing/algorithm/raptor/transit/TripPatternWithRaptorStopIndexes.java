@@ -2,12 +2,13 @@ package org.opentripplanner.routing.algorithm.raptor.transit;
 
 import gnu.trove.map.TIntObjectMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import org.opentripplanner.model.FeedScopedId;
-import org.opentripplanner.model.TransitMode;
 import org.opentripplanner.model.TripPattern;
+import org.opentripplanner.model.modes.TransitMode;
 import org.opentripplanner.model.transfer.Transfer;
 import org.opentripplanner.routing.algorithm.raptor.transit.request.PatternGuaranteedTransferProvider;
 import org.opentripplanner.transit.raptor.api.transit.RaptorGuaranteedTransferProvider;
