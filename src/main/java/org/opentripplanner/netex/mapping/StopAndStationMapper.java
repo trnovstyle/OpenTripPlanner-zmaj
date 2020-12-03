@@ -14,11 +14,11 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import org.opentripplanner.graph_builder.DataImportIssueStore;
 import org.opentripplanner.graph_builder.Issue;
-import org.opentripplanner.gtfs.mapping.TransitModeMapper;
 import org.opentripplanner.model.FareZone;
 import org.opentripplanner.model.Station;
 import org.opentripplanner.model.Stop;
-import org.opentripplanner.model.TransitMode;
+import org.opentripplanner.model.modes.TransitMode;
+import org.opentripplanner.model.modes.TransitModeService;
 import org.opentripplanner.netex.index.api.ReadOnlyHierarchicalVersionMapById;
 import org.opentripplanner.netex.issues.StopPlaceWithoutQuays;
 import org.opentripplanner.netex.mapping.support.FeedScopedIdFactory;
@@ -45,7 +45,7 @@ class StopAndStationMapper {
     private final StationMapper stationMapper;
     private final StopMapper stopMapper;
     private final TariffZoneMapper tariffZoneMapper;
-    private final StopPlaceTypeMapper stopPlaceTypeMapper = new StopPlaceTypeMapper();
+    private final StopPlaceTypeMapper stopPlaceTypeMapper;
     private final DataImportIssueStore issueStore;
 
 
@@ -63,12 +63,14 @@ class StopAndStationMapper {
             FeedScopedIdFactory idFactory,
             ReadOnlyHierarchicalVersionMapById<Quay> quayIndex,
             TariffZoneMapper tariffZoneMapper,
+            TransitModeService transitModeService,
             DataImportIssueStore issueStore
     ) {
         this.stationMapper = new StationMapper(issueStore, idFactory);
         this.stopMapper = new StopMapper(idFactory, issueStore);
         this.tariffZoneMapper = tariffZoneMapper;
         this.quayIndex = quayIndex;
+        this.stopPlaceTypeMapper = new StopPlaceTypeMapper(transitModeService);
         this.issueStore = issueStore;
     }
 
@@ -85,9 +87,7 @@ class StopAndStationMapper {
 
         Station station = mapStopPlaceAllVersionsToStation(selectedStopPlace);
         Collection<FareZone> fareZones = mapTariffZones(selectedStopPlace);
-        TransitMode transitMode = TransitModeMapper.mapMode(
-            stopPlaceTypeMapper.getTransportMode(selectedStopPlace)
-        );
+        TransitMode transitMode = stopPlaceTypeMapper.map(selectedStopPlace);
 
         // Loop through all versions of the StopPlace in order to collect all quays, even if they
         // were deleted in never versions of the StopPlace

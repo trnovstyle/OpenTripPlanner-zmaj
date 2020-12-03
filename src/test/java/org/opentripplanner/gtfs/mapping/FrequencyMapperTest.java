@@ -49,7 +49,7 @@ public class FrequencyMapperTest {
 
     private FrequencyMapper subject = new FrequencyMapper(
             new TripMapper(
-                    new RouteMapper(new AgencyMapper(FEED_ID), new DataImportIssueStore(false))));
+                    new RouteMapper(new AgencyMapper(FEED_ID), null, new DataImportIssueStore(false))));
 
     @Test
     public void testMapCollection() throws Exception {

@@ -858,11 +858,14 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.accessBikeR
                 "id": "17"
               },
               "longName": "Holgate/NW 21st",
-              "mode": "BUS",
+              "mode": {
+                "gtfsExtendRouteTypes": [ ],
+                "mainMode": "BUS",
+                "netexSubmodes": [ ]
+              },
               "shortName": "17",
               "sortOrder": -999,
               "sortOrderSet": false,
-              "type": 3,
               "url": "http://trimet.org/schedules/r017.htm"
             },
             "serviceId": {
@@ -1595,11 +1598,14 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.accessBikeR
                 "id": "20"
               },
               "longName": "Burnside/Stark",
-              "mode": "BUS",
+              "mode": {
+                "gtfsExtendRouteTypes": [ ],
+                "mainMode": "BUS",
+                "netexSubmodes": [ ]
+              },
               "shortName": "20",
               "sortOrder": -999,
               "sortOrderSet": false,
-              "type": 3,
               "url": "http://trimet.org/schedules/r020.htm"
             },
             "serviceId": {
@@ -2295,11 +2301,14 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.accessBikeR
                 "id": "77"
               },
               "longName": "Broadway/Halsey",
-              "mode": "BUS",
+              "mode": {
+                "gtfsExtendRouteTypes": [ ],
+                "mainMode": "BUS",
+                "netexSubmodes": [ ]
+              },
               "shortName": "77",
               "sortOrder": -999,
               "sortOrderSet": false,
-              "type": 3,
               "url": "http://trimet.org/schedules/r077.htm"
             },
             "serviceId": {
@@ -3274,11 +3283,14 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.accessBikeR
                 "id": "17"
               },
               "longName": "Holgate/NW 21st",
-              "mode": "BUS",
+              "mode": {
+                "gtfsExtendRouteTypes": [ ],
+                "mainMode": "BUS",
+                "netexSubmodes": [ ]
+              },
               "shortName": "17",
               "sortOrder": -999,
               "sortOrderSet": false,
-              "type": 3,
               "url": "http://trimet.org/schedules/r017.htm"
             },
             "serviceId": {
@@ -4253,11 +4265,14 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.accessBikeR
                 "id": "17"
               },
               "longName": "Holgate/NW 21st",
-              "mode": "BUS",
+              "mode": {
+                "gtfsExtendRouteTypes": [ ],
+                "mainMode": "BUS",
+                "netexSubmodes": [ ]
+              },
               "shortName": "17",
               "sortOrder": -999,
               "sortOrderSet": false,
-              "type": 3,
               "url": "http://trimet.org/schedules/r017.htm"
             },
             "serviceId": {
@@ -4902,11 +4917,14 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.accessBikeR
                 "id": "77"
               },
               "longName": "Broadway/Halsey",
-              "mode": "BUS",
+              "mode": {
+                "gtfsExtendRouteTypes": [ ],
+                "mainMode": "BUS",
+                "netexSubmodes": [ ]
+              },
               "shortName": "77",
               "sortOrder": -999,
               "sortOrderSet": false,
-              "type": 3,
               "url": "http://trimet.org/schedules/r077.htm"
             },
             "serviceId": {
@@ -6826,11 +6844,14 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.egressBikeR
                 "id": "17"
               },
               "longName": "Holgate/NW 21st",
-              "mode": "BUS",
+              "mode": {
+                "gtfsExtendRouteTypes": [ ],
+                "mainMode": "BUS",
+                "netexSubmodes": [ ]
+              },
               "shortName": "17",
               "sortOrder": -999,
               "sortOrderSet": false,
-              "type": 3,
               "url": "http://trimet.org/schedules/r017.htm"
             },
             "serviceId": {
@@ -7950,11 +7971,14 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.egressBikeR
                 "id": "20"
               },
               "longName": "Burnside/Stark",
-              "mode": "BUS",
+              "mode": {
+                "gtfsExtendRouteTypes": [ ],
+                "mainMode": "BUS",
+                "netexSubmodes": [ ]
+              },
               "shortName": "20",
               "sortOrder": -999,
               "sortOrderSet": false,
-              "type": 3,
               "url": "http://trimet.org/schedules/r020.htm"
             },
             "serviceId": {
@@ -8684,11 +8708,14 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.egressBikeR
                 "id": "77"
               },
               "longName": "Broadway/Halsey",
-              "mode": "BUS",
+              "mode": {
+                "gtfsExtendRouteTypes": [ ],
+                "mainMode": "BUS",
+                "netexSubmodes": [ ]
+              },
               "shortName": "77",
               "sortOrder": -999,
               "sortOrderSet": false,
-              "type": 3,
               "url": "http://trimet.org/schedules/r077.htm"
             },
             "serviceId": {
@@ -9421,11 +9448,14 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.egressBikeR
                 "id": "17"
               },
               "longName": "Holgate/NW 21st",
-              "mode": "BUS",
+              "mode": {
+                "gtfsExtendRouteTypes": [ ],
+                "mainMode": "BUS",
+                "netexSubmodes": [ ]
+              },
               "shortName": "17",
               "sortOrder": -999,
               "sortOrderSet": false,
-              "type": 3,
               "url": "http://trimet.org/schedules/r017.htm"
             },
             "serviceId": {
@@ -10545,11 +10575,14 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.egressBikeR
                 "id": "20"
               },
               "longName": "Burnside/Stark",
-              "mode": "BUS",
+              "mode": {
+                "gtfsExtendRouteTypes": [ ],
+                "mainMode": "BUS",
+                "netexSubmodes": [ ]
+              },
               "shortName": "20",
               "sortOrder": -999,
               "sortOrderSet": false,
-              "type": 3,
               "url": "http://trimet.org/schedules/r020.htm"
             },
             "serviceId": {
@@ -11279,11 +11312,14 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.egressBikeR
                 "id": "77"
               },
               "longName": "Broadway/Halsey",
-              "mode": "BUS",
+              "mode": {
+                "gtfsExtendRouteTypes": [ ],
+                "mainMode": "BUS",
+                "netexSubmodes": [ ]
+              },
               "shortName": "77",
               "sortOrder": -999,
               "sortOrderSet": false,
-              "type": 3,
               "url": "http://trimet.org/schedules/r077.htm"
             },
             "serviceId": {
