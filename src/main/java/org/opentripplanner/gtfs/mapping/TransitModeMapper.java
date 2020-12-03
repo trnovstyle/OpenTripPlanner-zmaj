@@ -1,17 +1,56 @@
 package org.opentripplanner.gtfs.mapping;
 
-import org.opentripplanner.graph_builder.DataImportIssueStore;
-import org.opentripplanner.model.Route;
-import org.opentripplanner.model.TransitMode;
+import org.opentripplanner.model.modes.TransitMode;
+import org.opentripplanner.model.modes.TransitModeService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class TransitModeMapper {
+
+    private static final Logger LOG = LoggerFactory.getLogger(TransitModeMapper.class);
+
+    public static TransitMode mapMode(
+        int routeType,
+        TransitModeService transitModeService
+    ) {
+        TransitMode transitMode = transitModeService != null ?
+            mapSubmodeFromConfiguration(routeType, transitModeService) : null;
+
+        if (transitMode == null) {
+            transitMode = mapTransitModeOnly(routeType);
+        }
+
+        return transitMode;
+    }
+
+    private static TransitMode mapSubmodeFromConfiguration(
+        int routeType,
+        TransitModeService transitModeService
+    ) {
+        if (transitModeService == null) {
+            return null;
+        }
+
+        TransitMode transitMode;
+
+        try {
+            transitMode = transitModeService.getTransitModeByGtfsExtendedRouteType(
+                String.valueOf(routeType));
+        } catch (IllegalArgumentException e) {
+            transitMode = null;
+        }
+
+        return transitMode;
+    }
 
     /**
      * Return an OTP TransitMode matching a routeType. If no good match is found, it returns null.
      *
      * @param routeType  Route type to be mapped into a mode
      */
-    public static TransitMode mapMode(int routeType) {
+    private static TransitMode mapTransitModeOnly(
+        int routeType
+    ) {
         // Should really be reference to org.onebusaway.gtfs.model.Stop.MISSING_VALUE, but it is private.
         if (routeType == -999) { return null; }
 
