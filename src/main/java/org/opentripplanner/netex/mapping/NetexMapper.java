@@ -19,6 +19,7 @@ import org.opentripplanner.model.TransitEntity;
 import org.opentripplanner.model.Trip;
 import org.opentripplanner.model.TripPattern;
 import org.opentripplanner.model.impl.OtpTransitServiceBuilder;
+import org.opentripplanner.model.modes.TransitModeService;
 import org.opentripplanner.netex.index.api.NetexEntityIndexReadOnlyView;
 import org.opentripplanner.netex.mapping.calendar.CalendarServiceBuilder;
 import org.opentripplanner.netex.mapping.calendar.DatedServiceJourneyMapper;
@@ -53,6 +54,7 @@ public class NetexMapper {
 
     private final FeedScopedIdFactory idFactory;
     private final OtpTransitServiceBuilder transitBuilder;
+    private final TransitModeService transitModeService;
     private final Deduplicator deduplicator;
     private final DataImportIssueStore issueStore;
     private final Multimap<String, Station> stationsByMultiModalStationRfs = ArrayListMultimap.create();
@@ -76,11 +78,13 @@ public class NetexMapper {
             OtpTransitServiceBuilder transitBuilder,
             String feedId,
             Deduplicator deduplicator,
+            TransitModeService transitModeService,
             DataImportIssueStore issueStore
     ) {
         this.transitBuilder = transitBuilder;
         this.deduplicator = deduplicator;
         this.idFactory = new FeedScopedIdFactory(feedId);
+        this.transitModeService = transitModeService;
         this.issueStore = issueStore;
         this.calendarServiceBuilder = new CalendarServiceBuilder(idFactory);
         this.tripCalendarBuilder = new TripCalendarBuilder(this.calendarServiceBuilder, issueStore);
@@ -311,6 +315,7 @@ public class NetexMapper {
                 transitBuilder.getAgenciesById(),
                 transitBuilder.getOperatorsById(),
                 currentNetexIndex,
+                transitModeService,
                 currentNetexIndex.getTimeZone()
         );
         for (Line line : currentNetexIndex.getLineById().localValues()) {
@@ -339,7 +344,8 @@ public class NetexMapper {
                 currentNetexIndex.getServiceJourneyById(),
                 currentNetexIndex.getFlexibleLineById(),
                 serviceIds,
-                deduplicator
+                deduplicator,
+                transitModeService
         );
 
         for (JourneyPattern journeyPattern : currentNetexIndex.getJourneyPatternsById().localValues()) {
