@@ -1,7 +1,7 @@
 package org.opentripplanner.routing.algorithm.raptor.transit;
 
 import java.util.Map;
-import org.opentripplanner.model.TransitMode;
+import org.opentripplanner.model.modes.TransitMainMode;
 import org.opentripplanner.routing.algorithm.raptor.transit.request.TripPatternForDates;
 import org.opentripplanner.transit.raptor.api.transit.RaptorSlackProvider;
 import org.opentripplanner.transit.raptor.api.transit.RaptorTripPattern;
@@ -35,9 +35,9 @@ public final class SlackProvider implements RaptorSlackProvider {
     public SlackProvider(
             int transferSlack,
             int defaultBoardSlack,
-            Map<TransitMode, Integer> modeBoardSlack,
+            Map<TransitMainMode, Integer> modeBoardSlack,
             int defaultAlightSlack,
-            Map<TransitMode, Integer> modeAlightSlack
+            Map<TransitMainMode, Integer> modeAlightSlack
     ) {
         this.transferSlack = transferSlack;
         this.boardSlack = slackByMode(modeBoardSlack, defaultBoardSlack);
@@ -62,19 +62,19 @@ public final class SlackProvider implements RaptorSlackProvider {
 
     /* private methods */
 
-    private static int[] slackByMode(Map<TransitMode, Integer> modeSlack, int defaultSlack) {
-        int[] result = new int[TransitMode.values().length];
-        for (TransitMode mode : TransitMode.values()) {
+    private static int[] slackByMode(Map<TransitMainMode, Integer> modeSlack, int defaultSlack) {
+        int[] result = new int[TransitMainMode.values().length];
+        for (TransitMainMode mode : TransitMainMode.values()) {
             result[index(mode)] = modeSlack.getOrDefault(mode, defaultSlack) ;
         }
         return result;
     }
 
     private static int index(RaptorTripPattern pattern) {
-        return index(((TripPatternForDates)pattern).getTripPattern().getTransitMode());
+        return index(((TripPatternForDates)pattern).getTripPattern().getTransitMode().getMainMode());
     }
 
-    private static int index(final TransitMode mode) {
+    private static int index(final TransitMainMode mode) {
         return mode.ordinal();
     }
 }

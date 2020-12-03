@@ -20,7 +20,7 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import org.opentripplanner.model.TransitMode;
+import org.opentripplanner.model.modes.TransitMainMode;
 
 public class TransportModeSlack {
     private static final String BOARD_SLACK_DESCRIPTION;
@@ -82,9 +82,9 @@ public class TransportModeSlack {
     }
 
     public final int slack;
-    public final List<TransitMode> modes;
+    public final List<TransitMainMode> modes;
 
-    private TransportModeSlack(int slack, List<TransitMode> modes) {
+    private TransportModeSlack(int slack, List<TransitMainMode> modes) {
         this.slack = slack;
         this.modes = modes;
     }
@@ -105,7 +105,7 @@ public class TransportModeSlack {
     public static String slackByGroupDescription(String name) {
         return String.format("List of %s for a given set of modes.", name);
     }
-    public static String slackByGroupDescription(String name, Map<TransitMode, Integer> defaultValues) {
+    public static String slackByGroupDescription(String name, Map<TransitMainMode, Integer> defaultValues) {
         return slackByGroupDescription(name) + " " + defaultsToString(defaultValues);
     }
 
@@ -122,9 +122,9 @@ public class TransportModeSlack {
                 + "}";
     }
 
-    public static List<TransportModeSlack> mapToApiList(Map<TransitMode, Integer> domain) {
+    public static List<TransportModeSlack> mapToApiList(Map<TransitMainMode, Integer> domain) {
         // Group modes by slack value
-        Multimap<Integer, TransitMode> modesBySlack = ArrayListMultimap.create();
+        Multimap<Integer, TransitMainMode> modesBySlack = ArrayListMultimap.create();
         domain.forEach((k,v) -> modesBySlack.put(v, k));
 
         // Create a new entry for each group of modes
@@ -137,26 +137,26 @@ public class TransportModeSlack {
     }
 
     @SuppressWarnings("unchecked")
-    public static EnumMap<TransitMode, Integer> mapToDomain(Object value) {
-        var result = new EnumMap<TransitMode, Integer>(TransitMode.class);
+    public static EnumMap<TransitMainMode, Integer> mapToDomain(Object value) {
+        var result = new EnumMap<TransitMainMode, Integer>(TransitMainMode.class);
         if(value instanceof List) {
             List<Map<String, Object>> list = (List<Map<String, Object>>) value;
             for (Map<String, Object> map : list) {
                 int slack = (Integer) map.get("slack");
-                ((List<TransitMode>) map.get("modes")).forEach(m -> result.put(m, slack));
+                ((List<TransitMainMode>) map.get("modes")).forEach(m -> result.put(m, slack));
             }
         }
         return result;
     }
 
-    private static String defaultsToString(Map<TransitMode, Integer> byMode) {
+    private static String defaultsToString(Map<TransitMainMode, Integer> byMode) {
         List<String> groups = new ArrayList<>();
         byMode.forEach((m,v) -> groups.add(serializeTransportMode(m) + " : " + v));
         Collections.sort(groups);
         return "Defaults: " + groups;
     }
 
-    private static Object serializeTransportMode(TransitMode m) {
+    private static Object serializeTransportMode(TransitMainMode m) {
         return TRANSPORT_MODE.serialize(m);
     }
 }

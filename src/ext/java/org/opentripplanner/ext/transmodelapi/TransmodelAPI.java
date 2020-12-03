@@ -1,5 +1,6 @@
 package org.opentripplanner.ext.transmodelapi;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import graphql.ExecutionResult;
 import graphql.schema.GraphQLSchema;
@@ -29,6 +30,8 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.ext.ContextResolver;
+import javax.ws.rs.ext.Providers;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -60,9 +63,18 @@ public class TransmodelAPI {
     @Deprecated @PathParam("ignoreRouterId")
     private String ignoreRouterId;
 
-    public TransmodelAPI(@Context OTPServer otpServer) {
+    public TransmodelAPI(
+        @Context OTPServer otpServer, @Context Providers providers
+    ) {
         this.router = otpServer.getRouter();
         this.index = new TransmodelGraph(schema);
+
+        ContextResolver<ObjectMapper> resolver = providers.getContextResolver(
+            ObjectMapper.class,
+            MediaType.APPLICATION_JSON_TYPE
+        );
+        ObjectMapper mapper = resolver.getContext(ObjectMapper.class);
+        mapper.setDefaultPropertyInclusion(JsonInclude.Include.ALWAYS);
     }
 
     /**
@@ -80,7 +92,7 @@ public class TransmodelAPI {
         }
         tracingHeaderTags = config.tracingHeaderTags();
         gqlUtil = new GqlUtil(graph.getTimeZone());
-        schema = TransmodelGraphQLSchema.create(defaultRoutingRequest, gqlUtil);
+        schema = TransmodelGraphQLSchema.create(defaultRoutingRequest, gqlUtil, graph);
     }
 
     /**
