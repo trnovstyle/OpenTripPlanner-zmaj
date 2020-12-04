@@ -744,9 +744,9 @@ public class Timetable implements Serializable {
 
                 if (foundMatch) {
                     if (departureDate == null) {
-                        departureDate = recordedCall.getAimedDepartureTime();
+                        departureDate = convertToZone(recordedCall.getAimedDepartureTime(), timeZone);
                         if (departureDate == null) {
-                            departureDate = recordedCall.getAimedArrivalTime();
+                            departureDate = convertToZone(recordedCall.getAimedArrivalTime(), timeZone);
                         }
                         if (oldTimes.getDepartureTime(0) > 86400) {
                             // The "departure-date" for this trip is set to "yesterday" (or before) even though it actually departs "today"
@@ -770,11 +770,14 @@ public class Timetable implements Serializable {
                     int arrivalTime = newTimes.getArrivalTime(callCounter);
                     int realtimeArrivalTime = arrivalTime;
                     if (recordedCall.getActualArrivalTime() != null) {
-                        realtimeArrivalTime = calculateSecondsSinceMidnight(departureDate, recordedCall.getActualArrivalTime());
+                        realtimeArrivalTime = calculateSecondsSinceMidnight(departureDate, recordedCall.getActualArrivalTime(),
+                            timeZone);
                     } else if (recordedCall.getExpectedArrivalTime() != null) {
-                        realtimeArrivalTime = calculateSecondsSinceMidnight(departureDate, recordedCall.getExpectedArrivalTime());
+                        realtimeArrivalTime = calculateSecondsSinceMidnight(departureDate, recordedCall.getExpectedArrivalTime(),
+                            timeZone);
                     } else if (recordedCall.getAimedArrivalTime() != null) {
-                        realtimeArrivalTime = calculateSecondsSinceMidnight(departureDate, recordedCall.getAimedArrivalTime());
+                        realtimeArrivalTime = calculateSecondsSinceMidnight(departureDate, recordedCall.getAimedArrivalTime(),
+                            timeZone);
                     }
                     int arrivalDelay = realtimeArrivalTime - arrivalTime;
                     newTimes.updateArrivalDelay(callCounter, arrivalDelay);
@@ -783,11 +786,14 @@ public class Timetable implements Serializable {
                     int departureTime = newTimes.getDepartureTime(callCounter);
                     int realtimeDepartureTime = departureTime;
                     if (recordedCall.getActualDepartureTime() != null) {
-                        realtimeDepartureTime = calculateSecondsSinceMidnight(departureDate, recordedCall.getActualDepartureTime());
+                        realtimeDepartureTime = calculateSecondsSinceMidnight(departureDate, recordedCall.getActualDepartureTime(),
+                            timeZone);
                     } else if (recordedCall.getExpectedDepartureTime() != null) {
-                        realtimeDepartureTime = calculateSecondsSinceMidnight(departureDate, recordedCall.getExpectedDepartureTime());
+                        realtimeDepartureTime = calculateSecondsSinceMidnight(departureDate, recordedCall.getExpectedDepartureTime(),
+                            timeZone);
                     } else if (recordedCall.getAimedDepartureTime() != null) {
-                        realtimeDepartureTime = calculateSecondsSinceMidnight(departureDate, recordedCall.getAimedDepartureTime());
+                        realtimeDepartureTime = calculateSecondsSinceMidnight(departureDate, recordedCall.getAimedDepartureTime(),
+                            timeZone);
                     }
                     if (realtimeDepartureTime < realtimeArrivalTime) {
                         realtimeDepartureTime = realtimeArrivalTime;
@@ -822,9 +828,9 @@ public class Timetable implements Serializable {
 
                     if (foundMatch) {
                         if (departureDate == null) {
-                            departureDate = estimatedCall.getAimedDepartureTime();
+                            departureDate = convertToZone(estimatedCall.getAimedDepartureTime(), timeZone);
                             if (departureDate == null) {
-                                departureDate = estimatedCall.getAimedArrivalTime();
+                                departureDate = convertToZone(estimatedCall.getAimedArrivalTime(), timeZone);
                             }
                         }
 
@@ -851,17 +857,21 @@ public class Timetable implements Serializable {
                         int arrivalTime = newTimes.getArrivalTime(callCounter);
                         int realtimeArrivalTime = -1;
                         if (estimatedCall.getExpectedArrivalTime() != null) {
-                            realtimeArrivalTime = calculateSecondsSinceMidnight(departureDate, estimatedCall.getExpectedArrivalTime());
+                            realtimeArrivalTime = calculateSecondsSinceMidnight(departureDate, estimatedCall.getExpectedArrivalTime(),
+                                timeZone);
                         } else if (estimatedCall.getAimedArrivalTime() != null) {
-                            realtimeArrivalTime = calculateSecondsSinceMidnight(departureDate, estimatedCall.getAimedArrivalTime());
+                            realtimeArrivalTime = calculateSecondsSinceMidnight(departureDate, estimatedCall.getAimedArrivalTime(),
+                                timeZone);
                         }
 
                         int departureTime = newTimes.getDepartureTime(callCounter);
                         int realtimeDepartureTime = departureTime;
                         if (estimatedCall.getExpectedDepartureTime() != null) {
-                            realtimeDepartureTime = calculateSecondsSinceMidnight(departureDate, estimatedCall.getExpectedDepartureTime());
+                            realtimeDepartureTime = calculateSecondsSinceMidnight(departureDate, estimatedCall.getExpectedDepartureTime(),
+                                timeZone);
                         } else if (estimatedCall.getAimedDepartureTime() != null) {
-                            realtimeDepartureTime = calculateSecondsSinceMidnight(departureDate, estimatedCall.getAimedDepartureTime());
+                            realtimeDepartureTime = calculateSecondsSinceMidnight(departureDate, estimatedCall.getAimedDepartureTime(),
+                                timeZone);
                         }
 
                         if (realtimeArrivalTime == -1) {
@@ -941,6 +951,13 @@ public class Timetable implements Serializable {
 
         LOG.debug("A valid TripUpdate object was applied using the Timetable class update method.");
         return newTimes;
+    }
+
+    private ZonedDateTime convertToZone(ZonedDateTime zonedDateTime, TimeZone timeZone) {
+        if (zonedDateTime != null) {
+            return zonedDateTime.withZoneSameInstant(timeZone.toZoneId());
+        }
+        return null;
     }
 
     private OccupancyStatus mapOccupancy(OccupancyEnumeration occupancy) {
@@ -1149,6 +1166,9 @@ public class Timetable implements Serializable {
                     }
                     if (departureDate == null) {
                         departureDate = (estimatedCall.getAimedDepartureTime() != null ? estimatedCall.getAimedDepartureTime() : estimatedCall.getAimedArrivalTime());
+                        if (departureDate == null) {
+                            departureDate = departureDate.withZoneSameInstant(graphIndex.graph.getTimeZone().toZoneId());
+                        }
                     }
 
                     //Current stop is being updated
@@ -1210,18 +1230,27 @@ public class Timetable implements Serializable {
         return modifiedStops;
     }
 
-    private int calculateSecondsSinceMidnight(ZonedDateTime departureDate, ZonedDateTime dateTime) {
-
-        int daysBetween = 0;
+    private int calculateSecondsSinceMidnight(
+        ZonedDateTime departureDate,
+        ZonedDateTime dateTime,
+        TimeZone timeZone
+    ) {
+        int daysSinceDeparture = 0;
         if (departureDate.getDayOfMonth() != dateTime.getDayOfMonth()) {
-            ZonedDateTime midnightOnDepartureDate = departureDate.withHour(0).withMinute(0).withSecond(0);
-            ZonedDateTime midnightOnCurrentStop = dateTime.withHour(0).withMinute(0).withSecond(0);
-            daysBetween = (int) ChronoUnit.DAYS.between(midnightOnDepartureDate, midnightOnCurrentStop);
-        }
-        // If first departure was 'yesterday' - add 24h
-        int daysSinceDeparture = daysBetween * (24 * 60 * 60);
+            ZonedDateTime midnightOnDepartureDate = departureDate.withZoneSameInstant(timeZone.toZoneId())
+                                    .withHour(12).withMinute(0).withSecond(0).minusHours(12);
+            ZonedDateTime midnightOnCurrentStop = dateTime.withZoneSameInstant(timeZone.toZoneId())
+                                    .withHour(12).withMinute(0).withSecond(0).minusHours(12);
+            int daysBetween = (int) ChronoUnit.DAYS.between(
+                                    midnightOnDepartureDate.withZoneSameInstant(timeZone.toZoneId()),
+                                    midnightOnCurrentStop.withZoneSameInstant(timeZone.toZoneId())
+                                );
 
-        return dateTime.toLocalTime().toSecondOfDay() + daysSinceDeparture;
+            // If first departure was 'yesterday' - add 24h
+            daysSinceDeparture = daysBetween * (24 * 60 * 60);
+        }
+
+        return dateTime.withZoneSameInstant(timeZone.toZoneId()).toLocalTime().toSecondOfDay() + daysSinceDeparture;
     }
 
     /**
