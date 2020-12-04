@@ -23,6 +23,7 @@ public class TripTimeShortHelper {
     @Nullable
     public static TripTimeShort getTripTimeShortForFromPlace(Leg leg, RoutingService routingService) {
         if (!leg.isTransitLeg()) { return null; }
+        if (leg.isFlexibleTrip()) { return null; }
 
         ServiceDate serviceDate = leg.serviceDate;
         List<TripTimeShort> tripTimes = routingService.getTripTimesShort(leg.getTrip(), serviceDate);
@@ -49,6 +50,7 @@ public class TripTimeShortHelper {
     @Nullable
     public static TripTimeShort getTripTimeShortForToPlace(Leg leg, RoutingService routingService) {
         if (!leg.isTransitLeg()) { return null; }
+        if (leg.isFlexibleTrip()) { return null; }
 
         ServiceDate serviceDate = leg.serviceDate;
         List<TripTimeShort> tripTimes = routingService.getTripTimesShort(leg.getTrip(), serviceDate);
@@ -75,6 +77,7 @@ public class TripTimeShortHelper {
      */
     public static List<TripTimeShort> getAllTripTimeShortsForLegsTrip(Leg leg, RoutingService routingService) {
         if (!leg.isTransitLeg()) { return List.of(); }
+        if (leg.isFlexibleTrip()) { return List.of(); }
 
         ServiceDate serviceDate = leg.serviceDate;
         return routingService.getTripTimesShort(leg.getTrip(), serviceDate);
@@ -85,6 +88,7 @@ public class TripTimeShortHelper {
      */
     public static List<TripTimeShort> getIntermediateTripTimeShortsForLeg(Leg leg, RoutingService routingService) {
         if (!leg.isTransitLeg()) { return List.of(); }
+        if (leg.isFlexibleTrip()) { return List.of(); }
 
         ServiceDate serviceDate = leg.serviceDate;
 

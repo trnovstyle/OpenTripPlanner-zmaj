@@ -23,7 +23,10 @@ public enum ApiRequestMode {
   GONDOLA(AllowedTransitMode.fromMainModeEnum(TransitMainMode.GONDOLA)),
   FUNICULAR(AllowedTransitMode.fromMainModeEnum(TransitMainMode.FUNICULAR)),
   TRANSIT(AllowedTransitMode.getAllTransitModes()),
-  AIRPLANE(AllowedTransitMode.fromMainModeEnum(TransitMainMode.AIRPLANE));
+  AIRPLANE(AllowedTransitMode.fromMainModeEnum(TransitMainMode.AIRPLANE)),
+  FLEXACCESS(),
+  FLEXEGRESS(),
+  FLEXDIRECT();
 
   private final Collection<AllowedTransitMode> transitModes;
 
