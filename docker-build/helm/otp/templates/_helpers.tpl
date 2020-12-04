@@ -36,6 +36,7 @@ Common labels
 */}}
 {{- define "otp.labels" -}}
 helm.sh/chart: {{ include "otp.chart" . }}
+aadpodidbinding: {{ .Values.azureIdentity.bindingName  }}
 {{ include "otp.selectorLabels" . }}
 {{- if .Chart.AppVersion }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
@@ -49,7 +50,6 @@ Selector labels
 {{- define "otp.selectorLabels" -}}
 app.kubernetes.io/name: {{ include "otp.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
-aadpodidbinding: {{ .Values.azureIdentity.bindingName  }}
 {{- end -}}
 
 {{/*
