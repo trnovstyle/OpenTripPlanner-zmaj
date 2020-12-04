@@ -1236,10 +1236,14 @@ public class Timetable implements Serializable {
         TimeZone timeZone
     ) {
         int daysSinceDeparture = 0;
-        if (departureDate.getDayOfMonth() != dateTime.getDayOfMonth()) {
-            ZonedDateTime midnightOnDepartureDate = departureDate.withZoneSameInstant(timeZone.toZoneId())
+
+        final ZonedDateTime departureDateInZone = departureDate.withZoneSameInstant(timeZone.toZoneId());
+        final ZonedDateTime dateTimeInZone = dateTime.withZoneSameInstant(timeZone.toZoneId());
+
+        if (departureDateInZone.getDayOfMonth() != dateTimeInZone.getDayOfMonth()) {
+            ZonedDateTime midnightOnDepartureDate = departureDateInZone
                                     .withHour(12).withMinute(0).withSecond(0).minusHours(12);
-            ZonedDateTime midnightOnCurrentStop = dateTime.withZoneSameInstant(timeZone.toZoneId())
+            ZonedDateTime midnightOnCurrentStop = dateTimeInZone
                                     .withHour(12).withMinute(0).withSecond(0).minusHours(12);
             int daysBetween = (int) ChronoUnit.DAYS.between(
                                     midnightOnDepartureDate.withZoneSameInstant(timeZone.toZoneId()),
@@ -1250,7 +1254,7 @@ public class Timetable implements Serializable {
             daysSinceDeparture = daysBetween * (24 * 60 * 60);
         }
 
-        return dateTime.withZoneSameInstant(timeZone.toZoneId()).toLocalTime().toSecondOfDay() + daysSinceDeparture;
+        return dateTimeInZone.toLocalTime().toSecondOfDay() + daysSinceDeparture;
     }
 
     /**
