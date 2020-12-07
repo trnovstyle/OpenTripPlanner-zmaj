@@ -15,4 +15,4 @@ steps:
       options: '-Pjunit-report --settings docker-build/azure-deploy/settings.xml -Dsettings.security=/tmp/settings-security.xml -B -U'
       jdkVersionOption: '1.11'
       jdkArchitectureOption: 'x64'
-      mavenOptions: '-Xmx2G' # Build agents are limited to 2Gb
+      mavenOptions: '-Xmx1G' # Build agents are limited to 2Gb
