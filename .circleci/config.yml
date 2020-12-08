@@ -28,7 +28,7 @@ jobs:
           paths:
             - ~/.m2
           key: dep-cache-{{ checksum "pom.xml" }}
-      - run: mvn install org.apache.maven.plugins:maven-deploy-plugin:2.8.2:deploy  -s /tools/m2/settings.xml -DskipTests -Dgpg.skip -DaltDeploymentRepository=snapshots::default::https://entur2.jfrog.io/entur2/libs-snapshot-local
+      - run: mvn install org.apache.maven.plugins:maven-deploy-plugin:2.8.2:deploy  -s /tools/m2/settings.xml -DskipTests -Dgpg.skip -DaltDeploymentRepository=snapshots::default::https://entur2.jfrog.io/entur2/libs-release-local
       - run: *post_build
 workflows:
   version: 2.1
@@ -40,6 +40,4 @@ workflows:
           filters:
             branches:
               only:
-                - entur_raptor
-                - rutebanken_develop
                 - otp2_entur_develop
