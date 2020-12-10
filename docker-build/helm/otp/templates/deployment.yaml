@@ -12,7 +12,7 @@ spec:
   template:
     metadata:
       labels:
-        {{- include "otp.selectorLabels" . | nindent 8 }}
+        {{- include "otp.labels" . | nindent 8 }}
     spec:
     {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
@@ -40,21 +40,21 @@ spec:
               containerPort: 8080
               protocol: TCP
           livenessProbe:
-            failureThreshold: 3
+            failureThreshold: 120
             httpGet:
               path: /otp/routers/ready
               port: http
             initialDelaySeconds: 120
-            periodSeconds: 10
+            periodSeconds: 30
             successThreshold: 1
             timeoutSeconds: 30
           readinessProbe:
-            failureThreshold: 3
+            failureThreshold: 120
             httpGet:
               path: otp/routers/ready
               port: http
             initialDelaySeconds: 120
-            periodSeconds: 10
+            periodSeconds: 30
             successThreshold: 1
             timeoutSeconds: 20
           resources:
