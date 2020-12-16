@@ -1,0 +1,8 @@
+{
+  "routingDefaults": {
+    "preferredInterchangePenalty": 0,
+    "recommendedInterchangePenalty": 60,
+    "interchangeAllowedPenalty": 150,
+    "noInterchangePenalty": 3000
+  }
+}
