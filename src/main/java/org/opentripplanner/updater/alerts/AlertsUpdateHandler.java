@@ -358,7 +358,7 @@ public class AlertsUpdateHandler {
                                         continue;
                                     }
                                     // Creating unique, deterministic id for the alert
-                                    String id = paddedSituationNumber + tripId.getId() + "-" + new ServiceDate(effectiveStartDate).getAsString() + "-" + stop.getId();
+                                    String id = paddedSituationNumber + tripId.getId() + "-" + new ServiceDate(effectiveStartDate).toYyyyMmDd() + "-" + stop.getId();
                                     if (expireSituation) {
                                         idsToExpire.add(id);
                                     } else {
@@ -459,7 +459,7 @@ public class AlertsUpdateHandler {
                                 continue;
                             }
                             // Creating unique, deterministic id for the alert
-                            String id = paddedSituationNumber + tripId.getId() + "-" + new ServiceDate(effectiveStartDate).getAsString() + "-" + stop.getId();
+                            String id = paddedSituationNumber + tripId.getId() + "-" + new ServiceDate(effectiveStartDate).toYyyyMmDd() + "-" + stop.getId();
                             if (expireSituation) {
                                 idsToExpire.add(id);
                             } else {
