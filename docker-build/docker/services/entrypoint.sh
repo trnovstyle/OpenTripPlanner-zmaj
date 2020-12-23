@@ -9,7 +9,7 @@ FILE_NETEX_PATH=/code/otpdata/malmo
 OTP_JAR_PATH=/code/otp-shaded.jar
 
 GRAPH_CONTAINER="resesok-graph"
-NETEX_FILENAME="ST_netex"
+NETEX_FILENAME="ST_netex.zip"
 OSM_FILENAME="sweden-filtered.osm.pbf"
 SA_NAME="ressa$ENVIRONMENT"
 
