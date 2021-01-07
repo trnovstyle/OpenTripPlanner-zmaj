@@ -1,6 +1,6 @@
 #!/bin/bash
 
-. logging.sh
+. /code/bash-files/logging.sh
 
 GRAPH_CONTAINER="resesok-graph"
 NETEX_CONTAINER="resesok-netex"

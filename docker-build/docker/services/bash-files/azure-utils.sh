@@ -1,6 +1,6 @@
 #!/bin/bash
 
-. logging.sh
+. /code/bash-files/logging.sh
 
 function downloadFromAzureStorage {
   account_name=$1
