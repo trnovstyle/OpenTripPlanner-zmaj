@@ -12,4 +12,7 @@ RUN chmod a+x /code/*.sh
 
 EXPOSE 8080
 
-ENTRYPOINT ["/code/entrypoint.sh"]
+COPY docker-build/docker/scuttle/scuttle /bin/scuttle
+ENV ENVOY_ADMIN_API="http://127.0.0.1:15000"
+ENV ISTIO_QUIT_API="http://127.0.0.1:15020"
+ENTRYPOINT ["scuttle", "bash", "/code/entrypoint.sh"]
