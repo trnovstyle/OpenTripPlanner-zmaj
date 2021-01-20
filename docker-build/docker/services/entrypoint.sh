@@ -23,7 +23,7 @@ fi
 
 GRAPH_NAME=GRAPH-$VERSION-$GIT_HASH.zip
 
-keyvault="RES-OTP-KV-${ENVIRONMENT^^}"
+keyvault=$ResesokOtpKeyVaultUrl
 
 log_info "Logging into azure.."
 
