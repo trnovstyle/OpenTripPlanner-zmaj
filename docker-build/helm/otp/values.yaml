@@ -74,7 +74,7 @@ affinity: {}
 ENVIRONMENT: "set by Azure Pipeline"
 
 # Managed identities
-ResesokOtpKeyVaultUrl: "This secret should be set from build pipeline"
+OtpKeyVaultName: "This secret should be set from build pipeline"
 
 azureIdentity:
   bindingName: "resesok-otp-service-azure-identity-binding"
