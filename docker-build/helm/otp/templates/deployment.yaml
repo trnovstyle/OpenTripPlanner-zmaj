@@ -30,10 +30,10 @@ spec:
           env:
             - name: "ENVIRONMENT"
               value: {{ .Values.ENVIRONMENT }}
-            - name: "ResesokOtpKeyVaultUrl"
+            - name: "OtpKeyVaultName"
               valueFrom:
                 secretKeyRef:
-                  key:  ResesokOtpKeyVaultUrl
+                  key:  OtpKeyVaultName
                   name: {{ .Release.Name }}-auth
           ports:
             - name: http
