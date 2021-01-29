@@ -658,8 +658,8 @@ public class TimetableSnapshotSource {
                 if (route.getType() == 100) {
                     // Replacement-route is also RAIL
                     trip.setTransportSubmode(TransmodelTransportSubmode.REPLACEMENT_RAIL_SERVICE);
-                } else if (route.getType() == 700) {
-                    // Replacement-route is BUS
+                } else if (route.getType() == 700 | route.getType() == 714) {
+                    // Replacement-route is BUS or RAIL_REPLACEMENT_BUS
                     trip.setTransportSubmode(TransmodelTransportSubmode.RAIL_REPLACEMENT_BUS);
                 }
             }
