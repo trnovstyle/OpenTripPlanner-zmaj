@@ -114,8 +114,8 @@ steps:
       waitForQueuedBuildsToFinish: false
       storeInEnvironmentVariable: true
       buildParameters: "ServiceName: resesok-otp, ServiceBuildVersion: $(buildVersion), ServiceBranchName: $(Build.SourceBranchName), ServiceSourceVersion: $(Build.SourceVersion), ServiceSourceVersionMessage: $(Build.SourceVersionMessage)"
-      authenticationMethod: 'Personal Access Token'
-      password: $(BUILD-TRIGGER-PAT)
+      authenticationMethod: 'OAuth Token'
+      password: $(System.AccessToken)
       enableBuildInQueueCondition: false
       dependentOnSuccessfulBuildCondition: false
       dependentOnFailedBuildCondition: false
