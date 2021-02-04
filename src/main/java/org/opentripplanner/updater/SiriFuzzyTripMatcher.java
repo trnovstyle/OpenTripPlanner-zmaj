@@ -2,6 +2,7 @@ package org.opentripplanner.updater;
 
 import org.opentripplanner.gtfs.GtfsLibrary;
 import org.opentripplanner.model.AgencyAndId;
+import org.opentripplanner.model.DatedServiceJourney;
 import org.opentripplanner.model.Route;
 import org.opentripplanner.model.Stop;
 import org.opentripplanner.model.TransmodelTransportSubmode;
@@ -103,6 +104,11 @@ public class SiriFuzzyTripMatcher {
                 Trip trip = index.tripForId.get(new AgencyAndId(feedId, serviceJourneyId));
                 if (trip != null) {
                     return trip;
+                }
+                final DatedServiceJourney datedServiceJourney = index.datedServiceJourneyForId.get(
+                    new AgencyAndId(feedId, serviceJourneyId));
+                if (datedServiceJourney != null) {
+                    return datedServiceJourney.getTrip();
                 }
             }
         }
@@ -338,6 +344,18 @@ public class SiriFuzzyTripMatcher {
 
     public Set<Route> getRoutes(String lineRefValue) {
         return mappedRoutesCache.getOrDefault(lineRefValue, new HashSet<>());
+    }
+
+    public DatedServiceJourney getDatedServiceJourney(String datedServiceJourneyId) {
+        for (String feedId : index.agenciesForFeedId.keySet()) {
+            final DatedServiceJourney dsj = index.datedServiceJourneyForId.get(new AgencyAndId(feedId,
+                datedServiceJourneyId
+            ));
+            if (dsj != null) {
+                return dsj;
+            }
+        }
+        return null;
     }
 
     public AgencyAndId getTripId(String vehicleJourney) {

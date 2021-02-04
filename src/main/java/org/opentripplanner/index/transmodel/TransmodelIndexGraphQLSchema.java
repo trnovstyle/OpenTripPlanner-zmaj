@@ -60,6 +60,7 @@ import org.opentripplanner.model.Transfer;
 import org.opentripplanner.model.TransmodelTransportSubmode;
 import org.opentripplanner.model.Trip;
 import org.opentripplanner.model.TripAlteration;
+import org.opentripplanner.model.TripAlterationOnDate;
 import org.opentripplanner.model.calendar.ServiceDate;
 import org.opentripplanner.routing.alertpatch.Alert;
 import org.opentripplanner.routing.alertpatch.AlertPatch;
@@ -1256,6 +1257,11 @@ public class TransmodelIndexGraphQLSchema {
                         .dataFetcher(environment -> wrapInListUnlessNull(index.tripForId.get(((AlertPatch) environment.getSource()).getTrip())))
                         .build())
                 .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("datedServiceJourneys")
+                        .type(new GraphQLNonNull(new GraphQLList(datedServiceJourneyType)))
+                        .dataFetcher(environment -> wrapInListUnlessNull(index.datedServiceJourneyForId.get(((AlertPatch) environment.getSource()).getDatedServiceJourneyId())))
+                        .build())
+                .field(GraphQLFieldDefinition.newFieldDefinition()
                         .name("quays")
                         .type(new GraphQLNonNull(new GraphQLList(quayType)))
                         .dataFetcher(environment ->
@@ -2371,6 +2377,15 @@ public class TransmodelIndexGraphQLSchema {
                 .dataFetcher(environment -> {
                     var id = ((DatedServiceJourney) environment.getSource()).getReplacesId();
                     return id == null? null : index.datedServiceJourneyForId.get(id);
+                })
+                .build())
+            .field(GraphQLFieldDefinition.newFieldDefinition()
+                .name("situations")
+                .description("Get all situations active for the DatedServiceJourney")
+                .type(new GraphQLNonNull(new GraphQLList(ptSituationElementType)))
+                .dataFetcher(environment -> {
+                    DatedServiceJourney dsj = environment.getSource();
+                    return dsj == null? null : index.getAlertsForDatedServiceJourney(dsj);
                 })
                 .build())
             .build();
@@ -3696,6 +3711,14 @@ public class TransmodelIndexGraphQLSchema {
         Trip trip = index.tripForId.get(tripId);
         AgencyAndId routeId = trip.getRoute().getId();
 
+        AgencyAndId dsjId = null;
+        if(trip != null) {
+            final TripAlterationOnDate tripAlterationOnDate = trip.getTripAlterationOnDate(new ServiceDate(new Date(tripTimeShort.serviceDay*1000)));
+            if (tripAlterationOnDate != null) {
+                dsjId = tripAlterationOnDate.getId();
+            }
+        }
+
         AgencyAndId stopId = tripTimeShort.stopId;
 
         Stop stop = index.stopForId.get(stopId);
@@ -3709,10 +3732,13 @@ public class TransmodelIndexGraphQLSchema {
             allAlerts.addAll(index.getAlertsForStopId(stopId));
             allAlerts.addAll(index.getAlertsForStopAndTrip(stopId, tripId));
             allAlerts.addAll(index.getAlertsForStopAndRoute(stopId, routeId));
+            allAlerts.addAll(index.getAlertsForStopAndDatedServiceJourney(stopId, dsjId));
+
             // StopPlace
             allAlerts.addAll(index.getAlertsForStopId(parentStopId));
             allAlerts.addAll(index.getAlertsForStopAndTrip(parentStopId, tripId));
             allAlerts.addAll(index.getAlertsForStopAndRoute(parentStopId, routeId));
+            allAlerts.addAll(index.getAlertsForStopAndDatedServiceJourney(parentStopId, dsjId));
 
             if (stop.getMultiModalStation() != null) {
                 // MultimodalStopPlace
@@ -3722,6 +3748,9 @@ public class TransmodelIndexGraphQLSchema {
                 allAlerts.addAll(index.getAlertsForStopId(multimodalStopId));
                 allAlerts.addAll(index.getAlertsForStopAndTrip(multimodalStopId, tripId));
                 allAlerts.addAll(index.getAlertsForStopAndRoute(multimodalStopId, routeId));
+                allAlerts.addAll(index.getAlertsForStopAndDatedServiceJourney(multimodalStopId,
+                    dsjId
+                ));
             }
         }
 
@@ -3733,6 +3762,8 @@ public class TransmodelIndexGraphQLSchema {
         allAlerts.addAll(index.getAlertsForAgency(trip.getRoute().getAgency()));
         // TripPattern
         allAlerts.addAll(index.getAlertsForPattern(index.patternForTrip.get(trip)));
+        // DatedServiceJourney
+        allAlerts.addAll(index.getAlertsForDatedServiceJourney(dsjId));
 
         long serviceDayMillis = 1000 * tripTimeShort.serviceDay;
         long arrivalMillis = 1000 * tripTimeShort.realtimeArrival;

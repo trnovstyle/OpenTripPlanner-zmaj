@@ -21,6 +21,7 @@ import com.google.transit.realtime.GtfsRealtime.TimeRange;
 import com.google.transit.realtime.GtfsRealtime.TripDescriptor;
 import org.apache.commons.lang3.tuple.Pair;
 import org.opentripplanner.model.AgencyAndId;
+import org.opentripplanner.model.DatedServiceJourney;
 import org.opentripplanner.model.Route;
 import org.opentripplanner.model.TransmodelTransportSubmode;
 import org.opentripplanner.model.calendar.ServiceDate;
@@ -47,6 +48,7 @@ import uk.org.siri.siri20.AffectedStopPointStructure;
 import uk.org.siri.siri20.AffectedVehicleJourneyStructure;
 import uk.org.siri.siri20.AffectsScopeStructure;
 import uk.org.siri.siri20.DataFrameRefStructure;
+import uk.org.siri.siri20.DatedVehicleJourneyRef;
 import uk.org.siri.siri20.DefaultedTextStructure;
 import uk.org.siri.siri20.FramedVehicleJourneyRefStructure;
 import uk.org.siri.siri20.HalfOpenTimestampOutputRangeStructure;
@@ -399,6 +401,85 @@ public class AlertsUpdateHandler {
 
                                     patches.add(alertPatch);
                                 }
+                            }
+                        }
+                    }
+                }
+
+                final List<DatedVehicleJourneyRef> datedVehicleJourneyReves = affectedVehicleJourney
+                    .getDatedVehicleJourneyReves();
+                if (datedVehicleJourneyReves != null) {
+                    List<DatedServiceJourney> datedServiceJourneys = new ArrayList();
+                    for (DatedVehicleJourneyRef ref : datedVehicleJourneyReves) {
+                        String datedVehicleJourneyRef = ref.getValue();
+                        DatedServiceJourney dsj = siriFuzzyTripMatcher.getDatedServiceJourney(datedVehicleJourneyRef);
+                        datedServiceJourneys.add(dsj);
+                    }
+
+                    if (!affectedStops.isEmpty()) {
+                         for (AffectedStopPointStructure affectedStop : affectedStops) {
+                            AgencyAndId stop = siriFuzzyTripMatcher.getStop(affectedStop.getStopPointRef().getValue());
+                            if (stop == null) {
+                                continue;
+                            }
+                            for (DatedServiceJourney datedServiceJourney : datedServiceJourneys) {
+
+                                // Creating unique, deterministic id for the alert
+                                String id = paddedSituationNumber + datedServiceJourney.getId() + "-" + stop.getId();
+                                if (expireSituation) {
+                                    idsToExpire.add(id);
+                                }
+                                else {
+                                    //  A tripId for a given date may be reused for other dates not affected by this alert.
+                                    List<TimePeriod> timePeriodList = new ArrayList<>();
+                                    timePeriodList.add(new TimePeriod(
+                                        alert.effectiveStartDate.getTime() / 1000,
+                                        alert.effectiveEndDate.getTime() / 1000
+                                    ));
+
+                                    AlertPatch alertPatch = createAlertPatch(id,
+                                        timePeriodList,
+                                        affectedStop.getStopConditions()
+                                    );
+                                    alertPatch.setDatedServiceJourneyId(datedServiceJourney.getId());
+                                    alertPatch.setStop(stop);
+
+                                    Alert vehicleJourneyAlert = cloneAlertTexts(alert);
+                                    vehicleJourneyAlert.effectiveStartDate = alert.effectiveStartDate;
+                                    vehicleJourneyAlert.effectiveEndDate = alert.effectiveEndDate;
+
+                                    alertPatch.setAlert(vehicleJourneyAlert);
+
+                                    patches.add(alertPatch);
+                                }
+                            }
+                        }
+                    } else {
+                        for (DatedServiceJourney datedServiceJourney : datedServiceJourneys) {
+
+                            String id = paddedSituationNumber + datedServiceJourney.getId();
+                            if (expireSituation) {
+                                idsToExpire.add(id);
+                            }
+                            else {
+                                //  A tripId for a given date may be reused for other dates not affected by this alert.
+                                List<TimePeriod> timePeriodList = new ArrayList<>();
+                                timePeriodList.add(new TimePeriod(
+                                    alert.effectiveStartDate.getTime() / 1000,
+                                    alert.effectiveEndDate.getTime() / 1000
+                                ));
+
+                                AlertPatch alertPatch = createAlertPatch(id, timePeriodList, null);
+
+                                alertPatch.setDatedServiceJourneyId(datedServiceJourney.getId());
+
+                                Alert vehicleJourneyAlert = cloneAlertTexts(alert);
+                                vehicleJourneyAlert.effectiveStartDate = alert.effectiveStartDate;
+                                vehicleJourneyAlert.effectiveEndDate = alert.effectiveEndDate;
+
+                                alertPatch.setAlert(vehicleJourneyAlert);
+
+                                patches.add(alertPatch);
                             }
                         }
                     }

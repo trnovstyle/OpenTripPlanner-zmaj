@@ -1088,6 +1088,18 @@ public class GraphIndex {
         return getSiriAlertPatchService().getStopAndTripPatches(stopId, tripId);
     }
 
+    public Collection<AlertPatch> getAlertsForDatedServiceJourney(AgencyAndId dsjId) {
+        return getSiriAlertPatchService().getDatedServiceJourneyPatches(null, dsjId);
+    }
+
+    public Collection<AlertPatch> getAlertsForDatedServiceJourney(DatedServiceJourney dsjId) {
+        return getAlertsForDatedServiceJourney(dsjId.getId());
+    }
+
+    public Collection<AlertPatch> getAlertsForStopAndDatedServiceJourney(AgencyAndId stopId, AgencyAndId dsjId) {
+        return getSiriAlertPatchService().getDatedServiceJourneyPatches(stopId, dsjId);
+    }
+
     /**
      * Fetch an agency by its string ID, ignoring the fact that this ID should be scoped by a feedId.
      * This is a stopgap (i.e. hack) method for fetching agencies where no feed scope is available.
