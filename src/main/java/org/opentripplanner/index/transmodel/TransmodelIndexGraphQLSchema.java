@@ -97,6 +97,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -3519,6 +3520,51 @@ public class TransmodelIndexGraphQLSchema {
                             .get(mappingUtil.fromIdString(environment.getArgument("id"))))
                         .build())
                 .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("datedServiceJourneys")
+                        .description("List dated service journeys")
+                        .type(new GraphQLNonNull(new GraphQLList(datedServiceJourneyType)))
+                        .argument(GraphQLArgument.newArgument()
+                            .name("lines")
+                            .description("Set of line ids to fetch entities for.")
+                            .type(new GraphQLList(Scalars.GraphQLString))
+                            .build())
+                        .argument(GraphQLArgument.newArgument()
+                            .name("serviceJourneys")
+                            .description("Set of serviceJourney ids to fetch entities for.")
+                            .type(new GraphQLList(Scalars.GraphQLString))
+                            .build())
+                        .argument(GraphQLArgument.newArgument()
+                            .name("operatingDays")
+                            .description("Set of dates to fetch entites for.")
+                            .type(new GraphQLList(dateScalar))
+                            .build())
+                        .argument(GraphQLArgument.newArgument()
+                            .name("alterations")
+                            .description("Set of serviceAlteration to fetch entities for.")
+                            .type(new GraphQLList(serviceAlterationEnum))
+                            .build())
+                        .argument(GraphQLArgument.newArgument()
+                            .name("authorities")
+                            .description("Set of authorities ids to fetch serviceJourneys for.")
+                            .type(new GraphQLList(Scalars.GraphQLString))
+                            .build())
+                        .dataFetcher(e -> {
+                            List<AgencyAndId> lines = mappingUtil.idsFromStrings(e.getArgument("lines"));
+                            List<AgencyAndId> sjs = mappingUtil.idsFromStrings(e.getArgument("serviceJourneys"));
+                            List<ServiceDate> dates = ServiceDate.from(e.getArgument("operatingDays"));
+                            Set<TripAlteration> alts = enumSet(e.getArgument("alterations"));
+                            List<String> authorities = e.getArgument("authorities");
+
+                            return index.datedServiceJourneyForId.values().stream()
+                                .filter(dsj -> match(lines, dsj.getTrip().getRoute().getId()))
+                                .filter(dsj -> match(sjs, dsj.getTrip().getId()))
+                                .filter(dsj -> match(authorities, dsj.getTrip().getRoute().getAgency().getId()))
+                                .filter(dsj -> match(alts, dsj.getAlteration()))
+                                .filter(dsj -> match(dates, dsj.getDate()))
+                                .collect(Collectors.toList());
+                        })
+                        .build())
+                .field(GraphQLFieldDefinition.newFieldDefinition()
                                .name("bikeRentalStations")
                                .description("Get all bike rental stations")
                                .argument(GraphQLArgument.newArgument()
@@ -4924,5 +4970,13 @@ public class TransmodelIndexGraphQLSchema {
             }
         }
         return false;
+    }
+
+    private static <T> boolean match(Collection<T> set, T e) {
+        return set == null || set.isEmpty() || set.contains(e);
+    }
+    private static <T extends Enum<T>> Set<T> enumSet(Collection<T> set) {
+        if(set == null) { return null; }
+        return EnumSet.copyOf(set);
     }
 }

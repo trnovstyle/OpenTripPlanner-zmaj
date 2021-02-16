@@ -1,15 +1,19 @@
 package org.opentripplanner.model.calendar;
 
+import javax.annotation.Nullable;
 import java.io.Serializable;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.text.ParseException;
 import java.time.LocalDate;
 import java.util.Calendar;
+import java.util.Collection;
 import java.util.Date;
+import java.util.List;
 import java.util.TimeZone;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * A general representation of a year-month-day tuple not tied to any locale and
@@ -95,6 +99,15 @@ public class ServiceDate implements Serializable, Comparable<ServiceDate> {
         int month = Integer.parseInt(matcher.group(2));
         int day = Integer.parseInt(matcher.group(3));
         return new ServiceDate(year, month, day);
+    }
+
+    /** Map a list of epocSeconds to a list of ServiceDates. */
+    public static @Nullable List<ServiceDate> from(Collection<Long> dates) {
+        return dates == null
+            ? null
+            : dates.stream()
+                .map(t -> new ServiceDate(new Date(t * 1000)))
+                .collect(Collectors.toUnmodifiableList());
     }
 
     public int getYear() {
