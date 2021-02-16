@@ -550,7 +550,9 @@ public class TimetableSnapshotSource {
     private boolean handleTripPatternUpdate(Graph graph, TripPattern pattern, VehicleActivityStructure activity, Trip trip, ServiceDate serviceDate) {
 
         // Apply update on the *scheduled* time table and set the updated trip times in the buffer
-        final TripTimes updatedTripTimes = getCurrentTimetable(pattern, serviceDate).createUpdatedTripTimes(graph, activity, timeZone, trip.getId());
+        final TripTimes updatedTripTimes = getCurrentTimetable(pattern, serviceDate)
+            .createUpdatedTripTimes(graph, activity, trip.getId());
+
         if (updatedTripTimes == null) {
             return false;
         }
@@ -567,7 +569,7 @@ public class TimetableSnapshotSource {
      *
      */
     private Timetable getCurrentTimetable(TripPattern tripPattern, ServiceDate serviceDate) {
-        TimetableSnapshot timetableSnapshot=getTimetableSnapshot();
+        TimetableSnapshot timetableSnapshot = getTimetableSnapshot();
         if (timetableSnapshot!=null) {
             return getTimetableSnapshot().resolve(tripPattern, serviceDate);
         }
@@ -888,7 +890,10 @@ public class TimetableSnapshotSource {
             TripPattern exactPattern = graphIndex.patternForTrip.get(tripMatchedByServiceJourneyId);
 
             if (exactPattern != null) {
-                TripTimes exactUpdatedTripTimes = getCurrentTimetable(exactPattern, serviceDate).createUpdatedTripTimes(graph, estimatedVehicleJourney, timeZone, tripMatchedByServiceJourneyId.getId());
+                var timetable = getCurrentTimetable(exactPattern, serviceDate);
+                var exactUpdatedTripTimes = timetable.createUpdatedTripTimes(
+                    graph, estimatedVehicleJourney, timeZone, tripMatchedByServiceJourneyId.getId()
+                );
                 if (exactUpdatedTripTimes != null) {
                     times.add(exactUpdatedTripTimes);
                     patterns.add(exactPattern);
@@ -919,7 +924,10 @@ public class TimetableSnapshotSource {
             for (Trip matchingTrip : matchingTrips) {
                 TripPattern pattern = getPatternForTrip(matchingTrip, estimatedVehicleJourney);
                 if (pattern != null) {
-                    TripTimes updatedTripTimes = getCurrentTimetable(pattern, serviceDate).createUpdatedTripTimes(graph, estimatedVehicleJourney, timeZone, matchingTrip.getId());
+                    var timetable = getCurrentTimetable(pattern, serviceDate);
+                    var updatedTripTimes = timetable.createUpdatedTripTimes(
+                        graph, estimatedVehicleJourney, timeZone, matchingTrip.getId()
+                    );
                     if (updatedTripTimes != null) {
                         patterns.add(pattern);
                         times.add(updatedTripTimes);
@@ -942,11 +950,8 @@ public class TimetableSnapshotSource {
             Trip trip = tripTimes.trip;
             for (TripPattern pattern : patterns) {
                 if (tripTimes.getNumStops() == pattern.stopPattern.stops.length) {
-                        /*
-                          All tripTimes should be handled the same way to always allow latest realtime-update
-                          to replace previous update regardless of realtimestate
-                         */
-
+                        // All tripTimes should be handled the same way to always allow latest realtime-update
+                        // to replace previous update regardless of realtimestate
                         cancelScheduledTrip(SIRI_FEED_ID, trip.getId().getId(), serviceDate);
 
                         // Check whether trip id has been used for previously ADDED/MODIFIED trip message and cancel

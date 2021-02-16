@@ -178,6 +178,12 @@ public class TripPatternMapper {
                 LOG.warn("Trip" + trip.getId() + " does not contain any trip times.");
             } else {
                 TripTimes tripTimes = new TripTimes(trip, transitBuilder.getStopTimesSortedByTrip().get(trip), deduplicator);
+
+                // Trip is cancelled in plan data
+                if (trip.isCanceledOrReplaced()) {
+                    tripTimes.cancelAllStops();
+                }
+
                 tripPattern.add(tripTimes);
                 transitBuilder.getTrips().add(trip);
             }

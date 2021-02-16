@@ -32,7 +32,6 @@ import org.opentripplanner.model.Route;
 import org.opentripplanner.model.Stop;
 import org.opentripplanner.model.StopPattern;
 import org.opentripplanner.model.Trip;
-import org.opentripplanner.model.TripAlteration;
 import org.opentripplanner.model.TripAlterationOnDate;
 import org.opentripplanner.model.calendar.ServiceDate;
 import org.opentripplanner.routing.alertpatch.AlertPatch;
@@ -234,7 +233,7 @@ public class GraphIndex {
         }
 
         for (Trip trip : tripForId.values()) {
-            for (TripAlterationOnDate it : trip.getTripAlterations()) {
+            for (TripAlterationOnDate it : trip.listTripAlterationOnDates()) {
                 datedServiceJourneyForId.put(it.getId(), new DatedServiceJourney(trip, it));
             }
         }
@@ -829,13 +828,7 @@ public class GraphIndex {
 
                         if (!includePlannedCancellations) {
                             // Check if trip has been cancelled via planned data
-                            boolean allCanceledOrReplaced = Arrays.stream(serviceDates)
-                                .allMatch(d -> {
-                                    TripAlteration alteration = triptimes.trip.getAlteration(d);
-                                    return alteration == null || alteration.isCanceledOrReplaced();
-                                }
-                            );
-                            if(allCanceledOrReplaced) { continue; }
+                            if(!triptimes.trip.isRunningOnDate(serviceDate)) { continue; }
                         }
 
 

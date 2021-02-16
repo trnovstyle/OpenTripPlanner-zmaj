@@ -16,8 +16,6 @@ import org.rutebanken.netex.model.LineRefStructure;
 import org.rutebanken.netex.model.Line_VersionStructure;
 import org.rutebanken.netex.model.Route;
 import org.rutebanken.netex.model.ServiceJourney;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.xml.bind.JAXBElement;
 import java.util.Map;
@@ -27,8 +25,6 @@ import java.util.Map;
  */
 
 public class TripMapper {
-    private static final Logger LOG = LoggerFactory.getLogger(TripMapper.class);
-
     private final KeyValueMapper keyValueMapper = new KeyValueMapper();
     private final TransportModeMapper transportModeMapper = new TransportModeMapper();
     private final BookingArrangementMapper bookingArrangementMapper = new BookingArrangementMapper();
@@ -55,10 +51,17 @@ public class TripMapper {
         }
 
         trip.setServiceId(serviceId);
-        trip.setAlterations(
-            TripServiceAlterationMapper.mapAlteration(serviceJourney.getServiceAlteration()),
-            alterations
-        );
+
+        if(alterations == null || alterations.isEmpty()) {
+            trip.setAlterations(
+                TripServiceAlterationMapper.mapAlteration(
+                    serviceJourney.getServiceAlteration()
+                )
+            );
+        }
+        else {
+            trip.setAlterations(alterations);
+        }
 
         if (serviceJourney.getPrivateCode() != null) {
             trip.setTripPrivateCode(serviceJourney.getPrivateCode().getValue());

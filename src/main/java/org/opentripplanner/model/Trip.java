@@ -19,8 +19,6 @@ import org.opentripplanner.model.calendar.ServiceDate;
 
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
-import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -54,15 +52,8 @@ public final class Trip extends IdentityBean<AgencyAndId> {
 
     private int wheelchairAccessible = 0;
 
-    /**
-     * Default alteration for a trip, if no DSJ exist then this is the ServiceJourney
-     * alteration. If DSJs exist, then this is null.
-     *
-     * This is planned, by default (e.g. GTFS and if not set explicit).
-     */
-    private TripAlteration alteration = TripAlteration.planned;
-
-    private Map<ServiceDate, TripAlterationOnDate> alterations = Map.of();
+    @NotNull
+    private TripAlterationSchedule alterationSchedule = TripAlterationSchedule.defaultAlteration();
 
     private List<KeyValue> keyValues;
 
@@ -105,7 +96,7 @@ public final class Trip extends IdentityBean<AgencyAndId> {
         this.route = obj.route;
         this.operator = obj.operator;
         this.serviceId = obj.serviceId;
-        this.alterations = obj.alterations;
+        this.alterationSchedule = obj.alterationSchedule;
         this.tripShortName = obj.tripShortName;
         this.tripPrivateCode = obj.tripPrivateCode;
         this.tripHeadsign = obj.tripHeadsign;
@@ -332,76 +323,50 @@ public final class Trip extends IdentityBean<AgencyAndId> {
         this.continuousDropOffMessage = continuousDropOffMessage;
     }
 
-    /** @deprecated If a trip have is imported as dated-service-journeys this i {@code null}.
+    /**
+     * If a trip is imported as dated-service-journeys this is {@code null}.
      * If this trip is imported from a ServiceJourney then this have that service journey's
      * value. If imported from GTFS then it is always planned.
      */
-    @Deprecated
     @Nullable
     public TripAlteration getAlteration() {
-        return alteration;
+        return alterationSchedule.isMappedToDate() ? null : alterationSchedule.fixedAlteration();
     }
 
     /**
-     * If the source is GTFS, planned is returned.
-     * <p>
-     * If the source for this trip DSJs the alteration for the given day is returned.
-     * {@code null} is returned if the service is not running on that day.
-     * <p>
-     * If Trip is created from a regular ServiceJourney then, its alteration is used - if the
-     * SJ alteration is {@code null}, then planned i returned.
-     * <p>
-     * Only if the imported source is DSJs, is the calendar date checked. This method should
-     * only be called with a date argument, where the date is IN service.
+     * If the trip origin is GTFS or a dated-service-journeys this method return {@code false}.
+     * If the origin is a ServiceJourney, then check the the fixed alternation.
      */
+    public boolean isCanceledOrReplaced() {
+        return alterationSchedule.isCanceledOrReplaced();
+    }
+
+    /**
+     * Is the trip alterations planed or extra-journey?
+     * @throws IllegalStateException for undefined dates (DSJ).
+     */
+    public boolean isRunningOnDate(@NotNull ServiceDate date) {
+        return !alterationSchedule.alteration(date).isCanceledOrReplaced();
+    }
+
+    /** Only defined if the source is DSJs. */
     @Nullable
-    public TripAlteration getAlteration(ServiceDate date) {
-        if(alterations.isEmpty()) {
-            return alteration;
-        }
-        else {
-            TripAlterationOnDate onDate = getTripAlterationOnDate(date);
-            return onDate == null ? alteration : onDate.getAlteration();
-        }
-    }
-
-    /**
-     * Check the alterations if the Trip is running(planned or extraJourney) on a
-     * given date. This method only check the alteration, not the service calendar.
-     * Also, if this method return false the trip is either not scheduled on the given date
-     * or cancelled/replaced.
-     */
-    public boolean isRunningOnDate(ServiceDate date) {
-        if(alterations.isEmpty()) {
-            return !alteration.isCanceledOrReplaced();
-        }
-        else {
-            TripAlterationOnDate onDate = getTripAlterationOnDate(date);
-            return onDate != null && !onDate.getAlteration().isCanceledOrReplaced();
-        }
+    public TripAlterationOnDate getTripAlterationOnDate(ServiceDate date) {
+        return alterationSchedule.alterationForDate(date);
     }
 
     /** Only defined is the source is DSJs. */
-    @Nullable
-    public TripAlterationOnDate getTripAlterationOnDate(ServiceDate date) {
-        return alterations.get(date);
+    public Iterable<TripAlterationOnDate> listTripAlterationOnDates() {
+        return alterationSchedule.listAll();
     }
 
-    public Collection<TripAlterationOnDate> getTripAlterations() {
-        return alterations.values();
+
+    public void setAlterations(TripAlteration fixedAlteration) {
+        this.alterationSchedule = TripAlterationSchedule.createAlterationSchedule(fixedAlteration);
     }
 
-    public void setAlterations(TripAlteration defaultAlteration, @NotNull Map<ServiceDate, TripAlterationOnDate> alterations) {
-        // TODO: We should use Map.of() instead of new HashMap(...),
-        //  but that fails with Kryo
-        if(alterations == null || alterations.isEmpty()) {
-            this.alteration = defaultAlteration == null ? TripAlteration.planned : defaultAlteration;
-            this.alterations = new HashMap<>();
-        }
-        else {
-            this.alteration = null;
-            this.alterations = new HashMap<>(alterations);
-        }
+    public void setAlterations(Map<ServiceDate, TripAlterationOnDate> alterations) {
+        this.alterationSchedule = TripAlterationSchedule.createAlterationSchedule(alterations);
     }
 
     public List<KeyValue> getKeyValues() {

@@ -48,6 +48,7 @@ import uk.org.siri.siri20.OccupancyEnumeration;
 import uk.org.siri.siri20.RecordedCall;
 import uk.org.siri.siri20.VehicleActivityStructure;
 
+import javax.annotation.Nullable;
 import javax.xml.datatype.Duration;
 import java.io.Serializable;
 import java.time.ZonedDateTime;
@@ -665,7 +666,12 @@ public class Timetable implements Serializable {
      * with the id specified in the trip descriptor of the TripUpdate; null if something
      * went wrong
      */
-    public TripTimes createUpdatedTripTimes(final Graph graph, EstimatedVehicleJourney journey, TimeZone timeZone, AgencyAndId tripId) {
+    public TripTimes createUpdatedTripTimes(
+        final Graph graph,
+        EstimatedVehicleJourney journey,
+        TimeZone timeZone,
+        AgencyAndId tripId
+    ) {
         if (journey == null) {
             return null;
         }
@@ -1267,13 +1273,13 @@ public class Timetable implements Serializable {
      * case.
      *
      * @param activity SIRI-VM VehicleActivity
-     * @param timeZone time zone of trip update
      * @param tripId
      * @return new copy of updated TripTimes after TripUpdate has been applied on TripTimes of trip
      * with the id specified in the trip descriptor of the TripUpdate; null if something
      * went wrong
      */
-    public TripTimes createUpdatedTripTimes(Graph graph, VehicleActivityStructure activity, TimeZone timeZone, AgencyAndId tripId) {
+    @Nullable
+    public TripTimes createUpdatedTripTimes(Graph graph, VehicleActivityStructure activity, AgencyAndId tripId) {
         if (activity == null) {
             return null;
         }

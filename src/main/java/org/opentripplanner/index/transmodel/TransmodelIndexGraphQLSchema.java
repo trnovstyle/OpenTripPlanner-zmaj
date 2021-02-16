@@ -2192,16 +2192,13 @@ public class TransmodelIndexGraphQLSchema {
                 .field(GraphQLFieldDefinition.newFieldDefinition()
                         .name("serviceAlteration")
                         .type(serviceAlterationEnum)
-                        .description("Whether journey is as planned, a cancellation, an extra journey or replaced.")
+                        .description(
+                            "For a Whether journey is as planned, a cancellation, an extra journey or replaced.")
                         .deprecate(
                             "The service-alteration might be different for each service day, so "
                             + "this method is not always giving the correct result. This method "
                             + "will return 'null' if there is a mix of different alterations."
                         )
-                    .deprecate("After the introduction of DatedServiceJourney the 'serviceAlteration' is only"
-                        + "returned if it is the same for ALL pnanned operating dates. If the service-alteration"
-                        + " is mixed, then 'null' is returned. If a dated-service-journey exist, then use that "
-                        + "insetead.")
                         .dataFetcher(environment -> ((Trip) environment.getSource()).getAlteration())
                         .build())
                 .field(GraphQLFieldDefinition.newFieldDefinition()
