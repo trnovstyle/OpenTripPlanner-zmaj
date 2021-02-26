@@ -52,6 +52,14 @@ public final class Path<T extends RaptorTripSchedule> implements Comparable<Path
         this.endTime = egressPathLeg.toTime();
     }
 
+    public Path(int iterationDepartureTime, AccessPathLeg<T> accessLeg) {
+        this(
+            iterationDepartureTime,
+            accessLeg,
+            accessLeg.stream().mapToInt(PathLeg::generalizedCost).sum()
+        );
+    }
+
     /**
      * Create a "dummy" path without legs. Can be used to test if a path is pareto optimal without
      * creating the hole path.

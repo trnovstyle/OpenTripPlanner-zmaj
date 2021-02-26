@@ -3,6 +3,7 @@ package org.opentripplanner.transit.raptor.api.path;
 import org.opentripplanner.transit.raptor.api.transit.RaptorTransfer;
 import org.opentripplanner.transit.raptor.api.transit.RaptorTripSchedule;
 
+import javax.annotation.Nonnull;
 import java.util.Objects;
 
 /**
@@ -21,6 +22,12 @@ public final class TransferPathLeg<T extends RaptorTripSchedule> extends Interme
         this.transfer = transfer;
         this.next = next;
     }
+
+    /** Create new access leg with a different tail */
+    public TransferPathLeg(@Nonnull TransferPathLeg<T> o, @Nonnull PathLeg<T> tail) {
+        this(o.fromStop(), o.fromTime(), o.toStop(), o.toTime(), o.generalizedCost(), o.transfer, tail);
+    }
+
 
     public final RaptorTransfer transfer() {
         return transfer;

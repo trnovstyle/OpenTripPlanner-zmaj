@@ -25,10 +25,11 @@ import java.util.stream.StreamSupport;
  *
  * @param <T> The TripSchedule type defined by the user of the raptor API.
  */
-public interface PathLeg<T extends RaptorTripSchedule> {
+public interface  PathLeg<T extends RaptorTripSchedule> {
 
     /**
-     * The time when the leg start/depart from the leg origin.
+     * The time when the leg start/depart from the leg origin. For transit the time do
+     * NOT include boardSlack.
      */
     int fromTime();
 
@@ -41,7 +42,8 @@ public interface PathLeg<T extends RaptorTripSchedule> {
     }
 
     /**
-     * The time when the leg end/arrive at the leg destination.
+     * The time when the leg end/arrive at the leg destination. For transit the time do
+     * NOT include alight-slack.
      */
     int toTime();
 
@@ -59,7 +61,6 @@ public interface PathLeg<T extends RaptorTripSchedule> {
     default int duration() {
         return toTime() - fromTime();
     }
-
 
     /**
      * The computed generalized-cost for this path leg.
