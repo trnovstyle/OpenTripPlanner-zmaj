@@ -1,5 +1,7 @@
 package org.opentripplanner.transit.raptor.rangeraptor.multicriteria;
 
+import static org.opentripplanner.transit.raptor.rangeraptor.multicriteria.PatternRide.paretoComparatorRelativeCost;
+
 import org.opentripplanner.transit.raptor.api.transit.CostCalculator;
 import org.opentripplanner.transit.raptor.api.transit.RaptorTransfer;
 import org.opentripplanner.transit.raptor.api.transit.RaptorTripPattern;
@@ -11,8 +13,6 @@ import org.opentripplanner.transit.raptor.rangeraptor.multicriteria.arrivals.Abs
 import org.opentripplanner.transit.raptor.rangeraptor.transit.TransitCalculator;
 import org.opentripplanner.transit.raptor.rangeraptor.transit.TripScheduleSearch;
 import org.opentripplanner.transit.raptor.util.paretoset.ParetoSet;
-
-import static org.opentripplanner.transit.raptor.rangeraptor.multicriteria.PatternRide.paretoComparatorRelativeCost;
 
 
 /**
@@ -104,7 +104,6 @@ public final class McTransitWorker<T extends RaptorTripSchedule> implements Rout
                 if(prevArrival.arrivedByAccess()) {
                     prevArrival = prevArrival.timeShiftNewArrivalTime(boardTime - slackProvider.boardSlack());
                 }
-
 
                 final int boardWaitTimeForCostCalculation = timeShiftingAllowed(prevArrival)
                         ? slackProvider.boardSlack()
