@@ -83,29 +83,66 @@ public class TripTimesSearch<T extends RaptorTripSchedule> {
             .findTripBefore(leg.toTime());
     }
 
-    private BoarAndAlightTime findTripAfter(int earliestDepartureTime) {
+    /**
+     * Search for departure-stop-position for the given trip, earliest-departure-time
+     * and stop index.
+     *
+     * @return the stop-position in the trip pattern if found, if not -1 is returned.
+     */
+    public static <S extends RaptorTripSchedule> int findDepartureStopPosition(
+        S schedule, int earliestDepartureTime, int stop
+    ) {
         RaptorTripPattern p = schedule.pattern();
         final int size = p.numberOfStopsInPattern();
         int i = 0;
 
-        // Search for departure
-        while (i < size && schedule.departure(i) < earliestDepartureTime) { ++i; }
-
-        if(i == size) {
-            throw noFoundException(
-                    "No departures after 'earliestDepartureTime'",
-                    "earliestDepartureTime",
-                    earliestDepartureTime
-            );
+        while (schedule.departure(i) < earliestDepartureTime) {
+            ++i;
+            if(i == size) { return -1; }
         }
 
-        while (i < size && p.stopIndex(i) != fromStop) { ++i; }
+        while (p.stopIndex(i) != stop) {
+            ++i;
+            if(i == size) { return -1; }
+        }
+        return i;
+    }
 
-        if(i == size) {
-            throw noFoundException(
-                "No stops matching 'fromStop'",
-                "earliestDepartureTime",
-                earliestDepartureTime
+    /**
+     * Search for departure-stop-position for the given trip, earliest-departure-time
+     * and stop index.
+     *
+     * @return the stop-position in the trip pattern if found, if not -1 is returned.
+     */
+    public static <S extends RaptorTripSchedule> int findArrivalStopPosition(
+        S schedule, int latestArrivalTime, int stop
+    ) {
+        RaptorTripPattern p = schedule.pattern();
+        int i = p.numberOfStopsInPattern() -1 ;
+
+        while (schedule.arrival(i) > latestArrivalTime) {
+            --i;
+            if(i == -1) { return -1; }
+        }
+
+        while (p.stopIndex(i) != stop) {
+            --i;
+            if(i == -1) { return -1; }
+        }
+        return i;
+    }
+
+    /* private methods */
+
+    private BoarAndAlightTime findTripAfter(final int earliestDepartureTime) {
+        RaptorTripPattern p = schedule.pattern();
+        final int size = p.numberOfStopsInPattern();
+
+        int i = findDepartureStopPosition(schedule, earliestDepartureTime, fromStop);
+
+        if(i < 0) {
+            throw notFoundException(
+                "No stops matching 'fromStop'", "earliestDepartureTime", earliestDepartureTime
             );
         }
 
@@ -120,7 +157,7 @@ public class TripTimesSearch<T extends RaptorTripSchedule> {
         }
 
         if(i == size) {
-            throw noFoundException(
+            throw notFoundException(
                 "No stops matching 'toStop'",
                 "earliestDepartureTime",
                 earliestDepartureTime
@@ -131,29 +168,11 @@ public class TripTimesSearch<T extends RaptorTripSchedule> {
 
     private BoarAndAlightTime findTripBefore(int latestArrivalTime) {
         RaptorTripPattern p = schedule.pattern();
-        final int size = p.numberOfStopsInPattern();
-        int i = size-1;
-
-        // Search for arrival
-        while (i >= 0 && schedule.arrival(i) > latestArrivalTime) {
-            --i;
-        }
+        int i = findArrivalStopPosition(schedule, latestArrivalTime, toStop);
 
         if(i < 0) {
-            throw noFoundException(
-                    "No arrivals before 'latestArrivalTime'",
-                    "latestArrivalTime",
-                    latestArrivalTime
-            );
-        }
-
-        while (i >= 0 && p.stopIndex(i) != toStop) { --i; }
-
-        if(i < 0) {
-            throw noFoundException(
-                    "No stops matching 'toStop'",
-                    "latestArrivalTime",
-                    latestArrivalTime
+            throw notFoundException(
+                "No stops matching 'toStop'", "latestArrivalTime", latestArrivalTime
             );
         }
 
@@ -168,7 +187,7 @@ public class TripTimesSearch<T extends RaptorTripSchedule> {
         }
 
         if(i < 0) {
-            throw noFoundException(
+            throw notFoundException(
                     "No stops matching 'fromStop'",
                     "latestArrivalTime",
                     latestArrivalTime
@@ -177,7 +196,7 @@ public class TripTimesSearch<T extends RaptorTripSchedule> {
         return new BoarAndAlightTime(schedule, i, alightStopPos);
     }
 
-    private IllegalStateException noFoundException(String hint, String lbl, int time) {
+    private IllegalStateException notFoundException(String hint, String lbl, int time) {
         return new IllegalStateException(
                 "Trip not found: " + hint + ". "
                         + " [FromStop: " + fromStop
@@ -186,5 +205,4 @@ public class TripTimesSearch<T extends RaptorTripSchedule> {
                         + ", pattern: " + schedule.pattern().debugInfo() + "]"
         );
     }
-
 }

@@ -120,7 +120,7 @@ public class TripTimesSearchTest implements RaptorTestConstants {
         catch (IllegalStateException e) {
             assertTrue(
                 e.getMessage(),
-                e.getMessage().contains("No arrivals before 'latestArrivalTime'")
+                e.getMessage().contains("No stops matching 'toStop'.")
             );
         }
     }
@@ -134,7 +134,7 @@ public class TripTimesSearchTest implements RaptorTestConstants {
         catch (IllegalStateException e) {
             assertTrue(
                 e.getMessage(),
-                e.getMessage().contains("No departures after 'earliestDepartureTime'")
+                e.getMessage().contains("No stops matching 'fromStop'.")
             );
         }
     }
@@ -148,7 +148,7 @@ public class TripTimesSearchTest implements RaptorTestConstants {
         catch (IllegalStateException e) {
             assertTrue(
                     e.getMessage(),
-                    e.getMessage().contains("No stops matching 'fromStop'")
+                    e.getMessage().contains("No stops matching 'fromStop'.")
             );
         }
     }
