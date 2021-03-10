@@ -12,12 +12,9 @@ import java.util.stream.Stream;
 /**
  * Manages street spatial indexes by scope. When linking vertices, visibility is as follows:
  *
- * PERMANENT: Can only see the permanent index
- * REALTIME: Can only see the permanent index
- * REQUEST: Can see both the permanent and realtime indexes
- *
- * A request-scoped index is not needed, as we do not want request-scoped edges to be visible
- * when linking.
+ * PERMANENT: Looks at the permanent index and inserts into the permanent index
+ * REALTIME: Looks and the permanent index and inserts into the realtime index
+ * REQUEST: Looks at both the permanent and realtime indexes and does not insert into any index
  */
 class StreetSpatialIndex {
 
@@ -38,12 +35,14 @@ class StreetSpatialIndex {
     }
   }
 
-   boolean remove(Envelope envelope, final Object item, Scope scope) {
+  void remove(Envelope envelope, final Object item, Scope scope) {
     switch (scope) {
       case PERMANENT:
-        return permanentIndex.remove(envelope, item);
+        permanentIndex.remove(envelope, item);
+        return;
       case REALTIME:
-        return realTimeIndex.remove(envelope, item);
+        realTimeIndex.remove(envelope, item);
+        return;
       default:
         throw new IllegalArgumentException();
     }
