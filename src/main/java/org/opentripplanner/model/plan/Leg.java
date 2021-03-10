@@ -166,6 +166,8 @@ public class Leg {
 
    public Boolean rentedBike;
 
+   public Set<String> bikeRentalNetworks = new HashSet<>();
+
   /**
    * If a generalized cost is used in the routing algorithm, this should be the "delta" cost
    * computed by the algorithm for the section this leg account for. This is relevant for anyone
@@ -240,7 +242,11 @@ public class Leg {
     }
 
     public void addAlert(TransitAlert alert) {
-        transitAlerts.add(alert);
+      transitAlerts.add(alert);
+    }
+
+    public void addBikeRentalNetworks(Set<String> networks) {
+      bikeRentalNetworks.addAll(networks);
     }
 
     /**
@@ -316,6 +322,7 @@ public class Leg {
                 .addStr("boardRule", boardRule)
                 .addStr("alightRule", alightRule)
                 .addBool("rentedBike", rentedBike)
+                .addCol("bikeRentalNetworks", bikeRentalNetworks)
                 .toString();
     }
 }
