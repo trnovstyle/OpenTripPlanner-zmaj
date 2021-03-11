@@ -1,10 +1,14 @@
 /* This file is based on code copied from project OneBusAway, see the LICENSE file for further information. */
-package org.opentripplanner.model;
+package org.opentripplanner.model.transfers;
 
+import org.opentripplanner.model.Route;
+import org.opentripplanner.model.Stop;
+import org.opentripplanner.model.TransitEntity;
+import org.opentripplanner.model.Trip;
+
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
 
 public final class Transfer implements Serializable {
 
@@ -26,6 +30,8 @@ public final class Transfer implements Serializable {
 
     private final int minTransferTimeSeconds;
 
+    private final int specificityRanking;
+
     public Transfer(Transfer obj) {
         this.fromStop = obj.fromStop;
         this.fromRoute = obj.fromRoute;
@@ -35,6 +41,7 @@ public final class Transfer implements Serializable {
         this.toTrip = obj.toTrip;
         this.transferType = obj.transferType;
         this.minTransferTimeSeconds = obj.minTransferTimeSeconds;
+        this.specificityRanking = obj.specificityRanking;
     }
 
     public Transfer(
@@ -55,6 +62,13 @@ public final class Transfer implements Serializable {
         this.toTrip = toTrip;
         this.transferType = transferType;
         this.minTransferTimeSeconds = minTransferTimeSeconds;
+        this.specificityRanking = calcRanking(fromRoute, fromTrip) + calcRanking(toRoute, toTrip);
+    }
+
+    public boolean matches(Stop fromStop, Stop toStop, Trip fromTrip, Trip toTrip
+    ) {
+        return matches(fromStop, fromTrip, this.fromStop, this.fromRoute, this.fromTrip)
+            && matches(toStop, toTrip, this.toStop, this.toRoute, this.toTrip);
     }
 
     public Stop getFromStop() {
@@ -89,15 +103,48 @@ public final class Transfer implements Serializable {
         return minTransferTimeSeconds;
     }
 
+    public int getSpecificityRanking() {
+        return specificityRanking;
+    }
+
     public String toString() {
         return "<Transfer"
-                + toStrOpt(" stop=", fromStop, toStop)
-                + toStrOpt(" route=", fromRoute, toRoute)
-                + toStrOpt(" trip=", fromTrip, toTrip)
+                + toStrOpt(" stop", fromStop, toStop)
+                + toStrOpt(" route", fromRoute, toRoute)
+                + toStrOpt(" trip", fromTrip, toTrip)
                 + ">";
     }
 
     private static String toStrOpt(String lbl, TransitEntity arg1, TransitEntity arg2) {
-        return  (arg1 == null ? "" : (lbl + arg1.getId() + ".." + arg2.getId()));
+        if(arg1 == null && arg2 == null) { return ""; }
+        var buf = new StringBuilder(lbl).append("(");
+        if(arg1 != null) { buf.append(arg1.getId()); }
+        buf.append(" ~ ");
+        if(arg2 != null) { buf.append(arg2.getId()); }
+        return buf.append(")").toString();
+    }
+
+    private static int calcRanking(Route route, Trip trip) {
+        if(trip != null) { return 2; }
+        if(route != null) { return 1; }
+        return 0;
+    }
+
+    /**
+     * Do the given input (stop s, trip t) match the current Transfer (s0, r0, t0)
+     */
+    private static boolean matches(
+        @Nonnull Stop s, @Nonnull Trip t,
+        @Nonnull Stop s0, @Nullable Route r0, @Nullable Trip t0
+    ) {
+        if(s != s0) { return false; }
+
+        if(t0 != null) {
+            return t0 == t;
+        }
+        else if(r0 != null) {
+            return r0 == t.getRoute();
+        }
+        return true;
     }
 }

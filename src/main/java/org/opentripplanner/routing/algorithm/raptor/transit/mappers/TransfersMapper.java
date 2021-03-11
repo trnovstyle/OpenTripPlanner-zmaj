@@ -1,7 +1,7 @@
 package org.opentripplanner.routing.algorithm.raptor.transit.mappers;
 
 import com.google.common.collect.Multimap;
-import org.opentripplanner.model.SimpleTransfer;
+import org.opentripplanner.model.transfers.SimpleTransfer;
 import org.opentripplanner.model.Stop;
 import org.opentripplanner.model.StopLocation;
 import org.opentripplanner.routing.algorithm.raptor.transit.StopIndexForRaptor;

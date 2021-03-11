@@ -1,12 +1,12 @@
 package org.opentripplanner.netex.mapping;
 
 import org.junit.Test;
-import org.opentripplanner.model.TransferPriority;
+import org.opentripplanner.model.StopTransferPriority;
 import org.rutebanken.netex.model.InterchangeWeightingEnumeration;
 
 import static org.junit.Assert.*;
 
-public class TransferPriorityMapperTest {
+public class StopTransferPriorityMapperTest {
 
   @SuppressWarnings("ConstantConditions")
   @Test
@@ -15,19 +15,19 @@ public class TransferPriorityMapperTest {
     assertNull(TransferPriorityMapper.mapToDomain(null));
 
     assertEquals(
-        TransferPriority.DISCOURAGED,
+        StopTransferPriority.DISCOURAGED,
         TransferPriorityMapper.mapToDomain(InterchangeWeightingEnumeration.NO_INTERCHANGE)
     );
     assertEquals(
-        TransferPriority.ALLOWED,
+        StopTransferPriority.ALLOWED,
         TransferPriorityMapper.mapToDomain(InterchangeWeightingEnumeration.INTERCHANGE_ALLOWED)
     );
     assertEquals(
-        TransferPriority.PREFERRED,
+        StopTransferPriority.PREFERRED,
         TransferPriorityMapper.mapToDomain(InterchangeWeightingEnumeration.PREFERRED_INTERCHANGE)
     );
     assertEquals(
-        TransferPriority.RECOMMENDED,
+        StopTransferPriority.RECOMMENDED,
         TransferPriorityMapper.mapToDomain(InterchangeWeightingEnumeration.RECOMMENDED_INTERCHANGE)
     );
   }

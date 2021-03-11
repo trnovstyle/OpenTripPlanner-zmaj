@@ -15,7 +15,7 @@ import org.opentripplanner.model.ShapePoint;
 import org.opentripplanner.model.Station;
 import org.opentripplanner.model.Stop;
 import org.opentripplanner.model.StopTime;
-import org.opentripplanner.model.Transfer;
+import org.opentripplanner.model.transfers.Transfer;
 import org.opentripplanner.model.Trip;
 
 import java.io.IOException;
@@ -101,7 +101,7 @@ public class OtpTransitServiceImplTest {
         Collection<Transfer> transfers = subject.getAllTransfers();
 
         assertEquals(9, transfers.size());
-        assertEquals("<Transfer stop=Z:F..Z:E>", first(transfers).toString());
+        assertEquals("<Transfer stop(Z:F ~ Z:E)>", first(transfers).toString());
     }
 
     @Test

@@ -2,8 +2,8 @@ package org.opentripplanner.gtfs.mapping;
 
 import org.opentripplanner.model.Route;
 import org.opentripplanner.model.Stop;
-import org.opentripplanner.model.Transfer;
-import org.opentripplanner.model.TransferType;
+import org.opentripplanner.model.transfers.Transfer;
+import org.opentripplanner.model.transfers.TransferType;
 import org.opentripplanner.model.Trip;
 
 import java.util.ArrayList;
