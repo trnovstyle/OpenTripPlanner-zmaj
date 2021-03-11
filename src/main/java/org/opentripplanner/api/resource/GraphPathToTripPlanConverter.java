@@ -727,7 +727,14 @@ public abstract class GraphPathToTripPlanConverter {
                 if (leg.from != null && leg.from.stopId != null) {
                     addAlertPatchesToLeg(leg, departingStopConditions, getAlertsForStopAndRoute(graph, leg.from.stopId, leg.routeId), requestedLocale, leg.startTime.getTime(), leg.endTime.getTime());
                 }
-
+                if (leg.stop != null) {
+                    for (Place place : leg.stop) {
+                        if (place.stopId != null) {
+                            addAlertPatchesToLeg(leg, passingStopConditions, getAlertsForStopAndRoute(graph, place.stopId, leg.routeId),
+                                requestedLocale, place.arrival.getTime(), place.departure.getTime());
+                        }
+                    }
+                }
                 if (leg.to != null && leg.to.stopId != null) {
                     addAlertPatchesToLeg(leg, arrivingStopConditions, getAlertsForStopAndRoute(graph, leg.to.stopId, leg.routeId), requestedLocale, leg.startTime.getTime(), leg.endTime.getTime());
                 }
