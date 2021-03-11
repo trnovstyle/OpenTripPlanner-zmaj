@@ -4,6 +4,7 @@ package org.opentripplanner.routing.algorithm.prioritizedtransfers.services;
 import org.opentripplanner.routing.algorithm.raptor.transit.TransitLayer;
 import org.opentripplanner.transit.raptor.api.path.Path;
 import org.opentripplanner.transit.raptor.api.path.PathLeg;
+import org.opentripplanner.transit.raptor.api.transit.RaptorCostConverter;
 
 /**
  * This calculator uses the {@code minSafeTransferTime}(t0) and a inverse log function
@@ -163,8 +164,7 @@ public class OptimizeTransferCostCalculator {
       prev = next;
       next = next.nextLeg();
     }
-    // Use centi-seconds for better accuracy
-    return (int)Math.round(100.0 * cost);
+    return RaptorCostConverter.toRaptorCost(cost);
   }
 
 

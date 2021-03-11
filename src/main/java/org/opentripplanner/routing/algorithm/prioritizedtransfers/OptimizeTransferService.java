@@ -82,6 +82,7 @@ public class OptimizeTransferService<T extends RaptorTripSchedule> {
   /**
    * Initiate calculation.
    */
+  @SuppressWarnings("ConstantConditions")
   private void setup(Collection<Path<T>> paths) {
     if(transferCostCalculator != null) {
       transferCostCalculator.setMinSafeTransferTime(
