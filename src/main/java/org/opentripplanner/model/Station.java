@@ -13,7 +13,7 @@ import java.util.TimeZone;
 public class Station extends TransitEntity implements StopCollection {
 
   private static final long serialVersionUID = 1L;
-  public static final TransferPriority DEFAULT_COST_PRIORITY = TransferPriority.ALLOWED;
+  public static final StopTransferPriority DEFAULT_COST_PRIORITY = StopTransferPriority.ALLOWED;
 
   private final String name;
 
@@ -23,7 +23,7 @@ public class Station extends TransitEntity implements StopCollection {
 
   private final WgsCoordinate coordinate;
 
-  private final TransferPriority costPriority;
+  private final StopTransferPriority costPriority;
 
   /**
    * URL to a web page containing information about this particular station
@@ -42,7 +42,7 @@ public class Station extends TransitEntity implements StopCollection {
       String description,
       String url,
       TimeZone timezone,
-      TransferPriority costPriority
+      StopTransferPriority costPriority
   ) {
     super(id);
     this.name = name;
@@ -91,10 +91,10 @@ public class Station extends TransitEntity implements StopCollection {
    * adding adjusting the cost for all board-/alight- events in the routing search.
    * <p/>
    * To not interfere with request parameters this must be implemented in a neutral way. This mean
-   * that the {@link TransferPriority#ALLOWED} (witch is default) should a nett-effect of
+   * that the {@link StopTransferPriority#ALLOWED} (witch is default) should a nett-effect of
    * adding 0 - zero cost.
    */
-  public TransferPriority getCostPriority() {
+  public StopTransferPriority getCostPriority() {
     return costPriority;
   }
 

@@ -53,7 +53,7 @@ import org.opentripplanner.model.projectinfo.OtpProjectInfo;
 import org.opentripplanner.routing.algorithm.raptor.transit.TransitLayer;
 import org.opentripplanner.routing.algorithm.raptor.transit.mappers.TransitLayerUpdater;
 import org.opentripplanner.routing.bike_rental.BikeRentalStationService;
-import org.opentripplanner.routing.core.TransferTable;
+import org.opentripplanner.model.transfers.TransferService;
 import org.opentripplanner.routing.edgetype.EdgeWithCleanup;
 import org.opentripplanner.routing.edgetype.StreetEdge;
 import org.opentripplanner.routing.impl.DelegatingTransitAlertServiceImpl;
@@ -125,7 +125,7 @@ public class Graph implements Serializable {
 
     private final Map<Class<?>, Serializable> services = new HashMap<>();
 
-    private final TransferTable transferTable = new TransferTable();
+    private final TransferService transferService = new TransferService();
 
     private GraphBundle bundle;
 
@@ -524,8 +524,8 @@ public class Graph implements Serializable {
         return env;
     }
 
-    public TransferTable getTransferTable() {
-        return transferTable;
+    public TransferService getTransferService() {
+        return transferService;
     }
 
     // Infer the time period covered by the transit feed
