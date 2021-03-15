@@ -1187,11 +1187,9 @@ public class RoutingRequest implements Cloneable, Serializable {
      *               (Constructors with side effects on their parameters are a bad design).
      */
     public void setRoutingContext(Graph graph, Edge fromBackEdge, Vertex from, Vertex to) {
-        // normally you would want to tear down the routing context...
-        // but this method is mostly used in tests, and teardown interferes with testHalfEdges
-        // FIXME here, or in test, and/or in other places like TSP that use this method
-        // if (rctx != null)
-        // this.rctx.destroy();
+        if (rctx != null) {
+            this.rctx.destroy();
+        }
         this.rctx = new RoutingContext(this, graph, from, to);
         this.rctx.originBackEdge = fromBackEdge;
     }
@@ -1208,8 +1206,8 @@ public class RoutingRequest implements Cloneable, Serializable {
         // normally you would want to tear down the routing context...
         // but this method is mostly used in tests, and teardown interferes with testHalfEdges
         // FIXME here, or in test, and/or in other places like TSP that use this method
-        // if (rctx != null)
-        // this.rctx.destroy();
+        if (rctx != null)
+            this.rctx.destroy();
         this.rctx = new RoutingContext(this, graph, from, to);
         this.rctx.originBackEdge = fromBackEdge;
     }
