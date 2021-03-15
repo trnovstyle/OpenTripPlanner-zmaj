@@ -129,8 +129,8 @@ public final class Stop extends StationElement implements StopLocation {
    * [if parent exist] or return the default value.
    */
   @NotNull
-  public TransferPriority getCostPriority() {
-    return isPartOfStation() ? getParentStation().getCostPriority() : TransferPriority.ALLOWED;
+  public StopTransferPriority getCostPriority() {
+    return isPartOfStation() ? getParentStation().getCostPriority() : StopTransferPriority.ALLOWED;
   }
 
   public Collection<FareZone> getFareZones() {

@@ -1,7 +1,7 @@
 package org.opentripplanner.api.mapping;
 
 import org.opentripplanner.api.model.ApiTransfer;
-import org.opentripplanner.model.SimpleTransfer;
+import org.opentripplanner.model.transfers.SimpleTransfer;
 
 public class TransferMapper {
     /** Make a transfer from a simpletransfer edge from the graph. */

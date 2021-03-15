@@ -1,5 +1,6 @@
-package org.opentripplanner.model;
+package org.opentripplanner.model.transfers;
 
+import org.opentripplanner.model.StopLocation;
 import org.opentripplanner.routing.graph.Edge;
 
 import java.io.Serializable;
