@@ -75,7 +75,8 @@ public class ToStringBuilder {
     }
 
     public ToStringBuilder addFieldIfTrue(String name, Boolean value) {
-        return TRUE.equals(value) ? addFieldName(name) : this;
+        if(TRUE.equals(value)) { addLabel(name); }
+        return this;
     }
 
     public ToStringBuilder addStr(String name, String value) {
@@ -219,18 +220,20 @@ public class ToStringBuilder {
     }
 
     private ToStringBuilder addIt(String name, @NotNull String value) {
-        addFieldName(name);
-        sb.append(FIELD_VALUE_SEP);
-        sb.append(value);
+        addLabel(name);
+        addValue(value);
         return this;
     }
 
-    private ToStringBuilder addFieldName(String name) {
+    private void addLabel(String name) {
         if (first) { first = false; }
         else { sb.append(FIELD_SEPARATOR); }
-
         sb.append(name);
-        return this;
+    }
+
+    private void addValue(@NotNull String value) {
+        sb.append(FIELD_VALUE_SEP);
+        sb.append(value);
     }
 
     private String formatTime(Date time) {

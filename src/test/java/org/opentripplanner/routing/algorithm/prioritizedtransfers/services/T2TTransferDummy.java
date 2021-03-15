@@ -1,16 +1,15 @@
 package org.opentripplanner.routing.algorithm.prioritizedtransfers.services;
 
-import org.opentripplanner.routing.algorithm.prioritizedtransfers.model.StopTime;
-import org.opentripplanner.routing.algorithm.prioritizedtransfers.model.TripToTripTransfer;
-import org.opentripplanner.transit.raptor._data.transit.TestTripSchedule;
+import static org.opentripplanner.routing.algorithm.prioritizedtransfers.model.TripStopTime.arrival;
+import static org.opentripplanner.routing.algorithm.prioritizedtransfers.model.TripStopTime.departure;
+import static org.opentripplanner.transit.raptor._data.transit.TestTransfer.walk;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
-
-import static org.opentripplanner.routing.algorithm.prioritizedtransfers.model.TripStopTime.arrival;
-import static org.opentripplanner.routing.algorithm.prioritizedtransfers.model.TripStopTime.departure;
-import static org.opentripplanner.transit.raptor._data.transit.TestTransfer.walk;
+import org.opentripplanner.routing.algorithm.prioritizedtransfers.model.StopTime;
+import org.opentripplanner.routing.algorithm.prioritizedtransfers.model.TripToTripTransfer;
+import org.opentripplanner.transit.raptor._data.transit.TestTripSchedule;
 
 /**
  * Mock the TripToTripTransfersService
@@ -25,11 +24,10 @@ class T2TTransferDummy {
     return new TripToTripTransfersService<>(null, null) {
       @Override
       public List<TripToTripTransfer<TestTripSchedule>> findTransfers(
-          TestTripSchedule fromTrip, StopTime fromBoardStop, TestTripSchedule toTrip
+          TestTripSchedule fromTrip, StopTime fromTripDeparture, TestTripSchedule toTrip
       ) {
         return Arrays.stream(transfers)
-            .filter(tx -> tx.from().stop() == fromBoardStop.stop() && tx.from().trip().equals(fromTrip)
-                && tx.to().trip().equals(toTrip))
+            .filter(tx -> tx.from().trip().equals(fromTrip) && tx.to().trip().equals(toTrip))
             .collect(Collectors.toList());
       }
     };

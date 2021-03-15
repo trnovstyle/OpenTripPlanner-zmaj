@@ -1,11 +1,5 @@
 package org.opentripplanner.routing.algorithm.prioritizedtransfers.services;
 
-import org.junit.Test;
-import org.opentripplanner.transit.raptor._data.RaptorTestConstants;
-import org.opentripplanner.transit.raptor._data.api.PathBuilder;
-import org.opentripplanner.transit.raptor._data.transit.TestTripSchedule;
-import org.opentripplanner.transit.raptor.api.transit.RaptorSlackProvider;
-
 import static org.junit.Assert.assertEquals;
 import static org.opentripplanner.routing.algorithm.prioritizedtransfers.services.T2TTransferDummy.dummyT2TTransferService;
 import static org.opentripplanner.routing.algorithm.prioritizedtransfers.services.T2TTransferDummy.tx;
@@ -13,6 +7,12 @@ import static org.opentripplanner.routing.algorithm.prioritizedtransfers.service
 import static org.opentripplanner.transit.raptor._data.stoparrival.BasicPathTestCase.COST_CALCULATOR;
 import static org.opentripplanner.transit.raptor._data.transit.TestTripPattern.pattern;
 import static org.opentripplanner.util.time.TimeUtils.time;
+
+import org.junit.Test;
+import org.opentripplanner.transit.raptor._data.RaptorTestConstants;
+import org.opentripplanner.transit.raptor._data.api.PathBuilder;
+import org.opentripplanner.transit.raptor._data.transit.TestTripSchedule;
+import org.opentripplanner.transit.raptor.api.transit.RaptorSlackProvider;
 
 /**
  * The {@code TransfersPermutationService} is tested using a fixed set of trips/routes, but
@@ -130,6 +130,4 @@ public class TransfersPermutationServiceTest implements RaptorTestConstants {
     assertEquals(result.toString(), 1, result.size());
     assertEquals(original.toString(), result.get(0).toString());
   }
-
-
 }

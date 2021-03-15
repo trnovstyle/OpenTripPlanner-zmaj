@@ -1,5 +1,12 @@
 package org.opentripplanner.routing.algorithm.prioritizedtransfers.services;
 
+import static org.opentripplanner.transit.raptor.rangeraptor.transit.TripTimesSearch.findArrivalStopPosition;
+import static org.opentripplanner.transit.raptor.rangeraptor.transit.TripTimesSearch.findDepartureStopPosition;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
 import org.opentripplanner.routing.algorithm.prioritizedtransfers.model.StopTime;
 import org.opentripplanner.routing.algorithm.prioritizedtransfers.model.TripStopTime;
 import org.opentripplanner.routing.algorithm.prioritizedtransfers.model.TripToTripTransfer;
@@ -8,17 +15,9 @@ import org.opentripplanner.transit.raptor.api.transit.RaptorTransfer;
 import org.opentripplanner.transit.raptor.api.transit.RaptorTransitDataProvider;
 import org.opentripplanner.transit.raptor.api.transit.RaptorTripSchedule;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-
-import static org.opentripplanner.transit.raptor.rangeraptor.transit.TripTimesSearch.findArrivalStopPosition;
-import static org.opentripplanner.transit.raptor.rangeraptor.transit.TripTimesSearch.findDepartureStopPosition;
-
 
 /**
- *
+ * TODO TGR
  *
  * @param <T>
  */
@@ -41,19 +40,20 @@ public class TripToTripTransfersService<T extends RaptorTripSchedule> {
 
   public List<TripToTripTransfer<T>> findTransfers(
       T fromTrip,
-      StopTime fromBoardStop,
+      StopTime fromTripDeparture,
       T toTrip
   ) {
     this.fromTrip = fromTrip;
     this.toTrip = toTrip;
 
-    return findAllTransfers(fromBoardStop);
+    return findAllTransfers(fromTripDeparture);
   }
 
-  private List<TripToTripTransfer<T>> findAllTransfers(StopTime arrival) {
+  private List<TripToTripTransfer<T>> findAllTransfers(StopTime fromTripDeparture) {
+
     final List<TripToTripTransfer<T>> result = new ArrayList<>();
 
-    int stopPos = findArrivalStopPosition(fromTrip, arrival.time(), arrival.stop());
+    int stopPos = findArrivalStopPosition(fromTrip, fromTripDeparture.time(), fromTripDeparture.stop());
 
     while (stopPos < fromTrip.pattern().numberOfStopsInPattern()) {
       var from = TripStopTime.arrival(fromTrip, stopPos);
@@ -63,8 +63,6 @@ public class TripToTripTransfersService<T extends RaptorTripSchedule> {
       result.addAll(transferFromSameStop(from));
       result.addAll(findStandardTransfers(from));
 
-      // Block/no transfer T
-      // remove all S -> S transfers with specificity < T
       ++stopPos;
     }
     return result;
@@ -83,6 +81,7 @@ public class TripToTripTransfersService<T extends RaptorTripSchedule> {
       if(toTripStopPos < 0) { continue; }
 
       var to = TripStopTime.departure(toTrip, toStop, toTripStopPos);
+
       result.add(new TripToTripTransfer<T>(from, to, it));
     }
     return result;

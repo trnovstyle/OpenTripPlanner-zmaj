@@ -1,5 +1,15 @@
 package org.opentripplanner.routing.algorithm.raptor.path;
 
+import static org.opentripplanner.util.TableFormatter.Align.Center;
+import static org.opentripplanner.util.TableFormatter.Align.Left;
+import static org.opentripplanner.util.TableFormatter.Align.Right;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.List;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
 import org.opentripplanner.routing.util.DiffTool;
 import org.opentripplanner.transit.raptor.api.path.Path;
 import org.opentripplanner.transit.raptor.api.path.PathLeg;
@@ -8,17 +18,6 @@ import org.opentripplanner.util.CompositeComparator;
 import org.opentripplanner.util.TableFormatter;
 import org.opentripplanner.util.time.DurationUtils;
 import org.opentripplanner.util.time.TimeUtils;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.List;
-import java.util.function.Consumer;
-import java.util.stream.Collectors;
-
-import static org.opentripplanner.util.TableFormatter.Align.Center;
-import static org.opentripplanner.util.TableFormatter.Align.Left;
-import static org.opentripplanner.util.TableFormatter.Align.Right;
 
 
 /**
@@ -92,7 +91,7 @@ public class PathDiff<T extends RaptorTripSchedule> {
         it.path.toString()
       );
     }
-    logger.accept("\n" + tbl.toString());
+    logger.accept("Compare " + leftLabel + " with " + rightLabel + "\n" + tbl.toString());
   }
 
   public static <T extends RaptorTripSchedule> List<DiffTool.Entry<PathDiff<T>>> diff(

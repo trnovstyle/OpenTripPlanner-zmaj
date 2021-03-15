@@ -178,6 +178,13 @@ public final class Path<T extends RaptorTripSchedule> implements Comparable<Path
             .sum();
     }
 
+    /**
+     * Aggregated wait-time in seconds. This method compute the total wait time for this path.
+     */
+    public int waitTime() {
+        return travelDurationInSeconds() - transitDuration();
+    }
+
     public Stream<PathLeg<T>> legStream() {
         return accessLeg.stream();
     }

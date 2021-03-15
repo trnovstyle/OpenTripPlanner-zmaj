@@ -223,12 +223,12 @@ public class RoutingWorker {
 
         if(OTPFeature.OptimizeTransfers.isOn()) {
             paths = PrioritizedTransfersConfig.createOptimizeTransferService(
-                transitLayer,
+                transitLayer::getStopByIndex,
+                router.graph.getTransferService(),
                 requestTransitDataProvider,
                 raptorRequest,
                 true
             ).optimize(transitResponse.paths());
-            logPathDiff(paths, transitResponse.paths());
         }
 
         // Create itineraries
