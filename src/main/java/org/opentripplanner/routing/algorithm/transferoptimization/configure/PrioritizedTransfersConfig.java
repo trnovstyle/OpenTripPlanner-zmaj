@@ -1,14 +1,14 @@
-package org.opentripplanner.routing.algorithm.prioritizedtransfers.configure;
+package org.opentripplanner.routing.algorithm.transferoptimization.configure;
 
 import java.util.function.IntFunction;
 import org.opentripplanner.model.Stop;
 import org.opentripplanner.model.transfers.TransferService;
-import org.opentripplanner.routing.algorithm.prioritizedtransfers.OptimizeTransferService;
-import org.opentripplanner.routing.algorithm.prioritizedtransfers.services.MinSafeTransferTimeCalculator;
-import org.opentripplanner.routing.algorithm.prioritizedtransfers.services.OptimizeTransferCostCalculator;
-import org.opentripplanner.routing.algorithm.prioritizedtransfers.services.PriorityBasedTransfersCostCalculator;
-import org.opentripplanner.routing.algorithm.prioritizedtransfers.services.TransfersPermutationService;
-import org.opentripplanner.routing.algorithm.prioritizedtransfers.services.TripToTripTransfersService;
+import org.opentripplanner.routing.algorithm.transferoptimization.OptimizeTransferService;
+import org.opentripplanner.routing.algorithm.transferoptimization.services.MinSafeTransferTimeCalculator;
+import org.opentripplanner.routing.algorithm.transferoptimization.services.OptimizeTransferCostCalculator;
+import org.opentripplanner.routing.algorithm.transferoptimization.services.PriorityBasedTransfersCostCalculator;
+import org.opentripplanner.routing.algorithm.transferoptimization.services.TransfersPermutationService;
+import org.opentripplanner.routing.algorithm.transferoptimization.services.TripToTripTransfersService;
 import org.opentripplanner.transit.raptor.api.request.McCostParams;
 import org.opentripplanner.transit.raptor.api.request.RaptorRequest;
 import org.opentripplanner.transit.raptor.api.transit.CostCalculator;

@@ -1,4 +1,4 @@
-package org.opentripplanner.routing.algorithm.prioritizedtransfers.model;
+package org.opentripplanner.routing.algorithm.transferoptimization.model;
 
 /**
  * A Stop time represent an arrival-time or a departure-time at a given stop.

@@ -1,14 +1,14 @@
-package org.opentripplanner.routing.algorithm.prioritizedtransfers.services;
+package org.opentripplanner.routing.algorithm.transferoptimization.services;
 
-import static org.opentripplanner.routing.algorithm.prioritizedtransfers.model.TripStopTime.arrival;
-import static org.opentripplanner.routing.algorithm.prioritizedtransfers.model.TripStopTime.departure;
+import static org.opentripplanner.routing.algorithm.transferoptimization.model.TripStopTime.arrival;
+import static org.opentripplanner.routing.algorithm.transferoptimization.model.TripStopTime.departure;
 import static org.opentripplanner.transit.raptor._data.transit.TestTransfer.walk;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
-import org.opentripplanner.routing.algorithm.prioritizedtransfers.model.StopTime;
-import org.opentripplanner.routing.algorithm.prioritizedtransfers.model.TripToTripTransfer;
+import org.opentripplanner.routing.algorithm.transferoptimization.model.StopTime;
+import org.opentripplanner.routing.algorithm.transferoptimization.model.TripToTripTransfer;
 import org.opentripplanner.transit.raptor._data.transit.TestTripSchedule;
 
 /**

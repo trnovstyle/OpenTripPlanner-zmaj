@@ -1,4 +1,4 @@
-package org.opentripplanner.routing.algorithm.prioritizedtransfers.services;
+package org.opentripplanner.routing.algorithm.transferoptimization.services;
 
 import static org.opentripplanner.transit.raptor.rangeraptor.transit.TripTimesSearch.findArrivalStopPosition;
 import static org.opentripplanner.transit.raptor.rangeraptor.transit.TripTimesSearch.findDepartureStopPosition;
@@ -7,9 +7,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
-import org.opentripplanner.routing.algorithm.prioritizedtransfers.model.StopTime;
-import org.opentripplanner.routing.algorithm.prioritizedtransfers.model.TripStopTime;
-import org.opentripplanner.routing.algorithm.prioritizedtransfers.model.TripToTripTransfer;
+import org.opentripplanner.routing.algorithm.transferoptimization.model.StopTime;
+import org.opentripplanner.routing.algorithm.transferoptimization.model.TripStopTime;
+import org.opentripplanner.routing.algorithm.transferoptimization.model.TripToTripTransfer;
 import org.opentripplanner.transit.raptor.api.transit.RaptorSlackProvider;
 import org.opentripplanner.transit.raptor.api.transit.RaptorTransfer;
 import org.opentripplanner.transit.raptor.api.transit.RaptorTransitDataProvider;

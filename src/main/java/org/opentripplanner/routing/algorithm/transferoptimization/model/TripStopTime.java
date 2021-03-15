@@ -1,4 +1,4 @@
-package org.opentripplanner.routing.algorithm.prioritizedtransfers.model;
+package org.opentripplanner.routing.algorithm.transferoptimization.model;
 
 import static org.opentripplanner.transit.raptor.rangeraptor.transit.TripTimesSearch.findArrivalStopPosition;
 import static org.opentripplanner.transit.raptor.rangeraptor.transit.TripTimesSearch.findDepartureStopPosition;

@@ -1,4 +1,4 @@
-package org.opentripplanner.routing.algorithm.prioritizedtransfers.services;
+package org.opentripplanner.routing.algorithm.transferoptimization.services;
 
 import java.util.Collection;
 import java.util.List;

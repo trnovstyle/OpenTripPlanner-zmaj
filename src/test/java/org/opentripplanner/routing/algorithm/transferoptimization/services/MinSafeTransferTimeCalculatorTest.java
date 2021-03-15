@@ -1,4 +1,4 @@
-package org.opentripplanner.routing.algorithm.prioritizedtransfers.services;
+package org.opentripplanner.routing.algorithm.transferoptimization.services;
 
 import org.junit.Test;
 import org.opentripplanner.transit.raptor._data.RaptorTestConstants;

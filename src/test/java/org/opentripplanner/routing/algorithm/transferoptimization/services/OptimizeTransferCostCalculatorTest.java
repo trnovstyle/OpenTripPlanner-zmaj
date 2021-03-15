@@ -1,4 +1,4 @@
-package org.opentripplanner.routing.algorithm.prioritizedtransfers.services;
+package org.opentripplanner.routing.algorithm.transferoptimization.services;
 
 import static org.junit.Assert.assertEquals;
 import static org.opentripplanner.util.time.DurationUtils.duration;

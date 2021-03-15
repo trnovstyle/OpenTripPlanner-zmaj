@@ -1,4 +1,4 @@
-package org.opentripplanner.routing.algorithm.prioritizedtransfers.model;
+package org.opentripplanner.routing.algorithm.transferoptimization.model;
 
 import org.opentripplanner.model.base.ValueObjectToStringBuilder;
 

@@ -1,8 +1,8 @@
-package org.opentripplanner.routing.algorithm.prioritizedtransfers.services;
+package org.opentripplanner.routing.algorithm.transferoptimization.services;
 
-import org.opentripplanner.routing.algorithm.prioritizedtransfers.model.StopTime;
-import org.opentripplanner.routing.algorithm.prioritizedtransfers.model.TripStopTime;
-import org.opentripplanner.routing.algorithm.prioritizedtransfers.model.TripToTripTransfer;
+import org.opentripplanner.routing.algorithm.transferoptimization.model.StopTime;
+import org.opentripplanner.routing.algorithm.transferoptimization.model.TripStopTime;
+import org.opentripplanner.routing.algorithm.transferoptimization.model.TripToTripTransfer;
 import org.opentripplanner.transit.raptor.api.path.AccessPathLeg;
 import org.opentripplanner.transit.raptor.api.path.Path;
 import org.opentripplanner.transit.raptor.api.path.PathLeg;

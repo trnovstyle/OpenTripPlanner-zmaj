@@ -6,7 +6,7 @@ import org.opentripplanner.routing.algorithm.filterchain.ItineraryFilter;
 import org.opentripplanner.routing.algorithm.mapping.RaptorPathToItineraryMapper;
 import org.opentripplanner.routing.algorithm.mapping.RoutingRequestToFilterChainMapper;
 import org.opentripplanner.routing.algorithm.mapping.TripPlanMapper;
-import org.opentripplanner.routing.algorithm.prioritizedtransfers.configure.PrioritizedTransfersConfig;
+import org.opentripplanner.routing.algorithm.transferoptimization.configure.PrioritizedTransfersConfig;
 import org.opentripplanner.routing.algorithm.raptor.path.PathDiff;
 import org.opentripplanner.routing.algorithm.raptor.router.FilterTransitWhenDirectModeIsEmpty;
 import org.opentripplanner.routing.algorithm.raptor.router.street.AccessEgressRouter;

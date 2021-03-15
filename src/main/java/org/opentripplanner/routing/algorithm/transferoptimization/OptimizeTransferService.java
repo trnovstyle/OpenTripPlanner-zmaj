@@ -1,18 +1,17 @@
-package org.opentripplanner.routing.algorithm.prioritizedtransfers;
+package org.opentripplanner.routing.algorithm.transferoptimization;
 
-import static org.opentripplanner.routing.algorithm.prioritizedtransfers.services.TransferDiffDebug.debugDiffAfterPriorityFilter;
-import static org.opentripplanner.routing.algorithm.prioritizedtransfers.services.TransferDiffDebug.debugDiffAfterWaitTimeFilter;
-import static org.opentripplanner.routing.algorithm.prioritizedtransfers.services.TransferDiffDebug.debugDiffOriginalVsPermutations;
+import static org.opentripplanner.routing.algorithm.transferoptimization.services.TransferDiffDebug.debugDiffAfterPriorityFilter;
+import static org.opentripplanner.routing.algorithm.transferoptimization.services.TransferDiffDebug.debugDiffAfterWaitTimeFilter;
+import static org.opentripplanner.routing.algorithm.transferoptimization.services.TransferDiffDebug.debugDiffOriginalVsPermutations;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.function.ToIntFunction;
-import javax.annotation.Nullable;
-import org.opentripplanner.routing.algorithm.prioritizedtransfers.services.MinSafeTransferTimeCalculator;
-import org.opentripplanner.routing.algorithm.prioritizedtransfers.services.OptimizeTransferCostCalculator;
-import org.opentripplanner.routing.algorithm.prioritizedtransfers.services.PriorityBasedTransfersCostCalculator;
-import org.opentripplanner.routing.algorithm.prioritizedtransfers.services.TransfersPermutationService;
+import org.opentripplanner.routing.algorithm.transferoptimization.services.MinSafeTransferTimeCalculator;
+import org.opentripplanner.routing.algorithm.transferoptimization.services.OptimizeTransferCostCalculator;
+import org.opentripplanner.routing.algorithm.transferoptimization.services.PriorityBasedTransfersCostCalculator;
+import org.opentripplanner.routing.algorithm.transferoptimization.services.TransfersPermutationService;
 import org.opentripplanner.transit.raptor.api.path.Path;
 import org.opentripplanner.transit.raptor.api.path.TransitPathLeg;
 import org.opentripplanner.transit.raptor.api.transit.RaptorTripSchedule;
