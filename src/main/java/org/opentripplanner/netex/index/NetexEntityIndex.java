@@ -29,6 +29,7 @@ import org.rutebanken.netex.model.Operator;
 import org.rutebanken.netex.model.Quay;
 import org.rutebanken.netex.model.Route;
 import org.rutebanken.netex.model.ServiceJourney;
+import org.rutebanken.netex.model.ServiceJourneyInterchange;
 import org.rutebanken.netex.model.ServiceLink;
 import org.rutebanken.netex.model.StopPlace;
 import org.rutebanken.netex.model.TariffZone;
@@ -89,6 +90,7 @@ public class NetexEntityIndex {
     public final HierarchicalMap<String, String> quayIdByStopPointRef;
     public final HierarchicalMapById<Route> routeById;
     public final HierarchicalMapById<ServiceJourney> serviceJourneyById;
+    public final HierarchicalMapById<ServiceJourneyInterchange> serviceJourneyInterchangeById;
     public final HierarchicalMapById<ServiceLink> serviceLinkById;
     public final HierarchicalVersionMapById<StopPlace> stopPlaceById;
     public final HierarchicalMapById<TariffZone> tariffZonesById;
@@ -135,6 +137,7 @@ public class NetexEntityIndex {
         this.routeById = new HierarchicalMapById<>();
         this.serviceJourneyById = new HierarchicalMapById<>();
         this.serviceLinkById = new HierarchicalMapById<>();
+        this.serviceJourneyInterchangeById = new HierarchicalMapById<>();
         this.stopPlaceById = new HierarchicalVersionMapById<>();
         this.tariffZonesById = new HierarchicalMapById<>();
         this.timeZone = new HierarchicalElement<>();
@@ -171,6 +174,7 @@ public class NetexEntityIndex {
         this.routeById = new HierarchicalMapById<>(parent.routeById);
         this.serviceJourneyById = new HierarchicalMapById<>(parent.serviceJourneyById);
         this.serviceLinkById = new HierarchicalMapById<>(parent.serviceLinkById);
+        this.serviceJourneyInterchangeById = new HierarchicalMapById<>(parent.serviceJourneyInterchangeById);
         this.stopPlaceById = new HierarchicalVersionMapById<>(parent.stopPlaceById);
         this.tariffZonesById = new HierarchicalMapById<>(parent.tariffZonesById);
         this.timeZone = new HierarchicalElement<>(parent.timeZone);
@@ -322,6 +326,11 @@ public class NetexEntityIndex {
             @Override
             public ReadOnlyHierarchicalMapById<ServiceJourney> getServiceJourneyById() {
                 return serviceJourneyById;
+            }
+
+            @Override
+            public ReadOnlyHierarchicalMapById<ServiceJourneyInterchange> getServiceJourneyInterchangeById() {
+                return serviceJourneyInterchangeById;
             }
 
             @Override

@@ -15,6 +15,7 @@ import org.opentripplanner.model.TransitEntity;
 import org.opentripplanner.model.Trip;
 import org.opentripplanner.model.TripPattern;
 import org.opentripplanner.model.impl.OtpTransitServiceBuilder;
+import org.opentripplanner.model.transfers.Transfer;
 import org.opentripplanner.netex.index.api.NetexEntityIndexReadOnlyView;
 import org.opentripplanner.netex.mapping.calendar.CalendarServiceBuilder;
 import org.opentripplanner.netex.mapping.calendar.DatedServiceJourneyMapper;
@@ -27,6 +28,7 @@ import org.rutebanken.netex.model.GroupOfStopPlaces;
 import org.rutebanken.netex.model.JourneyPattern;
 import org.rutebanken.netex.model.Line;
 import org.rutebanken.netex.model.NoticeAssignment;
+import org.rutebanken.netex.model.ServiceJourneyInterchange;
 import org.rutebanken.netex.model.StopPlace;
 import org.rutebanken.netex.model.TariffZone;
 
@@ -143,6 +145,7 @@ public class NetexMapper {
 
         mapRoute(netexIndex);
         mapTripPatterns(serviceIds, netexIndex);
+        mapInterchanges(netexIndex);
         mapNoticeAssignments(netexIndex);
     }
 
@@ -311,6 +314,21 @@ public class NetexMapper {
                 transitBuilder.getTripPatterns().put(it.stopPattern, it);
             }
             stopTimesByNetexId.putAll(result.stopTimeByNetexId);
+        }
+    }
+
+    private void mapInterchanges(NetexEntityIndexReadOnlyView netexIndex) {
+        var mapper = new TransferMapper(
+            idFactory,
+            netexIndex.getQuayIdByStopPointRef(),
+            transitBuilder.getStops(),
+            transitBuilder.getTripsById()
+        );
+        for (ServiceJourneyInterchange it : netexIndex.getServiceJourneyInterchangeById().localValues()) {
+            Transfer result = mapper.mapToTransfer(it);
+            if(result != null) {
+                transitBuilder.getTransfers().add(result);
+            }
         }
     }
 

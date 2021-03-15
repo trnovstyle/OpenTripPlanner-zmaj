@@ -1,9 +1,9 @@
 package org.opentripplanner.routing.algorithm.prioritizedtransfers.services;
 
-import org.junit.Test;
-
 import static org.junit.Assert.assertEquals;
 import static org.opentripplanner.util.time.DurationUtils.duration;
+
+import org.junit.Test;
 
 public class OptimizeTransferCostCalculatorTest {
   private static final double EPSILON = 0.01;
@@ -36,7 +36,7 @@ public class OptimizeTransferCostCalculatorTest {
     double[] ns = { 1.0, 2.0, 10.0 };
 
     for (double n : ns) {
-      subject = new OptimizeTransferCostCalculator(n);
+      subject = new OptimizeTransferCostCalculator(1.0, n);
 
       for (int t0 : ts) {
         subject.setMinSafeTransferTime(t0);
@@ -50,7 +50,7 @@ public class OptimizeTransferCostCalculatorTest {
 
   @Test
   public void calculateTxCost_sample_A() {
-    subject = new OptimizeTransferCostCalculator(2.0);
+    subject = new OptimizeTransferCostCalculator(1.0, 2.0);
     subject.setMinSafeTransferTime(d2m);
 
     assertEquals(236.64, subject.calculateWaitCost(1), EPSILON);
@@ -64,7 +64,7 @@ public class OptimizeTransferCostCalculatorTest {
 
   @Test
   public void calculateTxCost_sample_B() {
-    subject = new OptimizeTransferCostCalculator(5.0);
+    subject = new OptimizeTransferCostCalculator(1.0, 5.0);
     subject.setMinSafeTransferTime(d10m);
 
     assertEquals(2966.07, subject.calculateWaitCost(1), EPSILON);
@@ -78,7 +78,7 @@ public class OptimizeTransferCostCalculatorTest {
 
   @Test(expected = IllegalStateException.class)
   public void calculateTxCostWithNoMinSafeTxTimeThrowsException() {
-    var subject = new OptimizeTransferCostCalculator(2.0);
+    var subject = new OptimizeTransferCostCalculator(1.0, 2.0);
     subject.calculateWaitCost(d20m);
   }
 }

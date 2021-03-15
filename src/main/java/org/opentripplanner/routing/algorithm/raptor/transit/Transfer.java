@@ -8,7 +8,7 @@ import java.util.Arrays;
 import java.util.List;
 
 public class Transfer {
-    private int toStop;
+    private final int toStop;
 
     private final int effectiveWalkDistanceMeters;
     private final int distanceIndependentTime;

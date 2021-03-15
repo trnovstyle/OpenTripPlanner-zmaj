@@ -71,6 +71,13 @@ public class ToStringBuilder {
         return addIfNotNull(name, value);
     }
 
+    public ToStringBuilder addBoolIfTrue(String name, Boolean value) {
+        if(value != null && value) {
+            addLabel(name);
+        }
+        return this;
+    }
+
     public ToStringBuilder addStr(String name, String value) {
         return addIfNotNull(name, value, v -> "'" + v + "'");
     }
@@ -187,12 +194,20 @@ public class ToStringBuilder {
     }
 
     private ToStringBuilder addIt(String name, @NotNull String value) {
+        addLabel(name);
+        addValue(value);
+        return this;
+    }
+
+    private void addLabel(String name) {
         if (first) { first = false; }
         else { sb.append(FIELD_SEPARATOR); }
+        sb.append(name);
+    }
 
-        sb.append(name).append(FIELD_VALUE_SEP);
+    private void addValue(@NotNull String value) {
+        sb.append(FIELD_VALUE_SEP);
         sb.append(value);
-        return this;
     }
 
     private String formatTime(Date time) {

@@ -1,12 +1,11 @@
 package org.opentripplanner.routing.algorithm.prioritizedtransfers.model;
 
-import org.opentripplanner.model.base.ValueObjectToStringBuilder;
-import org.opentripplanner.transit.raptor.api.transit.RaptorTripSchedule;
-
-import java.util.Objects;
-
 import static org.opentripplanner.transit.raptor.rangeraptor.transit.TripTimesSearch.findArrivalStopPosition;
 import static org.opentripplanner.transit.raptor.rangeraptor.transit.TripTimesSearch.findDepartureStopPosition;
+
+import java.util.Objects;
+import org.opentripplanner.model.base.ValueObjectToStringBuilder;
+import org.opentripplanner.transit.raptor.api.transit.RaptorTripSchedule;
 
 public final class TripStopTime<T extends RaptorTripSchedule> implements StopTime {
   private final T trip;
@@ -70,10 +69,13 @@ public final class TripStopTime<T extends RaptorTripSchedule> implements StopTim
   @Override
   public String toString() {
     return ValueObjectToStringBuilder.of()
-        .addLbl("Stop ")
+        .addLbl("[")
         .addNum(stop())
-        .addLbl(" @ ")
+        .addLbl(" ")
         .addServiceTime(time())
+        .addLbl(" ")
+        .addObj(trip.pattern().debugInfo())
+        .addLbl("]")
         .toString();
   }
 

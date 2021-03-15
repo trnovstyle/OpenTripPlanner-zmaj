@@ -80,9 +80,9 @@ public class TransfersPermutationService<T extends RaptorTripSchedule> {
         );
       }
 
-      StopTime to = StopTime.stopTime(leg.toStop(), leg.toTime());
+      StopTime fromDeparture = StopTime.stopTime(leg.fromStop(), leg.fromTime());
       List<TripToTripTransfer<T>> transfers = t2tService.findTransfers(
-          leg.trip(), to, nxtLeg.trip()
+          leg.trip(), fromDeparture, nxtLeg.trip()
       );
 
       if(transfers.isEmpty()) { return List.of(); }

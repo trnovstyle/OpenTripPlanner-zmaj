@@ -1,7 +1,6 @@
 package org.opentripplanner.routing.algorithm.prioritizedtransfers.services;
 
 
-import org.opentripplanner.routing.algorithm.raptor.transit.TransitLayer;
 import org.opentripplanner.transit.raptor.api.path.Path;
 import org.opentripplanner.transit.raptor.api.path.PathLeg;
 import org.opentripplanner.transit.raptor.api.transit.RaptorCostConverter;
@@ -120,8 +119,8 @@ import org.opentripplanner.transit.raptor.api.transit.RaptorCostConverter;
 public class OptimizeTransferCostCalculator {
   private int t0 = -1;
   private final double n;
+  private final double legacyWaitReluctance;
   private double a = Double.NaN;
-  public TransitLayer transitLayer;
 
 
   /**
@@ -132,7 +131,8 @@ public class OptimizeTransferCostCalculator {
    *
    * Default value is 4.
    */
-  public OptimizeTransferCostCalculator(double n) {
+  public OptimizeTransferCostCalculator(double legacyWaitReluctance, double n) {
+    this.legacyWaitReluctance = legacyWaitReluctance;
     this.n = n;
   }
 
@@ -142,7 +142,10 @@ public class OptimizeTransferCostCalculator {
   }
 
   public int cost(Path<?> path) {
-    double cost = 0.0;
+    // We use the path generalized-cost as a starting point minus the cost of waiting.
+    // We want to maximize the waiting, but balance it toward walking and time spent on-board.
+    double cost = path.generalizedCost() - path.waitTime() * (1 + legacyWaitReluctance);
+
     PathLeg<?> prev = path.accessLeg().nextLeg();
     PathLeg<?> next = prev.nextLeg();
 

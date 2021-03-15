@@ -1,16 +1,16 @@
 /* This file is based on code copied from project OneBusAway, see the LICENSE file for further information. */
 package org.opentripplanner.model.transfers;
 
-import org.opentripplanner.model.Route;
-import org.opentripplanner.model.Stop;
-import org.opentripplanner.model.TransitEntity;
-import org.opentripplanner.model.Trip;
-
+import java.io.Serializable;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.io.Serializable;
+import org.opentripplanner.model.Route;
+import org.opentripplanner.model.Stop;
+import org.opentripplanner.model.Trip;
+import org.opentripplanner.model.base.ToStringBuilder;
 
 public final class Transfer implements Serializable {
+    private static final int NOT_SET = -1;
 
     private static final long serialVersionUID = 1L;
 
@@ -26,7 +26,11 @@ public final class Transfer implements Serializable {
 
     private final Trip toTrip;
 
-    private final TransferType transferType;
+    private final TransferPriority priority;
+
+    private final boolean staySeated;
+
+    private final boolean guaranteed;
 
     private final int minTransferTimeSeconds;
 
@@ -39,7 +43,9 @@ public final class Transfer implements Serializable {
         this.toStop = obj.toStop;
         this.toRoute = obj.toRoute;
         this.toTrip = obj.toTrip;
-        this.transferType = obj.transferType;
+        this.staySeated = obj.staySeated;
+        this.guaranteed = obj.guaranteed;
+        this.priority = obj.priority;
         this.minTransferTimeSeconds = obj.minTransferTimeSeconds;
         this.specificityRanking = obj.specificityRanking;
     }
@@ -51,7 +57,9 @@ public final class Transfer implements Serializable {
             Route toRoute,
             Trip fromTrip,
             Trip toTrip,
-            TransferType transferType,
+            boolean staySeated,
+            boolean guaranteed,
+            TransferPriority priority,
             int minTransferTimeSeconds
     ) {
         this.fromStop = fromStop;
@@ -60,9 +68,32 @@ public final class Transfer implements Serializable {
         this.toRoute = toRoute;
         this.fromTrip = fromTrip;
         this.toTrip = toTrip;
-        this.transferType = transferType;
+        this.staySeated = staySeated;
+        this.guaranteed = guaranteed;
+        this.priority = priority;
         this.minTransferTimeSeconds = minTransferTimeSeconds;
-        this.specificityRanking = calcRanking(fromRoute, fromTrip) + calcRanking(toRoute, toTrip);
+        this.specificityRanking = calcSpecificityRanking(fromRoute, fromTrip)
+            + calcSpecificityRanking(toRoute, toTrip);
+    }
+
+    public Transfer(
+        Stop fromStop,
+        Stop toStop,
+        Trip fromTrip,
+        Trip toTrip,
+        boolean staySeated,
+        boolean guaranteed,
+        TransferPriority priority
+    ) {
+        this(
+            fromStop, toStop,
+            null, null,
+            fromTrip, toTrip,
+            staySeated,
+            guaranteed,
+            priority,
+            NOT_SET
+        );
     }
 
     public boolean matches(Stop fromStop, Stop toStop, Trip fromTrip, Trip toTrip
@@ -95,36 +126,41 @@ public final class Transfer implements Serializable {
         return toTrip;
     }
 
-    public TransferType getTransferType() {
-        return transferType;
+    public TransferPriority getPriority() {
+        return priority;
+    }
+
+    public boolean isStaySeated() {
+        return staySeated;
+    }
+
+    public boolean isGuaranteed() {
+        return guaranteed;
     }
 
     public int getMinTransferTimeSeconds() {
         return minTransferTimeSeconds;
     }
 
+    /**
+     * <a href="https://developers.google.com/transit/gtfs/reference/gtfs-extensions#specificity-of-a-transfer">
+     *   Specificity of a transfer
+     * </a>
+     */
     public int getSpecificityRanking() {
         return specificityRanking;
     }
 
     public String toString() {
-        return "<Transfer"
-                + toStrOpt(" stop", fromStop, toStop)
-                + toStrOpt(" route", fromRoute, toRoute)
-                + toStrOpt(" trip", fromTrip, toTrip)
-                + ">";
+        return ToStringBuilder.of(Transfer.class)
+            .addObj("from", toString(fromStop, fromTrip, fromRoute))
+            .addObj("to", toString(toStop, toTrip, toRoute))
+            .addBoolIfTrue("staySeated", staySeated)
+            .addBoolIfTrue("guaranteed", guaranteed)
+            .toString();
     }
 
-    private static String toStrOpt(String lbl, TransitEntity arg1, TransitEntity arg2) {
-        if(arg1 == null && arg2 == null) { return ""; }
-        var buf = new StringBuilder(lbl).append("(");
-        if(arg1 != null) { buf.append(arg1.getId()); }
-        buf.append(" ~ ");
-        if(arg2 != null) { buf.append(arg2.getId()); }
-        return buf.append(")").toString();
-    }
-
-    private static int calcRanking(Route route, Trip trip) {
+    private static int calcSpecificityRanking(Route route, Trip trip) {
         if(trip != null) { return 2; }
         if(route != null) { return 1; }
         return 0;
@@ -146,5 +182,10 @@ public final class Transfer implements Serializable {
             return r0 == t.getRoute();
         }
         return true;
+    }
+
+    private String toString(Stop stop, Trip trip, Route route) {
+        var t = trip == null ? route : trip;
+        return t == null ? stop.toString() : "(" + stop + ", " + t + ")";
     }
 }

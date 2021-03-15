@@ -20,7 +20,7 @@ public class TransferService implements Serializable {
      */
     protected Multimap<P2<Stop>, Transfer> table = ArrayListMultimap.create();
 
-    private Transfer findTransfer(Stop fromStop, Stop toStop, Trip fromTrip, Trip toTrip) {
+    public Transfer findTransfer(Stop fromStop, Stop toStop, Trip fromTrip, Trip toTrip) {
         Collection<Transfer> transfers = table.get(new P2<>(fromStop, toStop));
         Transfer bestTransfer = null;
         int bestRank = -1;

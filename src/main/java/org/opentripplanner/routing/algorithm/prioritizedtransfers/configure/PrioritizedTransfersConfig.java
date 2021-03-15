@@ -1,10 +1,14 @@
 package org.opentripplanner.routing.algorithm.prioritizedtransfers.configure;
 
+import java.util.function.IntFunction;
+import org.opentripplanner.model.Stop;
+import org.opentripplanner.model.transfers.TransferService;
 import org.opentripplanner.routing.algorithm.prioritizedtransfers.OptimizeTransferService;
 import org.opentripplanner.routing.algorithm.prioritizedtransfers.services.MinSafeTransferTimeCalculator;
+import org.opentripplanner.routing.algorithm.prioritizedtransfers.services.OptimizeTransferCostCalculator;
+import org.opentripplanner.routing.algorithm.prioritizedtransfers.services.PriorityBasedTransfersCostCalculator;
 import org.opentripplanner.routing.algorithm.prioritizedtransfers.services.TransfersPermutationService;
 import org.opentripplanner.routing.algorithm.prioritizedtransfers.services.TripToTripTransfersService;
-import org.opentripplanner.routing.algorithm.raptor.transit.TransitLayer;
 import org.opentripplanner.transit.raptor.api.request.McCostParams;
 import org.opentripplanner.transit.raptor.api.request.RaptorRequest;
 import org.opentripplanner.transit.raptor.api.transit.CostCalculator;
@@ -16,18 +20,21 @@ import org.opentripplanner.transit.raptor.api.transit.RaptorTripSchedule;
  * Responsible for assembly of the prioritized-transfer services.
  */
 public class PrioritizedTransfersConfig<T extends RaptorTripSchedule> {
-  private final TransitLayer transitLayer;
+  private final IntFunction<Stop> stopLookup;
+  private final TransferService transferService;
   private final RaptorTransitDataProvider<T> transitDataProvider;
   private final RaptorRequest<T> raptorRequest;
   private final boolean optimizeWaitingTime;
 
   public PrioritizedTransfersConfig(
-      TransitLayer transitLayer,
+      IntFunction<Stop> stopLookup,
+      TransferService transferService,
       RaptorTransitDataProvider<T> transitDataProvider,
       RaptorRequest<T> raptorRequest,
       boolean optimizeWaitingTime
   ) {
-    this.transitLayer = transitLayer;
+    this.stopLookup = stopLookup;
+    this.transferService = transferService;
     this.transitDataProvider = transitDataProvider;
     this.raptorRequest = raptorRequest;
     this.optimizeWaitingTime = optimizeWaitingTime;
@@ -37,13 +44,15 @@ public class PrioritizedTransfersConfig<T extends RaptorTripSchedule> {
    * Scope: Request
    */
   public static <T extends RaptorTripSchedule> OptimizeTransferService<T> createOptimizeTransferService(
-      TransitLayer transitLayer,
+      IntFunction<Stop> stopLookup,
+      TransferService transferService,
       RaptorTransitDataProvider<T> transitDataProvider,
       RaptorRequest<T> raptorRequest,
       boolean optimizeWaitingTime
   ) {
     return new PrioritizedTransfersConfig<>(
-        transitLayer,
+        stopLookup,
+        transferService,
         transitDataProvider,
         raptorRequest,
         optimizeWaitingTime
@@ -59,11 +68,35 @@ public class PrioritizedTransfersConfig<T extends RaptorTripSchedule> {
         costCalculator
     );
 
-    return new OptimizeTransferService<T>(
-        transitLayer,
-        transfersPermutationService,
-        createMinSafeTxTimeService(),
-        optimizeWaitingTime
+    var priorityCostCalculator = priorityCostCalculator();
+
+    if(optimizeWaitingTime) {
+      return new OptimizeTransferService<>(
+          transfersPermutationService,
+          priorityCostCalculator,
+          createMinSafeTxTimeService(),
+          createOptimizeTransferCostCalculator()
+      );
+    }
+    else {
+      return new OptimizeTransferService<>(
+          transfersPermutationService,
+          priorityCostCalculator
+      );
+    }
+  }
+
+  private PriorityBasedTransfersCostCalculator<T> priorityCostCalculator() {
+    return new PriorityBasedTransfersCostCalculator<>(
+         stopLookup, transferService
+    );
+  }
+
+
+  private OptimizeTransferCostCalculator createOptimizeTransferCostCalculator() {
+    return new OptimizeTransferCostCalculator(
+        raptorRequest.multiCriteriaCostFactors().waitReluctanceFactor(),
+        4.0
     );
   }
 
