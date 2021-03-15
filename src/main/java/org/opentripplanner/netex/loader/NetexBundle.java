@@ -10,7 +10,7 @@ import java.io.IOException;
 
 public class NetexBundle implements Closeable {
 
-    private final static double MAX_STOP_TO_SHAPE_SNAP_DISTANCE = 150;
+    private final static double MAX_STOP_TO_SHAPE_SNAP_DISTANCE = 500;
 
     private final CompositeDataSource source;
 

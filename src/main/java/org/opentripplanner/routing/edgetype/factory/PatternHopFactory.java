@@ -608,6 +608,7 @@ public class PatternHopFactory {
         List<LinearLocation> locations = getStopLocations(possibleSegmentsForStop, stopTimes, 0, -1);
 
         if (locations == null) {
+            LOG.error("Could not find any nearby locations. Falling back to stop-to-stop geometry.");
             // this only happens on shape which have points very far from
             // their stop sequence. So we'll fall back to trivial stop-to-stop
             // linking, even though theoretically we could do better.
