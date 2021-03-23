@@ -1,4 +1,4 @@
-package org.opentripplanner.model.transfers;
+package org.opentripplanner.model.transfer;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -14,7 +14,6 @@ import org.opentripplanner.model.Stop;
 import org.opentripplanner.model.Trip;
 
 public class TransferTest {
-  private static final int MIN_TX_TIME = -1;
 
   private final Stop STOP_A = Stop.stopForTest("A", 60.0, 11.0);
   private final Stop STOP_B = Stop.stopForTest("B", 60.0, 11.0);
@@ -137,6 +136,15 @@ public class TransferTest {
   }
   
   private static Transfer transfer(Stop frStop, Stop toStop, Route frRoute, Route toRoute, Trip frTrip, Trip toTrip) {
-    return new Transfer(frStop, toStop, frRoute, toRoute, frTrip, toTrip, false, false, TransferPriority.ALLOWED, MIN_TX_TIME);
+    var from = point(frStop, frRoute, frTrip);
+    var to = point(toStop, toRoute, toTrip);
+
+    return new Transfer(from, to, TransferPriority.ALLOWED, false, false);
+  }
+
+  private static TransferPoint point(Stop s, Route r, Trip t) {
+    if(r == null && t == null) { return new StopTransferPoint(s); }
+    if(r == null) { return new TripTransferPoint(t, 1); }
+    else { return new RouteTransferPoint(r, t, 1); }
   }
 }

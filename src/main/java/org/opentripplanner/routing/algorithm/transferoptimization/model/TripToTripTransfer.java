@@ -1,11 +1,11 @@
 package org.opentripplanner.routing.algorithm.transferoptimization.model;
 
+import javax.annotation.Nullable;
 import org.opentripplanner.transit.raptor.api.transit.RaptorTransfer;
 import org.opentripplanner.transit.raptor.api.transit.RaptorTripSchedule;
 
-import javax.annotation.Nullable;
-
 public class TripToTripTransfer<T extends RaptorTripSchedule> {
+
   private final TripStopTime<T> from;
   private final TripStopTime<T> to;
   private final RaptorTransfer transfer;
@@ -32,13 +32,13 @@ public class TripToTripTransfer<T extends RaptorTripSchedule> {
     return sameStop() ? 0 : transfer.durationInSeconds();
   }
 
+  public boolean sameStop() {
+    return from.stop() == to.stop();
+  }
+
   @Nullable
   public RaptorTransfer getTransfer() {
     return transfer;
-  }
-
-  public boolean sameStop() {
-    return from.stop() == to.stop();
   }
 
 }

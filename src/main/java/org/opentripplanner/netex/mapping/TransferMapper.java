@@ -7,8 +7,9 @@ import org.opentripplanner.model.FeedScopedId;
 import org.opentripplanner.model.Stop;
 import org.opentripplanner.model.Trip;
 import org.opentripplanner.model.impl.EntityById;
-import org.opentripplanner.model.transfers.Transfer;
-import org.opentripplanner.model.transfers.TransferPriority;
+import org.opentripplanner.model.transfer.Transfer;
+import org.opentripplanner.model.transfer.TransferPriority;
+import org.opentripplanner.model.transfer.TripTransferPoint;
 import org.opentripplanner.netex.index.api.ReadOnlyHierarchicalMap;
 import org.opentripplanner.netex.mapping.support.FeedScopedIdFactory;
 import org.rutebanken.netex.model.ScheduledStopPointRefStructure;
@@ -55,22 +56,25 @@ public class TransferMapper {
   public Transfer mapToTransfer(ServiceJourneyInterchange it) {
     try {
       var id = it.getId();
-      var fromStop = findStop("fromPointRef", id, it.getFromPointRef());
-      var toStop = findStop("toPointRef", id, it.getToPointRef());
       var fromTrip = findTrip("fromJourneyRef", id, it.getFromJourneyRef());
+      int fromStopPos = findStopPosition("fromPointRef", id, it.getFromPointRef());
       var toTrip = findTrip("toJourneyRef", id, it.getToJourneyRef());
+      int toStopPos = findStopPosition("toPointRef", id, it.getToPointRef());
       var staySeated = isTrue(it.isStaySeated());
       var guaranteed = isTrue(it.isGuaranteed());
       var priority = mapPriority(it.getPriority());
 
-      return new Transfer(fromStop, toStop, fromTrip, toTrip, staySeated, guaranteed, priority);
+      var from = new TripTransferPoint(fromTrip, fromStopPos);
+      var to = new TripTransferPoint(fromTrip, fromStopPos);
+
+      return new Transfer(from, to, priority, staySeated, guaranteed);
     }
     catch (ExitMappingException e) {
       return null;
     }
   }
 
-  private Stop findStop(String fieldName, String rootId, ScheduledStopPointRefStructure ref) {
+  private int findStopPosition(String fieldName, String rootId, ScheduledStopPointRefStructure ref) {
     var quayId =  quayIdByStopPointRef.lookup(ref.getRef());
     assertRefExist("quayId", fieldName, rootId, ref.getRef(), quayId);
     var stopId = createId(fieldName, rootId, quayId);

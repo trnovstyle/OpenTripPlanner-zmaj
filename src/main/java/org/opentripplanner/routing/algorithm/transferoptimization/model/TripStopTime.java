@@ -1,8 +1,5 @@
 package org.opentripplanner.routing.algorithm.transferoptimization.model;
 
-import static org.opentripplanner.transit.raptor.rangeraptor.transit.TripTimesSearch.findArrivalStopPosition;
-import static org.opentripplanner.transit.raptor.rangeraptor.transit.TripTimesSearch.findDepartureStopPosition;
-
 import java.util.Objects;
 import org.opentripplanner.model.base.ValueObjectToStringBuilder;
 import org.opentripplanner.transit.raptor.api.transit.RaptorTripSchedule;
@@ -12,42 +9,29 @@ public final class TripStopTime<T extends RaptorTripSchedule> implements StopTim
   private final int stopPosition;
   private final boolean departure;
 
-  private TripStopTime(T trip, int stop, int stopPosition, boolean departure) {
+  private TripStopTime(T trip, int stopPosition, boolean departure) {
     this.trip = trip;
     this.stopPosition = stopPosition;
     this.departure = departure;
   }
 
-  public static <T extends RaptorTripSchedule> TripStopTime<T> arrival(
-      T trip, int stopPosition
-  ) {
-    return new TripStopTime<>(trip, trip.pattern().stopIndex(stopPosition), stopPosition, false);
+  public static <T extends RaptorTripSchedule> TripStopTime<T> arrival(T trip, int stopPosition) {
+    return new TripStopTime<>(trip, stopPosition, false);
   }
 
-  public static <T extends RaptorTripSchedule> TripStopTime<T> departure(
-      T trip, int stop, int stopPosition
-  ) {
-    return new TripStopTime<>(trip, stop, stopPosition, true);
+  public static <T extends RaptorTripSchedule> TripStopTime<T> arrival(T trip, StopTime stopTime) {
+    int stopPosition = trip.findArrivalStopPosition(stopTime.time(), stopTime.stop());
+    return arrival(trip, stopPosition);
+  }
+
+  public static <T extends RaptorTripSchedule> TripStopTime<T> departure(T trip, int stopPosition) {
+    return new TripStopTime<>(trip, stopPosition, true);
   }
 
   public static <T extends RaptorTripSchedule> TripStopTime<T> departure(T trip, StopTime stopTime) {
-    int stopPosition = findDepartureStopPosition(trip, stopTime.time(), stopTime.stop());
-    return departure(trip, stopTime.stop(), stopPosition);
+    int stopPosition = trip.findDepartureStopPosition(stopTime.time(), stopTime.stop());
+    return departure(trip, stopPosition);
   }
-
-  public static <T extends RaptorTripSchedule> TripStopTime<T> arrival(
-      T trip, int stop, int stopPosition
-  ) {
-    return new TripStopTime<>(trip, stop, stopPosition, false);
-  }
-
-  public static <T extends RaptorTripSchedule> TripStopTime<T> arrival(
-      T trip, StopTime stopTime
-  ) {
-    int stopPosition = findArrivalStopPosition(trip, stopTime.time(), stopTime.stop());
-    return arrival(trip, stopTime.stop(), stopPosition);
-  }
-
 
   public T trip() {
     return trip;

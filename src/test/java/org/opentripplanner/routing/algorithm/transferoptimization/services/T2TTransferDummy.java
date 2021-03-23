@@ -41,8 +41,8 @@ class T2TTransferDummy {
       int walk
   ) {
     return new TripToTripTransfer<>(
-        arrival(fromTrip, fromStop, fromTrip.pattern().firstStopPosition(fromStop)),
-        departure(toTrip, toStop, toTrip.pattern().firstStopPosition(toStop)),
+        arrival(fromTrip, fromTrip.pattern().findStopPositionAfter(0, fromStop)),
+        departure(toTrip, toTrip.pattern().findStopPositionAfter(0, toStop)),
         fromStop == toStop ? null : walk(toStop, walk)
     );
   }

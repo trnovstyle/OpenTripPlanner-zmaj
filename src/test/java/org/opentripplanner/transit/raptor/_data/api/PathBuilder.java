@@ -58,8 +58,8 @@ public class PathBuilder {
 
   public PathBuilder bus(TestTripSchedule trip, int toStop) {
     int fromStop = prev().toStop;
-    int fromTime = trip.departure(trip.pattern().firstStopPosition(fromStop));
-    int toTime = trip.arrival(trip.pattern().firstStopPosition(toStop));
+    int fromTime = trip.departure(0, fromStop);
+    int toTime = trip.arrival(0, toStop);
 
     int waitTime = currentTransitWaitTime(fromTime);
 

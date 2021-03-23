@@ -2,8 +2,9 @@ package org.opentripplanner.routing.algorithm.transferoptimization.configure;
 
 import java.util.function.IntFunction;
 import org.opentripplanner.model.Stop;
-import org.opentripplanner.model.transfers.TransferService;
+import org.opentripplanner.model.transfer.TransferService;
 import org.opentripplanner.routing.algorithm.transferoptimization.OptimizeTransferService;
+import org.opentripplanner.routing.algorithm.transferoptimization.api.TransferOptimizationParameters;
 import org.opentripplanner.routing.algorithm.transferoptimization.services.MinSafeTransferTimeCalculator;
 import org.opentripplanner.routing.algorithm.transferoptimization.services.OptimizeTransferCostCalculator;
 import org.opentripplanner.routing.algorithm.transferoptimization.services.PriorityBasedTransfersCostCalculator;
@@ -19,25 +20,26 @@ import org.opentripplanner.transit.raptor.api.transit.RaptorTripSchedule;
 /**
  * Responsible for assembly of the prioritized-transfer services.
  */
-public class PrioritizedTransfersConfig<T extends RaptorTripSchedule> {
+public class TransferOptimizationServiceConfigurator<T extends RaptorTripSchedule> {
   private final IntFunction<Stop> stopLookup;
   private final TransferService transferService;
   private final RaptorTransitDataProvider<T> transitDataProvider;
   private final RaptorRequest<T> raptorRequest;
-  private final boolean optimizeWaitingTime;
+  private final TransferOptimizationParameters config;
 
-  public PrioritizedTransfersConfig(
+
+  public TransferOptimizationServiceConfigurator(
       IntFunction<Stop> stopLookup,
       TransferService transferService,
       RaptorTransitDataProvider<T> transitDataProvider,
       RaptorRequest<T> raptorRequest,
-      boolean optimizeWaitingTime
+      TransferOptimizationParameters config
   ) {
     this.stopLookup = stopLookup;
     this.transferService = transferService;
     this.transitDataProvider = transitDataProvider;
     this.raptorRequest = raptorRequest;
-    this.optimizeWaitingTime = optimizeWaitingTime;
+    this.config = config;
   }
 
   /**
@@ -48,14 +50,14 @@ public class PrioritizedTransfersConfig<T extends RaptorTripSchedule> {
       TransferService transferService,
       RaptorTransitDataProvider<T> transitDataProvider,
       RaptorRequest<T> raptorRequest,
-      boolean optimizeWaitingTime
+      TransferOptimizationParameters config
   ) {
-    return new PrioritizedTransfersConfig<>(
+    return new TransferOptimizationServiceConfigurator<T>(
         stopLookup,
         transferService,
         transitDataProvider,
         raptorRequest,
-        optimizeWaitingTime
+        config
     ).createOptimizeTransferService();
   }
 
@@ -70,7 +72,7 @@ public class PrioritizedTransfersConfig<T extends RaptorTripSchedule> {
 
     var priorityCostCalculator = priorityCostCalculator();
 
-    if(optimizeWaitingTime) {
+    if(config.useOptimizeTransferCostFunction()) {
       return new OptimizeTransferService<>(
           transfersPermutationService,
           priorityCostCalculator,
@@ -95,8 +97,9 @@ public class PrioritizedTransfersConfig<T extends RaptorTripSchedule> {
 
   private OptimizeTransferCostCalculator createOptimizeTransferCostCalculator() {
     return new OptimizeTransferCostCalculator(
-        raptorRequest.multiCriteriaCostFactors().waitReluctanceFactor(),
-        4.0
+        config.waitReluctanceRouting(),
+        config.inverseWaitReluctance(),
+        config.minSafeWaitTimeFactor()
     );
   }
 

@@ -53,8 +53,6 @@ public class GTFSToOtpTransitServiceMapper {
 
     private final FrequencyMapper frequencyMapper;
 
-    private final TransferMapper transferMapper;
-
     private final FareRuleMapper fareRuleMapper;
 
     private final DataImportIssueStore issueStore;
@@ -67,9 +65,6 @@ public class GTFSToOtpTransitServiceMapper {
         tripMapper = new TripMapper(routeMapper);
         stopTimeMapper = new StopTimeMapper(stopMapper, tripMapper);
         frequencyMapper = new FrequencyMapper(tripMapper);
-        transferMapper = new TransferMapper(
-            routeMapper, stationMapper, stopMapper, tripMapper
-        );
         fareRuleMapper = new FareRuleMapper(
             routeMapper, fareAttributeMapper
         );
@@ -103,6 +98,16 @@ public class GTFSToOtpTransitServiceMapper {
 
         builder.getPathways().addAll(pathwayMapper.map(data.getAllPathways()));
         builder.getStopTimesSortedByTrip().addAll(stopTimeMapper.map(data.getAllStopTimes()));
+
+        TransferMapper transferMapper = new TransferMapper(
+            routeMapper,
+            stationMapper,
+            stopMapper,
+            tripMapper,
+            builder.getStopTimesSortedByTrip()
+        );
+
+
         builder.getTransfers().addAll(transferMapper.map(data.getAllTransfers()));
         builder.getTripsById().addAll(tripMapper.map(data.getAllTrips()));
 

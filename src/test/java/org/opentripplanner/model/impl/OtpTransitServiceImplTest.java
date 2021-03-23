@@ -25,7 +25,7 @@ import org.opentripplanner.model.Station;
 import org.opentripplanner.model.Stop;
 import org.opentripplanner.model.StopTime;
 import org.opentripplanner.model.Trip;
-import org.opentripplanner.model.transfers.Transfer;
+import org.opentripplanner.model.transfer.Transfer;
 
 public class OtpTransitServiceImplTest {
     private static final String FEED_ID = "Z";

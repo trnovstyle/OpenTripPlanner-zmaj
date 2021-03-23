@@ -3,7 +3,7 @@ package org.opentripplanner.routing.core;
 import org.opentripplanner.model.FeedScopedId;
 import org.opentripplanner.model.Route;
 import org.opentripplanner.model.Trip;
-import org.opentripplanner.model.transfers.TransferService;
+import org.opentripplanner.model.transfer.TransferService;
 
 import java.io.Serializable;
 

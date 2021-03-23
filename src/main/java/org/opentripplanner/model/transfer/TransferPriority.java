@@ -1,4 +1,4 @@
-package org.opentripplanner.model.transfers;
+package org.opentripplanner.model.transfer;
 
 /**
  * TODO TGR  - Add doc

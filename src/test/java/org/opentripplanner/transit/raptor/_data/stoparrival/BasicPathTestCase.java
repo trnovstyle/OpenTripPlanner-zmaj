@@ -1,5 +1,15 @@
 package org.opentripplanner.transit.raptor._data.stoparrival;
 
+import static org.junit.Assert.assertEquals;
+import static org.opentripplanner.transit.raptor._data.transit.TestTransfer.walk;
+import static org.opentripplanner.transit.raptor._data.transit.TestTripPattern.pattern;
+import static org.opentripplanner.transit.raptor.api.transit.RaptorCostConverter.toOtpDomainCost;
+import static org.opentripplanner.transit.raptor.api.transit.RaptorCostConverter.toRaptorCost;
+import static org.opentripplanner.util.time.DurationUtils.durationToStr;
+import static org.opentripplanner.util.time.TimeUtils.time;
+
+import java.util.Arrays;
+import java.util.List;
 import org.junit.Test;
 import org.opentripplanner.transit.raptor._data.RaptorTestConstants;
 import org.opentripplanner.transit.raptor._data.transit.TestTripSchedule;
@@ -15,17 +25,6 @@ import org.opentripplanner.transit.raptor.api.transit.RaptorSlackProvider;
 import org.opentripplanner.transit.raptor.api.transit.RaptorTransfer;
 import org.opentripplanner.transit.raptor.rangeraptor.WorkerLifeCycle;
 import org.opentripplanner.transit.raptor.rangeraptor.workerlifecycle.LifeCycleSubscriptions;
-
-import java.util.Arrays;
-import java.util.List;
-
-import static org.junit.Assert.assertEquals;
-import static org.opentripplanner.transit.raptor._data.transit.TestTransfer.walk;
-import static org.opentripplanner.transit.raptor._data.transit.TestTripPattern.pattern;
-import static org.opentripplanner.transit.raptor.api.transit.RaptorCostConverter.toOtpDomainCost;
-import static org.opentripplanner.transit.raptor.api.transit.RaptorCostConverter.toRaptorCost;
-import static org.opentripplanner.util.time.DurationUtils.durationToStr;
-import static org.opentripplanner.util.time.TimeUtils.time;
 
 
 /**
@@ -148,6 +147,11 @@ public class BasicPathTestCase implements RaptorTestConstants {
     public static final int TOTAL_COST = ACCESS_COST + LINE_11_COST + TX_COST + LINE_21_COST
         + LINE_31_COST + EGRESS_COST;
 
+    /** Wait time between trip L11 and L21 including slack */
+    public static final int WAIT_TIME_L11_L21 = L21_START - L11_END - TX_DURATION;
+
+    /** Wait time between trip L21 and L31 including slack */
+    public static final int WAIT_TIME_L21_L31 = L31_START - L21_END;
 
     public static WorkerLifeCycle lifeCycle() {
         return new LifeCycleSubscriptions();

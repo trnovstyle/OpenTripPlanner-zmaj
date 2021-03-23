@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.function.ToIntFunction;
+import org.opentripplanner.routing.algorithm.transferoptimization.model.FilterPathsUtil;
 import org.opentripplanner.routing.algorithm.transferoptimization.services.MinSafeTransferTimeCalculator;
 import org.opentripplanner.routing.algorithm.transferoptimization.services.OptimizeTransferCostCalculator;
 import org.opentripplanner.routing.algorithm.transferoptimization.services.PriorityBasedTransfersCostCalculator;
@@ -63,13 +64,28 @@ public class OptimizeTransferService<T extends RaptorTripSchedule> {
     return results;
   }
 
+  /**
+   * Initiate calculation.
+   */
+  @SuppressWarnings("ConstantConditions")
+  private void setup(Collection<Path<T>> paths) {
+    if (transferCostCalculator != null) {
+      transferCostCalculator.setMinSafeTransferTime(
+          minSafeTransferTimeCalculator.minSafeTransferTime(paths)
+      );
+    }
+  }
 
+  /**
+   * Optimize a single transfer, finding all possible permutations of transfers for the path and
+   * filtering the list down one path, or a few equally good paths.
+   */
   private Collection<Path<T>> optimize(Path<T> path) {
     TransitPathLeg<T> leg0 = path.accessLeg().nextTransitLeg();
 
     // Path has no transit legs(possible with flex access) or
     // the path have no transfers, then use the path found.
-    if(leg0 == null || leg0.nextTransitLeg() == null) {
+    if (leg0 == null || leg0.nextTransitLeg() == null) {
       return List.of(path);
     }
     LOG.debug("Optimize path: {}", path);
@@ -77,53 +93,21 @@ public class OptimizeTransferService<T extends RaptorTripSchedule> {
     var allPossibleTransfers = transfersPermutationService.findAllTransitPathPermutations(path);
     debugDiffOriginalVsPermutations(path, allPossibleTransfers);
 
-    var priorityFilteredPaths = filter(allPossibleTransfers, priorityBasedTransfersCostCalculator::cost);
+    var priorityFilteredPaths = FilterPathsUtil.filter(
+        allPossibleTransfers,
+        priorityBasedTransfersCostCalculator::cost
+    );
     debugDiffAfterPriorityFilter(allPossibleTransfers, priorityFilteredPaths);
-    
-    // The path passed in is not allowed, and no other path exist
-    if(priorityFilteredPaths.isEmpty()) { return List.of(); }
 
-    var waitTimeFilteredPaths = filter(priorityFilteredPaths, minimizeWaitTimeFunction);
+    // The path passed in is not allowed, and no other path exist
+    if (priorityFilteredPaths.isEmpty()) { return List.of(); }
+
+    var waitTimeFilteredPaths = FilterPathsUtil.filter(
+        priorityFilteredPaths,
+        minimizeWaitTimeFunction
+    );
     debugDiffAfterWaitTimeFilter(priorityFilteredPaths, waitTimeFilteredPaths);
 
     return waitTimeFilteredPaths;
-  }
-
-  /**
-   * Filter paths based on given {@code costFunction}. Keep all paths witch have a
-   * cost equal to the minimum cost across all paths in the given input {@code paths}.
-   */
-  private List<Path<T>> filter(List<Path<T>> paths, ToIntFunction<Path<T>> costFunction) {
-    if(costFunction == null || paths.isEmpty()) {
-      return paths;
-    }
-
-    List<Path<T>> result = new ArrayList<>();
-    int minCost = Integer.MAX_VALUE;
-
-    for (Path<T> it : paths) {
-      int cost = costFunction.applyAsInt(it);
-      if(cost > minCost) { continue; }
-
-      if(cost < minCost) {
-        minCost = cost;
-        result.clear();
-      }
-      result.add(it);
-    }
-    return result;
-  }
-
-
-  /**
-   * Initiate calculation.
-   */
-  @SuppressWarnings("ConstantConditions")
-  private void setup(Collection<Path<T>> paths) {
-    if(transferCostCalculator != null) {
-      transferCostCalculator.setMinSafeTransferTime(
-          minSafeTransferTimeCalculator.minSafeTransferTime(paths)
-      );
-    }
   }
 }

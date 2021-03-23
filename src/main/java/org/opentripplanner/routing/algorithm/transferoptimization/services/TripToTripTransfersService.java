@@ -1,8 +1,5 @@
 package org.opentripplanner.routing.algorithm.transferoptimization.services;
 
-import static org.opentripplanner.transit.raptor.rangeraptor.transit.TripTimesSearch.findArrivalStopPosition;
-import static org.opentripplanner.transit.raptor.rangeraptor.transit.TripTimesSearch.findDepartureStopPosition;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
@@ -53,7 +50,8 @@ public class TripToTripTransfersService<T extends RaptorTripSchedule> {
 
     final List<TripToTripTransfer<T>> result = new ArrayList<>();
 
-    int stopPos = findArrivalStopPosition(fromTrip, fromTripDeparture.time(), fromTripDeparture.stop());
+    int stopPos =
+        fromTrip.findArrivalStopPosition(fromTripDeparture.time(), fromTripDeparture.stop());
 
     while (stopPos < fromTrip.pattern().numberOfStopsInPattern()) {
       var from = TripStopTime.arrival(fromTrip, stopPos);
@@ -76,11 +74,11 @@ public class TripToTripTransfersService<T extends RaptorTripSchedule> {
       var it = transfers.next();
       int toStop = it.stop();
       int earliestDepartureTime = earliestDepartureTime(from.time(), it.durationInSeconds());
-      int toTripStopPos = findDepartureStopPosition(toTrip, earliestDepartureTime, toStop);
+      int toTripStopPos = toTrip.findDepartureStopPosition(earliestDepartureTime, toStop);
 
       if(toTripStopPos < 0) { continue; }
 
-      var to = TripStopTime.departure(toTrip, toStop, toTripStopPos);
+      var to = TripStopTime.departure(toTrip, toTripStopPos);
 
       result.add(new TripToTripTransfer<T>(from, to, it));
     }
@@ -90,12 +88,12 @@ public class TripToTripTransfersService<T extends RaptorTripSchedule> {
   private Collection<TripToTripTransfer<T>> transferFromSameStop(TripStopTime<T> from) {
     final int stop = from.stop();
     final int earliestDepartureTime = earliestDepartureTime(from.time(),0);
-    final int toTripStopPos = findDepartureStopPosition(toTrip, earliestDepartureTime, stop);
+    final int toTripStopPos = toTrip.findDepartureStopPosition(earliestDepartureTime, stop);
 
     if(toTripStopPos < 0) { return List.of(); }
 
     return List.of(
-        new TripToTripTransfer<T>(from, TripStopTime.departure(toTrip, stop, toTripStopPos), null)
+        new TripToTripTransfer<T>(from, TripStopTime.departure(toTrip, toTripStopPos), null)
     );
   }
 

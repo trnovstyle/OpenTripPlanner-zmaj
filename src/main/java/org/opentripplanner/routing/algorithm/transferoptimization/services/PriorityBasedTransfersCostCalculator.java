@@ -4,9 +4,9 @@ import java.util.function.IntFunction;
 import java.util.stream.Collectors;
 import org.opentripplanner.model.Stop;
 import org.opentripplanner.model.Trip;
-import org.opentripplanner.model.transfers.Transfer;
-import org.opentripplanner.model.transfers.TransferPriority;
-import org.opentripplanner.model.transfers.TransferService;
+import org.opentripplanner.model.transfer.Transfer;
+import org.opentripplanner.model.transfer.TransferPriority;
+import org.opentripplanner.model.transfer.TransferService;
 import org.opentripplanner.routing.algorithm.raptor.transit.TripSchedule;
 import org.opentripplanner.transit.raptor.api.path.Path;
 import org.opentripplanner.transit.raptor.api.path.PathLeg;
@@ -46,7 +46,9 @@ public class PriorityBasedTransfersCostCalculator<T extends RaptorTripSchedule> 
         stop(from.toStop()),
         stop(to.fromStop()),
         trip(from.trip()),
-        trip(to.trip())
+        trip(to.trip()),
+        from.getToStopPosition(),
+        to.getFromStopPosition()
     );
     return costTransfer(t);
   }

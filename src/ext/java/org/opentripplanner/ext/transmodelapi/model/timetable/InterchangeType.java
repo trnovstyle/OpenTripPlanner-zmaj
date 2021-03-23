@@ -4,7 +4,7 @@ import graphql.Scalars;
 import graphql.schema.GraphQLFieldDefinition;
 import graphql.schema.GraphQLObjectType;
 import graphql.schema.GraphQLOutputType;
-import org.opentripplanner.model.transfers.Transfer;
+import org.opentripplanner.model.transfer.Transfer;
 
 public class InterchangeType {
 
@@ -27,23 +27,25 @@ public class InterchangeType {
                 .build())
         .field(GraphQLFieldDefinition.newFieldDefinition()
                 .name("FromLine")
+                .deprecate("This is the same as using the `FromServiceJourney { line }` field.")
                 .type(lineType)
-                .dataFetcher(environment -> ((Transfer) environment.getSource()).getFromRoute())
+                .dataFetcher(environment -> ((Transfer) environment.getSource()).getFrom().getTrip().getRoute())
                 .build())
         .field(GraphQLFieldDefinition.newFieldDefinition()
                 .name("ToLine")
+                .deprecate("This is the same as using the `ToServiceJourney { line }` field.")
                 .type(lineType)
-                .dataFetcher(environment -> ((Transfer) environment.getSource()).getToRoute())
+                .dataFetcher(environment -> ((Transfer) environment.getSource()).getTo().getTrip().getRoute())
                 .build())
         .field(GraphQLFieldDefinition.newFieldDefinition()
                 .name("FromServiceJourney")
                 .type(serviceJourneyType)
-                .dataFetcher(environment -> ((Transfer) environment.getSource()).getFromTrip())
+                .dataFetcher(environment -> ((Transfer) environment.getSource()).getFrom().getTrip())
                 .build())
         .field(GraphQLFieldDefinition.newFieldDefinition()
                 .name("ToServiceJourney")
                 .type(serviceJourneyType)
-                .dataFetcher(environment -> ((Transfer) environment.getSource()).getToTrip())
+                .dataFetcher(environment -> ((Transfer) environment.getSource()).getTo().getTrip())
                 .build())
         .build();
   }

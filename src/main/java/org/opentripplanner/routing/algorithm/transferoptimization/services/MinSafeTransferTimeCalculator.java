@@ -72,13 +72,13 @@ public class MinSafeTransferTimeCalculator<T extends RaptorTripSchedule> {
     ToIntFunction<Path<T>> totalTransitTimeOp = p -> p
         .legStream()
         .filter(PathLeg::isTransitLeg)
-        .mapToInt(this::duration)
+        .mapToInt(this::durationIncludingSlack)
         .sum();
 
     return minSafeTransferTimeOp(paths, totalTransitTimeOp);
   }
 
-  int duration(PathLeg<T>  leg)  {
+  int durationIncludingSlack(PathLeg<T>  leg)  {
     var p = leg.asTransitLeg().trip().pattern();
     return leg.duration() + slackProvider.transitSlack(p);
   }
@@ -89,7 +89,8 @@ public class MinSafeTransferTimeCalculator<T extends RaptorTripSchedule> {
    * @param <T> The path or itinerary type for the list of journeys passed in.
    */
   public static <T> int minSafeTransferTimeOp(Collection<T> list, ToIntFunction<T> transitTimeSeconds) {
-    int minTransitTime = list.stream().mapToInt(transitTimeSeconds).min().orElse(MIN_SAFE_TRANSFER_TIME_LIMIT_UPPER_BOUND);
+    if(list.isEmpty()) { return MIN_SAFE_TRANSFER_TIME_LIMIT_UPPER_BOUND; }
+    int minTransitTime = list.stream().mapToInt(transitTimeSeconds).min().getAsInt();
     int minSafeTransitTime = (int) Math.round(minTransitTime * P / 100.0);
     return Math.min(MIN_SAFE_TRANSFER_TIME_LIMIT_UPPER_BOUND, minSafeTransitTime);
   }
