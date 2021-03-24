@@ -53,7 +53,7 @@ public class TripStopTimeTest {
 
   @Test
   public void trip() {
-    String expected = "TestTripSchedule{arrivals: [10:00, 10:05, 10:20], departures: [10:01, 10:06, 10:21]}";
+    String expected = "TestTripSchedule{arrivals: [10:00 10:05 10:20], departures: [10:01 10:06 10:21]}";
     assertEquals(expected, departureStop1.trip().toString());
     assertEquals(expected, arrivalStop3.trip().toString());
   }

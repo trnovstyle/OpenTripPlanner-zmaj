@@ -20,8 +20,8 @@ public class ToStringBuilderTest {
 
   @Test
   public void addFieldIfTrue() {
-    assertEquals("ToStringBuilderTest{x}", subject().addFieldIfTrue("x", true).toString());
-    assertEquals("ToStringBuilderTest{}", subject().addFieldIfTrue("x", false).toString());
+    assertEquals("ToStringBuilderTest{x}", subject().addBoolIfTrue("x", true).toString());
+    assertEquals("ToStringBuilderTest{}", subject().addBoolIfTrue("x", false).toString());
   }
 
   @Test

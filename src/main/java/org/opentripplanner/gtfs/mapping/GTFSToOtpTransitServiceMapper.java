@@ -57,8 +57,18 @@ public class GTFSToOtpTransitServiceMapper {
 
     private final DataImportIssueStore issueStore;
 
-    GTFSToOtpTransitServiceMapper(DataImportIssueStore issueStore, String feedId) {
+    private final GtfsRelationalDao data;
+
+    private final OtpTransitServiceBuilder builder = new OtpTransitServiceBuilder();
+
+
+    public GTFSToOtpTransitServiceMapper(
+            String feedId,
+            DataImportIssueStore issueStore,
+            GtfsRelationalDao data
+    ) {
         this.issueStore = issueStore;
+        this.data = data;
         feedInfoMapper = new FeedInfoMapper(feedId);
         agencyMapper = new AgencyMapper(feedId);
         routeMapper = new RouteMapper(agencyMapper);
@@ -70,17 +80,11 @@ public class GTFSToOtpTransitServiceMapper {
         );
     }
 
-    /**
-     * Map from GTFS data to the internal OTP model
-     */
-    public static OtpTransitServiceBuilder mapGtfsDaoToInternalTransitServiceBuilder(
-        GtfsRelationalDao data, String feedId, DataImportIssueStore issueStore
-    ) {
-        return new GTFSToOtpTransitServiceMapper(issueStore, feedId).map(data);
+    public OtpTransitServiceBuilder getBuilder() {
+        return builder;
     }
 
-    private OtpTransitServiceBuilder map(GtfsRelationalDao data) {
-        OtpTransitServiceBuilder builder = new OtpTransitServiceBuilder();
+    public void mapStopTripAndRouteDatantoBuilder() {
 
         builder.getAgenciesById().addAll(agencyMapper.map(data.getAllAgencies()));
         builder.getCalendarDates().addAll(serviceCalendarDateMapper.map(data.getAllCalendarDates()));
@@ -94,27 +98,31 @@ public class GTFSToOtpTransitServiceMapper {
             builder.getShapePoints().put(shapePoint.getShapeId(), shapePoint);
         }
 
-        mapGtfsStopsToOtpTypes(data, builder);
+        mapGtfsStopsToOtpTypes(data);
 
         builder.getPathways().addAll(pathwayMapper.map(data.getAllPathways()));
         builder.getStopTimesSortedByTrip().addAll(stopTimeMapper.map(data.getAllStopTimes()));
-
-        TransferMapper transferMapper = new TransferMapper(
-            routeMapper,
-            stationMapper,
-            stopMapper,
-            tripMapper,
-            builder.getStopTimesSortedByTrip()
-        );
-
-
-        builder.getTransfers().addAll(transferMapper.map(data.getAllTransfers()));
         builder.getTripsById().addAll(tripMapper.map(data.getAllTrips()));
 
-        return builder;
+        mapAndAddTransfersToBuilder();
     }
 
-    private void mapGtfsStopsToOtpTypes(GtfsRelationalDao data, OtpTransitServiceBuilder builder) {
+    /**
+     * Note! Trip-pattens must be added BEFORE mapping transfers
+     */
+    private void mapAndAddTransfersToBuilder() {
+        TransferMapper transferMapper = new TransferMapper(
+                routeMapper,
+                stationMapper,
+                stopMapper,
+                tripMapper,
+                builder.getStopTimesSortedByTrip()
+        );
+        builder.getTransfers().addAll(transferMapper.map(data.getAllTransfers()));
+    }
+
+
+    private void mapGtfsStopsToOtpTypes(GtfsRelationalDao data) {
         StopToParentStationLinker stopToParentStationLinker = new StopToParentStationLinker(issueStore);
         for (org.onebusaway.gtfs.model.Stop it : data.getAllStops()) {
             if(it.getLocationType() == org.onebusaway.gtfs.model.Stop.LOCATION_TYPE_STOP) {

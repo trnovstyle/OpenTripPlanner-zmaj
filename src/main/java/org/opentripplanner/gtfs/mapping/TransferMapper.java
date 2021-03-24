@@ -13,7 +13,6 @@ import org.opentripplanner.model.Stop;
 import org.opentripplanner.model.StopTime;
 import org.opentripplanner.model.Trip;
 import org.opentripplanner.model.TripStopTimes;
-import org.opentripplanner.model.transfer.RouteTransferPoint;
 import org.opentripplanner.model.transfer.StopTransferPoint;
 import org.opentripplanner.model.transfer.Transfer;
 import org.opentripplanner.model.transfer.TransferPoint;
@@ -157,15 +156,15 @@ class TransferMapper {
 
     for (TransferPoint fromPoint : fromPoints) {
       for (TransferPoint toPoint : toPoints) {
-        result.add(
-            new Transfer(
+        Transfer transfer = new Transfer(
                 fromPoint,
                 toPoint,
                 transferPriority,
                 staySeated,
                 guaranteed
-            )
         );
+        System.err.println("Add transfer: " + transfer);
+        result.add(transfer);
       }
     }
     return result;
@@ -181,6 +180,8 @@ class TransferMapper {
       result.addAll(createTransferPointForTrip(stops, trip, TripTransferPoint::new));
     }
     else if (route != null) {
+      // TODO TGR
+      /*
       for (Trip tripInRoute : tripsByRoute.get(route)) {
         result.addAll(
             createTransferPointForTrip(
@@ -189,7 +190,7 @@ class TransferMapper {
               (t,i) -> new RouteTransferPoint(route, t, i)
             )
         );
-      }
+      }*/
     }
     else {
       for (Stop stop : stops) {

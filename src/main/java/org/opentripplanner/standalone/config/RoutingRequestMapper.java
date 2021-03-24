@@ -100,7 +100,7 @@ public class RoutingRequestMapper {
 
     private static void mapTransferOptimization(TransferOptimizationRequest p, NodeAdapter c) {
         p.useOptimizeTransferCostFunction = c.asBoolean(
-            "optimizeCost",
+            "adjustGeneralizedCost",
             p.useOptimizeTransferCostFunction
         );
         p.minSafeWaitTimeFactor = c.asDouble("minSafeWaitTimeFactor", p.minSafeWaitTimeFactor);

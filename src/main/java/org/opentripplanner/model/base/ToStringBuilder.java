@@ -74,7 +74,7 @@ public class ToStringBuilder {
         return addIfNotNull(name, value);
     }
 
-    public ToStringBuilder addFieldIfTrue(String name, Boolean value) {
+    public ToStringBuilder addBoolIfTrue(String name, Boolean value) {
         if(TRUE.equals(value)) { addLabel(name); }
         return this;
     }
