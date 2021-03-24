@@ -80,7 +80,7 @@ public class TransferMapper {
     var stopId = createId(fieldName, rootId, quayId);
     Stop stop = stops.get(stopId);
     assertRefExist("quay", fieldName, rootId, quayId, stop);
-    return stop;
+    return 0;
   }
 
 

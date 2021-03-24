@@ -1,6 +1,7 @@
 package org.opentripplanner.model.impl;
 
 import static java.util.Comparator.comparing;
+import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 import static org.junit.Assert.assertEquals;
 import static org.opentripplanner.gtfs.GtfsContextBuilder.contextBuilder;
@@ -25,7 +26,6 @@ import org.opentripplanner.model.Station;
 import org.opentripplanner.model.Stop;
 import org.opentripplanner.model.StopTime;
 import org.opentripplanner.model.Trip;
-import org.opentripplanner.model.transfer.Transfer;
 
 public class OtpTransitServiceImplTest {
     private static final String FEED_ID = "Z";
@@ -97,11 +97,24 @@ public class OtpTransitServiceImplTest {
 
     @Test
     public void testGetAllTransfers() {
-        Transfer transfer = first(subject.getAllTransfers());
-        assertEquals(9, subject.getAllTransfers().size());
+        var result = removeFeedScope(
+                subject.getAllTransfers()
+                        .stream()
+                        .map(Object::toString)
+                        .sorted()
+                        .collect(joining("\n"))
+        );
+
+        // There is 9 transfers, but because of the Route to trip expansion the first 6 is expanded
         assertEquals(
-            "Transfer{from: (<Stop Z:N>, <Route agency:1 1>), to: (<Stop Z:K>, <Route agency:2 2>), guaranteed}",
-            transfer.toString()
+        "Transfer{from: (route: 2, trip: 2.1, stopPos: 2), to: (route: 5, trip: 5.1, stopPos: 0), guaranteed}\n"
+                + "Transfer{from: (route: 2, trip: 2.2, stopPos: 2), to: (route: 5, trip: 5.1, stopPos: 0), guaranteed}\n"
+                + "Transfer{from: (stop: K), to: (stop: L), priority: RECOMMENDED}\n"
+                + "Transfer{from: (stop: K), to: (stop: M), priority: NOT_ALLOWED}\n"
+                + "Transfer{from: (stop: L), to: (stop: K), priority: RECOMMENDED}\n"
+                + "Transfer{from: (stop: M), to: (stop: K), priority: NOT_ALLOWED}\n"
+                + "Transfer{from: (trip: 1.1, stopPos: 1), to: (trip: 2.2, stopPos: 0), guaranteed}",
+                result
         );
     }
 
@@ -183,6 +196,10 @@ public class OtpTransitServiceImplTest {
         rule.setDestinationId("Zone C");
         rule.setFare(fa);
         return rule;
+    }
+
+    private static String removeFeedScope(String text) {
+        return text.replace("agency:", "").replace("Z:", "");
     }
 
     private static <T> List<T> sort(Collection<? extends T> c) {

@@ -14,22 +14,25 @@ import org.slf4j.LoggerFactory;
 /**
  * This class represents all transfer information in the graph. Transfers are grouped by
  * stop-to-stop pairs.
+ * <p>
+ * THIS CLASS IS NOT THREAD_SAFE. This class is loaded with plan data only, and read-only during
+ * routing. No real-time update should touch this class; Hence it do not need to be thread-safe.
  */
 public class TransferService implements Serializable {
 
   private static final Logger LOG = LoggerFactory.getLogger(TransferService.class);
 
-  /** Table which contains transfers between two stops */
-  protected Map<P2<TripTransferPoint>, Transfer> trip2tripTransfers;
+  /** Table which contains transfers between two trips/routes */
+  private final Map<P2<TripTransferPoint>, Transfer> trip2tripTransfers;
+
+  /** Table which contains transfers between a trip/route and a stops */
+  private final Map<T2<TripTransferPoint, Stop>, Transfer> trip2StopTransfers;
+
+  /** Table which contains transfers between a stop and a trip/route */
+  private final Map<T2<Stop, TripTransferPoint>, Transfer> stop2TripTransfers;
 
   /** Table which contains transfers between two stops */
-  protected Map<T2<TripTransferPoint, Stop>, Transfer> trip2StopTransfers;
-
-  /** Table which contains transfers between two stops */
-  protected Map<T2<Stop, TripTransferPoint>, Transfer> stop2TripTransfers;
-
-  /** Table which contains transfers between two stops */
-  protected Map<P2<Stop>, Transfer> stop2StopTransfers;
+  private final Map<P2<Stop>, Transfer> stop2StopTransfers;
 
   public TransferService() {
     this.trip2tripTransfers = new HashMap<>();
@@ -44,7 +47,7 @@ public class TransferService implements Serializable {
     }
   }
 
-  public void add(Transfer transfer) {
+  void add(Transfer transfer) {
     TransferPoint from = transfer.getFrom();
     TransferPoint to = transfer.getTo();
 
@@ -105,6 +108,20 @@ public class TransferService implements Serializable {
     return stop2StopTransfers.get(new P2<>(fromStop, toStop));
   }
 
+  /**
+   * A transfer goes from/to a stop, route* or trip. Route transfers are expanded to all trips
+   * using the special {@link RouteTransferPoint} subtype of {@link TripTransferPoint}. This
+   * expansion make sure that there can only be one match for each combination of from and to
+   * combination (from -> to):
+   * <ol>
+   *     <li> trip -> trip
+   *     <li> trip -> stop
+   *     <li> stop -> trip
+   *     <li> stop -> stop
+   * </ol>
+   * For each pair of the above combination we can drop the transfers that have a the lowest
+   * specificity-ranking, thus using maps instead of multi-maps.
+   */
   private boolean doAddTransferBasedOnSpecificityRanking(
       Transfer newTransfer,
       Transfer existingTransfer

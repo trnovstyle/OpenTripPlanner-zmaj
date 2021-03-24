@@ -27,14 +27,25 @@ public class TripTransferPoint implements TransferPoint, Serializable {
     return stopPosition;
   }
 
+  /**
+   * <a href="https://developers.google.com/transit/gtfs/reference/gtfs-extensions#specificity-of-a-transfer">
+   *     GTFS Specificity of a transfer
+   * </a>
+   * {@link #equals(Object)}
+   */
   @Override
   public int getSpecificityRanking() { return 2; }
 
   @Override
   public String toString() {
-    return trip + "@" + stopPosition;
+    return "(trip: " + trip.getId() + ", stopPos: " + stopPosition + ")";
   }
 
+  /**
+   * This equals is intentionally final and enforce equality based on the *trip* and
+   * *stop-position*. Any sub-type is equal if the trip and stop-position match, the class is not
+   * used. This allow us to create sub-types and override the {@link #getSpecificityRanking()}.
+   */
   @Override
   public final boolean equals(Object o) {
     if (this == o) { return true; }

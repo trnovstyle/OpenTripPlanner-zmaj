@@ -84,7 +84,11 @@ public class ToStringBuilder {
     }
 
     public ToStringBuilder addEnum(String name, Enum<?> value) {
-        return addIfNotNull(name, value);
+        return addEnum(name, value, null);
+    }
+
+    public ToStringBuilder addEnum(String name, Enum<?> value, Enum<?> ignoreValue) {
+        return addIfNotIgnored(name, value, ignoreValue, Enum::name);
     }
 
     public ToStringBuilder addObj(String name, Object obj) {

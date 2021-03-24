@@ -5,7 +5,6 @@ import java.util.stream.Collectors;
 import org.opentripplanner.model.Stop;
 import org.opentripplanner.model.Trip;
 import org.opentripplanner.model.transfer.Transfer;
-import org.opentripplanner.model.transfer.TransferPriority;
 import org.opentripplanner.model.transfer.TransferService;
 import org.opentripplanner.routing.algorithm.raptor.transit.TripSchedule;
 import org.opentripplanner.transit.raptor.api.path.Path;
@@ -50,7 +49,7 @@ public class PriorityBasedTransfersCostCalculator<T extends RaptorTripSchedule> 
         from.getToStopPosition(),
         to.getFromStopPosition()
     );
-    return costTransfer(t);
+    return Transfer.priorityCost(t);
   }
 
   private Stop stop(int index) {
@@ -59,23 +58,5 @@ public class PriorityBasedTransfersCostCalculator<T extends RaptorTripSchedule> 
 
   private Trip trip(T raptorTripSchedule) {
     return ((TripSchedule)raptorTripSchedule).getOriginalTripTimes().trip;
-  }
-
-  private static int costTransfer(Transfer t) {
-    if(t == null) { return 0; }
-    int cost = 0;
-    if(t.isStaySeated()) { cost += 100; }
-    if(t.isGuaranteed()) { cost += 10; }
-    return cost + costPriority(t.getPriority());
-  }
-
-  private static int costPriority(TransferPriority priority) {
-    switch (priority) {
-      case RECOMMENDED: return 2;
-      case PREFERRED: return 1;
-      case ALLOWED: return 0;
-      case NOT_ALLOWED: return -1_000;
-    }
-    throw new IllegalArgumentException("Priority not supported: " + priority);
   }
 }

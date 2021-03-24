@@ -19,6 +19,8 @@ import org.opentripplanner.model.transfer.Transfer;
 import org.opentripplanner.model.transfer.TransferPoint;
 import org.opentripplanner.model.transfer.TransferPriority;
 import org.opentripplanner.model.transfer.TripTransferPoint;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Responsible for mapping GTFS Transfer into the OTP model.
@@ -27,6 +29,8 @@ import org.opentripplanner.model.transfer.TripTransferPoint;
  * of transfers you want to map.
  */
 class TransferMapper {
+
+  private static final Logger LOG = LoggerFactory.getLogger(TransferMapper.class);
 
   /**
    * This transfer is recommended over other transfers. The routing algorithm should prefer this
@@ -125,6 +129,17 @@ class TransferMapper {
 
     // TODO TGR - Create a SimpleTransfer for this se issue #3369
     int transferTime = rhs.getMinTransferTime();
+
+    // If this transfer do not give any advantages in the routing, then drop it
+    if(!guaranteed && !staySeated && transferPriority == TransferPriority.ALLOWED) {
+      if(transferTime > 0) {
+        LOG.info("Transfer skipped, issue #3369: " + rhs);
+      }
+      else {
+        LOG.warn("Transfer skipped - no effect on routing: " + rhs);
+      }
+      return List.of();
+    }
 
     // Transfers may be specified using parent stations
     // (https://developers.google.com/transit/gtfs/reference/transfers-file)

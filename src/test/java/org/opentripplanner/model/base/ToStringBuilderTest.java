@@ -74,7 +74,9 @@ public class ToStringBuilderTest {
   @Test
   public void addEnum() {
     assertEquals("ToStringBuilderTest{a: A}", subject().addEnum("a", AEnum.A).toString());
+    assertEquals("ToStringBuilderTest{}", subject().addEnum("a", AEnum.A, AEnum.A).toString());
     assertEquals("ToStringBuilderTest{}", subject().addEnum("b", null).toString());
+    assertEquals("ToStringBuilderTest{a: A}", subject().addEnum("a", AEnum.A, AEnum.B).toString());
   }
 
   @Test
@@ -211,7 +213,8 @@ public class ToStringBuilderTest {
     return ToStringBuilder.of(ToStringBuilderTest.class);
   }
 
-  private enum AEnum { A }
+  private enum AEnum { A, B }
+
   private static class Foo {
     int a;
     String b;

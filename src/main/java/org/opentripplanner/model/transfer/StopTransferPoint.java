@@ -14,12 +14,17 @@ public class StopTransferPoint implements TransferPoint, Serializable {
   }
 
   @Override
+  public Stop getStop() {
+    return stop;
+  }
+
+  @Override
   public int getSpecificityRanking() {
     return 0;
   }
 
   @Override
   public String toString() {
-    return stop.toString();
+    return "(stop: " + stop.getId() + ")";
   }
 }

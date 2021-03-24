@@ -2,10 +2,15 @@
 package org.opentripplanner.model.transfer;
 
 import java.io.Serializable;
-import java.util.Collection;
+import javax.annotation.Nullable;
 import org.opentripplanner.model.base.ToStringBuilder;
 
 public final class Transfer implements Serializable {
+
+  /**
+   * Regular street transfers should be given this cost.
+   */
+  public static final int NEUTRAL_TRANSFER_COST = 0;
 
   private static final long serialVersionUID = 1L;
 
@@ -66,21 +71,21 @@ public final class Transfer implements Serializable {
     return ToStringBuilder.of(Transfer.class)
         .addObj("from", from)
         .addObj("to", to)
+        .addEnum("priority", priority, TransferPriority.ALLOWED)
         .addBoolIfTrue("staySeated", staySeated)
         .addBoolIfTrue("guaranteed", guaranteed)
         .toString();
   }
 
-  static Transfer findBestSpecificityRankedTransfer(Collection<Transfer> result) {
-    Transfer bestTransfer = null;
-    int bestRank = -1;
-
-    for (Transfer it : result) {
-      if(it.getSpecificityRanking() > bestRank) {
-        bestTransfer = it;
-        bestRank = it.getSpecificityRanking();
-      }
-    }
-    return bestTransfer;
+  /**
+   * Calculate a cost for prioritizing transfers in a path to select the best path with respect to
+   * transfers. This cost should not be mixed with the path generalized-cost.
+   *
+   * @see TransferPriority#cost(boolean, boolean)
+   * @param t The transfer to return a cost for, or {@code null} if the transfer is a regular OSM
+   *          street generated transfer.
+   */
+  public static int priorityCost(@Nullable Transfer t) {
+    return t == null ? NEUTRAL_TRANSFER_COST : t.priority.cost(t.staySeated, t.guaranteed);
   }
 }
