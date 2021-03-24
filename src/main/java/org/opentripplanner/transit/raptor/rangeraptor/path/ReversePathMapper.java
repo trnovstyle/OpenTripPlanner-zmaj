@@ -1,6 +1,5 @@
 package org.opentripplanner.transit.raptor.rangeraptor.path;
 
-import org.opentripplanner.model.base.ToStringBuilder;
 import org.opentripplanner.transit.raptor.api.path.AccessPathLeg;
 import org.opentripplanner.transit.raptor.api.path.EgressPathLeg;
 import org.opentripplanner.transit.raptor.api.path.Path;
@@ -103,13 +102,13 @@ public final class ReversePathMapper<T extends RaptorTripSchedule> implements Pa
 
         BoarAndAlightTime r = findTripReverseSearch(fromStopArrival);
 
-        alightTime = r.alightTime;
+        alightTime = r.alightTime();
 
         return new TransitPathLeg<>(
             fromStop,
-            r.boardTime,
+            r.boardTime(),
             toStop,
-            r.alightTime,
+            r.alightTime(),
             domainCost(fromStopArrival),
             trip,
             // Recursive call to map next leg
@@ -137,14 +136,6 @@ public final class ReversePathMapper<T extends RaptorTripSchedule> implements Pa
     private EgressPathLeg<T> mapToEgressLeg(ArrivalView<T> accessArrival) {
         RaptorTransfer egress = accessArrival.accessPath().access();
         int targetFromTime = alightTime + slackProvider.alightSlack(trip.pattern());
-
-        System.out.println(
-            ToStringBuilder.of(getClass())
-                .addServiceTime("alightTime", alightTime, -1)
-                .addDurationSec("alightSlack", slackProvider.alightSlack(trip.pattern()))
-                .addServiceTime("targetFromTime", targetFromTime, 1)
-                .toString()
-        );
 
         if(egress.hasRides()) {
             targetFromTime += slackProvider.transferSlack();

@@ -24,7 +24,7 @@ public class RoutingServiceTest extends GtfsTest {
 
     @Override
     public String getFeedName() {
-        return "testagency.zip";
+        return "testagency";
     }
 
     public void testIdLookup() {

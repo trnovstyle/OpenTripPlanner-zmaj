@@ -112,6 +112,28 @@ public class Timetable implements Serializable {
     }
 
     /**
+     * Notes from dev-meeting today
+     *
+     * Attended: Leonard Ehrenfried, Gard, Andrew and Thomas
+     *
+     * Leonard is working to migrate from OTP1 and OTP2, and they have some local improvements
+     * they want to port to OTP2:
+     *  - https://github.com/mfdz/OpenTripPlanner/issues/47
+     *  - Our free-floating bike implementation: https://github.com/mfdz/OpenTripPlanner/pull/41
+     *
+     * re: tests i've even developed a small tool that allows you to visualise polylines.
+     * with that you see how a (street) route has changed when you tweak the WayPropertySet or other routing parameters.
+     * example: https://tinyurl.com/yfnyel73
+     * i've even integrated it into our test suite like this: https://github.com/mfdz/OpenTripPlanner/blob/master/src/test/java/org/opentripplanner/routing/core/PolylineAssert.java
+     * a unit test using this looks like this:
+     * https://github.com/mfdz/OpenTripPlanner/blob/master/src/test/java/org/opentripplanner/routing/core/BicycleAndWalkRoutingTest.java#L118
+     *
+     *
+     */
+
+
+
+    /**
      * Finish off a Timetable once all TripTimes have been added to it. This involves caching
      * lower bounds on the running times and dwell times at each stop, and may perform other
      * actions to compact the data structure such as trimming and deduplicating arrays.

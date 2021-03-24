@@ -5,12 +5,14 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import javax.annotation.Nullable;
 import org.opentripplanner.ext.flex.FlexAccessEgress;
 import org.opentripplanner.model.plan.Itinerary;
 import org.opentripplanner.routing.algorithm.filterchain.ItineraryFilter;
 import org.opentripplanner.routing.algorithm.mapping.RaptorPathToItineraryMapper;
 import org.opentripplanner.routing.algorithm.mapping.RoutingRequestToFilterChainMapper;
 import org.opentripplanner.routing.algorithm.mapping.TripPlanMapper;
+import org.opentripplanner.routing.algorithm.raptor.path.PathDiff;
 import org.opentripplanner.routing.algorithm.raptor.router.FilterTransitWhenDirectModeIsEmpty;
 import org.opentripplanner.routing.algorithm.raptor.router.street.AccessEgressRouter;
 import org.opentripplanner.routing.algorithm.raptor.router.street.DirectFlexRouter;
@@ -24,6 +26,7 @@ import org.opentripplanner.routing.algorithm.raptor.transit.mappers.RaptorReques
 import org.opentripplanner.routing.algorithm.raptor.transit.request.RaptorRoutingRequestTransitData;
 import org.opentripplanner.routing.algorithm.raptor.transit.request.RoutingRequestTransitDataProviderFilter;
 import org.opentripplanner.routing.algorithm.raptor.transit.request.TransitDataProviderFilter;
+import org.opentripplanner.routing.algorithm.transferoptimization.configure.TransferOptimizationServiceConfigurator;
 import org.opentripplanner.routing.api.request.RoutingRequest;
 import org.opentripplanner.routing.api.request.StreetMode;
 import org.opentripplanner.routing.api.response.InputField;
@@ -214,7 +217,20 @@ public class RoutingWorker {
         );
 
         LOG.debug("Found {} transit itineraries", transitResponse.paths().size());
+
         this.debugTimingAggregator.finishedRaptorSearch();
+
+        Collection<Path<TripSchedule>> paths = transitResponse.paths();
+
+        if(OTPFeature.OptimizeTransfers.isOn()) {
+            paths = TransferOptimizationServiceConfigurator.createOptimizeTransferService(
+                transitLayer::getStopByIndex,
+                router.graph.getTransferService(),
+                requestTransitDataProvider,
+                raptorRequest,
+                request.transferOptimization
+            ).optimize(transitResponse.paths());
+        }
 
         // Create itineraries
 
@@ -225,7 +241,8 @@ public class RoutingWorker {
         );
         FareService fareService = request.getRoutingContext().graph.getService(FareService.class);
 
-        for (Path<TripSchedule> path : transitResponse.paths()) {
+        // TODO
+        for (Path<TripSchedule> path : paths) {
             // Convert the Raptor/Astar paths to OTP API Itineraries
             Itinerary itinerary = itineraryMapper.createItinerary(path);
             // Decorate the Itineraries with fare information.
@@ -311,6 +328,7 @@ public class RoutingWorker {
         }
     }
 
+    @Nullable
     private TripSearchMetadata createTripSearchMetadata() {
         if(searchWindowUsedInSeconds == NOT_SET) { return null; }
 
@@ -332,6 +350,22 @@ public class RoutingWorker {
                 firstRemovedItinerary == null
                     ? null
                     : firstRemovedItinerary.startTime().toInstant()
+            );
+        }
+    }
+
+    @SuppressWarnings("Convert2MethodRef")
+    private static void logPathDiff(
+        Collection<Path<TripSchedule>> paths, Collection<Path<TripSchedule>> raptorPaths
+    ) {
+        if(LOG.isDebugEnabled()) {
+            PathDiff.logDiff(
+                "Raptor", raptorPaths,
+                "Optimized", paths,
+                "Equal",
+                false, false,
+                // Keep lambda to get correct class/line number in log
+                m -> LOG.debug(m)
             );
         }
     }

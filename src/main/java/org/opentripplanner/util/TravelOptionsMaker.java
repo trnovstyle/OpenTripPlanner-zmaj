@@ -1,12 +1,11 @@
 package org.opentripplanner.util;
 
-import org.opentripplanner.model.modes.TransitMode;
-import org.opentripplanner.routing.core.TraverseMode;
-import org.opentripplanner.routing.graph.Graph;
-
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import org.opentripplanner.model.modes.TransitMode;
+import org.opentripplanner.routing.core.TraverseMode;
+import org.opentripplanner.routing.graph.Graph;
 
 /**
  * Class which creates "Travel by" options list from supported transit modes and which extra modes are supported (bike sharing, bike &amp; ride, park &amp; ride)
