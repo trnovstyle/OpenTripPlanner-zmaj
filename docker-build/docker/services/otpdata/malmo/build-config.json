@@ -6,6 +6,7 @@
 	"islandWithoutStopsMaxSize": 5,
 	"islandWithStopsMaxSize": 5,
 	"dataImportReport": true,
+	"maxTransferDistance": 5000,
 	"netex" : {
 		"moduleFilePattern" : ".*-netex\\.zip",
 		"sharedFilePattern" : "ST_stops.xml",
