@@ -235,7 +235,7 @@ public class SearchParams {
             .addServiceTime("earliestDepartureTime", earliestDepartureTime, TIME_NOT_SET)
             .addServiceTime("latestArrivalTime", latestArrivalTime, TIME_NOT_SET)
             .addDurationSec("searchWindow", searchWindowInSeconds)
-            .addFieldIfTrue("departAsLateAsPossible", preferLateArrival)
+            .addBoolIfTrue("departAsLateAsPossible", preferLateArrival)
             .addNum("numberOfAdditionalTransfers", numberOfAdditionalTransfers)
             .addCollection("accessPaths", accessPaths, 5)
             .addCollection("egressPaths", egressPaths, 5)
@@ -244,8 +244,8 @@ public class SearchParams {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) { return true; }
+        if (o == null || getClass() != o.getClass()) { return false; }
         SearchParams that = (SearchParams) o;
         return earliestDepartureTime == that.earliestDepartureTime &&
                 latestArrivalTime == that.latestArrivalTime &&

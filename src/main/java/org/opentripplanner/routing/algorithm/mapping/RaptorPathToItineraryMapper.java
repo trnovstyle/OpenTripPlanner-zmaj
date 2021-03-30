@@ -1,5 +1,12 @@
 package org.opentripplanner.routing.algorithm.mapping;
 
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Collections;
+import java.util.List;
+import java.util.TimeZone;
 import org.locationtech.jts.geom.Coordinate;
 import org.opentripplanner.common.geometry.SphericalDistanceLibrary;
 import org.opentripplanner.model.GenericLocation;
@@ -16,6 +23,7 @@ import org.opentripplanner.routing.algorithm.raptor.transit.Transfer;
 import org.opentripplanner.routing.algorithm.raptor.transit.TransitLayer;
 import org.opentripplanner.routing.algorithm.raptor.transit.TripSchedule;
 import org.opentripplanner.routing.algorithm.raptor.transit.request.TransferWithDuration;
+import org.opentripplanner.routing.algorithm.transferoptimization.api.OptimizedPath;
 import org.opentripplanner.routing.api.request.RoutingRequest;
 import org.opentripplanner.routing.core.State;
 import org.opentripplanner.routing.core.StateEditor;
@@ -32,14 +40,6 @@ import org.opentripplanner.transit.raptor.api.path.PathLeg;
 import org.opentripplanner.transit.raptor.api.path.TransferPathLeg;
 import org.opentripplanner.transit.raptor.api.path.TransitPathLeg;
 import org.opentripplanner.util.PolylineEncoder;
-
-import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Calendar;
-import java.util.Collections;
-import java.util.List;
-import java.util.TimeZone;
 
 /**
  * This maps the paths found by the Raptor search algorithm to the itinerary structure currently used by OTP. The paths,
@@ -66,7 +66,8 @@ public class RaptorPathToItineraryMapper {
     public RaptorPathToItineraryMapper(
             TransitLayer transitLayer,
             ZonedDateTime startOfTime,
-            RoutingRequest request) {
+            RoutingRequest request
+    ) {
 
         this.transitLayer = transitLayer;
         this.startOfTime = startOfTime;
@@ -74,6 +75,8 @@ public class RaptorPathToItineraryMapper {
     }
 
     public Itinerary createItinerary(Path<TripSchedule> path) {
+        var optimizedPath = path instanceof OptimizedPath
+                ? (OptimizedPath<TripSchedule>) path : null;
         List<Leg> legs = new ArrayList<>();
 
         // Map access leg
@@ -84,11 +87,14 @@ public class RaptorPathToItineraryMapper {
         PathLeg<TripSchedule> pathLeg = path.accessLeg().nextLeg();
 
         boolean firstLeg = true;
+        Leg transitLeg = null;
 
         while (!pathLeg.isEgressLeg()) {
             // Map transit leg
             if (pathLeg.isTransitLeg()) {
-                Leg transitLeg = mapTransitLeg(request, pathLeg.asTransitLeg(), firstLeg);
+                transitLeg = mapTransitLeg(
+                        request, optimizedPath, transitLeg, pathLeg.asTransitLeg(), firstLeg
+                );
                 firstLeg = false;
                 legs.add(transitLeg);
             }
@@ -108,8 +114,12 @@ public class RaptorPathToItineraryMapper {
         Itinerary itinerary = new Itinerary(legs);
 
         // Map general itinerary fields
-        itinerary.generalizedCost = path.cost();
+        itinerary.generalizedCost = path.generalizedCost();
         itinerary.nonTransitLimitExceeded = itinerary.nonTransitDistanceMeters > request.maxWalkDistance;
+
+        if(optimizedPath != null) {
+            itinerary.waitTimeAdjustedGeneralizedCost = optimizedPath.getWaitTimeOptimizedCost();
+        }
 
         return itinerary;
     }
@@ -135,6 +145,8 @@ public class RaptorPathToItineraryMapper {
 
     private Leg mapTransitLeg(
             RoutingRequest request,
+            OptimizedPath<TripSchedule> optPath,
+            Leg prevTransitLeg,
             TransitPathLeg<TripSchedule> pathLeg,
             boolean firstLeg
     ) {
@@ -148,8 +160,12 @@ public class RaptorPathToItineraryMapper {
 
         // Find stop positions in pattern where this leg boards and alights.
         // We cannot assume every stop appears only once in a pattern, so we match times instead of stops.
-        int boardStopIndexInPattern = tripSchedule.findStopPosInPattern(pathLeg.fromStop(), pathLeg.fromTime(), true);
-        int alightStopIndexInPattern = tripSchedule.findStopPosInPattern(pathLeg.toStop(), pathLeg.toTime(), false);
+        int boardStopIndexInPattern = tripSchedule.findStopPosInPattern(
+            pathLeg.fromStop(), pathLeg.fromTime(), true
+        );
+        int alightStopIndexInPattern = tripSchedule.findStopPosInPattern(
+            pathLeg.toStop(), pathLeg.toTime(), false
+        );
 
         // Include real-time information in the Leg.
         if (!tripTimes.isScheduled()) {
@@ -177,6 +193,14 @@ public class RaptorPathToItineraryMapper {
         leg.generalizedCost = pathLeg.generalizedCost();
 
         leg.bookingInfo = tripTimes.getBookingInfo(boardStopIndexInPattern);
+
+        if(optPath != null) {
+            var transfer = optPath.getTransferTo(pathLeg);
+            if(transfer != null) {
+                leg.transferFromPrevLeg = transfer;
+                prevTransitLeg.transferToNextLeg = transfer;
+            }
+        }
 
         // TODO OTP2 - alightRule and boardRule needs mapping
         //    Under Raptor, for transit trips, ItineraryMapper converts Path<TripSchedule> directly to Itinerary

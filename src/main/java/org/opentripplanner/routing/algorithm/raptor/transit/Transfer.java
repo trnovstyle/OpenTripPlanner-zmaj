@@ -1,14 +1,13 @@
 package org.opentripplanner.routing.algorithm.raptor.transit;
 
-import org.locationtech.jts.geom.Coordinate;
-import org.opentripplanner.routing.graph.Edge;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import org.locationtech.jts.geom.Coordinate;
+import org.opentripplanner.routing.graph.Edge;
 
 public class Transfer {
-    private int toStop;
+    private final int toStop;
 
     private final int effectiveWalkDistanceMeters;
     private final int distanceIndependentTime;
@@ -26,7 +25,7 @@ public class Transfer {
 
     public List<Coordinate> getCoordinates() {
         List<Coordinate> coordinates = new ArrayList<>();
-        if (edges == null) return coordinates;
+        if (edges == null) { return coordinates; }
         for (Edge edge : edges) {
             if (edge.getGeometry() != null) {
                 coordinates.addAll((Arrays.asList(edge.getGeometry().getCoordinates())));
