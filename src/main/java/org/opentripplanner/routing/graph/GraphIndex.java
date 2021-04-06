@@ -64,6 +64,7 @@ import org.opentripplanner.routing.vertextype.TransitStop;
 import org.opentripplanner.standalone.Router;
 import org.opentripplanner.updater.alerts.GtfsRealtimeAlertsUpdater;
 import org.opentripplanner.updater.alerts.SiriSXUpdater;
+import org.opentripplanner.updater.siri.SiriAzureSxUpdater;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -983,6 +984,13 @@ public class GraphIndex {
                     .filter(SiriSXUpdater.class::isInstance)
                     .map(SiriSXUpdater.class::cast)
                     .map(SiriSXUpdater::getAlertPatchService).findFirst();
+
+            if(patchServiceOptional.isEmpty()) {
+                patchServiceOptional = graph.updaterManager.getUpdaterList().stream()
+                        .filter(SiriAzureSxUpdater.class::isInstance)
+                        .map(SiriAzureSxUpdater.class::cast)
+                        .map(SiriAzureSxUpdater::getAlertPatchService).findFirst();
+            }
 
             if (!patchServiceOptional.isPresent()) {
                 patchServiceOptional = graph.updaterManager.getUpdaterList().stream()
