@@ -106,8 +106,6 @@ public abstract class StreetTransitEntityLink<T extends Vertex> extends Edge {
         if (s0.getNonTransitMode() == TraverseMode.CAR) {
             if (req.carPickup && s0.getCarPickupState() == CarPickupState.IN_CAR) {
                 s1.setTaxiState(s0.getOptions().arriveBy ? CarPickupState.WALK_TO_PICKUP : CarPickupState.WALK_FROM_DROP_OFF);
-            } else {
-                return null;
             }
         }
 
