@@ -16,7 +16,7 @@ public class SiriAzureEtUpdater extends AbstractAzureSiriUpdater {
     void messageConsumer(ServiceBusReceivedMessageContext messageContext) {
         var message = messageContext.getMessage();
 
-        LOG.debug("Processing message. Session={}, Sequence={}", message.getMessageId(), message.getSequenceNumber());
+        LOG.info("Processing message. messageId={}, sequenceNumber={}", message.getMessageId(), message.getSequenceNumber());
 
         try {
             var siri = SiriXml.parseXml(message.getBody().toString());

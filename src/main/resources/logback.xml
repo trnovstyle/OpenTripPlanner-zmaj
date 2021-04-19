@@ -14,7 +14,7 @@
   <appender name="stdout" class="ch.qos.logback.core.ConsoleAppender">
     <encoder>
       <!-- print out file and line number in parenthesis, which Eclipse and IDEA will link -->
-      <pattern>%yellow(%d{yyyy-MM-dd HH:mm:ss.SSS}) - [%magenta(%t)] %green(%-5level) %logger{36}.%M - %blue(%msg%n)</pattern>
+      <pattern>%yellow(%d{yyyy-MM-dd HH:mm:ss.SSS}) - [%magenta(%t)] %green(%-5level) %logger{0}.%M - %blue(%msg%n)</pattern>
     </encoder>
   </appender>
 
@@ -28,6 +28,7 @@
   <logger name="com.conveyal" level="info"/>
 
   <logger name="com.azure" level="warn" />
+  <logger name="org.opentripplanner" level="warn" />
 
   <logger name="org.opentripplanner.graph_builder.module.DirectTransferGenerator" level="info" />
   <logger name="org.opentripplanner" level="info" />

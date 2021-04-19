@@ -1,6 +1,9 @@
 package org.opentripplanner.updater.siri;
 
 import com.azure.messaging.servicebus.*;
+import com.azure.messaging.servicebus.administration.ServiceBusAdministrationAsyncClient;
+import com.azure.messaging.servicebus.administration.ServiceBusAdministrationClientBuilder;
+import com.azure.messaging.servicebus.administration.models.CreateSubscriptionOptions;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.base.Preconditions;
 import org.opentripplanner.routing.graph.Graph;
@@ -10,6 +13,8 @@ import org.opentripplanner.updater.stoptime.TimetableSnapshotSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Duration;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
@@ -21,11 +26,12 @@ public abstract class AbstractAzureSiriUpdater implements GraphUpdater {
     private final Logger LOG = LoggerFactory.getLogger(getClass());
     protected GraphUpdaterManager updaterManager;
     private ServiceBusProcessorClient eventProcessor;
-    private String TOPIC;
-    private String SUBSCRIPTION;
-    private String SERVICEBUS_URL;
+    private String topicName;
+    private String subscriptionName;
+    private String serviceBusUrl;
     private final Consumer<ServiceBusReceivedMessageContext> messageConsumer = this::messageConsumer;
     private final Consumer<ServiceBusErrorContext> errorConsumer = this::errorConsumer;
+    private ServiceBusAdministrationAsyncClient serviceBusAdmin;
 
     /**
      * Consume Service Bus topic message and implement business logic.
@@ -48,12 +54,10 @@ public abstract class AbstractAzureSiriUpdater implements GraphUpdater {
     @Override
     public void configure(Graph graph, JsonNode jsonNode) throws Exception {
         Preconditions.checkNotNull(jsonNode.path("topic"), "'topic' must be set");
-        Preconditions.checkNotNull(jsonNode.path("subscription"), "'subscription' must be set");
         Preconditions.checkNotNull(jsonNode.path("servicebus-url"), "'servicebus-url' must be set");
 
-        TOPIC = jsonNode.path("topic").asText();
-        SUBSCRIPTION = jsonNode.path("subscription").asText();
-        SERVICEBUS_URL = jsonNode.path("servicebus-url").asText();
+        topicName = jsonNode.path("topic").asText();
+        serviceBusUrl = jsonNode.path("servicebus-url").asText();
 
         if (graph.timetableSnapshotSource == null) {
             // Add snapshot source to graph
@@ -66,16 +70,36 @@ public abstract class AbstractAzureSiriUpdater implements GraphUpdater {
      */
     @Override
     public void run() throws Exception {
+        subscriptionName = "otp-" + UUID.randomUUID().toString();
+        // Client with permissions to create subscription
+        serviceBusAdmin = new ServiceBusAdministrationClientBuilder()
+                .connectionString(serviceBusUrl)
+                .buildAsyncClient();
+
+        // If Idle more then one day, then delete subscription so we don't have old obsolete subscriptions on Azure Service Bus
+        var options = new CreateSubscriptionOptions();
+        options.setAutoDeleteOnIdle(Duration.ofDays(1));
+
+        serviceBusAdmin.createSubscription(topicName, subscriptionName, options).block();
+
         eventProcessor = new ServiceBusClientBuilder()
-                .connectionString(SERVICEBUS_URL)
+                .connectionString(serviceBusUrl)
                 .processor()
-                .topicName(TOPIC)
-                .subscriptionName(SUBSCRIPTION)
+                .topicName(topicName)
+                .subscriptionName(subscriptionName)
                 .processError(errorConsumer)
                 .processMessage(messageConsumer)
                 .buildProcessorClient();
 
         eventProcessor.start();
+        LOG.info("Service Bus processor started for topic {} and subscription {}", topicName, subscriptionName);
+
+        try {
+            Runtime.getRuntime().addShutdownHook(new Thread(this::teardown));
+        } catch (IllegalStateException e) {
+            LOG.error(e.getLocalizedMessage(), e);
+            teardown();
+        }
     }
 
     @Override
@@ -86,6 +110,8 @@ public abstract class AbstractAzureSiriUpdater implements GraphUpdater {
     @Override
     public void teardown() {
         eventProcessor.stop();
+        serviceBusAdmin.deleteSubscription(topicName, subscriptionName).block();
+        LOG.info("Subscription {} deleted on topic {}", subscriptionName, topicName);
     }
 
     @Override

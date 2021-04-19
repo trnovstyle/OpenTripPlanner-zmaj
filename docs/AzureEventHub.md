@@ -21,6 +21,9 @@ This is one of the unique capabilities of Event Hubs. Since the messages are not
 This capability is not available in Azure Service Bus. Since the messages are pulled out by the receiver, the message cannot be processed again. [3]
 
 
+# Azure JMS
+
+
 # Bibliography
 
 1. [Azure Event Hubs Features]([https://docs.microsoft.com/sv-se/azure/event-hubs/event-hubs-features])
