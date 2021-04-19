@@ -52,7 +52,8 @@ public class SiriAzureSxUpdater extends AbstractAzureSiriUpdater {
                     || siri.getServiceDelivery().getSituationExchangeDeliveries() == null
                     || siri.getServiceDelivery().getSituationExchangeDeliveries().isEmpty()) {
 
-                LOG.warn("Empty Siri message: {}", message.getBody().toString());
+                LOG.warn("Empty Siri message for messageId {}", message.getMessageId());
+                LOG.debug(message.getBody().toString());
                 return;
             }
 
