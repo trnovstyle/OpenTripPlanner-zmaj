@@ -5,6 +5,9 @@ import org.opentripplanner.routing.algorithm.raptor.transit.TripPatternWithRapto
 import org.opentripplanner.routing.algorithm.raptor.transit.TripPatternForDate;
 import org.opentripplanner.routing.algorithm.raptor.transit.mappers.DateMapper;
 import org.opentripplanner.transit.raptor.api.transit.RaptorTransfer;
+import static java.util.stream.Collectors.groupingBy;
+import static java.util.stream.Collectors.toList;
+import static org.opentripplanner.routing.algorithm.raptor.transit.mappers.DateMapper.secondsSinceStartOfTime;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -16,10 +19,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import static java.util.stream.Collectors.groupingBy;
-import static java.util.stream.Collectors.toList;
-import static org.opentripplanner.routing.algorithm.raptor.transit.mappers.DateMapper.secondsSinceStartOfTime;
+import org.opentripplanner.util.OTPFeature;
 
 
 /**
@@ -57,6 +57,13 @@ class RaptorRoutingRequestTransitDataCreator {
 
     List<TripPatternForDates> tripPatternForDateList = merge(searchStartTime, tripPatternForDates);
 
+    if(OTPFeature.GuaranteedTransfers.isOn()) {
+      TransferIndexGenerator.generateTransfers(
+              transitLayer.getTransferService(),
+              tripPatternForDateList
+      );
+    }
+
     return createTripPatternsPerStop(tripPatternForDateList, transitLayer.getStopCount());
   }
 
@@ -77,7 +84,6 @@ class RaptorRoutingRequestTransitDataCreator {
         )
       );
     }
-
     return tripPatternForDates;
   }
 
@@ -162,7 +168,7 @@ class RaptorRoutingRequestTransitDataCreator {
 
   List<List<RaptorTransfer>> calculateTransferDuration(double walkSpeed) {
     return transitLayer
-        .getTransferByStopIndex()
+        .getSimpleTransferByStopIndex()
         .stream()
         .map(t -> t
             .stream()

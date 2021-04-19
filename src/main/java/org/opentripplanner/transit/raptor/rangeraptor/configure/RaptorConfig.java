@@ -1,5 +1,6 @@
 package org.opentripplanner.transit.raptor.rangeraptor.configure;
 
+import javax.annotation.Nullable;
 import org.opentripplanner.transit.raptor.api.request.RaptorRequest;
 import org.opentripplanner.transit.raptor.api.request.RaptorTuningParameters;
 import org.opentripplanner.transit.raptor.api.transit.RaptorTripSchedule;
@@ -97,14 +98,17 @@ public class RaptorConfig<T extends RaptorTripSchedule> {
                 workerState,
                 routingStrategy,
                 ctx.transit(),
+                ctx.slackProvider(),
                 ctx.accessPaths(),
                 ctx.roundProvider(),
                 ctx.calculator(),
                 ctx.createLifeCyclePublisher(),
-                ctx.timers()
+                ctx.timers(),
+                ctx.enableGuaranteedTransfers()
         );
     }
 
+    @Nullable
     private ExecutorService createNewThreadPool(int size) {
         return size > 0 ? Executors.newFixedThreadPool(size) : null;
     }

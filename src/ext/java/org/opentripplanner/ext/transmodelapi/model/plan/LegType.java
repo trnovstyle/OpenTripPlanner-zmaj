@@ -13,7 +13,6 @@ import graphql.schema.GraphQLOutputType;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
-import org.opentripplanner.ext.transmodelapi.model.EnumTypes;
 import org.opentripplanner.ext.transmodelapi.model.TripTimeShortHelper;
 import org.opentripplanner.ext.transmodelapi.support.GqlUtil;
 import org.opentripplanner.model.plan.Leg;
@@ -290,7 +289,6 @@ public class LegType {
             .name("bookingArrangements")
             .type(bookingArrangementType)
             .dataFetcher(env -> leg(env).bookingInfo)
-            .dataFetcher(environment -> ((Leg) environment.getSource()).bookingInfo)
             .build())
         .field(GraphQLFieldDefinition
             .newFieldDefinition()
