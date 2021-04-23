@@ -14,18 +14,26 @@ import java.time.LocalDate;
  * a trip on a subsequent service day than the first one in the date range used.
  */
 
-public class TripScheduleWithOffset implements TripSchedule {
+public final class TripScheduleWithOffset implements TripSchedule {
 
     private final int secondsOffset;
     private final TripPatternForDates pattern;
     private final TripTimes tripTimes;
     private final LocalDate serviceDate;
+    private final int sortIndex;
 
     TripScheduleWithOffset(TripPatternForDates pattern, LocalDate localDate, TripTimes tripTimes, int offset) {
         this.pattern = pattern;
         this.tripTimes = tripTimes;
         this.secondsOffset = offset;
         this.serviceDate = localDate;
+        // Trip times are sorted based on the arrival times at stop 0,
+        this.sortIndex = arrival(0);
+    }
+
+    @Override
+    public final int tripSortIndex() {
+        return sortIndex;
     }
 
     @Override
@@ -39,7 +47,7 @@ public class TripScheduleWithOffset implements TripSchedule {
     }
 
     @Override
-    public RaptorTripPattern<TripSchedule> pattern() {
+    public RaptorTripPattern pattern() {
         return pattern;
     }
 
@@ -58,20 +66,7 @@ public class TripScheduleWithOffset implements TripSchedule {
         return serviceDate;
     }
 
-    @Override
-    public int findStopPosInPattern(int stopIndex, int time, boolean departure) {
-        for (int i=0; i < pattern.numberOfStopsInPattern(); ++i) {
-            if(pattern.stopIndex(i) != stopIndex) { continue; }
-            int t = departure ? departure(i) : arrival(i);
-            if(t == time) { return i; }
-        }
-        throw new IllegalStateException(
-            "No stop position(index) in pattern found. StopIndex=" + stopIndex + ", time=" + time +
-                ", departure=" + departure + "."
-        );
-    }
-
-    @Override
+     @Override
     public boolean equals(Object o) {
         if (this == o) { return true; }
         if (!(o instanceof TripScheduleWithOffset)) { return false; }

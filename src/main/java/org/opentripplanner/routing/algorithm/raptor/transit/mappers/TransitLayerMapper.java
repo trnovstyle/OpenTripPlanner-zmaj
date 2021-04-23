@@ -25,6 +25,7 @@ import org.opentripplanner.routing.algorithm.raptor.transit.TripPatternForDate;
 import org.opentripplanner.routing.algorithm.raptor.transit.TripPatternWithRaptorStopIndexes;
 import org.opentripplanner.routing.graph.Graph;
 import org.opentripplanner.routing.trippattern.TripTimes;
+import org.opentripplanner.util.OTPFeature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,14 +56,31 @@ public class TransitLayerMapper {
 
     private TransitLayer map(TransitTuningParameters tuningParameters) {
         StopIndexForRaptor stopIndex;
+        Map<TripPattern, TripPatternWithRaptorStopIndexes> newTripPatternForOld;
         HashMap<LocalDate, List<TripPatternForDate>> tripPatternsByStopByDate;
         List<List<Transfer>> transferByStopIndex;
 
         LOG.info("Mapping transitLayer from Graph...");
 
         stopIndex =  new StopIndexForRaptor(graph.index.getAllStops(), tuningParameters);
-        tripPatternsByStopByDate = mapTripPatterns(stopIndex);
+
+        Collection<TripPattern> allTripPatterns = graph.tripPatternForId.values();
+        newTripPatternForOld = mapOldTripPatternToRaptorTripPattern(
+                stopIndex,
+                allTripPatterns
+        );
+
+        tripPatternsByStopByDate = mapTripPatterns(allTripPatterns, newTripPatternForOld);
+
         transferByStopIndex = mapTransfers(stopIndex, graph.transfersByStop);
+
+        if(OTPFeature.GuaranteedTransfers.isOn()) {
+            TransferIndexGenerator.generateTransfers(
+                    graph.getTransferService(),
+                    newTripPatternForOld.values()
+            );
+        }
+
 
         LOG.info("Mapping complete.");
 
@@ -82,14 +100,9 @@ public class TransitLayerMapper {
      * <p>
      */
     private HashMap<LocalDate, List<TripPatternForDate>> mapTripPatterns (
-        StopIndexForRaptor stopIndex
+            Collection<TripPattern> allTripPatterns,
+            Map<TripPattern, TripPatternWithRaptorStopIndexes> newTripPatternForOld
     ) {
-        Collection<TripPattern> allTripPatterns = graph.tripPatternForId.values();
-
-        final Map<TripPattern, TripPatternWithRaptorStopIndexes> newTripPatternForOld;
-
-        newTripPatternForOld = mapOldTripPatternToRaptorTripPattern(stopIndex, allTripPatterns);
-
         TripPatternForDateMapper tripPatternForDateMapper = new TripPatternForDateMapper(
             graph.index.getServiceCodesRunningForDate(),
             newTripPatternForOld
@@ -125,17 +138,14 @@ public class TransitLayerMapper {
             });
         // END PARALLEL CODE
 
-        HashMap<LocalDate, List<TripPatternForDate>> result =
-            keyByRunningPeriodDates(tripPatternForDates);
-
-        return result;
+        return keyByRunningPeriodDates(tripPatternForDates);
     }
 
     // TODO We can save time by either pre-sorting these or use a sorting algorithm that is
     //      optimized for sorting nearly sorted list
     static List<TripTimes> getSortedTripTimes (Timetable timetable) {
         return timetable.tripTimes.stream()
-                .sorted(Comparator.comparing(t -> t.getArrivalTime(0)))
+                .sorted(Comparator.comparing(TripTimes::sortIndex))
                 .collect(Collectors.toList());
     }
 

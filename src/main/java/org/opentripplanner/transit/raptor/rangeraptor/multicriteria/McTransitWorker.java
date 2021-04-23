@@ -10,7 +10,7 @@ import org.opentripplanner.transit.raptor.api.transit.RaptorTransfer;
 import org.opentripplanner.transit.raptor.api.transit.RaptorTripPattern;
 import org.opentripplanner.transit.raptor.api.transit.RaptorTripSchedule;
 import org.opentripplanner.transit.raptor.api.transit.TransitArrival;
-import org.opentripplanner.transit.raptor.api.transit.TripScheduleBoardOrAlightEvent;
+import org.opentripplanner.transit.raptor.api.transit.RaptorTripScheduleBoardOrAlightEvent;
 import org.opentripplanner.transit.raptor.rangeraptor.RoutingStrategy;
 import org.opentripplanner.transit.raptor.rangeraptor.SlackProvider;
 import org.opentripplanner.transit.raptor.rangeraptor.debug.DebugHandlerFactory;
@@ -58,7 +58,7 @@ public final class McTransitWorker<T extends RaptorTripSchedule> implements Rout
     }
 
     @Override
-    public void prepareForTransitWith(RaptorTripPattern<T> pattern) {
+    public void prepareForTransitWith(RaptorTripPattern pattern) {
         this.patternRides.clear();
         this.slackProvider.setCurrentPattern(pattern);
     }
@@ -84,7 +84,11 @@ public final class McTransitWorker<T extends RaptorTripSchedule> implements Rout
     }
 
     @Override
-    public void board(int stopIndex, TripScheduleBoardOrAlightEvent<T> result) {
+    public void board(
+            final int stopIndex,
+            final int earliestBoardTime,
+            final RaptorTripScheduleBoardOrAlightEvent<T> result
+    ) {
         final T trip = result.getTrip();
         final int boardTime = result.getTime();
 
@@ -112,8 +116,7 @@ public final class McTransitWorker<T extends RaptorTripSchedule> implements Rout
                 boardTime,
                 boardWaitTimeForCostCalculation,
                 relativeBoardCost,
-                trip,
-                result.getTripIndex()
+                trip
             )
         );
     }

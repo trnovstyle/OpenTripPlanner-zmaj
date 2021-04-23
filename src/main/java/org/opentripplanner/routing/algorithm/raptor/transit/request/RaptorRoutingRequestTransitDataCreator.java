@@ -19,7 +19,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import org.opentripplanner.util.OTPFeature;
 
 
 /**
@@ -56,13 +55,6 @@ class RaptorRoutingRequestTransitDataCreator {
     );
 
     List<TripPatternForDates> tripPatternForDateList = merge(searchStartTime, tripPatternForDates);
-
-    if(OTPFeature.GuaranteedTransfers.isOn()) {
-      TransferIndexGenerator.generateTransfers(
-              transitLayer.getTransferService(),
-              tripPatternForDateList
-      );
-    }
 
     return createTripPatternsPerStop(tripPatternForDateList, transitLayer.getStopCount());
   }
