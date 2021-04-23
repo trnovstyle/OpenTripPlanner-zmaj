@@ -241,7 +241,10 @@ public final class RangeRaptorWorker<T extends RaptorTripSchedule> implements Wo
 
                             if(enableGuaranteedTransfers) {
                                 // Board using guaranteed transfers
-                                result = findGuaranteedTransfer(txService, stopIndex, stopPos);
+                                result = findGuaranteedTransfer(
+                                        route.timetable(),
+                                        txService, stopIndex, stopPos
+                                );
                             }
 
                             // Find the best trip and board [no guaranteed transfer exist]
@@ -269,6 +272,7 @@ public final class RangeRaptorWorker<T extends RaptorTripSchedule> implements Wo
 
     @Nullable
     private RaptorTripScheduleBoardOrAlightEvent<T> findGuaranteedTransfer(
+            RaptorTimeTable<T> timetable,
             RaptorGuaranteedTransferProvider<T> txService,
             int targetStopIndex,
             int targetStopPos
@@ -281,7 +285,7 @@ public final class RangeRaptorWorker<T extends RaptorTripSchedule> implements Wo
 
         earliestBoardTime = calculator.minusDuration(sourceStopArrival.arrivalTime(), slackProvider.alightSlack());
 
-        return txService.find(sourceStopArrival.trip(), sourceStopArrival.stop(), earliestBoardTime);
+        return txService.find(timetable, sourceStopArrival.trip(), sourceStopArrival.stop(), earliestBoardTime);
     }
 
     private void transfersForRound() {
