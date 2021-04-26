@@ -52,6 +52,7 @@ import uk.org.siri.siri20.VehicleModesEnumeration;
 import uk.org.siri.siri20.VehicleMonitoringDeliveryStructure;
 
 import java.text.ParseException;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -549,7 +550,9 @@ public class TimetableSnapshotSource {
     private boolean handleTripPatternUpdate(Graph graph, TripPattern pattern, VehicleActivityStructure activity, Trip trip, ServiceDate serviceDate) {
 
         // Apply update on the *scheduled* time table and set the updated trip times in the buffer
-        final TripTimes updatedTripTimes = getCurrentTimetable(pattern, serviceDate).createUpdatedTripTimes(graph, activity, timeZone, trip.getId());
+        final TripTimes updatedTripTimes = getCurrentTimetable(pattern, serviceDate)
+            .createUpdatedTripTimes(graph, activity, trip.getId());
+
         if (updatedTripTimes == null) {
             return false;
         }
@@ -566,7 +569,7 @@ public class TimetableSnapshotSource {
      *
      */
     private Timetable getCurrentTimetable(TripPattern tripPattern, ServiceDate serviceDate) {
-        TimetableSnapshot timetableSnapshot=getTimetableSnapshot();
+        TimetableSnapshot timetableSnapshot = getTimetableSnapshot();
         if (timetableSnapshot!=null) {
             return getTimetableSnapshot().resolve(tripPattern, serviceDate);
         }
@@ -657,8 +660,8 @@ public class TimetableSnapshotSource {
                 if (route.getType() == 100) {
                     // Replacement-route is also RAIL
                     trip.setTransportSubmode(TransmodelTransportSubmode.REPLACEMENT_RAIL_SERVICE);
-                } else if (route.getType() == 700) {
-                    // Replacement-route is BUS
+                } else if (route.getType() == 700 | route.getType() == 714) {
+                    // Replacement-route is BUS or RAIL_REPLACEMENT_BUS
                     trip.setTransportSubmode(TransmodelTransportSubmode.RAIL_REPLACEMENT_BUS);
                 }
             }
@@ -887,7 +890,10 @@ public class TimetableSnapshotSource {
             TripPattern exactPattern = graphIndex.patternForTrip.get(tripMatchedByServiceJourneyId);
 
             if (exactPattern != null) {
-                TripTimes exactUpdatedTripTimes = getCurrentTimetable(exactPattern, serviceDate).createUpdatedTripTimes(graph, estimatedVehicleJourney, timeZone, tripMatchedByServiceJourneyId.getId());
+                var timetable = getCurrentTimetable(exactPattern, serviceDate);
+                var exactUpdatedTripTimes = timetable.createUpdatedTripTimes(
+                    graph, estimatedVehicleJourney, timeZone, tripMatchedByServiceJourneyId.getId()
+                );
                 if (exactUpdatedTripTimes != null) {
                     times.add(exactUpdatedTripTimes);
                     patterns.add(exactPattern);
@@ -918,7 +924,10 @@ public class TimetableSnapshotSource {
             for (Trip matchingTrip : matchingTrips) {
                 TripPattern pattern = getPatternForTrip(matchingTrip, estimatedVehicleJourney);
                 if (pattern != null) {
-                    TripTimes updatedTripTimes = getCurrentTimetable(pattern, serviceDate).createUpdatedTripTimes(graph, estimatedVehicleJourney, timeZone, matchingTrip.getId());
+                    var timetable = getCurrentTimetable(pattern, serviceDate);
+                    var updatedTripTimes = timetable.createUpdatedTripTimes(
+                        graph, estimatedVehicleJourney, timeZone, matchingTrip.getId()
+                    );
                     if (updatedTripTimes != null) {
                         patterns.add(pattern);
                         times.add(updatedTripTimes);
@@ -941,11 +950,8 @@ public class TimetableSnapshotSource {
             Trip trip = tripTimes.trip;
             for (TripPattern pattern : patterns) {
                 if (tripTimes.getNumStops() == pattern.stopPattern.stops.length) {
-                        /*
-                          All tripTimes should be handled the same way to always allow latest realtime-update
-                          to replace previous update regardless of realtimestate
-                         */
-
+                        // All tripTimes should be handled the same way to always allow latest realtime-update
+                        // to replace previous update regardless of realtimestate
                         cancelScheduledTrip(SIRI_FEED_ID, trip.getId().getId(), serviceDate);
 
                         // Check whether trip id has been used for previously ADDED/MODIFIED trip message and cancel
@@ -988,7 +994,7 @@ public class TimetableSnapshotSource {
         }
 
 
-        return new ServiceDate(date.toLocalDate());
+        return new ServiceDate(date.withZoneSameInstant(timeZone.toZoneId()).toLocalDate());
     }
 
     private int calculateSecondsSinceMidnight(ZonedDateTime dateTime) {
@@ -999,14 +1005,14 @@ public class TimetableSnapshotSource {
 
         int daysBetween = 0;
         if (departureDate.getDayOfMonth() != dateTime.getDayOfMonth()) {
-            ZonedDateTime midnightOnDepartureDate = departureDate.withHour(12).withMinute(0).withSecond(0).minusHours(12);
-            ZonedDateTime midnightOnCurrentStop = dateTime.withHour(12).withMinute(0).withSecond(0).minusHours(12);
-            daysBetween = (int) ChronoUnit.DAYS.between(midnightOnDepartureDate, midnightOnCurrentStop);
+            ZonedDateTime midnightOnDepartureDate = departureDate.withZoneSameInstant(timeZone.toZoneId()).withHour(12).withMinute(0).withSecond(0).minusHours(12);
+            ZonedDateTime midnightOnCurrentStop = dateTime.withZoneSameInstant(timeZone.toZoneId()).withHour(12).withMinute(0).withSecond(0).minusHours(12);
+            daysBetween = (int) ChronoUnit.DAYS.between(midnightOnDepartureDate.withZoneSameInstant(timeZone.toZoneId()), midnightOnCurrentStop.withZoneSameInstant(ZoneId.systemDefault()));
         }
         // If first departure was 'yesterday' - add 24h
         int daysSinceDeparture = daysBetween * (24 * 60 * 60);
 
-        return dateTime.toLocalTime().toSecondOfDay() + daysSinceDeparture;
+        return dateTime.withZoneSameInstant(timeZone.toZoneId()).toLocalTime().toSecondOfDay() + daysSinceDeparture;
     }
 
     /**

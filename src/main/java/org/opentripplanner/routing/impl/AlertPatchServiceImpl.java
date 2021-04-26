@@ -31,8 +31,10 @@ public class AlertPatchServiceImpl implements AlertPatchService {
     private Map<String, AlertPatch> alertPatches = new ConcurrentHashMap<>();
     private Map<AgencyAndId, Set<AlertPatch>> patchesByRoute = new ConcurrentHashMap<>();
     private Map<AgencyAndId, Set<AlertPatch>> patchesByStop = new ConcurrentHashMap<>();
+    private Map<AgencyAndId, Set<AlertPatch>> patchesByDatedServiceJourney = new ConcurrentHashMap<>();
     private Map<StopAndRouteOrTripKey, Set<AlertPatch>> patchesByStopAndRoute = new ConcurrentHashMap<>();
     private Map<StopAndRouteOrTripKey, Set<AlertPatch>> patchesByStopAndTrip = new ConcurrentHashMap<>();
+    private Map<StopAndRouteOrTripKey, Set<AlertPatch>> patchesByStopAndDatedServiceJourney = new ConcurrentHashMap<>();
     private Map<AgencyAndId, Set<AlertPatch>> patchesByTrip = new ConcurrentHashMap<>();
     private Map<String, Set<AlertPatch>> patchesByAgency = new ConcurrentHashMap<>();
     private Map<String, Set<AlertPatch>> patchesByTripPattern = new ConcurrentHashMap<>();
@@ -134,6 +136,24 @@ public class AlertPatchServiceImpl implements AlertPatchService {
     }
 
     @Override
+    public Collection<AlertPatch> getDatedServiceJourneyPatches(
+        AgencyAndId stopId, AgencyAndId dsjId
+    ) {
+        Set<AlertPatch> result = new HashSet<>();
+        if (stopId != null) {
+            StopAndRouteOrTripKey key = new StopAndRouteOrTripKey(stopId, dsjId);
+            if (dsjId != null && patchesByStopAndDatedServiceJourney.containsKey(key)) {
+                result.addAll(patchesByStopAndDatedServiceJourney.get(key));
+            }
+        } else {
+            if (dsjId != null && patchesByDatedServiceJourney.containsKey(dsjId)) {
+                result.addAll(patchesByDatedServiceJourney.get(dsjId));
+            }
+        }
+        return result;
+    }
+
+    @Override
     public synchronized void applyAll(Set<AlertPatch> alertPatches) {
         for (AlertPatch alertPatch : alertPatches) {
             apply(alertPatch);
@@ -152,6 +172,7 @@ public class AlertPatchServiceImpl implements AlertPatchService {
         AgencyAndId stop = alertPatch.getStop();
         AgencyAndId route = alertPatch.getRoute();
         AgencyAndId trip = alertPatch.getTrip();
+        AgencyAndId dsj = alertPatch.getDatedServiceJourneyId();
 
         if (stop != null && trip != null) {
             StopAndRouteOrTripKey key = new StopAndRouteOrTripKey(stop, trip);
@@ -163,6 +184,19 @@ public class AlertPatchServiceImpl implements AlertPatchService {
             Set<AlertPatch> set = patchesByStopAndRoute.getOrDefault(key, new HashSet());
             set.add(alertPatch);
             patchesByStopAndRoute.put(key, set);
+        } else if (dsj != null) {
+            if (stop != null) {
+                // Stop and DSJ
+                StopAndRouteOrTripKey key = new StopAndRouteOrTripKey(stop, dsj);
+                Set<AlertPatch> set = patchesByStopAndRoute.getOrDefault(key, new HashSet());
+                set.add(alertPatch);
+                patchesByStopAndDatedServiceJourney.put(key, set);
+            } else {
+                // DSJ only
+                Set<AlertPatch> set = patchesByDatedServiceJourney.getOrDefault(dsj, new HashSet());
+                set.add(alertPatch);
+                patchesByDatedServiceJourney.put(dsj, set);
+            }
         } else {
             if (stop != null) {
                 Set<AlertPatch> set = patchesByStop.getOrDefault(stop, new HashSet());
@@ -239,6 +273,7 @@ public class AlertPatchServiceImpl implements AlertPatchService {
         AgencyAndId stop = alertPatch.getStop();
         AgencyAndId route = alertPatch.getRoute();
         AgencyAndId trip = alertPatch.getTrip();
+        AgencyAndId dsj = alertPatch.getDatedServiceJourneyId();
 
         if (stop != null) {
             removeAlertPatch(patchesByStop.get(stop), alertPatch);
@@ -252,12 +287,20 @@ public class AlertPatchServiceImpl implements AlertPatchService {
             removeAlertPatch(patchesByTrip.get(trip), alertPatch);
         }
 
+        if (dsj != null) {
+            removeAlertPatch(patchesByDatedServiceJourney.get(dsj), alertPatch);
+        }
+
         if (stop != null && route != null) {
             removeAlertPatch(patchesByStopAndRoute.get(new StopAndRouteOrTripKey(stop, route)), alertPatch);
         }
 
         if (stop != null && trip != null) {
             removeAlertPatch(patchesByStopAndTrip.get(new StopAndRouteOrTripKey(stop, trip)), alertPatch);
+        }
+
+        if (stop != null && dsj != null) {
+            removeAlertPatch(patchesByStopAndDatedServiceJourney.get(new StopAndRouteOrTripKey(stop, dsj)), alertPatch);
         }
 
         String agency = alertPatch.getAgency();

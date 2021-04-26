@@ -64,6 +64,8 @@ public class AlertPatch implements Serializable {
 
     private AgencyAndId stop;
 
+    private AgencyAndId datedServiceJourneyId;
+
     private Collection<TripPattern> tripPatterns;
 
     /**
@@ -315,6 +317,14 @@ public class AlertPatch implements Serializable {
     @XmlJavaTypeAdapter(AgencyAndIdAdapter.class)
     public AgencyAndId getStop() {
         return stop;
+    }
+
+    public AgencyAndId getDatedServiceJourneyId() {
+        return datedServiceJourneyId;
+    }
+
+    public void setDatedServiceJourneyId(AgencyAndId datedServiceJourneyId) {
+        this.datedServiceJourneyId = datedServiceJourneyId;
     }
 
     public void setAgencyId(String agency) {

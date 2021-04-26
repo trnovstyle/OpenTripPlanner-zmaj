@@ -2,6 +2,7 @@ package org.opentripplanner.updater;
 
 import org.opentripplanner.gtfs.GtfsLibrary;
 import org.opentripplanner.model.AgencyAndId;
+import org.opentripplanner.model.DatedServiceJourney;
 import org.opentripplanner.model.Route;
 import org.opentripplanner.model.Stop;
 import org.opentripplanner.model.TransmodelTransportSubmode;
@@ -19,6 +20,7 @@ import uk.org.siri.siri20.RecordedCall;
 import uk.org.siri.siri20.VehicleActivityStructure;
 import uk.org.siri.siri20.VehicleModesEnumeration;
 
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -46,16 +48,19 @@ public class SiriFuzzyTripMatcher {
     private static Map<String, Trip> vehicleJourneyTripCache = new HashMap<>();
 
     private static Set<String> nonExistingStops = new HashSet<>();
+    private final ZoneId timeZoneId;
 
     public SiriFuzzyTripMatcher(GraphIndex index) {
         this.index = index;
         initCache(this.index);
+        timeZoneId = index.graph.getTimeZone().toZoneId();
     }
 
     //For testing only
     protected SiriFuzzyTripMatcher(GraphIndex index, boolean forceCacheRebuild) {
         LOG.error("For testing only");
         this.index = index;
+        timeZoneId = index.graph.getTimeZone().toZoneId();
 
         if (forceCacheRebuild) {
             mappedTripsCache.clear();
@@ -99,6 +104,11 @@ public class SiriFuzzyTripMatcher {
                 Trip trip = index.tripForId.get(new AgencyAndId(feedId, serviceJourneyId));
                 if (trip != null) {
                     return trip;
+                }
+                final DatedServiceJourney datedServiceJourney = index.datedServiceJourneyForId.get(
+                    new AgencyAndId(feedId, serviceJourneyId));
+                if (datedServiceJourney != null) {
+                    return datedServiceJourney.getTrip();
                 }
             }
         }
@@ -164,11 +174,17 @@ public class SiriFuzzyTripMatcher {
 
     private Set<Trip> getMatchingTripsOnStopOrSiblings(String lastStopPoint, ZonedDateTime arrivalTime) {
 
-        Set<Trip> trips = start_stop_tripCache.get(createStartStopKey(lastStopPoint, arrivalTime.toLocalTime().toSecondOfDay()));
+        final int arrivalTimeInSeconds = arrivalTime.withZoneSameInstant(timeZoneId)
+                                            .toLocalTime()
+                                            .toSecondOfDay();
+
+        Set<Trip> trips = start_stop_tripCache.get(createStartStopKey(lastStopPoint,
+            arrivalTimeInSeconds
+        ));
+
         if (trips == null) {
             //Attempt to fetch trips that started yesterday - i.e. add 24 hours to arrival-time
-            int lastStopArrivalTime = arrivalTime.toLocalTime().toSecondOfDay() + (24 * 60 * 60);
-            trips = start_stop_tripCache.get(createStartStopKey(lastStopPoint, lastStopArrivalTime));
+            trips = start_stop_tripCache.get(createStartStopKey(lastStopPoint, arrivalTimeInSeconds + (24 * 60 * 60)));
         }
 
         if (trips == null || trips.isEmpty()) {
@@ -178,7 +194,9 @@ public class SiriFuzzyTripMatcher {
             if (stop != null && stop.getParentStation() != null) {
                 Collection<Stop> allQuays = index.stopsForParentStation.get(stop.getParentStationAgencyAndId());
                 for (Stop quay : allQuays) {
-                    Set<Trip> tripSet = start_stop_tripCache.get(createStartStopKey(quay.getId().getId(), arrivalTime.toLocalTime().toSecondOfDay()));
+                    Set<Trip> tripSet = start_stop_tripCache.get(createStartStopKey(quay.getId().getId(),
+                        arrivalTimeInSeconds
+                    ));
                     if (tripSet != null) {
                         if (trips == null) {
                             trips = tripSet;
@@ -326,6 +344,18 @@ public class SiriFuzzyTripMatcher {
 
     public Set<Route> getRoutes(String lineRefValue) {
         return mappedRoutesCache.getOrDefault(lineRefValue, new HashSet<>());
+    }
+
+    public DatedServiceJourney getDatedServiceJourney(String datedServiceJourneyId) {
+        for (String feedId : index.agenciesForFeedId.keySet()) {
+            final DatedServiceJourney dsj = index.datedServiceJourneyForId.get(new AgencyAndId(feedId,
+                datedServiceJourneyId
+            ));
+            if (dsj != null) {
+                return dsj;
+            }
+        }
+        return null;
     }
 
     public AgencyAndId getTripId(String vehicleJourney) {

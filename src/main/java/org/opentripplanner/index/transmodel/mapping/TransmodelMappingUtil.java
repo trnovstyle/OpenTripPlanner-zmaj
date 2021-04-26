@@ -61,6 +61,9 @@ public class TransmodelMappingUtil {
         return GtfsLibrary.convertIdFromString(id);
     }
 
+    public List<AgencyAndId> idsFromStrings(Collection<String> ids) {
+        return ids == null ? null : ids.stream().map(this::fromIdString).collect(Collectors.toList());
+    }
 
     /**
      * Add agency id prefix to vertexIds if fixed agency is set.
