@@ -53,7 +53,6 @@ public class RoutingService {
     public RoutingResponse route(RoutingRequest request, Router router) {
         RoutingResponse response = null;
         try {
-            AvgTimer.enableTimers(true);
             RoutingWorker worker = new RoutingWorker(router.raptorConfig, request);
             response = worker.route(router);
         } catch (Exception e) {
