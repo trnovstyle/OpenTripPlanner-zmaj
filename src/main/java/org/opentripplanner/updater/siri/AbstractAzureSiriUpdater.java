@@ -37,13 +37,13 @@ public abstract class AbstractAzureSiriUpdater implements GraphUpdater {
      * Consume Service Bus topic message and implement business logic.
      * @param messageContext The Service Bus processor message context that holds a received message and additional methods to settle the message.
      */
-    abstract void messageConsumer(ServiceBusReceivedMessageContext messageContext);
+    protected abstract void messageConsumer(ServiceBusReceivedMessageContext messageContext);
 
     /**
      * Consume error and decide how to manage it.
      * @param errorContext Context for errors handled by the ServiceBusProcessorClient.
      */
-    abstract void errorConsumer(ServiceBusErrorContext errorContext);
+    protected abstract void errorConsumer(ServiceBusErrorContext errorContext);
 
     /**
      * Get common parameters always required to connect to Azure Service Bus. Specific parameters for ET, SX or VM topics should be extracted by
@@ -70,7 +70,12 @@ public abstract class AbstractAzureSiriUpdater implements GraphUpdater {
      */
     @Override
     public void run() throws Exception {
-        subscriptionName = "otp-" + UUID.randomUUID().toString();
+        // In Kubernetes this should be the POD identifier
+        subscriptionName = System.getenv("HOSTNAME");
+        if (subscriptionName == null || subscriptionName.isBlank()) {
+            subscriptionName = "otp-"+UUID.randomUUID().toString();
+        }
+
         // Client with permissions to create subscription
         serviceBusAdmin = new ServiceBusAdministrationClientBuilder()
                 .connectionString(serviceBusUrl)
@@ -144,7 +149,7 @@ public abstract class AbstractAzureSiriUpdater implements GraphUpdater {
             LOG.error("Service Bus is busy, wait and try again");
             try {
                 // Choosing an arbitrary amount of time to wait until trying again.
-                TimeUnit.SECONDS.sleep(1);
+                TimeUnit.SECONDS.sleep(5);
             } catch (InterruptedException e2) {
                 LOG.error("Unable to sleep for period of time");
             }

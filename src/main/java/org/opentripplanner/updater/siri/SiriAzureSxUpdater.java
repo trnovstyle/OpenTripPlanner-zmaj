@@ -41,10 +41,13 @@ public class SiriAzureSxUpdater extends AbstractAzureSiriUpdater {
     }
 
     @Override
-    void messageConsumer(ServiceBusReceivedMessageContext messageContext) {
+    protected void messageConsumer(ServiceBusReceivedMessageContext messageContext) {
         var message = messageContext.getMessage();
 
-        LOG.info("Processing message. Session={}, Sequence={}", message.getMessageId(), message.getSequenceNumber());
+        LOG.debug("Processing message. messageId={}, sequenceNumber={}, enqueued time={}",
+                message.getMessageId(),
+                message.getSequenceNumber(),
+                message.getEnqueuedTime());
 
         try {
             var siri = SiriXml.parseXml(message.getBody().toString());
@@ -64,7 +67,7 @@ public class SiriAzureSxUpdater extends AbstractAzureSiriUpdater {
     }
 
     @Override
-    void errorConsumer(ServiceBusErrorContext errorContext) {
+    protected void errorConsumer(ServiceBusErrorContext errorContext) {
         defaultErrorConsumer(errorContext);
     }
 
