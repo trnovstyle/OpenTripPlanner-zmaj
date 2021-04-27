@@ -720,12 +720,21 @@ public abstract class GraphPathToTripPlanConverter {
             arrivingStopConditions.add(StopCondition.STOP);
             arrivingStopConditions.add(StopCondition.DESTINATION);
 
+            DatedServiceJourney legDatedServiceJourney = findDatedServiceJourney(graph, leg);
+
             if (leg.routeId != null) {
 
                 if (leg.from != null && leg.from.stopId != null) {
                     addAlertPatchesToLeg(leg, departingStopConditions, getAlertsForStopAndRoute(graph, leg.from.stopId, leg.routeId), requestedLocale, leg.startTime.getTime(), leg.endTime.getTime());
                 }
-
+                if (leg.stop != null) {
+                    for (Place place : leg.stop) {
+                        if (place.stopId != null) {
+                            addAlertPatchesToLeg(leg, passingStopConditions, getAlertsForStopAndRoute(graph, place.stopId, leg.routeId),
+                                requestedLocale, place.arrival.getTime(), place.departure.getTime());
+                        }
+                    }
+                }
                 if (leg.to != null && leg.to.stopId != null) {
                     addAlertPatchesToLeg(leg, arrivingStopConditions, getAlertsForStopAndRoute(graph, leg.to.stopId, leg.routeId), requestedLocale, leg.startTime.getTime(), leg.endTime.getTime());
                 }
@@ -734,20 +743,42 @@ public abstract class GraphPathToTripPlanConverter {
             if (leg.tripId != null) {
                 if (leg.from != null && leg.from.stopId != null) {
                     addAlertPatchesToLeg(leg, departingStopConditions, getAlertsForStopAndTrip(graph, leg.from.stopId, leg.tripId), requestedLocale, leg.startTime.getTime(), leg.endTime.getTime());
+                    if (legDatedServiceJourney != null) {
+                        // DSJ + from-stop
+                        addAlertPatchesToLeg(leg, departingStopConditions, graph.index.getAlertsForStopAndDatedServiceJourney(leg.from.stopId, legDatedServiceJourney.getId()),
+                            requestedLocale, leg.startTime.getTime(), leg.endTime.getTime()
+                        );
+                    }
                 }
 
                 if (leg.to != null && leg.to.stopId != null) {
                     addAlertPatchesToLeg(leg, arrivingStopConditions, getAlertsForStopAndTrip(graph, leg.to.stopId, leg.tripId), requestedLocale, leg.startTime.getTime(), leg.endTime.getTime());
+                    if (legDatedServiceJourney != null) {
+                        // DSJ + to-stop
+                        addAlertPatchesToLeg(leg, arrivingStopConditions, graph.index.getAlertsForStopAndDatedServiceJourney(leg.to.stopId, legDatedServiceJourney.getId()),
+                            requestedLocale, leg.startTime.getTime(), leg.endTime.getTime()
+                        );
+                    }
                 }
-
                 if (leg.stop != null) {
                     for (Place place : leg.stop) {
                         if (place.stopId != null) {
                             addAlertPatchesToLeg(leg, passingStopConditions, getAlertsForStopAndTrip(graph, place.stopId, leg.tripId),
                                     requestedLocale, place.arrival.getTime(), place.departure.getTime());
+                            if (legDatedServiceJourney != null) {
+                                // DSJ + stops
+                                addAlertPatchesToLeg(leg, passingStopConditions, graph.index.getAlertsForStopAndDatedServiceJourney(place.stopId, legDatedServiceJourney.getId()),
+                                    requestedLocale, leg.startTime.getTime(), leg.endTime.getTime()
+                                );
+                            }
                         }
                     }
                 }
+            }
+            if (legDatedServiceJourney != null) {
+                addAlertPatchesToLeg(leg, graph.index.getAlertsForDatedServiceJourney(legDatedServiceJourney),
+                    requestedLocale, leg.startTime.getTime(), leg.endTime.getTime()
+                );
             }
 
             if (leg.stop != null) {
@@ -786,6 +817,19 @@ public abstract class GraphPathToTripPlanConverter {
             // Filter alerts when there are multiple timePeriods for each alert
             leg.alertPatches.removeIf(alertPatch ->  !alertPatch.displayDuring(leg.startTime.getTimeInMillis()/1000, leg.endTime.getTimeInMillis()/1000));
         }
+    }
+
+    private static DatedServiceJourney findDatedServiceJourney(Graph graph, Leg leg) {
+        if (leg.tripId != null && leg.serviceDate != null) {
+            final Trip trip = graph.index.tripForId.get(leg.tripId);
+            if (trip != null) {
+                final TripAlterationOnDate tripAlterationOnDate = trip.getTripAlterationOnDate(leg.serviceDate);
+                if (tripAlterationOnDate != null) {
+                    return new DatedServiceJourney(trip,tripAlterationOnDate);
+                }
+            }
+        }
+        return null;
     }
 
     private static Collection<AlertPatch> getAlertsForStopAndRoute(Graph graph, AgencyAndId stopId, AgencyAndId routeId) {
@@ -957,7 +1001,7 @@ public abstract class GraphPathToTripPlanConverter {
             leg.continuousDropOffMessage = trip.getContinuousDropOffMessage();
 
             if (serviceDay != null) {
-                leg.serviceDate = serviceDay.getServiceDate().getAsString();
+                leg.serviceDate = serviceDay.getServiceDate();
             }
 
             if (leg.headsign == null) {
