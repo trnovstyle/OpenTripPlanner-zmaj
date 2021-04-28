@@ -22,12 +22,7 @@ import org.opentripplanner.updater.bike_rental.BikeRentalUpdater;
 import org.opentripplanner.updater.car_park.CarParkUpdater;
 import org.opentripplanner.updater.example.ExampleGraphUpdater;
 import org.opentripplanner.updater.example.ExamplePollingGraphUpdater;
-import org.opentripplanner.updater.siri.SiriActiveMQUpdater;
-import org.opentripplanner.updater.siri.SiriETUpdater;
-import org.opentripplanner.updater.siri.SiriEstimatedTimetableGooglePubsubUpdater;
-import org.opentripplanner.updater.siri.SiriLiteETUpdater;
-import org.opentripplanner.updater.siri.SiriLiteVMUpdater;
-import org.opentripplanner.updater.siri.SiriVMUpdater;
+import org.opentripplanner.updater.siri.*;
 import org.opentripplanner.updater.stoptime.PollingStoptimeUpdater;
 import org.opentripplanner.updater.stoptime.WebsocketGtfsRealtimeUpdater;
 import org.opentripplanner.updater.street_notes.WinkkiPollingGraphUpdater;
@@ -145,6 +140,12 @@ public abstract class GraphUpdaterConfigurator {
                 }
                 else if (type.equals("siri-lite-vm-updater")) {
                     updater = new SiriLiteVMUpdater();
+                }
+                else if (type.equals("siri-azure-et-updater")) {
+                    updater = new SiriAzureEtUpdater();
+                }
+                else if (type.equals("siri-azure-sx-updater")) {
+                    updater = new SiriAzureSxUpdater();
                 }
             }
 

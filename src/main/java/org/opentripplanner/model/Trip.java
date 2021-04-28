@@ -15,8 +15,12 @@
  */
 package org.opentripplanner.model;
 
+import org.opentripplanner.model.calendar.ServiceDate;
+
+import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 import java.util.List;
+import java.util.Map;
 
 public final class Trip extends IdentityBean<AgencyAndId> {
 
@@ -49,7 +53,7 @@ public final class Trip extends IdentityBean<AgencyAndId> {
     private int wheelchairAccessible = 0;
 
     @NotNull
-    private TripServiceAlteration serviceAlteration = TripServiceAlteration.planned;
+    private TripAlterationSchedule alterationSchedule = TripAlterationSchedule.defaultAlteration();
 
     private List<KeyValue> keyValues;
 
@@ -85,14 +89,14 @@ public final class Trip extends IdentityBean<AgencyAndId> {
 
     private transient String replacementForTripId; //Transient to be backwards graph-compatible. Will only be used for realtime-data anyway.
 
-    public Trip() {
-    }
+    public Trip() { }
 
     public Trip(Trip obj) {
         this.id = obj.id;
         this.route = obj.route;
         this.operator = obj.operator;
         this.serviceId = obj.serviceId;
+        this.alterationSchedule = obj.alterationSchedule;
         this.tripShortName = obj.tripShortName;
         this.tripPrivateCode = obj.tripPrivateCode;
         this.tripHeadsign = obj.tripHeadsign;
@@ -104,7 +108,6 @@ public final class Trip extends IdentityBean<AgencyAndId> {
         this.tripBikesAllowed = obj.tripBikesAllowed;
         this.bikesAllowed = obj.bikesAllowed;
         this.fareId = obj.fareId;
-        this.serviceAlteration = obj.serviceAlteration;
         this.keyValues = obj.keyValues;
         this.transportSubmode = obj.transportSubmode;
         this.drtMaxTravelTime = obj.drtMaxTravelTime;
@@ -157,7 +160,7 @@ public final class Trip extends IdentityBean<AgencyAndId> {
     }
 
     public String getTripShortName() {
-        return tripPrivateCode != null && !tripPrivateCode.equals("") ? tripPrivateCode : tripPublicCode;
+        return tripPrivateCode != null && !tripPrivateCode.isEmpty() ? tripPrivateCode : tripPublicCode;
     }
 
     public void setTripShortName(String tripShortName) {
@@ -320,12 +323,50 @@ public final class Trip extends IdentityBean<AgencyAndId> {
         this.continuousDropOffMessage = continuousDropOffMessage;
     }
 
-    public TripServiceAlteration getServiceAlteration() {
-        return serviceAlteration;
+    /**
+     * If a trip is imported as dated-service-journeys this is {@code null}.
+     * If this trip is imported from a ServiceJourney then this have that service journey's
+     * value. If imported from GTFS then it is always planned.
+     */
+    @Nullable
+    public TripAlteration getAlteration() {
+        return alterationSchedule.isMappedToDate() ? null : alterationSchedule.fixedAlteration();
     }
 
-    public void setServiceAlteration(TripServiceAlteration serviceAlteration) {
-        this.serviceAlteration = serviceAlteration == null ? TripServiceAlteration.planned : serviceAlteration;
+    /**
+     * If the trip origin is GTFS or a dated-service-journeys this method return {@code false}.
+     * If the origin is a ServiceJourney, then check the the fixed alternation.
+     */
+    public boolean isCanceledOrReplaced() {
+        return alterationSchedule.isCanceledOrReplaced();
+    }
+
+    /**
+     * Is the trip alterations planed or extra-journey?
+     * @throws IllegalStateException for undefined dates (DSJ).
+     */
+    public boolean isRunningOnDate(@NotNull ServiceDate date) {
+        return !alterationSchedule.alteration(date).isCanceledOrReplaced();
+    }
+
+    /** Only defined if the source is DSJs. */
+    @Nullable
+    public TripAlterationOnDate getTripAlterationOnDate(ServiceDate date) {
+        return alterationSchedule.alterationForDate(date);
+    }
+
+    /** Only defined is the source is DSJs. */
+    public Iterable<TripAlterationOnDate> listTripAlterationOnDates() {
+        return alterationSchedule.listAll();
+    }
+
+
+    public void setAlterations(TripAlteration fixedAlteration) {
+        this.alterationSchedule = TripAlterationSchedule.createAlterationSchedule(fixedAlteration);
+    }
+
+    public void setAlterations(Map<ServiceDate, TripAlterationOnDate> alterations) {
+        this.alterationSchedule = TripAlterationSchedule.createAlterationSchedule(alterations);
     }
 
     public List<KeyValue> getKeyValues() {

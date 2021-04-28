@@ -39,6 +39,8 @@ public interface AlertPatchService {
 
     Collection<AlertPatch> getTripPatternPatches(TripPattern tripPattern);
 
+    Collection<AlertPatch> getDatedServiceJourneyPatches(AgencyAndId stopId, AgencyAndId dsjId);
+
     void apply(AlertPatch alertPatch);
 
     void expire(Set<String> ids);
