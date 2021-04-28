@@ -31,6 +31,7 @@ import org.opentripplanner.graph_builder.module.osm.WayPropertySetSource.Driving
 import org.opentripplanner.model.FeedScopedId;
 import org.opentripplanner.model.GenericLocation;
 import org.opentripplanner.model.Route;
+import org.opentripplanner.model.modes.TransitMainMode;
 import org.opentripplanner.routing.algorithm.transferoptimization.api.TransferOptimizationParameters;
 import org.opentripplanner.model.modes.AllowedTransitMode;
 import org.opentripplanner.routing.core.BicycleOptimizeType;
@@ -340,6 +341,18 @@ public class RoutingRequest implements Cloneable, Serializable {
 
     /** Configure the transfer optimization */
     public final TransferOptimizationParameters transferOptimization = new TransferOptimizationRequest(this);
+
+    /**
+     * Transit reluctance per mode. Use this to add a advantage(<1.0) to specific modes, or to add
+     * a penalty to other modes (> 1.0). The type used here it the internal model
+     * {@link TransitMainMode} make sure to create a mapping for this before using it on the API.
+     * <p>
+     * If set, the alight-slack-for-mode override the default value {@code 1.0}.
+     * <p>
+     * This is a scalar multiplied with the time in second on board the transit vehicle. Default
+     * value is not-set(empty map).
+     */
+    public Map<TransitMainMode, Double> transitReluctanceForMode = new HashMap<>();
 
     /** A multiplier for how bad walking is, compared to being in transit for equal lengths of time.
      *  Defaults to 2. Empirically, values between 10 and 20 seem to correspond well to the concept
@@ -1432,7 +1445,7 @@ public class RoutingRequest implements Cloneable, Serializable {
      * @see RoutingRequest#isCloseToStartOrEnd(Vertex)
      * @see DominanceFunction#betterOrEqualAndComparable(State, State)
      */
-    private final int MAX_CLOSENESS_METERS = 500;
+    private static final int MAX_CLOSENESS_METERS = 500;
     private Envelope fromEnvelope;
     private Envelope toEnvelope;
 
