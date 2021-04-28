@@ -1,6 +1,7 @@
 /* This file is based on code copied from project OneBusAway, see the LICENSE file for further information. */
 package org.opentripplanner.model;
 
+import java.util.Objects;
 import org.opentripplanner.util.time.TimeUtils;
 
 
@@ -12,8 +13,6 @@ import org.opentripplanner.util.time.TimeUtils;
  *           - object structure.
  */
 public final class StopTime implements Comparable<StopTime> {
-
-    private static final long serialVersionUID = 1L;
 
     public static final int MISSING_VALUE = -999;
 
@@ -274,5 +273,38 @@ public final class StopTime implements Comparable<StopTime> {
       return "StopTime(seq=" + getStopSequence() + " stop=" + getStop().getId() + " trip="
                 + getTrip().getId() + " times=" + TimeUtils.timeToStrLong(getArrivalTime())
                 + "-" + TimeUtils.timeToStrLong(getDepartureTime()) + ")";
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) { return true; }
+        if (!(o instanceof StopTime)) { return false; }
+        final StopTime stopTime = (StopTime) o;
+        return arrivalTime == stopTime.arrivalTime
+                && departureTime == stopTime.departureTime
+                && timepoint == stopTime.timepoint
+                && stopSequence == stopTime.stopSequence
+                && pickupType == stopTime.pickupType
+                && dropOffType == stopTime.dropOffType
+                && Double.compare(stopTime.shapeDistTraveled, shapeDistTraveled) == 0
+                && flexWindowStart == stopTime.flexWindowStart
+                && flexWindowEnd == stopTime.flexWindowEnd
+                && flexContinuousPickup == stopTime.flexContinuousPickup
+                && flexContinuousDropOff == stopTime.flexContinuousDropOff
+                && Objects.equals(stop, stopTime.stop)
+                && Objects.equals(stopHeadsign, stopTime.stopHeadsign)
+                && Objects.equals(routeShortName, stopTime.routeShortName)
+                && Objects.equals(farePeriodId, stopTime.farePeriodId)
+                && Objects.equals(bookingInfo, stopTime.bookingInfo);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(
+                stop, arrivalTime, departureTime, timepoint, stopSequence, stopHeadsign,
+                routeShortName, pickupType, dropOffType, shapeDistTraveled, farePeriodId,
+                flexWindowStart, flexWindowEnd, flexContinuousPickup, flexContinuousDropOff,
+                bookingInfo
+        );
     }
 }

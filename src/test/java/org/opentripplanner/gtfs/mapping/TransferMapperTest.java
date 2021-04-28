@@ -5,6 +5,7 @@ import org.onebusaway.gtfs.model.Route;
 import org.onebusaway.gtfs.model.Stop;
 import org.onebusaway.gtfs.model.Transfer;
 import org.onebusaway.gtfs.model.Trip;
+import org.opentripplanner.model.TripStopTimes;
 
 public class TransferMapperTest {
     private static final String FEED_ID = "FEED";
@@ -63,7 +64,8 @@ public class TransferMapperTest {
             ROUTE_MAPPER,
             STATION_MAPPER,
             STOP_MAPPER,
-            TRIP_MAPPER
+            TRIP_MAPPER,
+            new TripStopTimes()
     );
 
     /*
