@@ -52,7 +52,7 @@ public class BikeRentalServiceDirectoryFetcher {
         updaters.add(updater);
       }
     }
-    catch (java.io.IOException e) {
+    catch (java.io.IOException | NullPointerException e) {
       LOG.warn("Error fetching list of bike rental endpoints from {}", url, e);
     }
 
