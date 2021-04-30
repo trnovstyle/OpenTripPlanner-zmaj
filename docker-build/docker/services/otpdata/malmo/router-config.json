@@ -5,14 +5,5 @@
     "interchangeAllowedPenalty": 150,
     "noInterchangePenalty": 3000,
     "transferSlack": 180
-  },
-  "updaters": [ {
-    "type": "siri-azure-et-updater",
-    "topic": "siri_et",
-    "servicebus-url": "SERVICE_BUS_URL"
-  }, {
-    "type": "siri-azure-sx-updater",
-    "topic": "siri_sx",
-    "servicebus-url": "SERVICE_BUS_URL"
-  } ]
+  }
 }
