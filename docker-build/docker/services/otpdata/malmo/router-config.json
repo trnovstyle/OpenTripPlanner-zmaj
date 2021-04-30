@@ -8,11 +8,11 @@
   },
   "updaters": [ {
     "type": "siri-azure-et-updater",
-    "topic": "siriet",
+    "topic": "siri_et",
     "servicebus-url": "SERVICE_BUS_URL"
   }, {
     "type": "siri-azure-sx-updater",
-    "topic": "sirisx",
+    "topic": "siri_sx",
     "servicebus-url": "SERVICE_BUS_URL"
   } ]
 }
