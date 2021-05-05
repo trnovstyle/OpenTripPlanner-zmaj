@@ -1,0 +1,98 @@
+trigger: none
+pool: 'TJP'
+#vmImage: 'ubuntu latest'
+
+schedules:
+  # Run every night 02:00, UTC time
+  - cron: "0 2 * * *"
+    displayName: "Daily Night Run"
+    branches:
+      include:
+        - resesok-otp
+    # Schedule even if there are no changes in the code
+    always: true
+
+variables:
+  dockerRegistryServiceConnection: 'TJPCRPROD'
+  namespace: 'otp'
+  keyVaultName: 'TJP-INFRA-KV-DEV'
+  dockerRegistry: 'TJPCRPROD'
+  azureSubscription: 'TJPDevOps-CN'
+  clusterName: 'TJP-AKS-PR'
+  clusterResourceGroup: 'TJP-AKS-RG-PR'
+  chartName: 'TJPCRPROD/otp'
+  otpKeyVaultName: 'RES-RESP-KV-DEV'
+
+steps:
+
+  - task: AzureKeyVault@1
+    inputs:
+      azureSubscription: $(azureSubscription)
+      KeyVaultName: $(keyVaultName)
+      SecretsFilter: '*'
+
+  # Remove old OTP pod from cluster by recreating namespace
+  - task: AzureCLI@2
+    displayName: 'Recreate PR Namespace: $(namespace)'
+    env:
+      CLUSTER_NAME: $(clusterName)
+      CLUSTER_GROUP: $(clusterResourceGroup)
+      NAMESPACE: $(namespace)
+    inputs:
+      azureSubscription: $(azureSubscription)
+      scriptType: 'bash'
+      scriptLocation: 'inlineScript'
+      inlineScript: |
+        az aks get-credentials -n $CLUSTER_NAME -g $CLUSTER_GROUP --admin
+        kubectl delete namespace $NAMESPACE --wait
+        kubectl create namespace $NAMESPACE || true
+
+  - task: Kubernetes@1
+    displayName: 'Label PR Namespace for Auto-Injection'
+    inputs:
+      connectionType: 'Azure Resource Manager'
+      azureSubscriptionEndpoint: $(azureSubscription)
+      azureResourceGroup: $(clusterResourceGroup)
+      kubernetesCluster: $(clusterName)
+      useClusterAdmin: true
+      command: 'label'
+      arguments: 'namespace $(namespace) istio-injection=enabled --overwrite'
+
+  # Install the latest version of helm
+  - task: HelmInstaller@1
+    displayName: 'Initialize Helm'
+    inputs:
+      helmVersionToInstall: '3.2.1'
+
+  - task: AzureCLI@2
+    displayName: 'Update Container Registry'
+    inputs:
+      azureSubscription: $(azureSubscription)
+      scriptType: 'bash'
+      scriptLocation: 'inlineScript'
+      inlineScript: |
+        export HELM_EXPERIMENTAL_OCI=1
+        helm repo remove TJPCRPROD
+        az acr helm repo add --name TJPCRPROD
+        helm repo update
+
+  - task: HelmDeploy@0
+    displayName: 'Deploying resesok-otp to PR-namespace'
+    inputs:
+      connectionType: 'Azure Resource Manager'
+      azureSubscriptionEndpoint: $(azureSubscription)
+      azureResourceGroup: $(clusterResourceGroup)
+      kubernetesCluster:  $(clusterName)
+      useClusterAdmin: true
+      namespace: $(namespace)
+      chartType: 'Name'
+      chartName: $(chartName)
+      releaseName: 'resesok-otp'
+      overrideValues:
+        "OtpKeyVaultName=$(otpKeyVaultName)\
+        ,manageIdentity.clientId=$(ResResesokProxyClientId)\
+        ,manageIdentity.resourceId=$(ResResesokProxyResourceId)"
+      valueFile: '$(System.DefaultWorkingDirectory)/docker-build/azure-deploy/helm-values/otp-values-pr.yaml'
+      command: 'upgrade'
+      # It can take some time to build graph.
+      arguments: '--create-namespace --timeout 30m0s --install'

@@ -7,6 +7,9 @@ pool: 'TJP'
 variables:
   dockerRegistryServiceConnection: 'TJPCRPROD'
   buildVersion: '0.1.$(Build.BuildId)'
+  keyVaultName: 'TJP-INFRA-KV-DEV'
+  dockerRegistry: 'TJPCRPROD'
+  azureSubscription: 'TJPDevOps-CN'
 
 steps:
   # Put settings with Azure Artifacts repository
@@ -68,11 +71,11 @@ steps:
       chartVersion: $(buildVersion)
       destination: $(Build.ArtifactStagingDirectory)
       save: false
-  # Push the package to the Azure container regristy
+  # Push the package to the Azure container registry
   - task: AzureCLI@2
     displayName: 'Push Helm Chart'
     inputs:
-      azureSubscription: 'TJPDevOps-CN'
+      azureSubscription: $(azureSubscription)
       scriptType: 'bash'
       scriptLocation: 'inlineScript'
       inlineScript: |
@@ -81,24 +84,37 @@ steps:
         az acr helm push \
           --name 'TJPCRPROD' \
           $(Build.ArtifactStagingDirectory)/otp-$(buildVersion).tgz
+
+  - task: AzureCLI@2
+    displayName: 'Add Azure Container Registry'
+    inputs:
+      azureSubscription: $(azureSubscription)
+      scriptType: 'bash'
+      scriptLocation: 'inlineScript'
+      inlineScript: |
+        export HELM_EXPERIMENTAL_OCI=1
+        helm repo remove TJPCRPROD
+        az acr helm repo add --name TJPCRPROD
+        helm repo update
+
   - task: AzureKeyVault@1
     inputs:
-      azureSubscription: 'TJPDevOps-CN'
-      KeyVaultName: 'TJP-INFRA-KV-DEV'
+      azureSubscription: $(azureSubscription)
+      KeyVaultName: $(keyVaultName)
       SecretsFilter: '*'
 
   #upload swagger.json to blobstaorage
   - task: PowerShell@2
     inputs:
       targetType: 'inline'
-      script: |        
+      script: |
         If(-not(Get-InstalledModule Az -ErrorAction silentlycontinue))
         {
           Install-Module -Name Az  -Confirm:$False -Force -AllowClobber
-        } 
-        $ctx = New-AzStorageContext -StorageAccountName "tjpsageo" -StorageAccountKey $(TJPSAGEO-AZURE-BLOB-STORAGE-KEY)         
+        }
+        $ctx = New-AzStorageContext -StorageAccountName "tjpsageo" -StorageAccountKey $(TJPSAGEO-AZURE-BLOB-STORAGE-KEY)
         Set-AzStorageBlobContent -File $(Build.Repository.LocalPath)/docker-build/azure-deploy/swagger.json -Container "otp-service" -Blob "$(buildVersion)_swagger.json" -Context $ctx
-        
+
   - task: TriggerBuild@3
     inputs:
       definitionIsInCurrentTeamProject: false
@@ -116,6 +132,25 @@ steps:
       buildParameters: "ServiceName: resesok-otp, ServiceBuildVersion: $(buildVersion), ServiceBranchName: $(Build.SourceBranchName), ServiceSourceVersion: $(Build.SourceVersion), ServiceSourceVersionMessage: $(Build.SourceVersionMessage)"
       authenticationMethod: 'OAuth Token'
       password: $(System.AccessToken)
+      enableBuildInQueueCondition: false
+      dependentOnSuccessfulBuildCondition: false
+      dependentOnFailedBuildCondition: false
+      checkbuildsoncurrentbranch: false
+      failTaskIfConditionsAreNotFulfilled: false
+
+  # Trigger deploy to PR environment
+  - task: TriggerBuild@3
+    inputs:
+      definitionIsInCurrentTeamProject: true
+      buildDefinition: 'resesok-otp-deploy-pr'
+      queueBuildForUserThatTriggeredBuild: true
+      ignoreSslCertificateErrors: false
+      useSameSourceVersion: false
+      useCustomSourceVersion: false
+      useSameBranch: true
+      waitForQueuedBuildsToFinish: false
+      storeInEnvironmentVariable: false
+      authenticationMethod: 'OAuth Token'
       enableBuildInQueueCondition: false
       dependentOnSuccessfulBuildCondition: false
       dependentOnFailedBuildCondition: false
