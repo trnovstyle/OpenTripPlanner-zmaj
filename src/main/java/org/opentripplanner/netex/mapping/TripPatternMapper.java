@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import org.opentripplanner.model.FeedScopedId;
+import org.opentripplanner.model.FlexLocationGroup;
 import org.opentripplanner.model.FlexStopLocation;
 import org.opentripplanner.model.Operator;
 import org.opentripplanner.model.Stop;
@@ -65,6 +66,7 @@ class TripPatternMapper {
             EntityById<Operator> operatorById,
             EntityById<Stop> stopsById,
             EntityById<FlexStopLocation> flexStopLocationsById,
+            EntityById<FlexLocationGroup> flexLocationGroupsById,
             EntityById<org.opentripplanner.model.Route> otpRouteById,
             Set<FeedScopedId> shapePointsIds,
             ReadOnlyHierarchicalMap<String, Route> routeById,
@@ -95,6 +97,7 @@ class TripPatternMapper {
             idFactory,
             stopsById,
             flexStopLocationsById,
+            flexLocationGroupsById,
             destinationDisplayById,
             quayIdByStopPointRef,
             flexibleStopPlaceIdByStopPointRef,
@@ -155,10 +158,13 @@ class TripPatternMapper {
         // TODO OTP2 Trips containing FlexStopLocations are not added to StopPatterns until support
         //           for this is added.
         if (
-                result.tripStopTimes
-                        .get(trips.get(0))
-                        .stream()
-                        .anyMatch(t -> t.getStop() instanceof FlexStopLocation)
+            result.tripStopTimes
+                .get(trips.get(0))
+                .stream()
+                .anyMatch(t ->
+                    t.getStop() instanceof FlexStopLocation
+                    || t.getStop() instanceof FlexLocationGroup
+                )
         ) {
             return result;
         }
