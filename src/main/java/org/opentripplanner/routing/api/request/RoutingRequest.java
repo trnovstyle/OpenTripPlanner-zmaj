@@ -35,6 +35,7 @@ import org.opentripplanner.routing.algorithm.transferoptimization.api.TransferOp
 import org.opentripplanner.model.modes.AllowedTransitMode;
 import org.opentripplanner.routing.core.BicycleOptimizeType;
 import org.opentripplanner.routing.core.IntersectionTraversalCostModel;
+import org.opentripplanner.routing.core.NorwayIntersectionTraversalCostModel;
 import org.opentripplanner.routing.core.RouteMatcher;
 import org.opentripplanner.routing.core.RoutingContext;
 import org.opentripplanner.routing.core.SimpleIntersectionTraversalCostModel;
@@ -81,7 +82,7 @@ public class RoutingRequest implements AutoCloseable, Cloneable, Serializable {
      * The model that computes turn/traversal costs.
      * TODO: move this to the Router or the Graph if it doesn't clutter the code too much
      */
-    public IntersectionTraversalCostModel traversalCostModel = new SimpleIntersectionTraversalCostModel(
+    public IntersectionTraversalCostModel traversalCostModel = new NorwayIntersectionTraversalCostModel(
             DrivingDirection.RIGHT_HAND_TRAFFIC);
 
     /* FIELDS UNIQUELY IDENTIFYING AN SPT REQUEST */

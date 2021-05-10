@@ -6,6 +6,7 @@ import org.opentripplanner.routing.algorithm.astar.strategies.RemainingWeightHeu
 import org.opentripplanner.routing.algorithm.astar.strategies.TrivialRemainingWeightHeuristic;
 import org.opentripplanner.routing.api.request.RoutingRequest;
 import org.opentripplanner.routing.api.response.RoutingErrorCode;
+import org.opentripplanner.routing.core.NorwayIntersectionTraversalCostModel;
 import org.opentripplanner.routing.core.SimpleIntersectionTraversalCostModel;
 import org.opentripplanner.routing.error.PathNotFoundException;
 import org.opentripplanner.routing.error.RoutingValidationException;
@@ -66,7 +67,7 @@ public class GraphPathFinder {
             throw new UnsupportedOperationException("Transit search not supported");
         }
 
-        options.traversalCostModel = new SimpleIntersectionTraversalCostModel(options.getRoutingContext().graph.getDrivingDirection());
+        options.traversalCostModel = new NorwayIntersectionTraversalCostModel(options.getRoutingContext().graph.getDrivingDirection());
 
         // Reuse one instance of AStar for all N requests, which are carried out sequentially
         AStar aStar = new AStar();
