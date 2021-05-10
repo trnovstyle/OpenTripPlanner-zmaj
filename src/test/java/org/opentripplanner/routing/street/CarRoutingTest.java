@@ -59,7 +59,7 @@ public class CarRoutingTest {
 
         assertThatPolylinesAreEqual(
                 polyline,
-                "ouqgH}mcu@gAE]U}BaA]Q}@]uAs@[SAm@Ee@AUEi@XEQkBQ?Bz@Dt@Dh@@TGBC@KBSHGx@"
+                "ouqgH}mcu@`ADJ@B]I]G_@s@yEa@kCSmAOcA?GAEi@~@c@j@{@r@c@Re@JC@o@LcBXQkBQ?Bz@Dt@Dh@@TGBC@KBSHGx@"
         );
     }
 
