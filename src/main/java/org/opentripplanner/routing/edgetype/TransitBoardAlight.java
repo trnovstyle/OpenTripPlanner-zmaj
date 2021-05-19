@@ -248,11 +248,23 @@ public class TransitBoardAlight extends TablePatternEdge implements OnboardEdge 
             s1.setBackMode(getMode());
             return s1.makeState();
         } else { 
-            /* We are going onto transit and must look for a suitable transit trip on this pattern. */   
-            
+            /* We are going onto transit and must look for a suitable transit trip on this pattern. */
+
             /* Disallow ever re-boarding the same trip pattern. */
             if (s0.getLastPattern() == this.getPattern()) {
-                return null; 
+                // Check if lastPattern and current pattern are from the same route (NeTEx named Line), if so we allow re-boarding
+                if(this.getPattern() != null
+                        && s0.getLastPattern() != null
+                        && this.getPattern().route != null
+                        && this.getPattern().route.getId() != null) {
+
+                    var lastLineId = s0.getLastPattern().route == null ? null : s0.getLastPattern().route.getId();
+                    if(!this.getPattern().route.getId().equals(lastLineId)) {
+                        return null;
+                    }
+                } else {
+                    return null;
+                }
             }
             
             /* Check this pattern's mode against those allowed in the request. */
