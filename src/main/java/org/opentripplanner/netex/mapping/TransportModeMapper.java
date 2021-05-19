@@ -14,7 +14,7 @@ public class TransportModeMapper {
 
     public TransmodelTransportSubmode getTransportSubmode(TransportSubmodeStructure transportSubmodeStructure) {
         if (transportSubmodeStructure == null) {
-            return null;
+            return TransmodelTransportSubmode.UNKNOWN;
         }
         String transportSubmodeVal = null;
 
@@ -45,12 +45,13 @@ public class TransportModeMapper {
             transportSubmodeVal = transportSubmodeStructure.getAirSubmode().value();
         }
 
-        return TransmodelTransportSubmode.fromValue(transportSubmodeVal);
+        TransmodelTransportSubmode transportSubmode = TransmodelTransportSubmode.fromValue(transportSubmodeVal);
+        return transportSubmode != null ? transportSubmode : TransmodelTransportSubmode.UNKNOWN;
     }
 
     public TransmodelTransportSubmode getTransportSubmode(StopPlace stopPlace) {
         if (stopPlace == null) {
-            return null;
+            return TransmodelTransportSubmode.UNKNOWN;
         }
         String transportSubmodeVal = null;
 
@@ -81,7 +82,8 @@ public class TransportModeMapper {
             transportSubmodeVal = stopPlace.getAirSubmode().value();
         }
 
-        return TransmodelTransportSubmode.fromValue(transportSubmodeVal);
+        TransmodelTransportSubmode transportSubmode = TransmodelTransportSubmode.fromValue(transportSubmodeVal);
+        return transportSubmode != null ? transportSubmode : TransmodelTransportSubmode.UNKNOWN;
     }
 
 
