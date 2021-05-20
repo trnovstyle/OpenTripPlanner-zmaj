@@ -74,6 +74,10 @@ public class TransfersPermutationService<T extends RaptorTripSchedule> {
       TransitPathLeg<T> nxtLeg = leg.nextTransitLeg();
 
       if(nxtLeg == null) {
+        // Do not allow the transfer to happen AFTER alight time/stop
+        if(leg.toTime() <= from.time()) {
+          return List.of();
+        }
         return List.of(
             leg.mutate()
                 .boardStop(from.stop(), from.time())
@@ -94,12 +98,15 @@ public class TransfersPermutationService<T extends RaptorTripSchedule> {
         List<PathLeg<T>> paths = createTransfers(round, tx, nxtLeg);
 
         for (PathLeg<T> next : paths) {
-          result.add(
-              leg.mutate()
-                  .boardStop(from.stop(), from.time())
-                  .newTail(tx.from().time(), next)
-                  .build(costCalculator, slackProvider, round < 2, arrivalTime)
-          );
+          // Check if the new alight time is AFTER the board time, if not ignore
+          if (from.time() < tx.from().time()) {
+            result.add(
+                    leg.mutate()
+                            .boardStop(from.stop(), from.time())
+                            .newTail(tx.from().time(), next)
+                            .build(costCalculator, slackProvider, round < 2, arrivalTime)
+            );
+          }
         }
       }
       return result;
