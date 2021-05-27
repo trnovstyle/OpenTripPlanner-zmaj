@@ -43,7 +43,13 @@ steps:
       scriptType: 'bash'
       scriptLocation: 'inlineScript'
       inlineScript: |
+        rm /root/.kube/config
         az aks get-credentials -n $CLUSTER_NAME -g $CLUSTER_GROUP --admin
+        currentContext=$(kubectl config current-context)
+        if [[ "$CLUSTER_NAME-admin" != "$currentContext" ]]; then
+          echo "Current-context is not the expected context: $CLUSTER_NAME-admin != $currentContext"
+          exit 1
+        fi
         kubectl delete namespace $NAMESPACE --wait
         kubectl create namespace $NAMESPACE || true
 
