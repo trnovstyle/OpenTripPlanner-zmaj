@@ -23,6 +23,7 @@ import org.opentripplanner.routing.api.request.StreetMode;
 import org.opentripplanner.routing.api.response.RoutingError;
 import org.opentripplanner.routing.api.response.RoutingResponse;
 import org.opentripplanner.routing.core.BicycleOptimizeType;
+import org.opentripplanner.routing.framework.PerformanceLogger;
 import org.opentripplanner.standalone.server.Router;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,8 +47,12 @@ import static org.opentripplanner.ext.transmodelapi.mapping.TransitIdMapper.mapI
 public class TransmodelGraphQLPlanner {
 
     private static final Logger LOG = LoggerFactory.getLogger(TransmodelGraphQLPlanner.class);
+    private static final PerformanceLogger PLOG = new PerformanceLogger(
+            LOG, "Transmodel Plan", 600
+    );
 
     public PlanResponse plan(DataFetchingEnvironment environment) {
+        long startTime = System.currentTimeMillis();
         PlanResponse response = new PlanResponse();
         RoutingRequest request = null;
         try {
@@ -65,9 +70,11 @@ public class TransmodelGraphQLPlanner {
                 response.messages.add(PlannerErrorMapper.mapMessage(routingError).message);
             }
 
+            PLOG.add("OK", System.currentTimeMillis() - startTime);
             response.debugOutput = res.getDebugAggregator().finishedRendering();
         }
         catch (Exception e) {
+            PLOG.add("FAILED", System.currentTimeMillis() - startTime);
             LOG.warn("System error");
             LOG.error("Root cause: " + e.getMessage(), e);
             PlannerError error = new PlannerError();
