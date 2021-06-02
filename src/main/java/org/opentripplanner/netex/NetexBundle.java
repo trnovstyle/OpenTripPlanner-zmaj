@@ -12,6 +12,7 @@ import org.opentripplanner.netex.index.NetexEntityIndex;
 import org.opentripplanner.netex.loader.GroupEntries;
 import org.opentripplanner.netex.loader.NetexDataSourceHierarchy;
 import org.opentripplanner.netex.loader.NetexXmlParser;
+import org.opentripplanner.model.modes.TransitModeService;
 import org.opentripplanner.netex.loader.parser.NetexDocumentParser;
 import org.opentripplanner.netex.mapping.NetexMapper;
 import org.opentripplanner.netex.validation.Validator;
@@ -56,7 +57,6 @@ public class NetexBundle implements Closeable {
             String netexFeedId,
             CompositeDataSource source,
             NetexDataSourceHierarchy hierarchy
-
     ) {
         this.netexFeedId = netexFeedId;
         this.source = source;
@@ -66,6 +66,7 @@ public class NetexBundle implements Closeable {
     /** load the bundle, map it to the OTP transit model and return */
     public OtpTransitServiceBuilder loadBundle(
             Deduplicator deduplicator,
+            TransitModeService transitModeService,
             DataImportIssueStore issueStore
     ) {
         LOG.info("Reading {}", hierarchy.description());
@@ -77,7 +78,13 @@ public class NetexBundle implements Closeable {
 
         // init parser and mapper
         xmlParser = new NetexXmlParser();
-        mapper = new NetexMapper(transitBuilder, netexFeedId, deduplicator, issueStore);
+        mapper = new NetexMapper(
+            transitBuilder,
+            netexFeedId,
+            deduplicator,
+            transitModeService,
+            issueStore
+        );
 
         // Load data
         loadFileEntries();
