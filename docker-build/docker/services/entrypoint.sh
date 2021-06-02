@@ -41,6 +41,8 @@ fi
 
 # Cut of " chars and set as environment variable
 export applicationInsightsKey=${applicationInsightsKey:1:-1}
+export APPLICATIONINSIGHTS_CONNECTION_STRING="InstrumentationKey=$applicationInsightsKey;"
+
 
 # Attempt to download graph from azure storage
 downloadFromAzureStorage $SA_NAME $GRAPH_CONTAINER $GRAPH_NAME $FILE_ZIP_PATH
@@ -73,20 +75,7 @@ else
   fi
 fi
 
-cd /code/appInsights || exit 1
-
-wget -q -P /code https://github.com/microsoft/ApplicationInsights-Java/releases/download/2.6.1/applicationinsights-agent-2.6.1.jar > /dev/null
-wget -q https://repo1.maven.org/maven2/com/microsoft/azure/applicationinsights-web-auto/2.6.1/applicationinsights-web-auto-2.6.1.jar > /dev/null
-wget -q https://repo1.maven.org/maven2/com/microsoft/azure/applicationinsights-logging-logback/2.6.1/applicationinsights-logging-logback-2.6.1.jar > /dev/null
-
-jar -xf applicationinsights-web-auto-2.6.1.jar > /dev/null && jar -xf applicationinsights-logging-logback-2.6.1.jar > /dev/null
-jar -uf /code/otp-shaded.jar com/ > /dev/null
-jar -uf /code/otp-shaded.jar ApplicationInsights.xml > /dev/null
-jar -uf /code/otp-shaded.jar logback.xml > /dev/null
-
 cd /code || exit 1
-# Remove application insights temporary files
-rm -rf appInsights
 
 #TO BE REMOVED SECTION START
 #Edit router-config.json service bus connection string from secret value
@@ -100,4 +89,4 @@ fi
 
 log_info "Start java OTP jar"
 
-exec java -javaagent:/code/applicationinsights-agent-2.6.1.jar -DAPPINSIGHTS_INSTRUMENTATIONKEY=$applicationInsightsKey -Xms256m -Xmx6144m -jar $OTP_JAR_PATH --server --graphs /code/otpdata --router malmo
+exec java -javaagent:/code/applicationinsights-agent-3.1.0.jar -Xms256m -Xmx6144m -jar $OTP_JAR_PATH --server --graphs /code/otpdata --router malmo
