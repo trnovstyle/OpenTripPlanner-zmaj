@@ -1,6 +1,7 @@
 package org.opentripplanner.routing.algorithm.transferoptimization.services;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
@@ -49,99 +50,121 @@ public class TransfersPermutationService<T extends RaptorTripSchedule> {
   }
 
   public List<OptimizedPath<T>> findAllTransitPathPermutations(Path<T> path) {
-    TransitPathLeg<T> leg0 = path.accessLeg().nextTransitLeg();
+    List<TransitPathLeg<T>> transitLegs = listOfTransitLegs(path);
 
-    // Path has no transit legs(possible with flex access) or
-    // the path have no transfers, then use the path found.
-    if(leg0 == null || leg0.nextTransitLeg() == null) {
-      return List.of(new OptimizedPath<T>(path, path));
-    }
+    // Find all possible transfer between each pair of transit legs
+    var possibleTransfers = listOfPossibleTransfers(transitLegs);
 
-    // Make sure we add the proper cost/slack for FLEX access
-    boolean firstTransitLeg = !path.accessLeg().access().hasRides();
-
-    List<TransitPathLeg<T>> paths = findTransitPaths(
-            path.accessLeg().toTime(),
-            fromStopTime(leg0),
-            leg0,
-            firstTransitLeg
+    // Combine transit legs and transfers
+    List<TransitPathLeg<T>> result = findAllTransferCombinations(
+            path, transitLegs, possibleTransfers
     );
 
-    return paths.stream()
-        .map(l -> newPath(path, l))
-        .map(p -> new OptimizedPath<>(path, p))
-        .collect(Collectors.toList());
+    // Create result; Add back the the access-leg to all paths
+    return result.stream()
+            .map(l -> newPath(path, l))
+            .map(p -> new OptimizedPath<>(path, p))
+            .collect(Collectors.toList());
   }
 
-  private List<TransitPathLeg<T>> findTransitPaths(
-      final int arrivalTime, final StopTime from, final TransitPathLeg<T> leg, boolean firstTransitLeg
+  private List<TransitPathLeg<T>> listOfTransitLegs(Path<T> path) {
+    return path.legStream()
+            .filter(PathLeg::isTransitLeg)
+            .map(PathLeg::asTransitLeg)
+            .collect(Collectors.toList());
+  }
+
+  private List<List<TripToTripTransfer<T>>> listOfPossibleTransfers(List<TransitPathLeg<T>> originalTransitLegs) {
+    List<List<TripToTripTransfer<T>>> result = new ArrayList<>();
+    var fromLeg = originalTransitLegs.get(0);
+    TransitPathLeg<T> toLeg;
+    var departure = fromStopTime(fromLeg);
+
+    for (int i = 1; i < originalTransitLegs.size(); i++) {
+      toLeg = originalTransitLegs.get(i);
+      var transfers = t2tService.findTransfers(fromLeg.trip(), departure, toLeg.trip());
+      result.add(transfers);
+
+      // Setup next
+      departure = transfers.stream()
+              .map(TripToTripTransfer::to)
+              .min(Comparator.comparingInt(TripStopTime::time))
+              .orElseThrow();
+      fromLeg = toLeg;
+    }
+    return result;
+  }
+
+  private List<TransitPathLeg<T>> findAllTransferCombinations(
+          Path<T> path,
+          List<TransitPathLeg<T>> originalTransitLegs,
+          List<List<TripToTripTransfer<T>>> possibleTransfers
   ) {
-      TransitPathLeg<T> nxtLeg = leg.nextTransitLeg();
+    List<TransitPathLeg<T>> result = List.of(last(originalTransitLegs));
+    List<TransitPathLeg<T>> tails;
+    int accessArrivalTime = path.accessLeg().toTime();
 
-      if(nxtLeg == null) {
-        // Do not allow the transfer to happen AFTER alight time/stop
-        if(leg.toTime() <= from.time()) {
-          return List.of();
-        }
-        return List.of(
-            leg.mutate()
-                .boardStop(from.stop(), from.time())
-                .build(costCalculator, slackProvider, firstTransitLeg, arrivalTime)
-        );
-      }
+    // Make sure we add the proper cost/slack for FLEX access
+    boolean accessWithoutRides = !path.accessLeg().access().hasRides();
 
-      StopTime fromDeparture = StopTime.stopTime(leg.fromStop(), leg.fromTime());
-      List<TripToTripTransfer<T>> transfers = t2tService.findTransfers(
-          leg.trip(), fromDeparture, nxtLeg.trip()
-      );
+    for (int i = possibleTransfers.size()-1; i >=0; --i) {
+      tails = result;
+      result = new ArrayList<>();
 
-      if(transfers.isEmpty()) { return List.of(); }
+      for (TripToTripTransfer<T> tx : possibleTransfers.get(i)) {
+        for (TransitPathLeg<T> tail : tails) {
+          // Make sure board time is before alight time
+          if (tx.to().time() < tail.toTime()) {
+            int txDepartureTime = arrivalTime(tx.from());
+            int txArrivalTime = txDepartureTime + tx.transferDuration();
 
-      List<TransitPathLeg<T>> result = new ArrayList<>();
+            TransitPathLeg<T> newTransitLeg = tail.mutate()
+                    .boardStop(tx.to().stop(), tx.to().time())
+                    .build(costCalculator, slackProvider, false, txArrivalTime);
+            PathLeg<T> newTail = tx.sameStop()
+                    ? newTransitLeg
+                    : createTransfer(tx, txDepartureTime, txArrivalTime, newTransitLeg);
 
-      for (TripToTripTransfer<T> tx : transfers) {
-        List<PathLeg<T>> paths = createTransfers(tx, nxtLeg);
-
-        for (PathLeg<T> next : paths) {
-          // Check if the new alight time is AFTER the board time, if not ignore
-          if(from.time() < tx.from().time()) {
-              result.add(
-                      leg.mutate()
-                              .boardStop(from.stop(), from.time())
-                              .newTail(tx.from().time(), next)
-                              .build(costCalculator, slackProvider, firstTransitLeg, arrivalTime)
-              );
+            boolean firstRide = i==0 && accessWithoutRides;
+            result.add(
+                  // Using the access-arrival-time as input here is only correct for the first
+                  // transit leg. But the leg created here is temporary and will be mutated in
+                  // the next iteration(except for the first transit leg)
+                  originalTransitLegs.get(i).mutate()
+                          .newTail(tx.from().time(), newTail)
+                          .build(costCalculator, slackProvider, firstRide, accessArrivalTime)
+            );
           }
         }
       }
-      return result;
+    }
+    return result;
   }
 
-  private List<PathLeg<T>> createTransfers(TripToTripTransfer<T> tx, TransitPathLeg<T> nextLeg) {
-    int departureTime = arrivalTime(tx.from());
-    int arrivalTime = departureTime + tx.transferDuration();
-    List<TransitPathLeg<T>> paths = findTransitPaths(arrivalTime, tx.to(), nextLeg, false);
-
-    return paths.stream().map( p ->
-        tx.sameStop()
-            ? p
-            : new TransferPathLeg<>(
-                tx.from().stop(),
-                departureTime,
-                tx.to().stop(),
-                arrivalTime,
-                RaptorCostConverter.toOtpDomainCost(
-                    costCalculator.walkCost(tx.transferDuration())
-                ),
-                tx.getTransfer(),
-                p
-            )
-    ).collect(Collectors.toList());
-  }
-
-  private static <T extends RaptorTripSchedule> Path<T> newPath(Path<T> path, TransitPathLeg<T> tail) {
+  private static <T extends RaptorTripSchedule> Path<T> newPath(
+          Path<T> path,
+          TransitPathLeg<T> tail
+  ) {
     AccessPathLeg<T> accessPathLeg = new AccessPathLeg<>(path.accessLeg(), tail);
     return new Path<>(path.rangeRaptorIterationDepartureTime(), accessPathLeg);
+  }
+
+  private TransferPathLeg<T> createTransfer(
+          TripToTripTransfer<T> tx,
+          int departureTime,
+          int arrivalTime,
+          TransitPathLeg<T> tail
+  ) {
+    int cost = RaptorCostConverter.toOtpDomainCost(costCalculator.walkCost(tx.transferDuration()));
+    return new TransferPathLeg<>(
+            tx.from().stop(),
+            departureTime,
+            tx.to().stop(),
+            arrivalTime,
+            cost,
+            tx.getTransfer(),
+            tail
+    );
   }
 
   /** Trip alight time + alight slack */
@@ -153,4 +176,6 @@ public class TransfersPermutationService<T extends RaptorTripSchedule> {
   private StopTime fromStopTime(final TransitPathLeg<T> leg) {
     return StopTime.stopTime(leg.fromStop(), leg.fromTime());
   }
+
+  private static <T> T last(List<T> list) { return list.get(list.size()-1);}
 }

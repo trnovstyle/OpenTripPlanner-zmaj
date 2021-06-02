@@ -47,13 +47,17 @@ public class StandardTransferGenerator<T extends RaptorTripSchedule> {
   }
 
   private List<TripToTripTransfer<T>> findAllTransfers(StopTime fromTripDeparture) {
-
-    final List<TripToTripTransfer<T>> result = new ArrayList<>();
-
-    int stopPos = fromTrip.findArrivalStopPosition(
+    return  findAllTransfers(
+        fromTrip.findArrivalStopPosition(
             fromTripDeparture.time(),
             fromTripDeparture.stop()
+        )
     );
+  }
+
+  private List<TripToTripTransfer<T>> findAllTransfers(int stopPos) {
+
+    final List<TripToTripTransfer<T>> result = new ArrayList<>();
 
     while (stopPos < fromTrip.pattern().numberOfStopsInPattern()) {
       var from = TripStopTime.arrival(fromTrip, stopPos);

@@ -39,6 +39,7 @@ public class PathTest {
     @Test
     public void numberOfTransfers() {
         assertEquals(2, subject.numberOfTransfers());
+        assertEquals(2, subject.numberOfTransfersExAccessEgress());
     }
 
     @Test

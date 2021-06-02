@@ -15,6 +15,7 @@ import org.opentripplanner.routing.algorithm.transferoptimization.services.Optim
 import org.opentripplanner.routing.algorithm.transferoptimization.services.PriorityBasedTransfersCostCalculator;
 import org.opentripplanner.routing.algorithm.transferoptimization.services.TransfersPermutationService;
 import org.opentripplanner.transit.raptor.api.path.Path;
+import org.opentripplanner.transit.raptor.api.path.PathLeg;
 import org.opentripplanner.transit.raptor.api.path.TransitPathLeg;
 import org.opentripplanner.transit.raptor.api.transit.RaptorTripSchedule;
 import org.slf4j.Logger;
@@ -79,13 +80,11 @@ public class OptimizeTransferService<T extends RaptorTripSchedule> {
    * filtering the list down one path, or a few equally good paths.
    */
   private Collection<OptimizedPath<T>> optimize(Path<T> path) {
-    TransitPathLeg<T> leg0 = path.accessLeg().nextTransitLeg();
-
-    // Path has no transit legs(possible with flex access) or
-    // the path have no transfers, then use the path found.
-    if (leg0 == null || leg0.nextTransitLeg() == null) {
+    // Skip transfer optimization if no transfers exist.
+    if (path.numberOfTransfersExAccessEgress() == 0) {
       return List.of(new OptimizedPath<>(path, path));
     }
+
     LOG.debug("Optimize path: {}", path);
 
     var transfers = decorateWithSpecializedTransfers(
