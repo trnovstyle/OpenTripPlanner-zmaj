@@ -12,14 +12,16 @@ import javax.xml.stream.XMLStreamException;
 public class SiriAzureEtUpdater extends AbstractAzureSiriUpdater {
     private final Logger LOG = LoggerFactory.getLogger(getClass());
 
+    private int messageCounter;
+
     @Override
     protected void messageConsumer(ServiceBusReceivedMessageContext messageContext) {
         var message = messageContext.getMessage();
+        messageCounter++;
 
-        LOG.info("Processing message. messageId={}, sequenceNumber={}, enqueued time={}",
-                message.getMessageId(),
-                message.getSequenceNumber(),
-                message.getEnqueuedTime());
+        if(messageCounter % 100 == 0) {
+            LOG.info("Total SIRI-ET messages received={}", messageCounter);
+        }
 
         try {
             var siri = SiriXml.parseXml(message.getBody().toString());
