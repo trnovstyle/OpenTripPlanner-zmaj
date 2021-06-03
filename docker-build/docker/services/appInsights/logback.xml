@@ -25,6 +25,7 @@
     <appender-ref ref="stdout" />
     <appender-ref ref="aiAppender" />
   </root>
+  <logger name="com.azure" level="warn" />
   <logger name="ch.qos.logback" level="warn"/>
   <logger name="com.amazonaws" level="info"/>
   <logger name="org.apache.http" level="info" />
