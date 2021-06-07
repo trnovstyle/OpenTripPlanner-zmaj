@@ -3,7 +3,6 @@ package org.opentripplanner.transit.raptor.api.path;
 import java.util.Iterator;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
-import javax.annotation.Nullable;
 import org.opentripplanner.transit.raptor.api.transit.RaptorTripSchedule;
 import org.opentripplanner.util.time.DurationUtils;
 import org.opentripplanner.util.time.TimeUtils;
@@ -55,7 +54,7 @@ public interface  PathLeg<T extends RaptorTripSchedule> {
     }
 
     /**
-     * Number of seconds to travel this leg. This does not include wait time.
+     * Number of seconds to travel this leg. This does not include slack/wait time.
      */
     default int duration() {
         return toTime() - fromTime();
@@ -67,6 +66,16 @@ public interface  PathLeg<T extends RaptorTripSchedule> {
      * {@code -1} is returned if no cost is computed by raptor.
      */
     int generalizedCost();
+
+    /**
+     * The computed generalized-cost for this path leg plus all path-legs following this leg.
+     * <p>
+     * {@code -1} is returned if no cost is computed by raptor.
+     */
+    default int tailGeneralizedCost() {
+        if(generalizedCost() < 0) { return generalizedCost(); }
+        return stream().mapToInt(PathLeg::generalizedCost).sum();
+    }
 
     /**
      * @return {@code true} if transit leg, if not {@code false}.
@@ -86,7 +95,6 @@ public interface  PathLeg<T extends RaptorTripSchedule> {
      * </pre>
      */
     default TransitPathLeg<T> asTransitLeg() {
-        //noinspection unchecked
         return (TransitPathLeg<T>) this;
     }
 
@@ -108,7 +116,6 @@ public interface  PathLeg<T extends RaptorTripSchedule> {
      * </pre>
      */
     default TransferPathLeg<T> asTransferLeg() {
-        //noinspection unchecked
         return (TransferPathLeg<T>) this;
     }
 
@@ -158,20 +165,6 @@ public interface  PathLeg<T extends RaptorTripSchedule> {
                 ;
     }
 
-    /**
-     * Return the next transit leg in the path after this one, if no more
-     * transit exist before reaching the destination {@code null} is returned.
-     */
-    @Nullable
-    default TransitPathLeg<T> nextTransitLeg() {
-        PathLeg<T> leg = nextLeg();
-        while (!leg.isEgressLeg()) {
-            if(leg.isTransitLeg()) { return leg.asTransitLeg(); }
-            leg = leg.nextLeg();
-        }
-        return null;
-    }
-
     default Stream<PathLeg<T>> stream() {
         return StreamSupport.stream(iterator().spliterator(), false);
     }
@@ -183,7 +176,7 @@ public interface  PathLeg<T extends RaptorTripSchedule> {
                 return currentLeg != null;
             }
             @Override public PathLeg<T> next() {
-                PathLeg<T> temp = currentLeg;
+                var temp = currentLeg;
                 currentLeg = currentLeg.isEgressLeg() ? null : currentLeg.nextLeg();
                 return temp;
             }
