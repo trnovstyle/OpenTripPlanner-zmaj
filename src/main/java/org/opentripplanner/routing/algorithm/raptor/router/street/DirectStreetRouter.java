@@ -74,6 +74,11 @@ public class DirectStreetRouter {
         ? MAX_CAR_DISTANCE_METERS
         : (request.streetSubRequestModes.getBicycle() ? MAX_BIKE_DISTANCE_METERS : MAX_WALK_DISTANCE_METERS);
 
+    // If maxWalkDistance is det to default value
+    if(request.maxWalkDistance == Double.MAX_VALUE) {
+      return maxLimit;
+    }
+
     // Handle overflow and default setting is set to Double MAX_VALUE
     // Everything above Long.MAX_VALUE is treated as Infinite
     if(limit< 0 || limit > Long.MAX_VALUE) {
