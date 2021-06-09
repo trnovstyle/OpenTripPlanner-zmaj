@@ -86,8 +86,6 @@ public class RaptorPathToItineraryMapper {
         // Map access leg
         legs.addAll(mapAccessLeg(path.accessLeg()));
 
-        // TODO: Add back this code when PathLeg interface contains object references
-
         PathLeg<TripSchedule> pathLeg = path.accessLeg().nextLeg();
 
         boolean firstLeg = true;
