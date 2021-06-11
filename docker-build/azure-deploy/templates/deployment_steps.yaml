@@ -1,0 +1,135 @@
+# Build docker image / helm package from jar file and deploy
+
+steps:
+  # Put settings with Azure Artifacts repository
+  - bash: echo $dockerRegistryServiceConnection
+
+  - task: DownloadSecureFile@1
+    name: settingsSecurityxml
+    inputs:
+      secureFile: settings-security.xml
+
+  - bash: cp -p $(settingsSecurityxml.secureFilePath) /tmp/settings-security.xml
+
+  # Copy jar's for Dockerfile to find
+  - task: Bash@3
+    inputs:
+      filePath: docker-build/docker/copy-docker-data.sh
+  # Build and push Docker image
+#  - task: Docker@2
+#    inputs:
+#      command: buildAndPush
+#      dockerfile: $(System.DefaultWorkingDirectory)/docker-build/docker/Dockerfile
+#      buildContext : '$(Build.SourcesDirectory)'
+#      containerRegistry: $(dockerRegistryServiceConnection)
+#      repository: otp
+#      tags: |
+#        $(buildVersion)
+#        latest
+#  # Increment app version in helm chart to match docker app version
+#  - task: 'Bash@3'
+#    inputs:
+#      targetType: 'inline'
+#      script: |
+#        sed -i 's/appVersion:.*/appVersion: $(buildVersion)/' docker-build/helm/otp/Chart.yaml /
+#        sed -i 's/version:.*/version: $(buildVersion)/' docker-build/helm/otp//Chart.yaml /
+#        cat docker-build/helm/otp/Chart.yaml
+#  # Install the latest version of helm
+#  - task: HelmInstaller@1
+#    displayName: 'Initialize Helm'
+#    inputs:
+#      helmVersionToInstall: '3.2.1'
+#  # Package the helm chart before it is pushed to the Azure container regristy
+#  - task: HelmDeploy@0
+#    displayName: 'Package Helm Chart'
+#    inputs:
+#      command: 'package'
+#      chartPath: 'docker-build/helm/otp'
+#      chartVersion: $(buildVersion)
+#      destination: $(Build.ArtifactStagingDirectory)
+#      save: false
+#  # Push the package to the Azure container registry
+#  - task: AzureCLI@2
+#    displayName: 'Push Helm Chart'
+#    inputs:
+#      azureSubscription: $(azureSubscription)
+#      scriptType: 'bash'
+#      scriptLocation: 'inlineScript'
+#      inlineScript: |
+#        export HELM_EXPERIMENTAL_OCI=1
+#        ls $(Build.ArtifactStagingDirectory)
+#        az acr helm push \
+#          --name 'TJPCRPROD' \
+#          $(Build.ArtifactStagingDirectory)/otp-$(buildVersion).tgz
+#
+#  - task: AzureCLI@2
+#    displayName: 'Add Azure Container Registry'
+#    inputs:
+#      azureSubscription: $(azureSubscription)
+#      scriptType: 'bash'
+#      scriptLocation: 'inlineScript'
+#      inlineScript: |
+#        export HELM_EXPERIMENTAL_OCI=1
+#        helm repo remove TJPCRPROD
+#        az acr helm repo add --name TJPCRPROD
+#        helm repo update
+#
+#  - task: AzureKeyVault@1
+#    inputs:
+#      azureSubscription: $(azureSubscription)
+#      KeyVaultName: $(keyVaultName)
+#      SecretsFilter: '*'
+#
+#  #upload swagger.json to blobstaorage
+#  - task: PowerShell@2
+#    inputs:
+#      targetType: 'inline'
+#      script: |
+#        If(-not(Get-InstalledModule Az -ErrorAction silentlycontinue))
+#        {
+#          Install-Module -Name Az  -Confirm:$False -Force -AllowClobber
+#        }
+#        $ctx = New-AzStorageContext -StorageAccountName "tjpsageo" -StorageAccountKey $(TJPSAGEO-AZURE-BLOB-STORAGE-KEY)
+#        Set-AzStorageBlobContent -File $(Build.Repository.LocalPath)/docker-build/azure-deploy/swagger.json -Container "otp-service" -Blob "$(buildVersion)_swagger.json" -Context $ctx
+#
+#  - task: TriggerBuild@3
+#    inputs:
+#      definitionIsInCurrentTeamProject: false
+#      buildDefinition: 'TokyoResesok-CD'
+#      tfsServer: 'https://dev.azure.com/skanetrafiken2/'
+#      teamProject: 'Infra'
+#      queueBuildForUserThatTriggeredBuild: true
+#      ignoreSslCertificateErrors: false
+#      useSameSourceVersion: false
+#      useCustomSourceVersion: false
+#      useSameBranch: false
+#      branchToUse: 'master'
+#      waitForQueuedBuildsToFinish: false
+#      storeInEnvironmentVariable: true
+#      buildParameters: "ServiceName: resesok-otp, ServiceBuildVersion: $(buildVersion), ServiceBranchName: $(Build.SourceBranchName), ServiceSourceVersion: $(Build.SourceVersion), ServiceSourceVersionMessage: $(Build.SourceVersionMessage)"
+#      authenticationMethod: 'OAuth Token'
+#      password: $(System.AccessToken)
+#      enableBuildInQueueCondition: false
+#      dependentOnSuccessfulBuildCondition: false
+#      dependentOnFailedBuildCondition: false
+#      checkbuildsoncurrentbranch: false
+#      failTaskIfConditionsAreNotFulfilled: false
+#
+#  # Trigger deploy to PR environment
+#  - task: TriggerBuild@3
+#    inputs:
+#      definitionIsInCurrentTeamProject: true
+#      buildDefinition: 'resesok-otp-deploy-pr'
+#      queueBuildForUserThatTriggeredBuild: true
+#      ignoreSslCertificateErrors: false
+#      useSameSourceVersion: false
+#      useCustomSourceVersion: false
+#      useSameBranch: true
+#      waitForQueuedBuildsToFinish: false
+#      storeInEnvironmentVariable: false
+#      authenticationMethod: 'OAuth Token'
+#      enableBuildInQueueCondition: false
+#      dependentOnSuccessfulBuildCondition: false
+#      dependentOnFailedBuildCondition: false
+#      checkbuildsoncurrentbranch: false
+#      failTaskIfConditionsAreNotFulfilled: false
