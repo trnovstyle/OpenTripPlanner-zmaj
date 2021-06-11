@@ -3,6 +3,8 @@ pool: 'TJP'
 #vmImage: 'ubuntu latest'
 
 schedules:
+  # We want to deploy automatically every night because of NeTExchanges
+  # and because we want to get rid of old realtime messages to match other environments
   # Run every night 02:00, UTC time
   - cron: "0 2 * * *"
     displayName: "Daily Night Run"
