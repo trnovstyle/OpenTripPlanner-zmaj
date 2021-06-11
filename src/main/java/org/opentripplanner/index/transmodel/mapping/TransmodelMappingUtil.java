@@ -11,7 +11,9 @@ import org.opentripplanner.model.calendar.ServiceDate;
 import org.opentripplanner.routing.graph.GraphIndex;
 
 import javax.annotation.Nullable;
+import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
@@ -133,10 +135,14 @@ public class TransmodelMappingUtil {
     }
 
     public ServiceDate secondsSinceEpochToServiceDate(Long secondsSinceEpoch) {
+        ZonedDateTime zdt;
         if (secondsSinceEpoch == null) {
-            return new ServiceDate();
+            zdt = ZonedDateTime.now(timeZone.toZoneId());
+        } else {
+            zdt = ZonedDateTime.ofInstant(Instant.ofEpochSecond(secondsSinceEpoch), timeZone.toZoneId());
         }
-        return new ServiceDate(new Date(secondsSinceEpoch * 1000));
+
+        return new ServiceDate(zdt.getYear(), zdt.getMonthValue(), zdt.getDayOfMonth());
     }
 
 
