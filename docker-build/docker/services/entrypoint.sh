@@ -89,4 +89,4 @@ fi
 
 log_info "Start java OTP jar"
 
-exec java -javaagent:/code/applicationinsights-agent-3.1.0.jar -Xms256m -Xmx6144m -jar $OTP_JAR_PATH --server --graphs /code/otpdata --router malmo
+exec java -javaagent:/code/applicationinsights-agent-3.1.0.jar -Xms5120m -Xmx8704m -jar $OTP_JAR_PATH --server --graphs /code/otpdata --router malmo
