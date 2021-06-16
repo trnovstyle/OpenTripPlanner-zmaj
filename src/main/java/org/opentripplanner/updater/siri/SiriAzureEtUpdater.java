@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.xml.bind.JAXBException;
 import javax.xml.stream.XMLStreamException;
+import java.util.function.Consumer;
 
 public class SiriAzureEtUpdater extends AbstractAzureSiriUpdater {
     private final Logger LOG = LoggerFactory.getLogger(getClass());
@@ -46,6 +47,15 @@ public class SiriAzureEtUpdater extends AbstractAzureSiriUpdater {
     @Override
     protected void errorConsumer(ServiceBusErrorContext errorContext) {
         defaultErrorConsumer(errorContext);
+    }
+
+    @Override
+    protected void initializeData(String url, Consumer<ServiceBusReceivedMessageContext> consumer) {
+        if (url == null) {
+            LOG.info("No history url set up for Siri Azure ET Updater");
+            return;
+        }
+        LOG.info("Fetching initial Siri ET data from {}", url);
     }
 
 }

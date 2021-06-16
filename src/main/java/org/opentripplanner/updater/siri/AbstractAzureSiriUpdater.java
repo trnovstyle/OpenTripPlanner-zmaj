@@ -9,11 +9,14 @@ import com.google.common.base.Preconditions;
 import org.opentripplanner.routing.graph.Graph;
 import org.opentripplanner.updater.GraphUpdater;
 import org.opentripplanner.updater.GraphUpdaterManager;
+import org.opentripplanner.updater.ReadinessBlockingUpdater;
 import org.opentripplanner.updater.stoptime.TimetableSnapshotSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.time.Duration;
+import java.time.ZonedDateTime;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
@@ -22,13 +25,19 @@ import java.util.function.Consumer;
  * Common functionalities for connecting to Azure Service Bus. Implement abstract functions with business logic to consume messages and errors.
  * Override {@link #configure(Graph, JsonNode)} to configure queue specific parameters.
  */
-public abstract class AbstractAzureSiriUpdater implements GraphUpdater {
+public abstract class AbstractAzureSiriUpdater extends ReadinessBlockingUpdater implements GraphUpdater {
     private final Logger LOG = LoggerFactory.getLogger(getClass());
     protected GraphUpdaterManager updaterManager;
     private ServiceBusProcessorClient eventProcessor;
     private String topicName;
     private String subscriptionName;
     private String serviceBusUrl;
+
+    /**
+     * The URL used to fetch all initial updates
+     */
+    private String dataInitializationUrl;
+
     private final Consumer<ServiceBusReceivedMessageContext> messageConsumer = this::messageConsumer;
     private final Consumer<ServiceBusErrorContext> errorConsumer = this::errorConsumer;
     private ServiceBusAdministrationAsyncClient serviceBusAdmin;
@@ -58,6 +67,7 @@ public abstract class AbstractAzureSiriUpdater implements GraphUpdater {
 
         topicName = jsonNode.path("topic").asText();
         serviceBusUrl = jsonNode.path("servicebus-url").asText();
+        dataInitializationUrl = jsonNode.path("servicebus-history-url").asText();
 
         if (graph.timetableSnapshotSource == null) {
             // Add snapshot source to graph
@@ -87,6 +97,11 @@ public abstract class AbstractAzureSiriUpdater implements GraphUpdater {
 
         serviceBusAdmin.createSubscription(topicName, subscriptionName, options).block();
 
+        LOG.info("Service Bus created subscription {}", subscriptionName);
+
+        // Initialize historical Siri data
+        initializeData();
+
         eventProcessor = new ServiceBusClientBuilder()
                 .connectionString(serviceBusUrl)
                 .processor()
@@ -106,6 +121,31 @@ public abstract class AbstractAzureSiriUpdater implements GraphUpdater {
             teardown();
         }
     }
+
+    /**
+     * InitializeData - wrapping method that calls an implementation of initialize data - and blocks readiness till finished
+     */
+    private void initializeData() {
+        int sleepPeriod = 1000;
+        int attemptCounter = 1;
+        while (!isInitialized) {
+            try {
+                initializeData(dataInitializationUrl, messageConsumer);
+                isInitialized = true;
+            } catch (Exception e) {
+                sleepPeriod = sleepPeriod * 2;
+
+                LOG.warn("Caught exception while initializing data will retry after {} ms - attempt {}. ({})", sleepPeriod, attemptCounter++, e.toString());
+                try {
+                    Thread.sleep(sleepPeriod);
+                } catch (InterruptedException interruptedException) {
+                    //Ignore
+                }
+            }
+        }
+    }
+
+    protected abstract void initializeData(String url, Consumer<ServiceBusReceivedMessageContext> consumer) throws IOException;
 
     @Override
     public void setGraphUpdaterManager(GraphUpdaterManager updaterManager) {
@@ -131,7 +171,7 @@ public abstract class AbstractAzureSiriUpdater implements GraphUpdater {
         LOG.error("Error when receiving messages from namespace={}, Entity={}", errorContext.getFullyQualifiedNamespace(), errorContext.getEntityPath());
 
         if(!(errorContext.getException() instanceof ServiceBusException)) {
-            LOG.error("Non-SerivceBusException occurred!", errorContext.getException());
+            LOG.error("Non-ServiceBusException occurred!", errorContext.getException());
             return;
         }
 
@@ -156,5 +196,12 @@ public abstract class AbstractAzureSiriUpdater implements GraphUpdater {
         } else {
             LOG.error(e.getLocalizedMessage(), e);
         }
+    }
+
+    /**
+     * @return the current datetime adjusted to the current timezone
+     */
+    protected long now() {
+        return ZonedDateTime.now().toInstant().toEpochMilli();
     }
 }
