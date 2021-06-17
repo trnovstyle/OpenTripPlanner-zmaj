@@ -5,6 +5,7 @@ import com.azure.messaging.servicebus.administration.ServiceBusAdministrationAsy
 import com.azure.messaging.servicebus.administration.ServiceBusAdministrationClientBuilder;
 import com.azure.messaging.servicebus.administration.models.CreateSubscriptionOptions;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.google.api.client.json.Json;
 import com.google.common.base.Preconditions;
 import org.opentripplanner.routing.graph.Graph;
 import org.opentripplanner.updater.GraphUpdater;
@@ -15,8 +16,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.time.Duration;
-import java.time.ZonedDateTime;
+import java.net.URISyntaxException;
+import java.time.*;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
+import java.time.format.DateTimeParseException;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
@@ -38,9 +42,21 @@ public abstract class AbstractAzureSiriUpdater extends ReadinessBlockingUpdater 
      */
     private String dataInitializationUrl;
 
+    /**
+     * The timeout used when fetching historical data
+     */
+    protected int timeout;
+
     private final Consumer<ServiceBusReceivedMessageContext> messageConsumer = this::messageConsumer;
     private final Consumer<ServiceBusErrorContext> errorConsumer = this::errorConsumer;
     private ServiceBusAdministrationAsyncClient serviceBusAdmin;
+
+    /**
+     * In order to match the custom day break handling, this value will configure a custom midnight.
+     * For example: 4 - Then a new day will begin at 4am.
+     * Int value of a 24 hour clock
+     */
+    private int customMidnight;
 
     /**
      * Consume Service Bus topic message and implement business logic.
@@ -67,7 +83,21 @@ public abstract class AbstractAzureSiriUpdater extends ReadinessBlockingUpdater 
 
         topicName = jsonNode.path("topic").asText();
         serviceBusUrl = jsonNode.path("servicebus-url").asText();
-        dataInitializationUrl = jsonNode.path("servicebus-history-url").asText();
+        customMidnight = 0;
+        if (jsonNode.has("customMidnight")) {
+            customMidnight = jsonNode.path("customMidnight").asInt();
+        }
+
+        if (jsonNode.has("history")) {
+            dataInitializationUrl = jsonNode.path("history").path("url").asText();
+            timeout = jsonNode.path("history").path("timeout").asInt(30000);
+            blockReadinessUntilInitialized = true;
+        } else {
+            // If history is not defined, the updater does not need to block readiness
+            isInitialized = true;
+        }
+
+        type = topicName;
 
         if (graph.timetableSnapshotSource == null) {
             // Add snapshot source to graph
@@ -145,7 +175,13 @@ public abstract class AbstractAzureSiriUpdater extends ReadinessBlockingUpdater 
         }
     }
 
-    protected abstract void initializeData(String url, Consumer<ServiceBusReceivedMessageContext> consumer) throws IOException;
+    /**
+     * Abstract method to handle fetching of historical realtime data.
+     * @param url url for history service
+     * @param consumer the consumer for the message type
+     * @throws IOException
+     */
+    protected abstract void initializeData(String url, Consumer<ServiceBusReceivedMessageContext> consumer) throws IOException, URISyntaxException;
 
     @Override
     public void setGraphUpdaterManager(GraphUpdaterManager updaterManager) {
@@ -204,4 +240,51 @@ public abstract class AbstractAzureSiriUpdater extends ReadinessBlockingUpdater 
     protected long now() {
         return ZonedDateTime.now().toInstant().toEpochMilli();
     }
+
+    /**
+     * This code snippet is taken from NodeAdapter in OTP2.
+     *
+     * TODO Use nodeAdapter in OTP 2
+     * @param node The jsonNode to fetch from
+     * @param param The name of the parameter
+     * @param defaultValue The default value, used if node does not include a value for the parameter
+     * @return a relative zonedDateTime
+     */
+    protected LocalDate asDateOrRelativePeriod(JsonNode node, String param, String defaultValue){
+        String text = defaultValue;
+        if (node.has(param)) {
+            text = node.get(param).asText();
+        }
+        try {
+            if (text == null || text.isBlank()) {
+                return null;
+            }
+            if (text.startsWith("-") || text.startsWith("P")) {
+                return getDateBasedOnCustomMidnight(ZonedDateTime.now(ZoneId.of("CET")).plus(Period.parse(text)), customMidnight);
+            }
+            else {
+                return LocalDate.parse(text);
+            }
+        }
+        catch (DateTimeParseException e) {
+            throw new IllegalArgumentException("The parameter '" + param
+                    + "': '" + text + "' is not a Period or LocalDate. "
+                    + "Details: " + e.getLocalizedMessage()
+            );
+        }
+    }
+
+    /**
+     * Get current date with offset for a custom midnight, using a zonedDateTime as input
+     *
+     * @return LocalDate
+     */
+    public LocalDate getDateBasedOnCustomMidnight(ZonedDateTime time, int beforeHour) {
+        if (time.isBefore(time.withHour(beforeHour).withMinute(0).withSecond(0).withNano(0))) {
+            return time.minusDays(1).toLocalDate();
+        } else {
+            return time.toLocalDate();
+        }
+    }
+
 }

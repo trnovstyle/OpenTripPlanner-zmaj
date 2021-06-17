@@ -1,4 +1,5 @@
 {
+  "timeouts": [5, 5, 5, 5, 5, 5, 5, 5],
   "routingDefaults": {
     "preferredInterchangePenalty": 0,
     "recommendedInterchangePenalty": 60,
@@ -9,12 +10,25 @@
   "updaters": [ {
     "type": "siri-azure-et-updater",
     "topic": "siri_et",
-    "servicebus-url": "SERVICE_BUS_URL"
+    "servicebus-url": "SERVICE_BUS_URL",
+    "customMidnight": 4,
+    "history": {
+      "url": "http://siri-history-service.roi.svc.cluster.local/realtimehistory/siriethistory",
+      "fromDateTime": "-P1D",
+      "timeout": 300000
+    }
   },
     {
       "type": "siri-azure-sx-updater",
       "topic": "siri_sx",
-      "servicebus-url": "SERVICE_BUS_URL"
+      "servicebus-url": "SERVICE_BUS_URL",
+      "customMidnight": 4,
+      "history": {
+        "url": "http://siri-history-service.roi.svc.cluster.local/realtimehistory/sirisxhistory",
+        "publishFromDateTime": "-P1D",
+        "publishToDateTime": "P1D",
+        "timeout": 30000
+      }
     }
 
   ]

@@ -753,6 +753,10 @@ public class Timetable implements Serializable {
                         departureDate = convertToZone(recordedCall.getAimedDepartureTime(), timeZone);
                         if (departureDate == null) {
                             departureDate = convertToZone(recordedCall.getAimedArrivalTime(), timeZone);
+                            if (departureDate == null) {
+                                LOG.error("TripTimes was not added, both AimedArrivalTime and AimedDepartureTime was null");
+                                return null;
+                            }
                         }
                         if (oldTimes.getDepartureTime(0) > 86400) {
                             // The "departure-date" for this trip is set to "yesterday" (or before) even though it actually departs "today"
@@ -837,6 +841,10 @@ public class Timetable implements Serializable {
                             departureDate = convertToZone(estimatedCall.getAimedDepartureTime(), timeZone);
                             if (departureDate == null) {
                                 departureDate = convertToZone(estimatedCall.getAimedArrivalTime(), timeZone);
+                                if (departureDate == null) {
+                                    LOG.error("TripTimes was not added, both AimedArrivalTime and AimedDepartureTime was null");
+                                    return null;
+                                }
                             }
                         }
 
