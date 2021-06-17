@@ -1699,6 +1699,7 @@ public class TransmodelIndexGraphQLSchema {
                 .field(GraphQLFieldDefinition.newFieldDefinition()
                         .name("wheelchairAccessible")
                         .type(wheelchairBoardingEnum)
+                        .dataFetcher(environment -> ((Stop) environment.getSource()).getWheelchairBoarding())
                         .description("Whether this quay is suitable for wheelchair boarding.")
                         .build())
                 .field(GraphQLFieldDefinition.newFieldDefinition()

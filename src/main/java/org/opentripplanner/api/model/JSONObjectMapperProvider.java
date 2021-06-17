@@ -7,6 +7,7 @@ import javax.ws.rs.ext.Provider;
 
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 /**
  * AgencyAndId is a third-party class in One Bus Away which represents a GTFS element's ID,
@@ -56,6 +57,7 @@ public class JSONObjectMapperProvider implements ContextResolver<ObjectMapper> {
         // and named, versioned reusable modules.
         mapper = new ObjectMapper()
                 .registerModule(AgencyAndIdSerializer.makeModule())
+                .registerModule(new JavaTimeModule())
                 .setSerializationInclusion(Include.NON_NULL); // skip null fields
     }
 
