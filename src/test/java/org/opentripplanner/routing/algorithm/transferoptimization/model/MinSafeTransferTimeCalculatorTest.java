@@ -1,12 +1,12 @@
-package org.opentripplanner.routing.algorithm.transferoptimization.services;
+package org.opentripplanner.routing.algorithm.transferoptimization.model;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.opentripplanner.transit.raptor._data.stoparrival.BasicPathTestCase.COST_CALCULATOR;
 import static org.opentripplanner.transit.raptor._data.stoparrival.BasicPathTestCase.SLACK_PROVIDER;
 import static org.opentripplanner.util.time.TimeUtils.time;
 
 import java.util.List;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.opentripplanner.transit.raptor._data.RaptorTestConstants;
 import org.opentripplanner.transit.raptor._data.api.PathBuilder;
 import org.opentripplanner.transit.raptor._data.stoparrival.BasicPathTestCase;

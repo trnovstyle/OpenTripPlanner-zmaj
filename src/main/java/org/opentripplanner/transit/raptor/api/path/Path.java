@@ -116,7 +116,7 @@ public class Path<T extends RaptorTripSchedule> implements Comparable<Path<T>>{
      * @return the number of transfers or zero 0.
      */
     public final int numberOfTransfersExAccessEgress() {
-        return Math.max(0, (int)legStream().filter(PathLeg::isTransitLeg).count() - 1);
+        return Math.max(0, (int)transitLegs().count() - 1);
     }
 
     /**
@@ -163,6 +163,13 @@ public class Path<T extends RaptorTripSchedule> implements Comparable<Path<T>>{
     public Stream<PathLeg<T>> legStream() {
         return accessLeg.stream();
     }
+
+    public Stream<TransitPathLeg<T>> transitLegs() {
+        return legStream()
+                .filter(PathLeg::isTransitLeg)
+                .map(PathLeg::asTransitLeg);
+    }
+
 
     public String toStringDetailed() {
         return toString(true);

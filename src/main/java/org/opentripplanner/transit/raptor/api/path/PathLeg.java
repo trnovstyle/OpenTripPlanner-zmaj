@@ -1,6 +1,8 @@
 package org.opentripplanner.transit.raptor.api.path;
 
 import java.util.Iterator;
+import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import org.opentripplanner.transit.raptor.api.transit.RaptorTripSchedule;
@@ -78,6 +80,25 @@ public interface  PathLeg<T extends RaptorTripSchedule> {
     }
 
     /**
+     * @return {@code true} if access leg, if not {@code false}.
+     */
+    default boolean isAccessLeg() {
+        return false;
+    }
+
+    /**
+     * Utility method performing a cast to {@link AccessPathLeg}, use with care:
+     * <pre>
+     * if(it.isAccessLeg()} {
+     *     AccessPathLeg&lt;T&gt; transit = it.asAccessLeg();
+     *     ...
+     * </pre>
+     */
+    default AccessPathLeg<T> asAccessLeg() {
+        return (AccessPathLeg<T>) this;
+    }
+
+    /**
      * @return {@code true} if transit leg, if not {@code false}.
      */
     default boolean isTransitLeg() {
@@ -90,8 +111,6 @@ public interface  PathLeg<T extends RaptorTripSchedule> {
      * if(it.isTransitLeg()} {
      *     TransitPathLeg&lt;T&gt; transit = it.asTransitLeg();
      *     ...
-     *
-     * }
      * </pre>
      */
     default TransitPathLeg<T> asTransitLeg() {
@@ -111,8 +130,6 @@ public interface  PathLeg<T extends RaptorTripSchedule> {
      * if(it.isTransferLeg()} {
      *     TransferPathLeg&lt;T&gt; transfer = it.asTransferLeg();
      *     ...
-     *
-     * }
      * </pre>
      */
     default TransferPathLeg<T> asTransferLeg() {
@@ -132,8 +149,6 @@ public interface  PathLeg<T extends RaptorTripSchedule> {
      * if(it.isEgressLeg()} {
      *     EgressPathLeg&lt;T&gt; egress = it.asEgressLeg();
      *     ...
-     *
-     * }
      * </pre>
      */
     default EgressPathLeg<T> asEgressLeg() {
