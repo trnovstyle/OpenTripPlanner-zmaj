@@ -5,6 +5,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.opentripplanner.transit.raptor._data.stoparrival.BasicPathTestCase.ACCESS_START;
 import static org.opentripplanner.transit.raptor._data.stoparrival.BasicPathTestCase.BASIC_PATH_AS_STRING;
 import static org.opentripplanner.transit.raptor._data.stoparrival.BasicPathTestCase.EGRESS_END;
+import static org.opentripplanner.transit.raptor._data.stoparrival.BasicPathTestCase.RAPTOR_ITERATION_START_TIME;
 import static org.opentripplanner.transit.raptor._data.stoparrival.BasicPathTestCase.TOTAL_COST;
 import static org.opentripplanner.transit.raptor._data.stoparrival.BasicPathTestCase.basicTripStops;
 import static org.opentripplanner.transit.raptor.api.transit.RaptorCostConverter.toOtpDomainCost;
@@ -15,11 +16,17 @@ import java.util.stream.Collectors;
 import org.junit.Test;
 import org.opentripplanner.transit.raptor._data.stoparrival.BasicPathTestCase;
 import org.opentripplanner.transit.raptor._data.transit.TestTripSchedule;
+import org.opentripplanner.util.time.TimeUtils;
 
 
 public class PathTest {
 
     private final Path<TestTripSchedule> subject = BasicPathTestCase.basicTripAsPath();
+
+    @Test
+    public void rangeRaptorIterationDepartureTime() {
+        assertEquals(RAPTOR_ITERATION_START_TIME, subject.rangeRaptorIterationDepartureTime());
+    }
 
     @Test
     public void startTime() {
@@ -33,12 +40,13 @@ public class PathTest {
 
     @Test
     public void totalTravelDurationInSeconds() {
-        assertEquals("2:00", timeToStrCompact(subject.travelDurationInSeconds()));
+        assertEquals("2:00", timeToStrCompact(subject.durationInSeconds()));
     }
 
     @Test
     public void numberOfTransfers() {
         assertEquals(2, subject.numberOfTransfers());
+        assertEquals(2, subject.numberOfTransfersExAccessEgress());
     }
 
     @Test
@@ -52,6 +60,16 @@ public class PathTest {
     }
 
     @Test
+    public void legStream() {
+        assertEquals(6, subject.legStream().count());
+    }
+
+    @Test
+    public void transitLegs() {
+        assertEquals(3, subject.transitLegs().count());
+    }
+
+    @Test
     public void listStops() {
         assertEquals(basicTripStops(), subject.listStops());
     }
@@ -59,6 +77,11 @@ public class PathTest {
     @Test
     public void cost() {
         assertEquals(toOtpDomainCost(TOTAL_COST), subject.generalizedCost());
+    }
+
+    @Test
+    public void waitTime() {
+        assertEquals(TimeUtils.time("0:39:15"), subject.waitTime());
     }
 
     @Test
@@ -91,14 +114,16 @@ public class PathTest {
 
     @Test
     public void testCompareTo() {
-        var p0 = Path.dummyPath(0, 1, 10, 10, 10);
-        var p1 = Path.dummyPath(0, 6, 12, 9, 9);
-        var p2 = Path.dummyPath(0, 5, 12, 8, 7);
-        var p3 = Path.dummyPath(0, 5, 12, 7, 8);
+        var p0 = Path.dummyPath(0, 10, 20, 10, 10);
+        var p1 = Path.dummyPath(0, 11, 20, 10, 10);
+        var p2 = Path.dummyPath(0, 10, 19, 10, 10);
+        var p3 = Path.dummyPath(0, 10, 20, 9, 10);
+        var p4 = Path.dummyPath(0, 10, 20, 10, 9);
 
-        List<Path<?>> expected = List.of(p0, p1, p2, p3);
+        // Order: < EndTime, > StartTime, < Cost, < Transfers
+        List<Path<?>> expected = List.of(p2, p1, p4, p3, p0);
 
-        List<Path<?>> paths = List.of(p3, p2, p1, p0).stream().sorted().collect(Collectors.toList());
+        List<Path<?>> paths = List.of(p4, p3, p2, p1, p0).stream().sorted().collect(Collectors.toList());
 
         assertEquals(expected, paths);
     }

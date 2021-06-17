@@ -1,8 +1,9 @@
 package org.opentripplanner.transit.raptor._data.api;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.opentripplanner.transit.raptor._data.stoparrival.BasicPathTestCase.ACCESS_DURATION;
 import static org.opentripplanner.transit.raptor._data.stoparrival.BasicPathTestCase.ACCESS_START;
+import static org.opentripplanner.transit.raptor._data.stoparrival.BasicPathTestCase.BASIC_PATH_AS_DETAILED_STRING;
 import static org.opentripplanner.transit.raptor._data.stoparrival.BasicPathTestCase.BASIC_PATH_AS_STRING;
 import static org.opentripplanner.transit.raptor._data.stoparrival.BasicPathTestCase.COST_CALCULATOR;
 import static org.opentripplanner.transit.raptor._data.stoparrival.BasicPathTestCase.EGRESS_DURATION;
@@ -22,7 +23,7 @@ import static org.opentripplanner.transit.raptor.api.transit.RaptorCostConverter
 import static org.opentripplanner.util.time.DurationUtils.duration;
 import static org.opentripplanner.util.time.TimeUtils.time;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.opentripplanner.transit.raptor._data.RaptorTestConstants;
 import org.opentripplanner.transit.raptor.api.transit.RaptorCostConverter;
 
@@ -67,6 +68,7 @@ public class PathBuilderTest implements RaptorTestConstants {
         .bus(LINE_31, L31_START, L31_DURATION, STOP_E)
         .egress(EGRESS_DURATION);
     assertEquals(BASIC_PATH_AS_STRING, path.toString());
+    assertEquals(BASIC_PATH_AS_DETAILED_STRING, path.toStringDetailed());
     assertEquals(RaptorCostConverter.toOtpDomainCost(TOTAL_COST), path.generalizedCost());
   }
 }

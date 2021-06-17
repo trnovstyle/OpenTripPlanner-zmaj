@@ -14,6 +14,7 @@ import org.opentripplanner.transit.raptor.api.path.TransferPathLeg;
 import org.opentripplanner.transit.raptor.api.path.TransitPathLeg;
 import org.opentripplanner.transit.raptor.api.transit.CostCalculator;
 import org.opentripplanner.transit.raptor.api.transit.RaptorCostConverter;
+import org.opentripplanner.transit.raptor.api.transit.RaptorTransfer;
 import org.opentripplanner.util.time.TimeUtils;
 
 
@@ -42,17 +43,18 @@ public class PathBuilder {
   }
 
   public PathBuilder access(int startTime, int duration, int toStop) {
-    start(startTime);
-    int toTime = startTime + duration;
-    return leg(NOT_SET, startTime, toStop, toTime, costCalculator.walkCost(duration), null);
+    return access(startTime, TestTransfer.walk(toStop, duration));
+  }
+
+  public PathBuilder access(int startTime, TestTransfer transfer) {
+    legs.add(new Leg(startTime, NOT_SET, costCalculator.walkCost(transfer.durationInSeconds()), transfer));
+    return this;
   }
 
   public PathBuilder walk(int duration, int toStop) {
     int fromStop = prev().toStop;
     int fromTime = prev().toTime + alightSlack;
-    int toTime = fromTime + duration;
-
-    return leg(fromStop, fromTime, toStop, toTime, costCalculator.walkCost(duration), null);
+    return transfer(fromStop, fromTime, costCalculator.walkCost(duration), TestTransfer.walk(toStop, duration));
   }
 
   public PathBuilder bus(TestTripSchedule trip, int toStop) {
@@ -67,7 +69,7 @@ public class PathBuilder {
         firstTransit(), fromStop, waitTime, transitTime, trip.transitReluctanceFactorIndex(), toStop
     );
 
-    return leg(fromStop, fromTime, toStop, toTime, cost, trip);
+    return transit(fromStop, fromTime, toStop, toTime, cost, trip);
   }
 
   public PathBuilder bus(String patternName, int fromTime, int duration, int toStop) {
@@ -85,13 +87,21 @@ public class PathBuilder {
         firstTransit(), fromStop, waitTime, duration, trip.transitReluctanceFactorIndex(), toStop
     );
 
-    return leg(fromStop, fromTime, toStop, toTime, cost, trip);
+    return transit(fromStop, fromTime, toStop, toTime, cost, trip);
   }
 
   public Path<TestTripSchedule> egress(int duration) {
-    return walk(duration, NOT_SET).build();
+    return egress(TestTransfer.walk(prev().toStop, duration));
   }
 
+  public Path<TestTripSchedule> egress(TestTransfer transfer) {
+    return transfer(
+            prev().toStop,
+            prev().toTime + alightSlack,
+            costCalculator.walkCost(transfer.durationInSeconds()),
+            transfer
+    ).build();
+  }
 
   /* private methods */
 
@@ -134,7 +144,7 @@ public class PathBuilder {
     if(index == legs.size()-1) {
       return leg.egressLeg();
     }
-    else if(leg.trip != null) {
+    else if(leg.isTransit()) {
       return leg.transitLeg(leg(index+1));
     }
     else {
@@ -142,8 +152,15 @@ public class PathBuilder {
     }
   }
 
-  private PathBuilder leg(
-      int fromStop, int fromTime, int toStop, int toTime, int cost, TestTripSchedule trip
+  private PathBuilder transfer(
+      int fromStop, int fromTime, int cost, TestTransfer transfer
+  ) {
+    legs.add(new Leg(fromTime, fromStop, cost, transfer));
+    return this;
+  }
+
+  private PathBuilder transit(
+          int fromStop, int fromTime, int toStop, int toTime, int cost, TestTripSchedule trip
   ) {
     legs.add(new Leg(fromTime, fromStop, toTime, toStop, cost, trip));
     return this;
@@ -156,15 +173,35 @@ public class PathBuilder {
     final int toStop;
     final int raptorCost;
     final TestTripSchedule trip;
+    final TestTransfer transfer;
 
     Leg(
-        int fromTime, int fromStop, int toTime, int toStop, int raptorCost, TestTripSchedule trip
+        int fromTime,
+        int fromStop,
+        int raptorCost,
+        TestTransfer transfer
+    ) {
+      this.fromTime = fromTime;
+      this.fromStop = fromStop;
+      this.toTime = fromTime + transfer.durationInSeconds();
+      this.toStop = transfer.stop();
+      this.raptorCost = raptorCost;
+      this.transfer = transfer;
+      this.trip = null;
+    }
+
+    Leg(
+        int fromTime, int fromStop,
+        int toTime, int toStop,
+        int raptorCost,
+        TestTripSchedule trip
     ) {
       this.fromTime = fromTime;
       this.fromStop = fromStop;
       this.toTime = toTime;
       this.toStop = toStop;
       this.raptorCost = raptorCost;
+      this.transfer = null;
       this.trip = trip;
     }
 

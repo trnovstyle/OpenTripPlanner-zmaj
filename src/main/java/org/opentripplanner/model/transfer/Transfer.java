@@ -13,7 +13,7 @@ public final class Transfer implements Serializable {
     /**
      * Regular street transfers should be given this cost.
      */
-    public static final int NEUTRAL_TRANSFER_COST = 0;
+    public static final int NEUTRAL_PRIORITY_COST = 0;
 
     /**
      * Regular street transfers should be given this cost.
@@ -59,7 +59,7 @@ public final class Transfer implements Serializable {
      * @see TransferPriority#cost(boolean, boolean)
      */
     public static int priorityCost(@Nullable Transfer t) {
-        return t == null ? NEUTRAL_TRANSFER_COST : t.priority.cost(t.staySeated, t.guaranteed);
+        return t == null ? NEUTRAL_PRIORITY_COST : t.priority.cost(t.staySeated, t.guaranteed);
     }
 
     public TransferPoint getFrom() {
@@ -80,6 +80,14 @@ public final class Transfer implements Serializable {
 
     public boolean isGuaranteed() {
         return guaranteed;
+    }
+
+    public boolean includeSlack() {
+        return !(guaranteed || staySeated);
+    }
+
+    public boolean matchesStopPos(int fromStopPos, int toStopPos) {
+        return from.getStopPosition() == fromStopPos && to.getStopPosition() == toStopPos;
     }
 
     /**

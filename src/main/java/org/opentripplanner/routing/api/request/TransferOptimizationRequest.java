@@ -1,6 +1,7 @@
 package org.opentripplanner.routing.api.request;
 
 import org.opentripplanner.routing.algorithm.transferoptimization.api.TransferOptimizationParameters;
+import org.opentripplanner.util.OTPFeature;
 
 public class TransferOptimizationRequest implements TransferOptimizationParameters {
   private final RoutingRequest parent;
@@ -13,7 +14,12 @@ public class TransferOptimizationRequest implements TransferOptimizationParamete
   }
 
   @Override
-  public boolean useOptimizeTransferCostFunction() {
+  public boolean optimizeTransferPriority() {
+    return OTPFeature.GuaranteedTransfers.isOn();
+  }
+
+  @Override
+  public boolean optimizeTransferWaitTime() {
     return useOptimizeTransferCostFunction;
   }
 

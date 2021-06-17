@@ -1,4 +1,4 @@
-package org.opentripplanner.routing.algorithm.transferoptimization.services;
+package org.opentripplanner.routing.algorithm.transferoptimization.model;
 
 import java.util.Collection;
 import java.util.function.ToIntFunction;
@@ -45,6 +45,8 @@ import org.opentripplanner.util.time.DurationUtils;
  * </pre>
  * Note! Normally the board-/alight-/transfer-slack serve as a lower bound for the
  *       transfer time; Hence also for the min-safe-transfer-time for short journeys.
+ *
+ * @param <T> The TripSchedule type defined by the user of the raptor API.
  */
 public class MinSafeTransferTimeCalculator<T extends RaptorTripSchedule> {
 
@@ -69,8 +71,7 @@ public class MinSafeTransferTimeCalculator<T extends RaptorTripSchedule> {
 
   public int minSafeTransferTime(Collection<Path<T>> paths) {
     ToIntFunction<Path<T>> totalTransitTimeOp = p -> p
-        .legStream()
-        .filter(PathLeg::isTransitLeg)
+        .transitLegs()
         .mapToInt(this::durationIncludingSlack)
         .sum();
 

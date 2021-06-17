@@ -1,12 +1,16 @@
 package org.opentripplanner.routing.algorithm.mapping;
 
 import au.com.origin.snapshots.junit5.SnapshotExtension;
+import java.util.Locale;
 import java.util.Set;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.parallel.ResourceLock;
+import org.junit.jupiter.api.parallel.Resources;
 import org.opentripplanner.model.GenericLocation;
 import org.opentripplanner.model.modes.AllowedTransitMode;
 import org.opentripplanner.routing.api.request.RequestModes;
@@ -15,8 +19,11 @@ import org.opentripplanner.routing.api.request.StreetMode;
 
 @Disabled
 @ExtendWith(SnapshotExtension.class)
+@ResourceLock(Resources.LOCALE)
 public class BikeRentalSnapshotTest
         extends SnapshotTestBase {
+
+    private static final Locale DEFAULT_LOCALE = Locale.getDefault();
 
     static GenericLocation p1 = new GenericLocation("SW Johnson St. & NW 24th Ave. (P1)", null,
             45.52832, -122.70059);
@@ -29,7 +36,13 @@ public class BikeRentalSnapshotTest
 
     @BeforeAll
     public static void beforeClass() {
+        Locale.setDefault(Locale.US);
         loadGraphBeforeClass();
+    }
+
+    @AfterAll
+    public static void afterClass() {
+        Locale.setDefault(DEFAULT_LOCALE);
     }
 
     @DisplayName("Direct BIKE_RENTAL")
