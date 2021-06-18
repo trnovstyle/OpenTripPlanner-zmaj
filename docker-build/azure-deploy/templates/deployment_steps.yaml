@@ -2,8 +2,6 @@
 
 steps:
   # Put settings with Azure Artifacts repository
-  - bash: echo $(dockerRegistryServiceConnection)
-
   - task: DownloadSecureFile@1
     name: settingsSecurityxml
     inputs:

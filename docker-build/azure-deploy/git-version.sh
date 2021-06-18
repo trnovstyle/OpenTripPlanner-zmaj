@@ -77,6 +77,9 @@ gitEmail=$(git config user.email)
 echo "New version : $new_version"
 versionTag="$new_version.RELEASE"
 
+# Get rid of all local tags
+git -c http.extraheader="AUTHORIZATION: bearer $DEVOPS_ACCESSTOKEN" fetch --prune  origin --tags -f
+
 # tag the master branch
 echo "# Create local tag $versionTag"
 if ! git tag -a $versionTag -m "New RELEASE $new_version"; then
