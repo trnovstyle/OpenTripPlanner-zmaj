@@ -20,18 +20,7 @@ import org.opentripplanner.routing.edgetype.TripPattern;
 import org.opentripplanner.routing.graph.AddBuilderAnnotation;
 import org.opentripplanner.routing.trippattern.Deduplicator;
 import org.opentripplanner.routing.trippattern.TripTimes;
-import org.rutebanken.netex.model.DestinationDisplay;
-import org.rutebanken.netex.model.FlexibleLine;
-import org.rutebanken.netex.model.JourneyPattern;
-import org.rutebanken.netex.model.Line_VersionStructure;
-import org.rutebanken.netex.model.PointInJourneyPatternRefStructure;
-import org.rutebanken.netex.model.PointInLinkSequence_VersionedChildStructure;
-import org.rutebanken.netex.model.Route;
-import org.rutebanken.netex.model.ScheduledStopPointRefStructure;
-import org.rutebanken.netex.model.ServiceJourney;
-import org.rutebanken.netex.model.StopPointInJourneyPattern;
-import org.rutebanken.netex.model.TimetabledPassingTime;
-import org.rutebanken.netex.model.TimetabledPassingTimes_RelStructure;
+import org.rutebanken.netex.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -330,10 +319,24 @@ public class TripPatternMapper {
             addBuilderAnnotation.addBuilderAnnotation(new TimeMissingForTrip(trip.getId()));
         }
 
-        if (stopPoint.getDestinationDisplayRef() != null) {
-            DestinationDisplay value = netexDao.destinationDisplayById.lookup(stopPoint.getDestinationDisplayRef().getRef());
-            if (value != null) {
-                currentHeadsign = value.getFrontText().getValue();
+        if (stopPoint != null) {
+            if (stopPoint.getDestinationDisplayRef() != null) {
+                DestinationDisplay value = netexDao.destinationDisplayById.lookup(stopPoint.getDestinationDisplayRef().getRef());
+                Vias_RelStructure viaValues = netexDao.destinationDisplayById.lookup(stopPoint.getDestinationDisplayRef().getRef()).getVias();
+                if (value != null) {
+                    currentHeadsign = value.getFrontText().getValue();
+                }
+                if (viaValues != null && viaValues.getVia() != null) {
+                    var via = viaValues.getVia()
+                            .stream()
+                            .map(x -> netexDao.destinationDisplayById.lookup(x.getDestinationDisplayRef().getRef()))
+                            .map(x -> x.getFrontText().getValue())
+                            .collect(Collectors.joining(", "));
+                    if (!via.equals("")) {
+                        currentHeadsign += " via ";
+                        currentHeadsign += via;
+                    }
+                }
             }
         }
 
