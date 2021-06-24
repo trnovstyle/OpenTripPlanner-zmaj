@@ -77,16 +77,6 @@ fi
 
 cd /code || exit 1
 
-#TO BE REMOVED SECTION START
-#Edit router-config.json service bus connection string from secret value
-if ! serviceBusConnectionString=$(getKeyVaultValue $keyvault "serviceBusConnectionString"); then
-  log_error "Error fetching value for KeyVault key $serviceBusConnectionString in keyvault $keyvault"
-  sed -i "s|\"type.*|\"type\": \"empty\"|g" otpdata/malmo/router-config.json
-else
-  sed -i "s|\"SERVICE_BUS_URL\"|$serviceBusConnectionString|g" otpdata/malmo/router-config.json
-fi
-#TO BE REMOVED SECTION END
-
 log_info "Start java OTP jar"
 
 exec java -javaagent:/code/applicationinsights-agent-3.1.0.jar -Xms5120m -Xmx8704m -jar $OTP_JAR_PATH --server --graphs /code/otpdata --router malmo

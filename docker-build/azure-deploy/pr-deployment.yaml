@@ -14,9 +14,14 @@ schedules:
     # Schedule even if there are no changes in the code
     always: true
 
+parameters:
+  - name: namespace
+    displayName: Namespace
+    type: string
+    default: 'otp'
+
 variables:
   dockerRegistryServiceConnection: 'TJPCRPROD'
-  namespace: 'otp'
   keyVaultName: 'TJP-INFRA-KV-DEV'
   dockerRegistry: 'TJPCRPROD'
   azureSubscription: 'TJPDevOps-CN'
@@ -35,11 +40,11 @@ steps:
 
   # Remove old OTP pod from cluster by recreating namespace
   - task: AzureCLI@2
-    displayName: 'Recreate PR Namespace: $(namespace)'
+    displayName: 'Recreate PR Namespace: ${{ parameters.namespace }}'
     env:
       CLUSTER_NAME: $(clusterName)
       CLUSTER_GROUP: $(clusterResourceGroup)
-      NAMESPACE: $(namespace)
+      NAMESPACE:  ${{ parameters.namespace }}
     inputs:
       azureSubscription: $(azureSubscription)
       scriptType: 'bash'
@@ -64,7 +69,7 @@ steps:
       kubernetesCluster: $(clusterName)
       useClusterAdmin: true
       command: 'label'
-      arguments: 'namespace $(namespace) istio-injection=enabled --overwrite'
+      arguments: 'namespace ${{ parameters.namespace }} istio-injection=enabled --overwrite'
 
   # Install the latest version of helm
   - task: HelmInstaller@1
@@ -92,7 +97,7 @@ steps:
       azureResourceGroup: $(clusterResourceGroup)
       kubernetesCluster:  $(clusterName)
       useClusterAdmin: true
-      namespace: $(namespace)
+      namespace: ${{ parameters.namespace }}
       chartType: 'Name'
       chartName: $(chartName)
       releaseName: 'resesok-otp'

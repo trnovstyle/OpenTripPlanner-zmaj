@@ -71,3 +71,26 @@ manageIdentity:
   clientId: "This secret should be set from build pipeline"
   resourceId: "This secret should be set from build pipeline"
 
+configmapMounts:
+  - name: config-volume
+    mountPath: /code/otpdata/malmo/router-config.json
+    subPath: router-config.json
+    configMap: otp-router-config
+    readOnly: false
+
+realtime:
+  enabled: true
+  serviceBusConnectionString: "set by Azure pipeline"
+  siriEt:
+    history:
+      enabled: true
+      url: "http://siri-history-service.roi.svc.cluster.local/realtimehistory/siriethistory"
+      fromDateTime: "-P1D"
+      timeout: 300000
+  siriSx:
+    history:
+      enabled: true
+      url: "http://siri-history-service.roi.svc.cluster.local/realtimehistory/sirisxhistory"
+      publishFromDateTime: "-P1D"
+      publishToDateTime: "P1D"
+      timeout: 30000
