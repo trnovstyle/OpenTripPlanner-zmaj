@@ -8,7 +8,8 @@ executors:
           password: $DOCKER_PASSWORD
     environment:
       DEBIAN_FRONTEND: "noninteractive"
-      MAVEN_OPTS: -Xmx3G
+      MAVEN_OPTS: -Xmx6G
+    resource_class: large
 aliases:
   - &post_build
     name: Update deployment with OTP version
