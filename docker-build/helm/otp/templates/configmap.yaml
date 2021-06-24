@@ -27,7 +27,7 @@ data:
           {
             "type": "siri-azure-sx-updater",
             "topic": "siri_sx",
-            "servicebus-url": "SERVICE_BUS_URL",
+            "servicebus-url": "{{ .Values.realtime.serviceBusConnectionString }}",
             {{- if .Values.realtime.siriSx.history.enabled }}
             "history": {
               "url": "{{ .Values.realtime.siriSx.history.url }}",
