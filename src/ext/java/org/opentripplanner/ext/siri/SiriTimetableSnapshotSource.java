@@ -509,7 +509,12 @@ public class SiriTimetableSnapshotSource implements TimetableSnapshotProvider {
 //        }*/
 
         ServiceDate serviceDate = getServiceDateForEstimatedVehicleJourney(estimatedVehicleJourney);
+
+        if(serviceDate == null) { return false; }
+
         FeedScopedId calServiceId = graph.getOrCreateServiceIdForDate(serviceDate);
+
+        if(calServiceId == null) { return false; }
 
         trip.setServiceId(calServiceId);
 
