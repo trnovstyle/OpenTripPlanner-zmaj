@@ -1,7 +1,17 @@
 package org.opentripplanner.transit.raptor.speed_test;
 
+import static org.opentripplanner.transit.raptor._data.transit.TestTransfer.walk;
+
 import gnu.trove.iterator.TIntIntIterator;
 import gnu.trove.map.TIntIntMap;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Set;
 import org.opentripplanner.model.modes.AllowedTransitMode;
 import org.opentripplanner.routing.algorithm.raptor.transit.SlackProvider;
 import org.opentripplanner.routing.algorithm.raptor.transit.TripSchedule;
@@ -16,17 +26,6 @@ import org.opentripplanner.transit.raptor.speed_test.options.SpeedTestCmdLineOpt
 import org.opentripplanner.transit.raptor.speed_test.options.SpeedTestConfig;
 import org.opentripplanner.transit.raptor.speed_test.testcase.TestCase;
 import org.opentripplanner.transit.raptor.speed_test.transit.EgressAccessRouter;
-
-import java.time.LocalDate;
-import java.time.LocalTime;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Set;
-
-import static org.opentripplanner.transit.raptor._data.transit.TestTransfer.walk;
 
 
 public class SpeedTestRequest {
@@ -59,7 +58,7 @@ public class SpeedTestRequest {
     public Date getDepartureTimestamp() {
         return new Date(
                 date.atStartOfDay(inputZoneId).toInstant().toEpochMilli()
-                        + testCase.departureTime * 1000
+                        + testCase.departureTime * 1000L
         );
     }
 
@@ -177,13 +176,13 @@ public class SpeedTestRequest {
         }
 
         TestDebugLogger logger = new TestDebugLogger(debugLoggerEnabled);
-
         builder.debug()
                 .stopArrivalListener(logger::stopArrivalLister)
                 .pathFilteringListener(logger::pathFilteringListener)
                 .logger(logger)
-                .debugPathFromStopIndex(opts.debugPathFromStopIndex());
-        builder.debug().path().addAll(path);
-        builder.debug().stops().addAll(stops);
+                .addPath(path)
+                .debugPathFromStopIndex(opts.debugPathFromStopIndex())
+                .addStops(stops);
+
     }
 }

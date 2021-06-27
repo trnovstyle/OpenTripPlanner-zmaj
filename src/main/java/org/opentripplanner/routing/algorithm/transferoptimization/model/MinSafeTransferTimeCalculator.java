@@ -1,9 +1,9 @@
-package org.opentripplanner.routing.algorithm.transferoptimization.services;
+package org.opentripplanner.routing.algorithm.transferoptimization.model;
 
 import java.util.Collection;
 import java.util.function.ToIntFunction;
 import org.opentripplanner.transit.raptor.api.path.Path;
-import org.opentripplanner.transit.raptor.api.path.PathLeg;
+import org.opentripplanner.transit.raptor.api.path.TransitPathLeg;
 import org.opentripplanner.transit.raptor.api.transit.RaptorSlackProvider;
 import org.opentripplanner.transit.raptor.api.transit.RaptorTripSchedule;
 import org.opentripplanner.util.time.DurationUtils;
@@ -45,6 +45,8 @@ import org.opentripplanner.util.time.DurationUtils;
  * </pre>
  * Note! Normally the board-/alight-/transfer-slack serve as a lower bound for the
  *       transfer time; Hence also for the min-safe-transfer-time for short journeys.
+ *
+ * @param <T> The TripSchedule type defined by the user of the raptor API.
  */
 public class MinSafeTransferTimeCalculator<T extends RaptorTripSchedule> {
 
@@ -69,16 +71,15 @@ public class MinSafeTransferTimeCalculator<T extends RaptorTripSchedule> {
 
   public int minSafeTransferTime(Collection<Path<T>> paths) {
     ToIntFunction<Path<T>> totalTransitTimeOp = p -> p
-        .legStream()
-        .filter(PathLeg::isTransitLeg)
+        .transitLegs()
         .mapToInt(this::durationIncludingSlack)
         .sum();
 
     return minSafeTransferTimeOp(paths, totalTransitTimeOp);
   }
 
-  int durationIncludingSlack(PathLeg<T>  leg)  {
-    var p = leg.asTransitLeg().trip().pattern();
+  int durationIncludingSlack(TransitPathLeg<T> leg)  {
+    var p = leg.trip().pattern();
     return leg.duration() + slackProvider.transitSlack(p);
   }
 

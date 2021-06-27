@@ -1,7 +1,7 @@
 package org.opentripplanner.transit.raptor.moduletests;
 
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.opentripplanner.transit.raptor._data.api.PathUtils.pathsToString;
 import static org.opentripplanner.transit.raptor._data.transit.TestRoute.route;
 import static org.opentripplanner.transit.raptor._data.transit.TestTransfer.flex;
@@ -10,9 +10,9 @@ import static org.opentripplanner.transit.raptor._data.transit.TestTransfer.walk
 import static org.opentripplanner.transit.raptor._data.transit.TestTripSchedule.schedule;
 import static org.opentripplanner.transit.raptor.api.transit.RaptorSlackProvider.defaultSlackProvider;
 
-import org.junit.Before;
 import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.opentripplanner.transit.raptor.RaptorService;
 import org.opentripplanner.transit.raptor._data.RaptorTestConstants;
 import org.opentripplanner.transit.raptor._data.transit.TestTransitData;
@@ -20,16 +20,21 @@ import org.opentripplanner.transit.raptor._data.transit.TestTripSchedule;
 import org.opentripplanner.transit.raptor.api.request.RaptorProfile;
 import org.opentripplanner.transit.raptor.api.request.RaptorRequestBuilder;
 import org.opentripplanner.transit.raptor.api.request.SearchDirection;
+import org.opentripplanner.transit.raptor.api.transit.RaptorCostConverter;
 import org.opentripplanner.transit.raptor.rangeraptor.configure.RaptorConfig;
 
 /**
  * FEATURE UNDER TEST
  * <p>
- * With FLEX access and egress Raptor must support access/egress paths with more then one leg.
+ * With FLEX access Raptor must support access paths with more then one leg.
  * These access paths have more transfers that regular paths, hence should not dominate
- * access/egress walking, but only get accepted when they are better on time and/or cost.
+ * access walking, but only get accepted when they are better on time and/or cost.
  */
-public class B11_FlexEgress implements RaptorTestConstants {
+public class B10_FlexAccessTest implements RaptorTestConstants {
+  private static final int TRANSFER_SLACK = 60;
+  private static final int COST_ONE_STOP = RaptorCostConverter.toRaptorCost(2 * 60);
+  private static final int COST_TRANSFER_SLACK = RaptorCostConverter.toRaptorCost(TRANSFER_SLACK);
+  private static final int COST_ONE_SEC = RaptorCostConverter.toRaptorCost(1);
 
   private final TestTransitData data = new TestTransitData();
   private final RaptorRequestBuilder<TestTripSchedule> requestBuilder = new RaptorRequestBuilder<>();
@@ -37,32 +42,35 @@ public class B11_FlexEgress implements RaptorTestConstants {
       RaptorConfig.defaultConfigForTest()
   );
 
-  @Before
+  @BeforeEach
   public void setup() {
     data.withRoute(
         route("R1", STOP_B, STOP_C, STOP_D, STOP_E, STOP_F)
             .withTimetable(
-                schedule("0:10, 0:12, 0:14, 0:16, 0:18")
+                schedule("0:10, 0:12, 0:14, 0:16, 0:20")
             )
     );
     requestBuilder.searchParams()
+        // All access paths are all pareto-optimal (McRaptor).
         .addAccessPaths(
-            walk(STOP_B, D1m)
+            // lowest num-of-transfers (0)
+            walk(STOP_B, D10m, COST_ONE_STOP + COST_TRANSFER_SLACK),
+            // lowest cost
+            flexAndWalk(STOP_C, D2m, TWO_RIDES, 2*COST_ONE_STOP - COST_ONE_SEC),
+            // latest departure time
+            flex(STOP_D, D3m, TWO_RIDES, 3*COST_ONE_STOP),
+            // best on combination of transfers and time
+            flexAndWalk(STOP_E, D7m, ONE_RIDE, 4*COST_ONE_STOP)
         )
-        // All egress paths are all pareto-optimal (McRaptor).
-        .addEgressPaths(
-            flexAndWalk(STOP_C, D7m),     // best on combination of transfers and time
-            flex(STOP_D, D3m, 2),         // earliest arrival time
-            flexAndWalk(STOP_E, D2m1s, 2),  // lowest cost
-            walk(STOP_F, D10m)            // lowest num-of-transfers (0)
-        );
+        .addEgressPaths(walk(STOP_F, D1m));
+
     requestBuilder.searchParams()
         .earliestDepartureTime(T00_00)
         .latestArrivalTime(T00_30);
 
     // We will test board- and alight-slack in a separate test
     requestBuilder.slackProvider(
-        defaultSlackProvider(60, 0, 0)
+        defaultSlackProvider(TRANSFER_SLACK, 0, 0)
     );
 
     ModuleTestDebugLogging.setupDebugLogging(data, requestBuilder);
@@ -75,7 +83,7 @@ public class B11_FlexEgress implements RaptorTestConstants {
     var response = raptorService.route(requestBuilder.build(), data);
 
     assertEquals(
-        "Walk 1m ~ 2 ~ BUS R1 0:10 0:14 ~ 4 ~ Flex 3m 2tx [0:09 0:18 9m]",
+        "Flex 3m 2x ~ 4 ~ BUS R1 0:14 0:20 ~ 6 ~ Walk 1m [0:10 0:21 11m]",
         pathsToString(response)
     );
   }
@@ -89,7 +97,7 @@ public class B11_FlexEgress implements RaptorTestConstants {
     var response = raptorService.route(requestBuilder.build(), data);
 
     assertEquals(
-        "Walk 1m ~ 2 ~ BUS R1 0:10 0:14 ~ 4 ~ Flex 3m 2tx [0:09 0:18 9m]",
+        "Flex 3m 2x ~ 4 ~ BUS R1 0:14 0:20 ~ 6 ~ Walk 1m [0:10 0:21 11m]",
         pathsToString(response)
     );
   }
@@ -101,10 +109,10 @@ public class B11_FlexEgress implements RaptorTestConstants {
     var response = raptorService.route(requestBuilder.build(), data);
 
     assertEquals(""
-            + "Walk 1m ~ 2 ~ BUS R1 0:10 0:14 ~ 4 ~ Flex 3m 2tx [0:09 0:18 9m $1860]\n"
-            + "Walk 1m ~ 2 ~ BUS R1 0:10 0:16 ~ 5 ~ Flex 2m1s 2tx [0:09 0:19:01 10m1s $1744]\n"
-            + "Walk 1m ~ 2 ~ BUS R1 0:10 0:12 ~ 3 ~ Flex 7m 1tx [0:09 0:20 11m $2700]\n"
-            + "Walk 1m ~ 2 ~ BUS R1 0:10 0:18 ~ 6 ~ Walk 10m [0:09 0:28 19m $3720]",
+            + "Flex 3m 2x ~ 4 ~ BUS R1 0:14 0:20 ~ 6 ~ Walk 1m [0:10 0:21 11m $1500]\n"  // ldt
+            + "Flex 2m 2x ~ 3 ~ BUS R1 0:12 0:20 ~ 6 ~ Walk 1m [0:09 0:21 12m $1499]\n" // cost
+            + "Flex 7m 1x ~ 5 ~ BUS R1 0:16 0:20 ~ 6 ~ Walk 1m [0:08 0:21 13m $1500]\n" // tx+time
+            + "Walk 10m ~ 2 ~ BUS R1 0:10 0:20 ~ 6 ~ Walk 1m [0:00 0:21 21m $1500]",    // tx
         pathsToString(response)
     );
   }

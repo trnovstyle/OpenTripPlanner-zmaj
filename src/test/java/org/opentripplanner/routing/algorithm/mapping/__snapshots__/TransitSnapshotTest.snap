@@ -677,7 +677,7 @@ org.opentripplanner.routing.algorithm.mapping.TransitSnapshotTest.test_trip_plan
       "systemNotices": [ ],
       "tooSloped": false,
       "transitTimeSeconds": 771,
-      "waitTimeAdjustedGeneralizedCost": -999999,
+      "waitTimeAdjustedGeneralizedCost": 0,
       "waitingTimeSeconds": 0,
       "walkOnly": false,
       "walkingAllTheWay": false
@@ -999,7 +999,7 @@ org.opentripplanner.routing.algorithm.mapping.TransitSnapshotTest.test_trip_plan
       "systemNotices": [ ],
       "tooSloped": false,
       "transitTimeSeconds": 1214,
-      "waitTimeAdjustedGeneralizedCost": -999999,
+      "waitTimeAdjustedGeneralizedCost": 0,
       "waitingTimeSeconds": 0,
       "walkOnly": false,
       "walkingAllTheWay": false
@@ -1389,7 +1389,7 @@ org.opentripplanner.routing.algorithm.mapping.TransitSnapshotTest.test_trip_plan
       "systemNotices": [ ],
       "tooSloped": false,
       "transitTimeSeconds": 785,
-      "waitTimeAdjustedGeneralizedCost": -999999,
+      "waitTimeAdjustedGeneralizedCost": 0,
       "waitingTimeSeconds": 0,
       "walkOnly": false,
       "walkingAllTheWay": false
@@ -1711,7 +1711,7 @@ org.opentripplanner.routing.algorithm.mapping.TransitSnapshotTest.test_trip_plan
       "systemNotices": [ ],
       "tooSloped": false,
       "transitTimeSeconds": 1284,
-      "waitTimeAdjustedGeneralizedCost": -999999,
+      "waitTimeAdjustedGeneralizedCost": 0,
       "waitingTimeSeconds": 0,
       "walkOnly": false,
       "walkingAllTheWay": false
@@ -1757,7 +1757,7 @@ org.opentripplanner.routing.algorithm.mapping.TransitSnapshotTest.test_trip_plan
           }
         }
       },
-      "generalizedCost": 3374,
+      "generalizedCost": 3375,
       "legs": [
         {
           "agencyTimeZoneOffset": -28800000,
@@ -2151,7 +2151,7 @@ org.opentripplanner.routing.algorithm.mapping.TransitSnapshotTest.test_trip_plan
       "systemNotices": [ ],
       "tooSloped": false,
       "transitTimeSeconds": 1264,
-      "waitTimeAdjustedGeneralizedCost": 223007,
+      "waitTimeAdjustedGeneralizedCost": 2927,
       "waitingTimeSeconds": 237,
       "walkOnly": false,
       "walkingAllTheWay": false
@@ -2800,7 +2800,7 @@ org.opentripplanner.routing.algorithm.mapping.TransitSnapshotTest.test_trip_plan
       "systemNotices": [ ],
       "tooSloped": false,
       "transitTimeSeconds": 769,
-      "waitTimeAdjustedGeneralizedCost": -999999,
+      "waitTimeAdjustedGeneralizedCost": 0,
       "waitingTimeSeconds": 0,
       "walkOnly": false,
       "walkingAllTheWay": false
@@ -3196,7 +3196,7 @@ org.opentripplanner.routing.algorithm.mapping.TransitSnapshotTest.test_trip_plan
       "systemNotices": [ ],
       "tooSloped": false,
       "transitTimeSeconds": 799,
-      "waitTimeAdjustedGeneralizedCost": -999999,
+      "waitTimeAdjustedGeneralizedCost": 0,
       "waitingTimeSeconds": 0,
       "walkOnly": false,
       "walkingAllTheWay": false
@@ -3592,7 +3592,7 @@ org.opentripplanner.routing.algorithm.mapping.TransitSnapshotTest.test_trip_plan
       "systemNotices": [ ],
       "tooSloped": false,
       "transitTimeSeconds": 769,
-      "waitTimeAdjustedGeneralizedCost": -999999,
+      "waitTimeAdjustedGeneralizedCost": 0,
       "waitingTimeSeconds": 0,
       "walkOnly": false,
       "walkingAllTheWay": false
@@ -4038,7 +4038,7 @@ org.opentripplanner.routing.algorithm.mapping.TransitSnapshotTest.test_trip_plan
       "systemNotices": [ ],
       "tooSloped": false,
       "transitTimeSeconds": 1133,
-      "waitTimeAdjustedGeneralizedCost": 210840,
+      "waitTimeAdjustedGeneralizedCost": 2502,
       "waitingTimeSeconds": 237,
       "walkOnly": false,
       "walkingAllTheWay": false
@@ -4400,7 +4400,7 @@ org.opentripplanner.routing.algorithm.mapping.TransitSnapshotTest.test_trip_plan
       "systemNotices": [ ],
       "tooSloped": false,
       "transitTimeSeconds": 1204,
-      "waitTimeAdjustedGeneralizedCost": -999999,
+      "waitTimeAdjustedGeneralizedCost": 0,
       "waitingTimeSeconds": 0,
       "walkOnly": false,
       "walkingAllTheWay": false
