@@ -95,4 +95,24 @@ public class CalendarServiceData implements Serializable {
         dates = Collections.unmodifiableList(new ArrayList<>(dates));
         datesByLocalizedServiceId.put(serviceId, dates);
     }
+
+    public void mergeCalender(CalendarServiceData data) {
+        // Agency IDs should not clash
+        this.timeZonesByAgencyId.putAll(data.timeZonesByAgencyId);
+        this.serviceDatesByServiceId.putAll(data.serviceDatesByServiceId);
+        this.datesByLocalizedServiceId.putAll(data.datesByLocalizedServiceId);
+
+        //ServiceDates are not unique and need merging
+        for (Map.Entry<ServiceDate, Set<AgencyAndId>> entry : data.serviceIdsByDate.entrySet()) {
+            ServiceDate key = entry.getKey();
+            Set<AgencyAndId> value = entry.getValue();
+            var existingServiceDate = this.serviceIdsByDate.get(key);
+            if (existingServiceDate == null) {
+                this.serviceIdsByDate.put(key, value);
+            } else {
+                existingServiceDate.addAll(value);
+                this.serviceIdsByDate.put(key, existingServiceDate);
+            }
+        }
+    }
 }
