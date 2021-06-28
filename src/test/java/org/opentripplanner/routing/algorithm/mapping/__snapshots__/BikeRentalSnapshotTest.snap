@@ -554,7 +554,7 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.accessBikeR
       "systemNotices": [ ],
       "tooSloped": false,
       "transitTimeSeconds": 575,
-      "waitTimeAdjustedGeneralizedCost": -9999,
+      "waitTimeAdjustedGeneralizedCost": 0,
       "waitingTimeSeconds": 0,
       "walkOnly": false,
       "walkingAllTheWay": false
@@ -978,7 +978,7 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.accessBikeR
       "systemNotices": [ ],
       "tooSloped": false,
       "transitTimeSeconds": 533,
-      "waitTimeAdjustedGeneralizedCost": -9999,
+      "waitTimeAdjustedGeneralizedCost": 0,
       "waitingTimeSeconds": 0,
       "walkOnly": false,
       "walkingAllTheWay": false
@@ -1402,7 +1402,7 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.accessBikeR
       "systemNotices": [ ],
       "tooSloped": false,
       "transitTimeSeconds": 601,
-      "waitTimeAdjustedGeneralizedCost": -9999,
+      "waitTimeAdjustedGeneralizedCost": 0,
       "waitingTimeSeconds": 0,
       "walkOnly": false,
       "walkingAllTheWay": false
@@ -1724,7 +1724,7 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.accessBikeR
       "systemNotices": [ ],
       "tooSloped": false,
       "transitTimeSeconds": 791,
-      "waitTimeAdjustedGeneralizedCost": -9999,
+      "waitTimeAdjustedGeneralizedCost": 0,
       "waitingTimeSeconds": 0,
       "walkOnly": false,
       "walkingAllTheWay": false
@@ -2283,7 +2283,7 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.accessBikeR
       "systemNotices": [ ],
       "tooSloped": false,
       "transitTimeSeconds": 575,
-      "waitTimeAdjustedGeneralizedCost": -9999,
+      "waitTimeAdjustedGeneralizedCost": 0,
       "waitingTimeSeconds": 0,
       "walkOnly": false,
       "walkingAllTheWay": false
@@ -2842,7 +2842,7 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.accessBikeR
       "systemNotices": [ ],
       "tooSloped": false,
       "transitTimeSeconds": 575,
-      "waitTimeAdjustedGeneralizedCost": -9999,
+      "waitTimeAdjustedGeneralizedCost": 0,
       "waitingTimeSeconds": 0,
       "walkOnly": false,
       "walkingAllTheWay": false
@@ -4102,7 +4102,7 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.egressBikeR
       "systemNotices": [ ],
       "tooSloped": false,
       "transitTimeSeconds": 522,
-      "waitTimeAdjustedGeneralizedCost": -9999,
+      "waitTimeAdjustedGeneralizedCost": 0,
       "waitingTimeSeconds": 0,
       "walkOnly": false,
       "walkingAllTheWay": false
@@ -4492,7 +4492,7 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.egressBikeR
       "systemNotices": [ ],
       "tooSloped": false,
       "transitTimeSeconds": 603,
-      "waitTimeAdjustedGeneralizedCost": -9999,
+      "waitTimeAdjustedGeneralizedCost": 0,
       "waitingTimeSeconds": 0,
       "walkOnly": false,
       "walkingAllTheWay": false
@@ -4882,7 +4882,7 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.egressBikeR
       "systemNotices": [ ],
       "tooSloped": false,
       "transitTimeSeconds": 477,
-      "waitTimeAdjustedGeneralizedCost": -9999,
+      "waitTimeAdjustedGeneralizedCost": 0,
       "waitingTimeSeconds": 0,
       "walkOnly": false,
       "walkingAllTheWay": false
@@ -5475,7 +5475,7 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.egressBikeR
       "systemNotices": [ ],
       "tooSloped": false,
       "transitTimeSeconds": 522,
-      "waitTimeAdjustedGeneralizedCost": -9999,
+      "waitTimeAdjustedGeneralizedCost": 0,
       "waitingTimeSeconds": 0,
       "walkOnly": false,
       "walkingAllTheWay": false
@@ -5865,7 +5865,7 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.egressBikeR
       "systemNotices": [ ],
       "tooSloped": false,
       "transitTimeSeconds": 663,
-      "waitTimeAdjustedGeneralizedCost": -9999,
+      "waitTimeAdjustedGeneralizedCost": 0,
       "waitingTimeSeconds": 0,
       "walkOnly": false,
       "walkingAllTheWay": false
@@ -6255,7 +6255,7 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.egressBikeR
       "systemNotices": [ ],
       "tooSloped": false,
       "transitTimeSeconds": 477,
-      "waitTimeAdjustedGeneralizedCost": -9999,
+      "waitTimeAdjustedGeneralizedCost": 0,
       "waitingTimeSeconds": 0,
       "walkOnly": false,
       "walkingAllTheWay": false
