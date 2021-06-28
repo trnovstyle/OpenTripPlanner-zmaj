@@ -326,7 +326,10 @@ public class TripPatternMapper {
                 if (value != null) {
                     currentHeadsign = value.getFrontText().getValue();
                     viaValues = value.getVias();
+                } else {
+                    LOG.warn("Invalid DestinationDisplayRef");
                 }
+
                 if (viaValues != null && viaValues.getVia() != null) {
                     var via = viaValues.getVia()
                             .stream()
@@ -337,8 +340,6 @@ public class TripPatternMapper {
                         currentHeadsign += " via ";
                         currentHeadsign += via;
                     }
-                } else {
-                    LOG.warn("Invalid DestinationDisplayRef");
                 }
             }
         }
