@@ -58,9 +58,24 @@ public class BikeRentalSourceFactory {
 
   public BikeRentalDataSourceParameters create() {
     switch (type) {
-      case GBFS: return new GbfsBikeRentalDataSourceParameters(url(), network(), routeAsCar(), allowKeepingBicycleRentalsAtDestination());
-      case KML:  return new GenericKmlBikeRentalDataSourceParameters(url(), namePrefix());
-      default:   return new BikeRentalDataSourceParameters(type, url(), network(), apiKey());
+      case GBFS:
+        return new GbfsBikeRentalDataSourceParameters(
+            url(),
+            network(),
+            routeAsCar(),
+            allowKeepingBicycleRentalsAtDestination(),
+            c.asMap("headers", NodeAdapter::asText)
+        );
+      case KML:
+        return new GenericKmlBikeRentalDataSourceParameters(url(), namePrefix());
+      default:
+        return new BikeRentalDataSourceParameters(
+            type,
+            url(),
+            network(),
+            apiKey(),
+            c.asMap("headers", NodeAdapter::asText)
+        );
     }
   }
 
