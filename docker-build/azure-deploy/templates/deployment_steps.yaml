@@ -1,14 +1,6 @@
 # Build docker image / helm package from jar file and deploy
 
 steps:
-  # Put settings with Azure Artifacts repository
-  - task: DownloadSecureFile@1
-    name: settingsSecurityxml
-    inputs:
-      secureFile: settings-security.xml
-
-  - bash: cp -p $(settingsSecurityxml.secureFilePath) /tmp/settings-security.xml
-
   # Copy jar's for Dockerfile to find
   - task: Bash@3
     inputs:

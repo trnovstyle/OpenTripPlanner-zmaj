@@ -10,6 +10,18 @@ variables:
   azureSubscription: 'TJPDevOps-CN'
 
 steps:
+  - checkout: self
+
+  # Put settings with Azure Artifacts repository
+  - task: DownloadSecureFile@1
+    displayName: 'Copy Maven authorization for Skånetrafiken Maven repository'
+    name: settingsSecurityxml
+    inputs:
+      secureFile: settings-security.xml
+
+  - bash: cp -p $(settingsSecurityxml.secureFilePath) /tmp/settings-security.xml
+    displayName: 'Copy Maven authorization configuration to Maven home directory'
+
   # Build Java project
   - task: Maven@3
     inputs:
