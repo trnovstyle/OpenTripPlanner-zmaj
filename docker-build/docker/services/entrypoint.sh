@@ -11,6 +11,7 @@ OTP_JAR_PATH=/code/otp-shaded.jar
 GRAPH_CONTAINER="resesok-graph"
 NETEX_FILENAME="ST_netex.zip"
 OSM_FILENAME="sweden-filtered.osm.pbf"
+OSM_DK_FILENAME="denmark-oresund.osm.pbf"
 SA_NAME="ressa$ENVIRONMENT"
 
 log_info "Running Entrypoint.sh.."
@@ -55,7 +56,8 @@ else
   log_info "** WARNING: Downloaded file ($FILE_ZIP_PATH) is empty or not present**"
   # Download netex + OSM data from azure storage in background
   downloadNetexFiles $FILE_NETEX_PATH &
-  downloadOSMFile $FILE_NETEX_PATH &
+  downloadOSMFile $FILE_NETEX_PATH $OSM_FILENAME &
+  downloadOSMFile $FILE_NETEX_PATH $OSM_DK_FILENAME &
   # Wait for download of Netex/OSM to finish
   wait
   if [ -s $FILE_NETEX_PATH/$NETEX_FILENAME ] && [ -s $FILE_NETEX_PATH/$OSM_FILENAME ] ;
