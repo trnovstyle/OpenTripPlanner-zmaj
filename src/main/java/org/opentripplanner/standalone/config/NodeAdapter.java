@@ -1,8 +1,10 @@
 package org.opentripplanner.standalone.config;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import org.opentripplanner.api.parameter.QualifiedModeSet;
 import org.opentripplanner.model.FeedScopedId;
 import org.opentripplanner.routing.api.request.RequestFunctions;
+import org.opentripplanner.routing.api.request.RequestModes;
 import org.opentripplanner.util.OtpAppException;
 import org.slf4j.Logger;
 
@@ -166,6 +168,11 @@ public class NodeAdapter {
 
     public String asText(String paramName, String defaultValue) {
         return param(paramName).asText(defaultValue);
+    }
+
+    public RequestModes asRequestModes(String paramName, RequestModes defaultValue) {
+        var node = param(paramName);
+        return node == null || node.asText().isBlank() ? defaultValue : new QualifiedModeSet(node.asText()).getRequestModes();
     }
 
     /**

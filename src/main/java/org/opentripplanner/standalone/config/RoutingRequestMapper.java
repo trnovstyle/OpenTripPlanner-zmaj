@@ -1,16 +1,12 @@
 package org.opentripplanner.standalone.config;
 
-import org.opentripplanner.model.modes.AllowedTransitMode;
 import org.opentripplanner.model.modes.TransitMainMode;
 import org.opentripplanner.routing.api.request.RequestModes;
 import org.opentripplanner.routing.api.request.RoutingRequest;
 import org.opentripplanner.routing.api.request.TransferOptimizationRequest;
-import org.opentripplanner.routing.api.request.StreetMode;
 import org.opentripplanner.routing.core.TraverseMode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.HashSet;
 
 public class RoutingRequestMapper {
 
@@ -72,9 +68,7 @@ public class RoutingRequestMapper {
         // 'maxTransfers' is configured in the Raptor tuning parameters, not here
         request.maxDirectStreetDurationSeconds = c.asDouble("maxDirectStreetDurationSeconds", dft.maxDirectStreetDurationSeconds);
         request.maxWheelchairSlope = c.asDouble("maxWheelchairSlope", dft.maxWheelchairSlope); // ADA max wheelchair ramp slope is a good default.
-        request.modes = new RequestModes(StreetMode.WALK, StreetMode.WALK, StreetMode.WALK, StreetMode.WALK,
-            AllowedTransitMode.getAllTransitModes()); // TODO Map default modes from config
-        request.modes = RequestModes.defaultRequestModes; // TODO Map default modes from config
+        request.modes = c.asRequestModes("modes", RequestModes.defaultRequestModes);
         request.nonpreferredTransferCost = c.asInt("nonpreferredTransferPenalty", dft.nonpreferredTransferCost);
         request.numItineraries = c.asInt("numItineraries", dft.numItineraries);
         request.onlyTransitTrips = c.asBoolean("onlyTransitTrips", dft.onlyTransitTrips);
@@ -108,7 +102,8 @@ public class RoutingRequestMapper {
 
     private static void mapTransferOptimization(TransferOptimizationRequest p, NodeAdapter c) {
         p.optimizeTransferWaitTime = c.asBoolean(
-                "optimizeTransferWaitTime", p.optimizeTransferWaitTime
+            "optimizeTransferWaitTime",
+            p.optimizeTransferWaitTime
         );
         p.minSafeWaitTimeFactor = c.asDouble("minSafeWaitTimeFactor", p.minSafeWaitTimeFactor);
         p.inverseWaitReluctance = c.asDouble("inverseWaitReluctance", p.inverseWaitReluctance);
