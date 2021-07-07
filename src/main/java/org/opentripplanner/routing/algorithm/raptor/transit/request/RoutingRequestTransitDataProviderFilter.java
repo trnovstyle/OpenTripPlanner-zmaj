@@ -59,9 +59,9 @@ public class RoutingRequestTransitDataProviderFilter implements TransitDataProvi
 
   @Override
   public boolean tripTimesPredicate(TripTimes tripTimes) {
-    if (requireBikesAllowed) {
-      return bikeAccessForTrip(tripTimes.trip) == BikeAccess.ALLOWED;
-    }
+//    if (requireBikesAllowed) {
+//      return bikeAccessForTrip(tripTimes.trip) == BikeAccess.ALLOWED;
+//    }
 
     if (requireWheelchairAccessible) {
       return tripTimes.trip.getWheelchairAccessible() == 1;

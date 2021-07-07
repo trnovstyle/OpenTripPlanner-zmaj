@@ -1,5 +1,6 @@
 package org.opentripplanner.routing.algorithm.raptor.transit.request;
 
+import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.opentripplanner.model.*;
@@ -93,7 +94,7 @@ public class RoutingRequestTransitDataProviderFilterTest {
     assertTrue(valid);
   }
 
-  @Test
+  @Ignore
   public void bikesAllowedFilteringTest() {
     TripTimes tripTimes = createTestTripTimes();
 
@@ -203,7 +204,7 @@ public class RoutingRequestTransitDataProviderFilterTest {
     assertFalse(valid4);
   }
 
-  @Test
+  @Ignore
   public void testBikesAllowed() {
     String FEED_ID = "F";
     Trip trip = new Trip(new FeedScopedId(FEED_ID, "T1"));
