@@ -22,6 +22,12 @@ steps:
   - bash: cp -p $(settingsSecurityxml.secureFilePath) /tmp/settings-security.xml
     displayName: 'Copy Maven authorization configuration to Maven home directory'
 
+  - task: JavaToolInstaller@0
+    displayName: 'Use JDK 11'
+    inputs:
+      versionSpec: '11'
+      jdkArchitectureOption: 'x64'
+      jdkSourceOption: 'PreInstalled'
   # Build Java project
   - task: Maven@3
     inputs:

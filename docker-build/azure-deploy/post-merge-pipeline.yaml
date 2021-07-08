@@ -30,6 +30,13 @@ steps:
     env:
       DEVOPS_ACCESSTOKEN: $(System.AccessToken)
 
+  - task: JavaToolInstaller@0
+    displayName: 'Use JDK 11'
+    inputs:
+      versionSpec: '11'
+      jdkArchitectureOption: 'x64'
+      jdkSourceOption: 'PreInstalled'
+
   - task: Maven@3
     displayName: 'Publish artifact with version number to Skånetrafiken Maven repository'
     inputs:
