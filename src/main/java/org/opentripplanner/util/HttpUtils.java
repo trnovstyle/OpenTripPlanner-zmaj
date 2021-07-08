@@ -44,6 +44,13 @@ public class HttpUtils {
     }
 
     public static InputStream getData(String url, String requestHeaderName, String requestHeaderValue) throws ClientProtocolException, IOException {
+        return getData(url, requestHeaderName, requestHeaderValue, getClient());
+    }
+    public static InputStream getData(String url, String requestHeaderName, String requestHeaderValue, int timeout) throws ClientProtocolException, IOException {
+        return getData(url, requestHeaderName, requestHeaderValue, getClient(timeout, timeout));
+    }
+
+    private static InputStream getData(String url, String requestHeaderName, String requestHeaderValue, HttpClient httpclient) throws IOException {
         URL url2 = new URL(url);
         String proto = url2.getProtocol();
         if (proto.equals("http") || proto.equals("https")) {
@@ -51,7 +58,6 @@ public class HttpUtils {
             if (requestHeaderValue != null) {
                 httpget.addHeader(requestHeaderName, requestHeaderValue);
             }
-            HttpClient httpclient = getClient();
             HttpResponse response = httpclient.execute(httpget);
             if(response.getStatusLine().getStatusCode() != 200)
                 return null;

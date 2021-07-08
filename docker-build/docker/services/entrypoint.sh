@@ -11,6 +11,7 @@ OTP_JAR_PATH=/code/otp-shaded.jar
 GRAPH_CONTAINER="resesok-graph"
 NETEX_FILENAME="ST_netex.zip"
 OSM_FILENAME="sweden-filtered.osm.pbf"
+OSM_DK_FILENAME="denmark-oresund.osm.pbf"
 SA_NAME="ressa$ENVIRONMENT"
 
 log_info "Running Entrypoint.sh.."
@@ -55,7 +56,8 @@ else
   log_info "** WARNING: Downloaded file ($FILE_ZIP_PATH) is empty or not present**"
   # Download netex + OSM data from azure storage in background
   downloadNetexFiles $FILE_NETEX_PATH &
-  downloadOSMFile $FILE_NETEX_PATH &
+  downloadOSMFile $FILE_NETEX_PATH $OSM_FILENAME &
+  downloadOSMFile $FILE_NETEX_PATH $OSM_DK_FILENAME &
   # Wait for download of Netex/OSM to finish
   wait
   if [ -s $FILE_NETEX_PATH/$NETEX_FILENAME ] && [ -s $FILE_NETEX_PATH/$OSM_FILENAME ] ;
@@ -77,16 +79,6 @@ fi
 
 cd /code || exit 1
 
-#TO BE REMOVED SECTION START
-#Edit router-config.json service bus connection string from secret value
-if ! serviceBusConnectionString=$(getKeyVaultValue $keyvault "serviceBusConnectionString"); then
-  log_error "Error fetching value for KeyVault key $serviceBusConnectionString in keyvault $keyvault"
-  sed -i "s|\"type.*|\"type\": \"empty\"|g" otpdata/malmo/router-config.json
-else
-  sed -i "s|\"SERVICE_BUS_URL\"|$serviceBusConnectionString|g" otpdata/malmo/router-config.json
-fi
-#TO BE REMOVED SECTION END
-
 log_info "Start java OTP jar"
 
-exec java -javaagent:/code/applicationinsights-agent-3.1.0.jar -Xms5120m -Xmx8704m -jar $OTP_JAR_PATH --server --graphs /code/otpdata --router malmo
+exec java -javaagent:/code/applicationinsights-agent-3.1.0.jar -Xms5120m -Xmx10500m -jar $OTP_JAR_PATH --server --graphs /code/otpdata --router malmo

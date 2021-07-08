@@ -322,10 +322,14 @@ public class TripPatternMapper {
         if (stopPoint != null) {
             if (stopPoint.getDestinationDisplayRef() != null) {
                 DestinationDisplay value = netexDao.destinationDisplayById.lookup(stopPoint.getDestinationDisplayRef().getRef());
-                Vias_RelStructure viaValues = netexDao.destinationDisplayById.lookup(stopPoint.getDestinationDisplayRef().getRef()).getVias();
+                Vias_RelStructure viaValues = null;
                 if (value != null) {
                     currentHeadsign = value.getFrontText().getValue();
+                    viaValues = value.getVias();
+                } else {
+                    LOG.warn("Invalid DestinationDisplayRef");
                 }
+
                 if (viaValues != null && viaValues.getVia() != null) {
                     var via = viaValues.getVia()
                             .stream()

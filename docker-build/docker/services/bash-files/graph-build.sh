@@ -5,7 +5,6 @@
 GRAPH_CONTAINER="resesok-graph"
 NETEX_CONTAINER="resesok-netex"
 NETEX_FILE_NAME="ST_netex.zip"
-OSM_FILE_NAME="sweden-filtered.osm.pbf"
 
 function downloadNetexFiles {
   file_path=$1
@@ -15,6 +14,7 @@ function downloadNetexFiles {
 
 function downloadOSMFile {
   file_path=$1
+  OSM_FILE_NAME=$2
   log_info "Downloading OSM file"
   downloadFromAzureStorage $SA_NAME $GRAPH_CONTAINER $OSM_FILE_NAME $file_path/$OSM_FILE_NAME
 }

@@ -57,6 +57,13 @@ spec:
             periodSeconds: 30
             successThreshold: 1
             timeoutSeconds: 20
+          volumeMounts:
+            {{- range .Values.configmapMounts }}
+            - name: {{ .name }}
+              mountPath: {{ .mountPath }}
+              subPath: {{ .subPath }}
+              readOnly: {{ .readOnly }}
+          {{- end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
       {{- with .Values.nodeSelector }}
@@ -70,4 +77,10 @@ spec:
     {{- with .Values.tolerations }}
       tolerations:
         {{- toYaml . | nindent 8 }}
+    {{- end }}
+      volumes:
+    {{- range .Values.configmapMounts }}
+      - name: {{ .name }}
+        configMap:
+          name: {{ .configMap }}
     {{- end }}
