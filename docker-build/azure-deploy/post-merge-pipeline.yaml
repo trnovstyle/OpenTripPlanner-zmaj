@@ -24,18 +24,18 @@ steps:
   - bash: cp -p $(settingsSecurity.secureFilePath) /tmp/settings-security.xml
     displayName: 'Copy Maven authorization configuration to Maven home directory'
 
-    # Exports otpVersion as pipeline variable
-  - bash: docker-build/azure-deploy/git-version.sh
-    displayName: 'Create new git tag with current version'
-    env:
-      DEVOPS_ACCESSTOKEN: $(System.AccessToken)
-
   - task: JavaToolInstaller@0
     displayName: 'Use JDK 11'
     inputs:
       versionSpec: '11'
       jdkArchitectureOption: 'x64'
       jdkSourceOption: 'PreInstalled'
+
+    # Exports otpVersion as pipeline variable
+  - bash: docker-build/azure-deploy/git-version.sh
+    displayName: 'Create new git tag with current version'
+    env:
+      DEVOPS_ACCESSTOKEN: $(System.AccessToken)
 
   - task: Maven@3
     displayName: 'Publish artifact with version number to Skånetrafiken Maven repository'
