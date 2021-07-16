@@ -1,10 +1,15 @@
 package org.opentripplanner.routing.algorithm.raptor.router.street;
 
+import org.opentripplanner.model.Station;
+import org.opentripplanner.model.Stop;
 import org.opentripplanner.routing.api.request.RoutingRequest;
 import org.opentripplanner.routing.api.request.StreetMode;
+import org.opentripplanner.routing.edgetype.ParkAndRideEdge;
+import org.opentripplanner.routing.graph.Edge;
 import org.opentripplanner.routing.graphfinder.NearbyStop;
 
 import java.util.Collection;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -23,37 +28,97 @@ public class AccessEgressFilter {
   ) {
     switch (streetMode) {
       case CAR_PICKUP:
-        return filterCarPickup(nearbyStops, request);
       case CAR_TO_PARK:
-        return filterByCarPark(nearbyStops, request);
+        return filterByDistanceOfNearestStop(
+            nearbyStops,
+            request.accessEgressFilterMinimumDistanceMeters,
+            request.accessEgressFilterDistanceFactor
+        );
       default:
         return nearbyStops;
     }
   }
 
   /**
-   * Returns the closest stops by distance
+   * Returns the closest stops by distance. In addition, all other stops within the same stations
+   * as the closest stops are added.
    */
   private static Collection<NearbyStop> filterCarPickup(
-      Collection<NearbyStop> nearbyStops, RoutingRequest request
+      Collection<NearbyStop> nearbyStops, int maxCarPickupAccessEgressStops
   ) {
-    return nearbyStops
-        .stream()
+    // Add all stops locations (including areas) within range to result
+    Set<NearbyStop> result = nearbyStops.stream()
+        // Sorts by least distance
         .sorted()
-        .limit(request.maxCarPickupAccessEgressStops)
-        .collect(Collectors.toList());
+        .limit(maxCarPickupAccessEgressStops)
+        .collect(Collectors.toSet());
+
+    // Get the station for the stops within range
+    Set<Station> stations = result
+        .stream()
+        .filter(s -> s.stop instanceof Stop)
+        .map(s -> ((Stop) s.stop).getParentStation())
+        .collect(Collectors.toSet());
+
+    // All the child stops that are outside of the range
+    result.addAll(
+        nearbyStops
+        .stream()
+        .filter(s -> s.stop instanceof Stop)
+        .filter(s -> stations.contains(((Stop) s.stop).getParentStation()))
+        .collect(Collectors.toList())
+    );
+
+    return result;
   }
 
   /**
-   * Returns the closest stops by distance
+   * Returns the closest stops by distance. In addition, all other stops using the same car park
+   * are added.
    */
   private static Collection<NearbyStop> filterByCarPark(
-      Collection<NearbyStop> nearbyStops, RoutingRequest request
+      Collection<NearbyStop> nearbyStops, int maxCarParkAccessEgressStops
   ) {
+    // Add all stops locations within range to result
+    Set<NearbyStop> result = nearbyStops.stream()
+        // Sorts by least distance
+        .sorted()
+        .limit(maxCarParkAccessEgressStops)
+        .collect(Collectors.toSet());
+
+    // Get the car park used for the stops within range
+    Set<Edge> parAndRideEdges = result
+        .stream()
+        .filter(s -> s.edges.stream().anyMatch(e -> e instanceof ParkAndRideEdge))
+        .map(s -> s.edges.stream().filter(e -> e instanceof ParkAndRideEdge).findFirst().get())
+        .collect(Collectors.toSet());
+
+    // Add all the stops that use the same car park as stops within range
+    result.addAll(
+        nearbyStops
+            .stream()
+            .filter(s -> s.edges.stream().anyMatch(parAndRideEdges::contains))
+            .collect(Collectors.toList())
+    );
+
+    return result;
+  }
+
+  /**
+   * Returns the stops within a radius of either the minDistance parameters or the distance of
+   * the closest stop multiplied by the distanceFactor parameter, whichever is highest.
+   */
+  private static Collection<NearbyStop> filterByDistanceOfNearestStop(
+      Collection<NearbyStop> nearbyStops, double minDistance, double distanceFactor
+  ) {
+    if (nearbyStops.isEmpty()) { return nearbyStops; }
+
+    double closestStopDistance = nearbyStops.stream().sorted().findFirst().get().distance;
+    double distanceLimit = Double.max(closestStopDistance * distanceFactor, minDistance);
+
     return nearbyStops
         .stream()
-        .sorted()
-        .limit(request.maxCarParkAccessEgressStops)
+        .filter(s -> s.distance <= distanceLimit)
         .collect(Collectors.toList());
   }
 }
