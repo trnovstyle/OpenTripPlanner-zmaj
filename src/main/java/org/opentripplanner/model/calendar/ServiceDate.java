@@ -36,6 +36,8 @@ public class ServiceDate implements Serializable, Comparable<ServiceDate> {
 
     private static final TimeZone UTC_TIME_ZONE = TimeZone.getTimeZone("UTC");
 
+    private TimeZone timeZoneOverride;
+
     private final int year;
 
     private final int month;
@@ -65,6 +67,11 @@ public class ServiceDate implements Serializable, Comparable<ServiceDate> {
 
     public ServiceDate(Calendar calendar) {
         this(calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH) + 1, calendar.get(Calendar.DAY_OF_MONTH));
+    }
+
+    public ServiceDate(LocalDate o, TimeZone timeZone) {
+        this(o);
+        this.timeZoneOverride = timeZone;
     }
 
     /**
@@ -127,6 +134,9 @@ public class ServiceDate implements Serializable, Comparable<ServiceDate> {
      *         this VM
      */
     public Date getAsDate() {
+        if(timeZoneOverride != null) {
+            return getAsDate(timeZoneOverride);
+        }
         return getAsDate(TimeZone.getDefault());
     }
 

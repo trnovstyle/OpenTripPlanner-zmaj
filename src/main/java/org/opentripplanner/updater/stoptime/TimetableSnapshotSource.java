@@ -994,7 +994,7 @@ public class TimetableSnapshotSource {
         }
 
 
-        return new ServiceDate(date.withZoneSameInstant(timeZone.toZoneId()).toLocalDate());
+        return new ServiceDate(date.withZoneSameInstant(timeZone.toZoneId()).toLocalDate(), timeZone);
     }
 
     private int calculateSecondsSinceMidnight(ZonedDateTime dateTime) {
