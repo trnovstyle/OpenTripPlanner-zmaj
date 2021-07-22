@@ -5,7 +5,7 @@
 
 FILE_TMP_PATH=/code/otpdata/malmo/
 FILE_ZIP_PATH=/code/otpdata/malmo/Graph.zip
-FILE_NETEX_PATH=/code/otpdata/malmo
+GRAPH_DATA_PATH=/code/otpdata/malmo
 OTP_JAR_PATH=/code/otp-shaded.jar
 
 GRAPH_CONTAINER="resesok-graph"
@@ -55,23 +55,24 @@ then
 else
   log_info "** WARNING: Downloaded file ($FILE_ZIP_PATH) is empty or not present**"
   # Download netex + OSM data from azure storage in background
-  downloadNetexFiles $FILE_NETEX_PATH &
-  downloadOSMFile $FILE_NETEX_PATH $OSM_FILENAME &
-  downloadOSMFile $FILE_NETEX_PATH $OSM_DK_FILENAME &
+  downloadNetexFiles $GRAPH_DATA_PATH &
+  downloadDkGtfsFiles $GRAPH_DATA_PATH &
+  downloadOSMFile $GRAPH_DATA_PATH $OSM_FILENAME &
+  downloadOSMFile $GRAPH_DATA_PATH $OSM_DK_FILENAME &
   # Wait for download of Netex/OSM to finish
   wait
-  if [ -s $FILE_NETEX_PATH/$NETEX_FILENAME ] && [ -s $FILE_NETEX_PATH/$OSM_FILENAME ] ;
+  if [ -s $GRAPH_DATA_PATH/$NETEX_FILENAME ] && [ -s $GRAPH_DATA_PATH/$OSM_FILENAME ] ;
   then
 
-    if ! buildGraphFromNetexData $OTP_JAR_PATH $FILE_NETEX_PATH $FILE_TMP_PATH; then
+    if ! buildGraphFromNetexData $OTP_JAR_PATH $GRAPH_DATA_PATH $FILE_TMP_PATH; then
       log_error "Building graph failed"
       exit 1
     fi
-    rm $FILE_NETEX_PATH/$NETEX_FILENAME $FILE_NETEX_PATH/$OSM_FILENAME
+    rm $GRAPH_DATA_PATH/$NETEX_FILENAME $GRAPH_DATA_PATH/$OSM_FILENAME
     zip -j /code/${GRAPH_NAME} ${FILE_TMP_PATH}Graph.obj
     uploadToAzureStorage $SA_NAME $GRAPH_CONTAINER /code/${GRAPH_NAME} $GRAPH_NAME
   else
-    ls -al $FILE_NETEX_PATH
+    ls -al $GRAPH_DATA_PATH
     log_error "ERROR: Empty netex or OSM file, quitting."
     exit 1
   fi
