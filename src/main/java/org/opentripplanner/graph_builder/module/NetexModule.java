@@ -92,6 +92,7 @@ public class NetexModule implements GraphBuilderModule {
             var existingData = graph.getService(CalendarServiceData.class);
             calendarService.mergeData(existingData);
             data = calendarService.getData();
+            graph.clearCalendar();
         }
 
         graph.putService(CalendarServiceData.class, data);
