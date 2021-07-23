@@ -16,7 +16,7 @@ function downloadNetexFiles {
 function downloadDkGtfsFiles {
   file_path=$1
   log_info "Downloading DK GTFS file"
-  downloadFromAzureStorage $SA_NAME $NETEX_CONTAINER $GTFS_DK_FILE_NAME $file_path/$GTFS_DK_FILE_NAME
+  downloadFromAzureStorage $SA_NAME $GRAPH_CONTAINER $GTFS_DK_FILE_NAME $file_path/$GTFS_DK_FILE_NAME
 }
 
 function downloadOSMFile {
