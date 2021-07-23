@@ -31,7 +31,7 @@ function buildGraphFromNetexData {
   file_path=$2
   graph_path=$3
   log_info "Building Graph"
-  if ! java -Xmx6G -jar $otp_jar_path --basePath $file_path --build $graph_path; then
+  if ! java -Xmx10500m -jar $otp_jar_path --basePath $file_path --build $graph_path; then
     log_error "Build OpenTripPlanner Graph database failed in bash $0"
     return 1
   fi
