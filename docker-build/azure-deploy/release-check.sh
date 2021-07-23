@@ -17,4 +17,3 @@ if ! [[ "$SOURCE_BRANCH" =~ ^refs\/heads\/release\/[0-9]+\.[0-9]+\.[0-9]+$ ]]; t
   echo "Release branch needs to follow naming standard: refs/heads/release/1.1.1"
   exit 1
 fi
-

@@ -4235,6 +4235,15 @@ public class TransmodelIndexGraphQLSchema {
                         })
                         .build())
                 .field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name("serviceDate")
+                        .description("Leg service date")
+                        .type(dateScalar)
+                        .dataFetcher(environment -> {
+                            Leg leg = environment.getSource();
+                            return leg.serviceDate;
+                        })
+                )
+                .field(GraphQLFieldDefinition.newFieldDefinition()
                         .name("serviceJourney")
                         .description("For ride legs, the service journey. For non-ride legs, null.")
                         .type(serviceJourneyType)
