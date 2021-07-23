@@ -851,6 +851,10 @@ public class Graph implements Serializable, AddBuilderAnnotation {
         }
         return this.calendarService;
     }
+    
+    public void clearCalendar() {
+        this.calendarService = null;
+    }
 
     public int removeEdgelessVertices() {
         int removed = 0;

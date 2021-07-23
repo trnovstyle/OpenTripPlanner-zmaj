@@ -5,11 +5,18 @@
 GRAPH_CONTAINER="resesok-graph"
 NETEX_CONTAINER="resesok-netex"
 NETEX_FILE_NAME="ST_netex.zip"
+GTFS_DK_FILE_NAME="GTFS-filtered.zip"
 
 function downloadNetexFiles {
   file_path=$1
   log_info "Downloading netex files"
   downloadFromAzureStorage $SA_NAME $NETEX_CONTAINER $NETEX_FILE_NAME $file_path/$NETEX_FILE_NAME
+}
+
+function downloadDkGtfsFiles {
+  file_path=$1
+  log_info "Downloading DK GTFS file"
+  downloadFromAzureStorage $SA_NAME $NETEX_CONTAINER $GTFS_DK_FILE_NAME $file_path/$GTFS_DK_FILE_NAME
 }
 
 function downloadOSMFile {

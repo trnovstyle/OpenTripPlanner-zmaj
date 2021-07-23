@@ -1,4 +1,5 @@
-{  
+{
+	"useTransit": true,
 	"areaVisibility": true,
 	"parentStopLinking": true,
 	"platformEntriesLinking": true,

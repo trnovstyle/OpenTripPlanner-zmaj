@@ -15,6 +15,7 @@ package org.opentripplanner.calendar.impl;
 
 import org.opentripplanner.model.Agency;
 import org.opentripplanner.model.AgencyAndId;
+import org.opentripplanner.model.CalendarService;
 import org.opentripplanner.model.calendar.CalendarServiceData;
 import org.opentripplanner.model.calendar.LocalizedServiceId;
 import org.opentripplanner.model.impl.OtpTransitBuilder;
@@ -50,6 +51,11 @@ public class MultiCalendarServiceImpl extends CalendarServiceImpl {
             _data.putServiceDatesForServiceId(serviceId,
                     data.getServiceDatesForServiceId(serviceId));
         }
+    }
+
+    public void mergeData(CalendarServiceData calenderServiceData) {
+        CalendarServiceData _data = super.getData();
+        _data.mergeCalender(calenderServiceData);
     }
 
     public CalendarServiceData getData() {

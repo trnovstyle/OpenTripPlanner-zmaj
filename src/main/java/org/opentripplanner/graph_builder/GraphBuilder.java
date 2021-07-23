@@ -242,7 +242,7 @@ public class GraphBuilder implements Runnable {
                     graphBuilder.addModule(new TransitToTaggedStopsModule());
                 }
             }
-            else if (input.containsKey(NETEX)) {
+            if (input.containsKey(NETEX)) {
                 List<NetexBundle> netexBundles = new ArrayList<>();
                 for (DataSource netexSource : input.get(NETEX)) {
                     NetexBundle netexBundle = new NetexBundle(

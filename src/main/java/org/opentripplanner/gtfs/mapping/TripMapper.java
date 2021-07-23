@@ -13,6 +13,7 @@
 
 package org.opentripplanner.gtfs.mapping;
 
+import org.opentripplanner.model.TransmodelTransportSubmode;
 import org.opentripplanner.model.Trip;
 import org.opentripplanner.util.MapUtils;
 
@@ -45,6 +46,7 @@ class TripMapper {
         lhs.setRoute(routeMapper.map(rhs.getRoute()));
         lhs.setServiceId(AgencyAndIdMapper.mapAgencyAndId(rhs.getServiceId()));
         lhs.setTripShortName(rhs.getTripShortName());
+        lhs.setTripPublicCode(rhs.getTripShortName());
         lhs.setTripHeadsign(rhs.getTripHeadsign());
         lhs.setRouteShortName(rhs.getRouteShortName());
         lhs.setDirectionId(rhs.getDirectionId());
@@ -61,6 +63,7 @@ class TripMapper {
         lhs.setDrtDropOffMessage(rhs.getDrtDropOffMessage());
         lhs.setContinuousPickupMessage(rhs.getContinuousPickupMessage());
         lhs.setContinuousDropOffMessage(rhs.getContinuousDropOffMessage());
+        lhs.setTransportSubmode(TransmodelTransportSubmode.UNKNOWN);
 
         return lhs;
     }
