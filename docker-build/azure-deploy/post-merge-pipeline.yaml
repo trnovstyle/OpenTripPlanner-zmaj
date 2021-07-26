@@ -32,8 +32,6 @@ steps:
       jdkArchitectureOption: 'x64'
       jdkSourceOption: 'PreInstalled'
 
-  - bash: ls -l docker-build/azure-deploy
-
     # Exports otpVersion as pipeline variable
   - bash: docker-build/azure-deploy/version-check.sh
     displayName: 'Check if new version is valid'
