@@ -125,6 +125,36 @@ public class RoutingRequest implements AutoCloseable, Cloneable, Serializable {
     public double maxAccessEgressDurationSeconds = Duration.ofMinutes(45).toSeconds();
 
     /**
+     * Limits the number of closest stops to use for access/egress searches when using {@link
+     * StreetMode#CAR_PICKUP}. This is for both for performance reasons and because we want car
+     * to be used as a last resort and not replace large parts of a transit trip.
+     */
+    public int maxCarPickupAccessEgressStops = 5;
+
+    /**
+     * Limits the number of closest stops to use for access/egress searches when using {@link
+     * StreetMode#CAR_TO_PARK}. This is for both for performance reasons and because we want car
+     * to be used as a last resort and not replace large parts of a transit trip.
+     */
+    public int maxCarParkAccessEgressStops = 5;
+
+    /**
+     * The factor to be multiplied by the closest stop distance to get the distance to filter by
+     * when doing for access/egress searches for {@link StreetMode#CAR_TO_PARK} and
+     * {@link StreetMode#CAR_PICKUP}. This is for both for performance reasons and because we want
+     * car to be used as a last resort and not replace large parts of a transit trip.
+     */
+    public double accessEgressFilterDistanceFactor = 1.5;
+
+    /**
+     * The minimum distance to filter by when doing for access/egress searches for
+     * {@link StreetMode#CAR_TO_PARK} and {@link StreetMode#CAR_PICKUP}. This is for both for
+     * performance reasons and because we want car to be used as a last resort and not replace
+     * large parts of a transit trip.
+     */
+    public double accessEgressFilterMinimumDistanceMeters = 1000;
+
+    /**
      * Override the settings in maxAccessEgressDurationSeconds for specific street modes. This is
      * done because some street modes searches are much more resource intensive than others.
      */
