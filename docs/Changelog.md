@@ -39,7 +39,7 @@
 - Cancel individual stop on StopPattern instead of TripTimes [#3575](https://github.com/opentripplanner/OpenTripPlanner/issues/3575)
 - Refactor StopPattern/TripPattern/TripTimes [#3571](https://github.com/opentripplanner/OpenTripPlanner/issues/3571)
 - Changes to the StopTimes call [#3576](https://github.com/opentripplanner/OpenTripPlanner/issues/3576)
-
+- Add maxAccessEgressDurationSecondsForMode to RoutingRequest [#3560](https://github.com/opentripplanner/OpenTripPlanner/issues/3560)
 
 ## 2.0.0 (2020-11-27)
 
