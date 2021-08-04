@@ -5,7 +5,8 @@
     "recommendedInterchangePenalty": 60,
     "interchangeAllowedPenalty": 150,
     "noInterchangePenalty": 3000,
-    "transferSlack": 180
+    "transferSlack": 180,
+    "waitAtBeginningFactor": 0.175
   },
   "updaters": [ {
     "type": "siri-azure-et-updater",
