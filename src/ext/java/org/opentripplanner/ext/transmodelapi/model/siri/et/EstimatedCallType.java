@@ -10,6 +10,7 @@ import graphql.schema.GraphQLTypeReference;
 import org.opentripplanner.ext.transmodelapi.model.EnumTypes;
 import org.opentripplanner.ext.transmodelapi.support.GqlUtil;
 import org.opentripplanner.model.FeedScopedId;
+import org.opentripplanner.model.PickDrop;
 import org.opentripplanner.model.Stop;
 import org.opentripplanner.model.Trip;
 import org.opentripplanner.model.TripTimeOnDate;
@@ -150,31 +151,21 @@ public class EstimatedCallType {
             .field(GraphQLFieldDefinition.newFieldDefinition()
                 .name("forBoarding")
                 .type(Scalars.GraphQLBoolean)
-                .description("Whether vehicle may be boarded at quay.")
-                .dataFetcher(environment -> {
-                    if (((TripTimeOnDate) environment.getSource()).getPickupType() >= 0) {
-                        //Realtime-updated
-                        return ((TripTimeOnDate) environment.getSource()).getPickupType() != NONE.getGtfsCode();
-                    }
-                  return GqlUtil.getRoutingService(environment).getPatternForTrip()
-                        .get(((TripTimeOnDate) environment.getSource()).getTrip())
-                        .getBoardType(((TripTimeOnDate) environment.getSource()).getStopIndex()) != NONE;
-                })
-                .build())
+                .description("Whether vehicle may be boarded at quay according to the planned data. "
+                    + "If the cancellation flag is set, boarding is not possible, even if this field "
+                    + "is set to true.")
+                .dataFetcher(environment ->
+                    ((TripTimeOnDate) environment.getSource()).getPickupType() != NONE
+                ).build())
             .field(GraphQLFieldDefinition.newFieldDefinition()
                 .name("forAlighting")
                 .type(Scalars.GraphQLBoolean)
-                .description("Whether vehicle may be alighted at quay.")
-                .dataFetcher(environment -> {
-                    if (((TripTimeOnDate) environment.getSource()).getDropoffType() >= 0) {
-                        //Realtime-updated
-                        return ((TripTimeOnDate) environment.getSource()).getDropoffType() != NONE.getGtfsCode();
-                    }
-                    return GqlUtil.getRoutingService(environment).getPatternForTrip()
-                            .get(((TripTimeOnDate) environment.getSource()).getTrip())
-                            .getAlightType(((TripTimeOnDate) environment.getSource()).getStopIndex()) != NONE;
-                })
-                .build())
+                .description("Whether vehicle may be alighted at quay according to the planned data. "
+                    + "If the cancellation flag is set, alighting is not possible, even if this field "
+                    + "is set to true.")
+                .dataFetcher(environment ->
+                    ((TripTimeOnDate) environment.getSource()).getDropoffType() != NONE
+                ).build())
             .field(GraphQLFieldDefinition.newFieldDefinition()
                     .name("requestStop")
                     .type(Scalars.GraphQLBoolean)
@@ -189,7 +180,11 @@ public class EstimatedCallType {
                     .newFieldDefinition()
                     .name("cancellation")
                     .type(Scalars.GraphQLBoolean)
-                    .description("Whether stop is cancelled.")
+                    .description("Whether stop is cancelled. This means that either the "
+                        + "ServiceJourney has a planned cancellation, the ServiceJourney has been "
+                        + "cancelled by realtime data, or this particular StopPoint has been "
+                        + "cancelled. This also means that both boarding and alighting has been "
+                        + "cancelled.")
                     .dataFetcher(environment -> ((TripTimeOnDate) environment.getSource()).isCanceledEffectively())
             .build())
             .field(GraphQLFieldDefinition.newFieldDefinition()
