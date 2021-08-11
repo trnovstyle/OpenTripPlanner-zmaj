@@ -11,8 +11,10 @@ import java.util.Collection;
 import java.util.List;
 import org.opentripplanner.model.BookingInfo;
 import org.opentripplanner.model.PickDrop;
+import org.opentripplanner.model.StopPattern;
 import org.opentripplanner.model.StopTime;
 import org.opentripplanner.model.Trip;
+import org.opentripplanner.model.TripPattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -75,18 +77,23 @@ public class TripTimes implements Serializable, Comparable<TripTimes> {
      * Flag to indicate that the stop has been passed without removing arrival/departure-times - i.e. "estimates" are
      * actual times, no longer estimates.
      *
-     * Non-final to allow updates.
+     * This is only for API-purposes. Non-final to allow updates.
      */
     private boolean[] recordedStops;
+
+    /**
+     * Stop has been cancelled by realtime updates. This is only for API-purposes and does not
+     * affect routing. It duplicates information found in the {@link StopPattern} of the new
+     * {@link TripPattern} created by the realtime update.
+     *
+     * Non-final to allow updates.
+     */
+    private boolean[] cancelledStops;
 
     /**
      * Flag to indicate inaccurate predictions on each stop. Non-final to allow updates.
      */
     private boolean[] predictionInaccurateOnStops;
-
-    private final List<PickDrop> pickups;
-
-    private final List<PickDrop> dropoffs;
 
     private final List<BookingInfo> dropOffBookingInfos;
 
@@ -124,8 +131,6 @@ public class TripTimes implements Serializable, Comparable<TripTimes> {
         final BitSet timepoints = new BitSet(nStops);
         // Times are always shifted to zero. This is essential for frequencies and deduplication.
         this.timeShift = stopTimes.iterator().next().getArrivalTime();
-        final List<PickDrop> pickups   = new ArrayList<>();
-        final List<PickDrop> dropoffs   = new ArrayList<>();
         final List<BookingInfo> dropOffBookingInfos = new ArrayList<>();
         final List<BookingInfo> pickupBookingInfos = new ArrayList<>();
         int s = 0;
@@ -135,8 +140,6 @@ public class TripTimes implements Serializable, Comparable<TripTimes> {
             sequences[s] = st.getStopSequence();
             timepoints.set(s, st.getTimepoint() == 1);
 
-            pickups.add(st.getPickupType());
-            dropoffs.add(st.getDropOffType());
             dropOffBookingInfos.add(st.getDropOffBookingInfo());
             pickupBookingInfos.add(st.getPickupBookingInfo());
             s++;
@@ -145,8 +148,6 @@ public class TripTimes implements Serializable, Comparable<TripTimes> {
         this.scheduledArrivalTimes = deduplicator.deduplicateIntArray(arrivals);
         this.originalGtfsStopSequence = deduplicator.deduplicateIntArray(sequences);
         this.headsigns = deduplicator.deduplicateStringArray(makeHeadsignsArray(stopTimes));
-        this.pickups = pickups;
-        this.dropoffs = dropoffs;
         this.dropOffBookingInfos = deduplicator.deduplicateImmutableList(BookingInfo.class, dropOffBookingInfos);
         this.pickupBookingInfos = deduplicator.deduplicateImmutableList(BookingInfo.class, pickupBookingInfos);
         // We set these to null to indicate that this is a non-updated/scheduled TripTimes.
@@ -154,6 +155,7 @@ public class TripTimes implements Serializable, Comparable<TripTimes> {
         this.arrivalTimes = null;
         this.departureTimes = null;
         this.recordedStops = null;
+        this.cancelledStops = null;
         this.timepoints = deduplicator.deduplicateBitSet(timepoints);
         LOG.trace("trip {} has timepoint at indexes {}", trip, timepoints);
     }
@@ -170,8 +172,6 @@ public class TripTimes implements Serializable, Comparable<TripTimes> {
         this.departureTimes = null;
         this.recordedStops = object.recordedStops;
         this.predictionInaccurateOnStops = object.predictionInaccurateOnStops;
-        this.pickups = new ArrayList<>(object.pickups);
-        this.dropoffs = new ArrayList<>(object.dropoffs);
         this.pickupBookingInfos = object.pickupBookingInfos;
         this.dropOffBookingInfos = object.dropOffBookingInfos;
         this.originalGtfsStopSequence = object.originalGtfsStopSequence;
@@ -279,29 +279,24 @@ public class TripTimes implements Serializable, Comparable<TripTimes> {
         recordedStops[stop] = recorded;
     }
 
+    public void setCancelled(int stop) {
+        prepareForRealTimeUpdates();
+        cancelledStops[stop] = true;
+    }
+
+    public boolean isCancelledStop(int stop) {
+        if (cancelledStops == null) {
+            return false;
+        }
+        return cancelledStops[stop];
+    }
+
     // TODO OTP2 - Unused, but will be used by Transmodel API
     public boolean isRecordedStop(int stop) {
         if (recordedStops == null) {
             return false;
         }
         return recordedStops[stop];
-    }
-
-    /**
-     * Cancels both pickup and dropoff for the specified stop
-     */
-    public void cancelStop(int stop) {
-        cancelDropOffForStop(stop);
-        cancelPickupForStop(stop);
-    }
-
-    // TODO OTP2 - Unused, but will be used by Transmodel API
-
-    /**
-     * Returns true if both pickup and dropoff is cancelled for the specified stop
-     */
-    public boolean isCancelledStop(int stop) {
-        return dropoffs.get(stop) == PickDrop.CANCELLED && pickups.get(stop) == PickDrop.CANCELLED;
     }
 
     //Is prediction for single stop inaccurate
@@ -316,26 +311,6 @@ public class TripTimes implements Serializable, Comparable<TripTimes> {
             return false;
         }
         return predictionInaccurateOnStops[stop];
-    }
-
-    public void cancelPickupForStop(int stop) {
-        prepareForRealTimeUpdates();
-        pickups.set(stop, PickDrop.CANCELLED);
-    }
-
-    // TODO OTP2 - Unused, but will be used by Transmodel API
-    public PickDrop getPickupType(int stop) {
-        return pickups.get(stop);
-    }
-
-    public void cancelDropOffForStop(int stop) {
-        prepareForRealTimeUpdates();
-        dropoffs.set(stop, PickDrop.CANCELLED);
-    }
-
-    // TODO OTP2 - Unused, but will be used by Transmodel API
-    public PickDrop getDropoffType(int stop) {
-        return dropoffs.get(stop);
     }
 
     public BookingInfo getDropOffBookingInfo(int stop) {
@@ -353,7 +328,7 @@ public class TripTimes implements Serializable, Comparable<TripTimes> {
      *         information is actually available in this TripTimes.
      */
     public boolean isScheduled() {
-        return departureTimes == null && arrivalTimes == null;
+        return realTimeState == RealTimeState.SCHEDULED;
     }
 
     /**
@@ -436,11 +411,13 @@ public class TripTimes implements Serializable, Comparable<TripTimes> {
             this.arrivalTimes = Arrays.copyOf(scheduledArrivalTimes, scheduledArrivalTimes.length);
             this.departureTimes = Arrays.copyOf(scheduledDepartureTimes, scheduledDepartureTimes.length);
             this.recordedStops = new boolean[arrivalTimes.length];
+            this.cancelledStops = new boolean[arrivalTimes.length];
             this.predictionInaccurateOnStops = new boolean[arrivalTimes.length];
             for (int i = 0; i < arrivalTimes.length; i++) {
                 arrivalTimes[i] += timeShift;
                 departureTimes[i] += timeShift;
                 recordedStops[i] = false;
+                cancelledStops[i] = false;
                 predictionInaccurateOnStops[i] = false;
             }
 
