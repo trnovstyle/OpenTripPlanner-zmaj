@@ -81,6 +81,7 @@ configmapMounts:
 realtime:
   enabled: true
   serviceBusConnectionString: "set by Azure pipeline"
+  customMidnight: 4
   siriEt:
     history:
       enabled: true
