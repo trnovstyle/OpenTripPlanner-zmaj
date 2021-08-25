@@ -44,6 +44,8 @@ fi
 export applicationInsightsKey=${applicationInsightsKey:1:-1}
 export APPLICATIONINSIGHTS_CONNECTION_STRING="InstrumentationKey=$applicationInsightsKey;"
 
+#applicationinsights.json needs to be in the same folder as insights agent
+mv /code/appInsights/applicationinsights.json /code/applicationinsights.json
 
 # Attempt to download graph from azure storage
 downloadFromAzureStorage $SA_NAME $GRAPH_CONTAINER $GRAPH_NAME $FILE_ZIP_PATH
@@ -82,4 +84,4 @@ cd /code || exit 1
 
 log_info "Start java OTP jar"
 
-exec java -javaagent:/code/applicationinsights-agent-3.1.0.jar -Xms5120m -Xmx10500m -jar $OTP_JAR_PATH --server --graphs /code/otpdata --router malmo
+exec java -javaagent:/code/applicationinsights-agent.jar -Xms5120m -Xmx10500m -jar $OTP_JAR_PATH --server --graphs /code/otpdata --router malmo
