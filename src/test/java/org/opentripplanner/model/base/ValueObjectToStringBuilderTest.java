@@ -1,8 +1,8 @@
 package org.opentripplanner.model.base;
 
-import org.junit.Test;
-
 import static org.junit.Assert.assertEquals;
+
+import org.junit.Test;
 
 public class ValueObjectToStringBuilderTest {
     private enum  AEnum { A }
@@ -125,11 +125,11 @@ public class ValueObjectToStringBuilderTest {
     @Test
     public void addSecondsPastMidnight() {
         assertEquals(
-                "00:00:35",
+                "0:00:35",
                 subject().addServiceTime(35).toString()
         );
         assertEquals(
-                "02:50:45+1d",
+                "2:50:45+1d",
                 subject().addServiceTime((26 * 60 + 50) * 60 + 45).toString()
         );
         assertEquals(

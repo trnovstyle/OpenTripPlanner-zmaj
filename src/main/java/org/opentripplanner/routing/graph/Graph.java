@@ -60,7 +60,7 @@ import org.opentripplanner.model.GroupOfStations;
 import org.opentripplanner.model.MultiModalStation;
 import org.opentripplanner.model.Notice;
 import org.opentripplanner.model.Operator;
-import org.opentripplanner.model.SimpleTransfer;
+import org.opentripplanner.model.PathTransfer;
 import org.opentripplanner.model.Station;
 import org.opentripplanner.model.Stop;
 import org.opentripplanner.model.StopLocation;
@@ -249,7 +249,7 @@ public class Graph implements Serializable {
     public final BiMap<Trip,Trip> interlinedTrips = HashBiMap.create();
 
     /** Pre-generated transfers between all stops. */
-    public final Multimap<StopLocation, SimpleTransfer> transfersByStop = HashMultimap.create();
+    public final Multimap<StopLocation, PathTransfer> transfersByStop = HashMultimap.create();
 
     public Map<FeedScopedId, FlexStopLocation> locationsById = new HashMap<>();
 
@@ -1009,7 +1009,7 @@ public class Graph implements Serializable {
         return serviceCodes;
     }
 
-    public Collection<SimpleTransfer> getTransfersByStop(StopLocation stop) {
+    public Collection<PathTransfer> getTransfersByStop(StopLocation stop) {
         return transfersByStop.get(stop);
     }
 

@@ -152,7 +152,7 @@ public class TripPatternType {
                         )
                         .type(Scalars.GraphQLInt)
                         .dataFetcher(
-                                env -> itinerary(env).waitTimeAdjustedGeneralizedCost)
+                                env -> itinerary(env).waitTimeOptimizedCost)
                         .build())
                 .build();
     }

@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.opentripplanner.transit.raptor._data.transit.TestTripPattern.pattern;
+import static org.opentripplanner.transit.raptor.api.transit.CostCalculator.ZERO_COST;
 import static org.opentripplanner.transit.raptor.rangeraptor.transit.TripTimesSearch.findTripForwardSearch;
 import static org.opentripplanner.transit.raptor.rangeraptor.transit.TripTimesSearch.findTripReverseSearch;
 
@@ -14,6 +15,8 @@ import org.opentripplanner.transit.raptor._data.stoparrival.Bus;
 import org.opentripplanner.transit.raptor._data.transit.TestTripPattern;
 import org.opentripplanner.transit.raptor._data.transit.TestTripSchedule;
 import org.opentripplanner.transit.raptor.api.path.TransitPathLeg;
+import org.opentripplanner.transit.raptor.api.view.BoardAndAlightTime;
+
 
 public class TripTimesSearchTest implements RaptorTestConstants {
 
@@ -32,7 +35,7 @@ public class TripTimesSearchTest implements RaptorTestConstants {
 
     @Test
     public void findTripWithPlentySlack() {
-        BoarAndAlightTime r;
+        BoardAndAlightTime r;
 
         // Search AFTER EDT
         r = findTripForwardSearch(busFwd(STOP_B, STOP_H, C_ALIGHT_LATE));
@@ -49,7 +52,7 @@ public class TripTimesSearchTest implements RaptorTestConstants {
 
     @Test
     public void findTripWithoutSlack() {
-        BoarAndAlightTime r;
+        BoardAndAlightTime r;
 
         // Search AFTER EDT
         r = findTripForwardSearch(busFwd(STOP_B, STOP_H, C_ALIGHT_TIME));
@@ -67,7 +70,7 @@ public class TripTimesSearchTest implements RaptorTestConstants {
 
     @Test
     public void findTripTimes() {
-        BoarAndAlightTime r;
+        BoardAndAlightTime r;
 
         // Search AFTER EDT
         TestTripSchedule trip = TestTripSchedule
@@ -75,7 +78,8 @@ public class TripTimesSearchTest implements RaptorTestConstants {
             .times(A_BOARD_TIME, A_BOARD_TIME + 10, C_ALIGHT_TIME)
             .build();
 
-        var leg = new TransitPathLeg<>(STOP_C, A_BOARD_TIME, STOP_H, C_ALIGHT_TIME, -0, trip, null);
+        var times = BoardAndAlightTime.create(trip, STOP_C, A_BOARD_TIME, STOP_H, C_ALIGHT_TIME);
+        var leg = new TransitPathLeg<>(trip, times, null, ZERO_COST, null);
 
         r = TripTimesSearch.findTripTimes(leg);
 
@@ -183,7 +187,7 @@ public class TripTimesSearchTest implements RaptorTestConstants {
                 .arrivals( 0, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000, 1100)
                 .build();
 
-        BoarAndAlightTime r;
+        BoardAndAlightTime r;
 
         // TEST FORWARD SEARCH
         {
