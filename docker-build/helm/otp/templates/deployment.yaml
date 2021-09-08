@@ -30,6 +30,8 @@ spec:
           env:
             - name: "ENVIRONMENT"
               value: {{ .Values.ENVIRONMENT }}
+            - name: "GRAPH_NAME"
+              value: {{ .Values.GRAPH_NAME }}
             - name: "OtpKeyVaultName"
               valueFrom:
                 secretKeyRef:
