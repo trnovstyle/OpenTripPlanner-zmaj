@@ -1,5 +1,6 @@
 package org.opentripplanner.graph_builder.module.osm;
 
+import org.junit.Ignore;
 import org.junit.Test;
 import org.opentripplanner.openstreetmap.model.OSMWithTags;
 import org.opentripplanner.routing.edgetype.StreetTraversalPermission;
@@ -15,6 +16,7 @@ public class NorwayWayPropertySetSourceTest {
   }
 
   @Test
+  @Ignore
   public void testMtbScaleNone() {
     // https://www.openstreetmap.org/way/302610220
     var way1 = new OSMWithTags();
@@ -33,6 +35,7 @@ public class NorwayWayPropertySetSourceTest {
   }
 
   @Test
+  @Ignore
   public void testMtbScalePedestrian() {
     var way1 = new OSMWithTags();
     way1.addTag("highway", "path");
