@@ -3,7 +3,6 @@ package org.opentripplanner.netex.mapping;
 import javax.annotation.Nullable;
 import javax.xml.bind.annotation.adapters.HexBinaryAdapter;
 import java.util.Set;
-import org.opentripplanner.gtfs.mapping.TransitModeMapper;
 import org.opentripplanner.model.Agency;
 import org.opentripplanner.model.BikeAccess;
 import org.opentripplanner.model.Operator;
@@ -12,6 +11,7 @@ import org.opentripplanner.netex.index.api.NetexEntityIndexReadOnlyView;
 import org.opentripplanner.netex.mapping.support.FeedScopedIdFactory;
 import org.opentripplanner.model.modes.TransitMode;
 import org.opentripplanner.model.modes.TransitModeService;
+import org.rutebanken.netex.model.AllVehicleModesOfTransportEnumeration;
 import org.rutebanken.netex.model.FlexibleLine_VersionStructure;
 import org.rutebanken.netex.model.Line_VersionStructure;
 import org.rutebanken.netex.model.Network;
@@ -92,7 +92,7 @@ class RouteMapper {
         // but currently it doesn't look it is being parsed.
         // until there is better information from the operators we assume that all ferries allow
         // bicycles on board.
-        if(mode == TransitMode.FERRY) {
+        if(line.getTransportMode().equals(AllVehicleModesOfTransportEnumeration.WATER)) {
             if(ferryIdsNotAllowedForBicycle.contains(line.getId())) {
                 otpRoute.setBikesAllowed(BikeAccess.NOT_ALLOWED);
             } else {
