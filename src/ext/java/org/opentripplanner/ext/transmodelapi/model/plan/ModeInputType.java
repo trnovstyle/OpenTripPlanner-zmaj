@@ -25,7 +25,6 @@ class ModeInputType {
       .field(GraphQLInputObjectField
           .newInputObjectField()
           .name("accessMode")
-          .defaultValue(null)
           .description("The mode used to get from the origin to the access stops in the transit "
               + "network the transit network (first-mile). If the element is not present or null,"
               + "only transit that can be immediately boarded from the origin will be used.")
@@ -34,7 +33,6 @@ class ModeInputType {
       .field(GraphQLInputObjectField
           .newInputObjectField()
           .name("egressMode")
-          .defaultValue(null)
           .description("The mode used to get from the egress stops in the transit network to"
               + "the destination (last-mile). If the element is not present or null,"
               + "only transit that can immediately arrive at the origin will be used.")
@@ -43,7 +41,6 @@ class ModeInputType {
       .field(GraphQLInputObjectField
           .newInputObjectField()
           .name("directMode")
-          .defaultValue(null)
           .description("The mode used to get from the origin to the destination directly, "
               + "without using the transit network. If the element is not present or null,"
               + "direct travel without using transit will be disallowed.")
