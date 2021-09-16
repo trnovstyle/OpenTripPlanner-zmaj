@@ -4,14 +4,15 @@ RUN curl -sL https://aka.ms/InstallAzureCLIDeb | bash
 RUN apt-get -y install zip unzip
 
 # install application insights
-RUN curl -LO https://github.com/microsoft/ApplicationInsights-Java/releases/download/3.2.0-BETA.2/applicationinsights-agent-3.2.0-BETA.2.jar
 RUN mkdir /code
 
 WORKDIR /code
 
 COPY target/resesok-otp-*-shaded.jar /code/otp-shaded.jar
-COPY docker-build/docker/services/ /codes
-RUN mv ./applicationinsights-agent-3.2.0-BETA.2.jar /code/appInsights/applicationinsights-agent.jar
+COPY docker-build/docker/services/ /code
+
+RUN curl -LO https://github.com/microsoft/ApplicationInsights-Java/releases/download/3.2.0-BETA.2/applicationinsights-agent-3.2.0-BETA.2.jar
+RUN mv applicationinsights-agent-3.2.0-BETA.2.jar /code/appInsights/applicationinsights-agent.jar
 
 RUN chmod a+x /code/*.sh
 
