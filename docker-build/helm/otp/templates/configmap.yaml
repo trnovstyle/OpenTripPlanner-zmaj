@@ -9,6 +9,7 @@ data:
         "interchangeAllowedPenalty": 150,
         "noInterchangePenalty": 3000,
         "transferSlack": 180,
+        "waitReluctance": 0.001,
         "waitAtBeginningFactor": 0.175
       },
       "updaters": [
