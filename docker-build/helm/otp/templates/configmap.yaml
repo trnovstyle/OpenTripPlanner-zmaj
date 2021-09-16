@@ -8,7 +8,9 @@ data:
         "recommendedInterchangePenalty": 60,
         "interchangeAllowedPenalty": 150,
         "noInterchangePenalty": 3000,
-        "transferSlack": 180
+        "transferSlack": 180,
+        "waitReluctance": 0.001,
+        "waitAtBeginningFactor": 0.175
       },
       "updaters": [
         {{- if .Values.realtime.enabled }}
@@ -16,6 +18,7 @@ data:
             "type": "siri-azure-et-updater",
             "topic": "siri_et",
             "servicebus-url": "{{ .Values.realtime.serviceBusConnectionString }}",
+            "customMidnight": {{ .Values.realtime.customMidnight }},
           {{- if .Values.realtime.siriEt.history.enabled }}
             "history": {
               "url": "{{ .Values.realtime.siriEt.history.url }}",
@@ -28,6 +31,7 @@ data:
             "type": "siri-azure-sx-updater",
             "topic": "siri_sx",
             "servicebus-url": "{{ .Values.realtime.serviceBusConnectionString }}",
+            "customMidnight": {{ .Values.realtime.customMidnight }},
             {{- if .Values.realtime.siriSx.history.enabled }}
             "history": {
               "url": "{{ .Values.realtime.siriSx.history.url }}",

@@ -59,6 +59,7 @@ affinity: {}
 
 #Parameters set in values files for each environment
 ENVIRONMENT: "set by Azure Pipeline"
+GRAPH_NAME: ""
 
 # Managed identities
 OtpKeyVaultName: "This secret should be set from build pipeline"
@@ -81,6 +82,7 @@ configmapMounts:
 realtime:
   enabled: true
   serviceBusConnectionString: "set by Azure pipeline"
+  customMidnight: 4
   siriEt:
     history:
       enabled: true

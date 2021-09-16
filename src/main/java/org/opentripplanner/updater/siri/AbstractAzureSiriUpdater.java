@@ -125,6 +125,12 @@ public abstract class AbstractAzureSiriUpdater extends ReadinessBlockingUpdater 
         var options = new CreateSubscriptionOptions();
         options.setAutoDeleteOnIdle(Duration.ofDays(1));
 
+        // Make sure there is no old subscription on serviceBus
+        if (Boolean.TRUE.equals(serviceBusAdmin.getSubscriptionExists(topicName, subscriptionName).block())) {
+            LOG.info("Subscription {} already exists", subscriptionName);
+            serviceBusAdmin.deleteSubscription(topicName, subscriptionName).block();
+            LOG.info("Service Bus deleted subscription {}.", subscriptionName);
+        }
         serviceBusAdmin.createSubscription(topicName, subscriptionName, options).block();
 
         LOG.info("Service Bus created subscription {}", subscriptionName);

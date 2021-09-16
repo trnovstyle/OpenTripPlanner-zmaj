@@ -13,16 +13,24 @@ NETEX_FILENAME="ST_netex.zip"
 OSM_FILENAME="sweden-filtered.osm.pbf"
 OSM_DK_FILENAME="denmark-oresund.osm.pbf"
 SA_NAME="ressa$ENVIRONMENT"
+GRAPH_NAME=""
 
 log_info "Running Entrypoint.sh.."
 
-if ! VERSION=$(java -jar /code/otp-shaded.jar --version|grep version|cut -d' ' -f2) ||
- ! GIT_HASH=$(java -jar /code/otp-shaded.jar --version|grep commit|cut -d' ' -f2); then
-  log_error "Failed to get OTP version or hash"
-  exit 1
+# If graph name not provided as env variable
+# Set name based on version and hash
+if [[ -z "${GRAPH_NAME}" ]]; then
+  if ! VERSION=$(java -jar /code/otp-shaded.jar --version|grep version|cut -d' ' -f2) ||
+   ! GIT_HASH=$(java -jar /code/otp-shaded.jar --version|grep commit|cut -d' ' -f2); then
+    log_error "Failed to get OTP version or hash"
+    exit 1
+  fi
+  GRAPH_NAME=GRAPH-$VERSION-$GIT_HASH.zip
+  UPLOAD_TO_AZURE=true
+else
+  log_info "Using custom graph file: $GRAPH_NAME. If file is missing no graph will be build."
+  UPLOAD_TO_AZURE=false
 fi
-
-GRAPH_NAME=GRAPH-$VERSION-$GIT_HASH.zip
 
 keyvault=$OtpKeyVaultName
 
@@ -44,6 +52,8 @@ fi
 export applicationInsightsKey=${applicationInsightsKey:1:-1}
 export APPLICATIONINSIGHTS_CONNECTION_STRING="InstrumentationKey=$applicationInsightsKey;"
 
+#applicationinsights.json needs to be in the same folder as insights agent
+mv /code/appInsights/applicationinsights.json /code/applicationinsights.json
 
 # Attempt to download graph from azure storage
 downloadFromAzureStorage $SA_NAME $GRAPH_CONTAINER $GRAPH_NAME $FILE_ZIP_PATH
@@ -52,7 +62,7 @@ if [ -s $FILE_ZIP_PATH ] ;
 then
   log_info "Found $FILE_ZIP_PATH, unzipping.."
   unzip $FILE_ZIP_PATH -d $FILE_TMP_PATH
-else
+elif [ "$UPLOAD_TO_AZURE" = true ]; then
   log_info "** WARNING: Downloaded file ($FILE_ZIP_PATH) is empty or not present**"
   # Download netex + OSM data from azure storage in background
   downloadNetexFiles $GRAPH_DATA_PATH &
@@ -76,10 +86,12 @@ else
     log_error "ERROR: Empty netex or OSM file, quitting."
     exit 1
   fi
+else
+  log_error "$GRAPH_NAME does not exists"
 fi
 
 cd /code || exit 1
 
 log_info "Start java OTP jar"
 
-exec java -javaagent:/code/applicationinsights-agent-3.1.0.jar -Xms5120m -Xmx10500m -jar $OTP_JAR_PATH --server --graphs /code/otpdata --router malmo
+exec java -javaagent:/code/applicationinsights-agent.jar -Xms5120m -Xmx10500m -jar $OTP_JAR_PATH --server --graphs /code/otpdata --router malmo
