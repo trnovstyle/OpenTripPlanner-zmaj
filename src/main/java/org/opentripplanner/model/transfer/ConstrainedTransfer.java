@@ -7,8 +7,17 @@ import java.io.Serializable;
 import java.util.Objects;
 import javax.annotation.Nullable;
 import org.opentripplanner.model.base.ToStringBuilder;
+import org.opentripplanner.transit.raptor.api.transit.RaptorTransferConstraints;
 
-public final class Transfer implements Serializable {
+
+/**
+ * A constrained transfer is a transfer witch is restricted in one ore more ways by the transit data
+ * provider. It can be guaranteed or stay-seated, have a priority (NOT_ALLOWED, ALLOWED,
+ * RECOMMENDED, PREFERRED) or some sort of time constraint attached to it. It is applied to a
+ * transfer from a transfer-point to another point. A transfer point is a combination of stop and
+ * route/trip.
+ */
+public final class ConstrainedTransfer implements Serializable, RaptorTransferConstraints {
 
     /**
      * Regular street transfers should be given this cost.
@@ -34,7 +43,7 @@ public final class Transfer implements Serializable {
 
     private final int maxWaitTime;
 
-    public Transfer(
+    public ConstrainedTransfer(
             TransferPoint from,
             TransferPoint to,
             TransferPriority priority,
@@ -58,7 +67,7 @@ public final class Transfer implements Serializable {
      *          street generated transfer.
      * @see TransferPriority#cost(boolean, boolean)
      */
-    public static int priorityCost(@Nullable Transfer t) {
+    public static int priorityCost(@Nullable ConstrainedTransfer t) {
         return t == null ? NEUTRAL_PRIORITY_COST : t.priority.cost(t.staySeated, t.guaranteed);
     }
 
@@ -115,8 +124,8 @@ public final class Transfer implements Serializable {
     @Override
     public boolean equals(Object o) {
         if (this == o) { return true; }
-        if (!(o instanceof Transfer)) { return false; }
-        final Transfer transfer = (Transfer) o;
+        if (!(o instanceof ConstrainedTransfer)) { return false; }
+        final ConstrainedTransfer transfer = (ConstrainedTransfer) o;
         return staySeated == transfer.staySeated
                 && guaranteed == transfer.guaranteed
                 && priority == transfer.priority
@@ -125,7 +134,7 @@ public final class Transfer implements Serializable {
     }
 
     public String toString() {
-        return ToStringBuilder.of(Transfer.class)
+        return ToStringBuilder.of(ConstrainedTransfer.class)
                 .addObj("from", from)
                 .addObj("to", to)
                 .addEnum("priority", priority, ALLOWED)

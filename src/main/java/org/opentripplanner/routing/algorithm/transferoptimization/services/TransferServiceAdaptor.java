@@ -3,7 +3,7 @@ package org.opentripplanner.routing.algorithm.transferoptimization.services;
 import java.util.function.IntFunction;
 import org.opentripplanner.model.Stop;
 import org.opentripplanner.model.Trip;
-import org.opentripplanner.model.transfer.Transfer;
+import org.opentripplanner.model.transfer.ConstrainedTransfer;
 import org.opentripplanner.model.transfer.TransferService;
 import org.opentripplanner.routing.algorithm.raptor.transit.TripSchedule;
 import org.opentripplanner.routing.algorithm.transferoptimization.model.TripStopTime;
@@ -43,14 +43,14 @@ public class TransferServiceAdaptor<T extends RaptorTripSchedule> {
     public static <T extends RaptorTripSchedule> TransferServiceAdaptor<T> noop() {
         return new TransferServiceAdaptor<>(null, null) {
             @Override
-            protected Transfer findTransfer(TripStopTime<T> from, T toTrip, int toStop) { return null; }
+            protected ConstrainedTransfer findTransfer(TripStopTime<T> from, T toTrip, int toStop) { return null; }
         };
     }
 
     /**
      * Find transfer in the same stop for the given from location and to trip/stop.
      */
-    protected Transfer findTransfer(TripStopTime<T> from, T toTrip, int toStop) {
+    protected ConstrainedTransfer findTransfer(TripStopTime<T> from, T toTrip, int toStop) {
         return transferService.findTransfer(
                 stop(from.stop()),
                 stop(toStop),

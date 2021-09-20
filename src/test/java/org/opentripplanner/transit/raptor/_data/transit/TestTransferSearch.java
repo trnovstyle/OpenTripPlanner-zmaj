@@ -3,17 +3,21 @@ package org.opentripplanner.transit.raptor._data.transit;
 import gnu.trove.map.TIntObjectMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.opentripplanner.model.base.ToStringBuilder;
-import org.opentripplanner.transit.raptor.api.transit.RaptorGuaranteedTransferProvider;
+import org.opentripplanner.model.transfer.ConstrainedTransfer;
+import org.opentripplanner.model.transfer.TransferPriority;
+import org.opentripplanner.transit.raptor.api.transit.RaptorConstrainedTransferSearch;
 import org.opentripplanner.transit.raptor.api.transit.RaptorTimeTable;
 import org.opentripplanner.transit.raptor.api.transit.RaptorTripScheduleBoardOrAlightEvent;
 
-public class TestTransferProvider implements RaptorGuaranteedTransferProvider<TestTripSchedule> {
+public class TestTransferSearch implements RaptorConstrainedTransferSearch<TestTripSchedule> {
 
     /** Index of guaranteed transfers by fromStopPos */
-    private final TIntObjectMap<List<GuaranteedTransfer>> transfersByFromStopPos = new TIntObjectHashMap<>();
+    private final TIntObjectMap<List<TestGuaranteedTransferBoarding>> transfersByFromStopPos = new TIntObjectHashMap<>();
 
     private int currentTargetStopPos;
 
@@ -32,7 +36,7 @@ public class TestTransferProvider implements RaptorGuaranteedTransferProvider<Te
             int sourceArrivalTime
     ) {
         var list = transfersByFromStopPos.get(currentTargetStopPos);
-        for (GuaranteedTransfer tx : list) {
+        for (TestGuaranteedTransferBoarding tx : list) {
             var trip = tx.getSourceTrip();
             if(trip == sourceTrip) {
                 int stopPos = trip.findDepartureStopPosition(sourceArrivalTime, sourceStopIndex);
@@ -44,6 +48,17 @@ public class TestTransferProvider implements RaptorGuaranteedTransferProvider<Te
         return null;
     }
 
+    public List<TestGuaranteedTransferBoarding> transferConstraints() {
+        return transfersByFromStopPos.valueCollection()
+                .stream()
+                .flatMap(Collection::stream)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * The the {@code source/target} is the trips in order of the search direction (forward or
+     * reverse). For reverse search it is the opposite from {@code from/to} in the result path.
+     */
     void addGuaranteedTransfers(
             TestTripSchedule sourceTrip,
             int sourceStopPos,
@@ -52,12 +67,13 @@ public class TestTransferProvider implements RaptorGuaranteedTransferProvider<Te
             int targetStopPos,
             int targetTime
     ) {
-        List<GuaranteedTransfer> list = transfersByFromStopPos.get(targetStopPos);
+        List<TestGuaranteedTransferBoarding> list = transfersByFromStopPos.get(targetStopPos);
         if(list == null) {
             list = new ArrayList<>();
             transfersByFromStopPos.put(targetStopPos, list);
         }
-        list.add(new GuaranteedTransfer(
+        list.add(new TestGuaranteedTransferBoarding(
+                new ConstrainedTransfer(null, null, TransferPriority.ALLOWED, false, true, 0),
                 sourceTrip, sourceStopPos,
                 targetTrip, targetTripIndex, targetStopPos, targetTime
         ));
@@ -65,7 +81,7 @@ public class TestTransferProvider implements RaptorGuaranteedTransferProvider<Te
 
     @Override
     public String toString() {
-        return ToStringBuilder.of(TestTransferProvider.class)
+        return ToStringBuilder.of(TestTransferSearch.class)
                 .addNum("currentTargetStopPos", currentTargetStopPos)
                 .addObj("index", transfersByFromStopPos)
                 .toString();

@@ -8,10 +8,10 @@ import java.util.List;
 import java.util.Objects;
 import org.opentripplanner.model.FeedScopedId;
 import org.opentripplanner.model.TripPattern;
+import org.opentripplanner.model.transfer.ConstrainedTransfer;
+import org.opentripplanner.routing.algorithm.raptor.transit.request.ConstrainedTransferSearch;
+import org.opentripplanner.transit.raptor.api.transit.RaptorConstrainedTransferSearch;
 import org.opentripplanner.model.modes.TransitMode;
-import org.opentripplanner.model.transfer.Transfer;
-import org.opentripplanner.routing.algorithm.raptor.transit.request.PatternGuaranteedTransferProvider;
-import org.opentripplanner.transit.raptor.api.transit.RaptorGuaranteedTransferProvider;
 import org.opentripplanner.transit.raptor.api.transit.RaptorTripPattern;
 
 public class TripPatternWithRaptorStopIndexes {
@@ -20,14 +20,18 @@ public class TripPatternWithRaptorStopIndexes {
     private final int[] stopIndexes;
 
     /**
-     * List of transfers FROM this pattern for each stop position in pattern
+     * List of transfers TO this pattern for each stop position in pattern used by Raptor during
+     * the FORWARD search.
      */
-    private final TIntObjectMap<List<Transfer>> guaranteedTransfersFrom = new TIntObjectHashMap<>();
+    private final TIntObjectMap<List<ConstrainedTransfer>> constrainedTransfersForwardSearch =
+            new TIntObjectHashMap<>();
 
     /**
-     * List of transfers TTO this pattern for each stop position in pattern
+     * List of transfers FROM this pattern for each stop position in pattern used by Raptor during
+     * the REVERSE search.
      */
-    private final TIntObjectMap<List<Transfer>> guaranteedTransfersTo = new TIntObjectHashMap<>();
+    private final TIntObjectMap<List<ConstrainedTransfer>> constrainedTransfersReverseSearch =
+            new TIntObjectHashMap<>();
 
 
     public TripPatternWithRaptorStopIndexes(
@@ -59,12 +63,12 @@ public class TripPatternWithRaptorStopIndexes {
         return stopIndexes[stopPositionInPattern];
     }
 
-    public RaptorGuaranteedTransferProvider<TripSchedule> getGuaranteedTransfersTo() {
-        return new PatternGuaranteedTransferProvider(true, guaranteedTransfersTo);
+    public RaptorConstrainedTransferSearch<TripSchedule> constrainedTransfersForwardSearch() {
+        return new ConstrainedTransferSearch(true, constrainedTransfersForwardSearch);
     }
 
-    public RaptorGuaranteedTransferProvider<TripSchedule> getGuaranteedTransfersFrom() {
-        return new PatternGuaranteedTransferProvider(false, guaranteedTransfersFrom);
+    public RaptorConstrainedTransferSearch<TripSchedule> constrainedTransfersReverseSearch() {
+        return new ConstrainedTransferSearch(false, constrainedTransfersReverseSearch);
     }
 
 
@@ -90,13 +94,17 @@ public class TripPatternWithRaptorStopIndexes {
     }
 
     /** These are public to allow the mappers to inject transfers */
-    public void addGuaranteedTransferFrom(Transfer tx) {
-        add(guaranteedTransfersFrom, tx, tx.getFrom().getStopPosition());
+    public void addGuaranteedTransfersForwardSearch(ConstrainedTransfer tx) {
+        // In the Raptor search the transfer is looked up using the target
+        // trip, the trip boarded after the transfer is done for a forward search.
+        add(constrainedTransfersForwardSearch, tx, tx.getTo().getStopPosition());
     }
 
     /** These are public to allow the mappers to inject transfers */
-    public void addGuaranteedTransfersTo(Transfer tx) {
-        add(guaranteedTransfersTo, tx, tx.getTo().getStopPosition());
+    public void addGuaranteedTransferReverseSearch(ConstrainedTransfer tx) {
+        // In the Raptor search the transfer is looked up using the target
+        // trip. Thus, the transfer "from trip" should be used in a reverse search.
+        add(constrainedTransfersReverseSearch, tx, tx.getFrom().getStopPosition());
     }
 
     private static <T> void add(TIntObjectMap<List<T>> index, T e, int pos) {

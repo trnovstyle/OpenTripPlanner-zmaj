@@ -286,6 +286,7 @@ public class RoutingWorker {
             transferRoutingRequest.setRoutingContext(graph, (Vertex) null, null);
 
             return new RaptorRoutingRequestTransitData(
+                    graph.getTransferService(),
                     transitLayer,
                     request.getDateTime().toInstant(),
                     request.additionalSearchDaysAfterToday,

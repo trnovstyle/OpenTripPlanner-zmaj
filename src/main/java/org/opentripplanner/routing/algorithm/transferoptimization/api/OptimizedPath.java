@@ -1,10 +1,11 @@
 package org.opentripplanner.routing.algorithm.transferoptimization.api;
 
-import java.util.Map;
-import org.opentripplanner.model.transfer.Transfer;
+import java.util.function.IntFunction;
+import org.opentripplanner.model.transfer.ConstrainedTransfer;
+import org.opentripplanner.transit.raptor.api.path.AccessPathLeg;
 import org.opentripplanner.transit.raptor.api.path.Path;
-import org.opentripplanner.transit.raptor.api.path.PathLeg;
 import org.opentripplanner.transit.raptor.api.transit.RaptorTripSchedule;
+import org.opentripplanner.transit.raptor.util.PathStringBuilder;
 
 
 /**
@@ -16,37 +17,30 @@ import org.opentripplanner.transit.raptor.api.transit.RaptorTripSchedule;
 public class OptimizedPath<T extends RaptorTripSchedule> extends Path<T>
         implements TransferOptimized
 {
-
-
-    private final Path<T> originalPath;
-    private final Map<PathLeg<T>, Transfer> transfersTo;
     private final int transferPriorityCost;
     private final int waitTimeOptimizedCost;
     private final int breakTieCost;
 
-
     public OptimizedPath(Path<T> originalPath) {
         this(
-                originalPath,
-                originalPath,
-                Map.of(),
-                Transfer.NEUTRAL_PRIORITY_COST,
+                originalPath.accessLeg(),
+                originalPath.rangeRaptorIterationDepartureTime(),
+                originalPath.generalizedCost(),
+                priorityCost(originalPath),
                 NEUTRAL_COST,
                 NEUTRAL_COST
         );
     }
 
     public OptimizedPath(
-            Path<T> originalPath,
-            Path<T> path,
-            Map<PathLeg<T>, Transfer> transfersTo,
+            AccessPathLeg<T> accessPathLeg,
+            int iterationStartTime,
+            int generalizedCost,
             int transferPriorityCost,
             int waitTimeOptimizedCost,
             int breakTieCost
     ) {
-        super(path);
-        this.originalPath = originalPath;
-        this.transfersTo = transfersTo;
+        super(iterationStartTime, accessPathLeg, generalizedCost);
         this.transferPriorityCost = transferPriorityCost;
         this.waitTimeOptimizedCost = waitTimeOptimizedCost;
         this.breakTieCost = breakTieCost;
@@ -67,21 +61,33 @@ public class OptimizedPath<T extends RaptorTripSchedule> extends Path<T>
         return breakTieCost;
     }
 
-    public Transfer getTransferTo(PathLeg<?> leg) {
-        return transfersTo.get(leg);
+    @Override
+    public String toStringDetailed(IntFunction<String> stopNameTranslator) {
+        return buildString(true, stopNameTranslator, this::appendSummary);
     }
 
-    public boolean isSameAsOriginal() {
-        PathLeg<T> originalLeg = originalPath.accessLeg();
-        PathLeg<T> newLeg = accessLeg();
+    @Override
+    public String toString(IntFunction<String> stopNameTranslator) {
+        return buildString(false, stopNameTranslator, this::appendSummary);
+    }
 
-        while (!originalLeg.isEgressLeg() && !newLeg.isEgressLeg()) {
-            if(originalLeg.toStop() != newLeg.toStop()) {
-                return false;
-            }
-            originalLeg = originalLeg.nextLeg();
-            newLeg = newLeg.nextLeg();
-        }
-        return true;
+    @Override
+    public String toString() {
+        return toString(null);
+    }
+
+    private void appendSummary(PathStringBuilder buf) {
+        buf.costCentiSec(transferPriorityCost, "pri");
+        buf.costCentiSec(waitTimeOptimizedCost, "wtc");
+    }
+
+    private static int priorityCost(Path<?> path) {
+        return path.legStream()
+                .mapToInt(leg -> ConstrainedTransfer.priorityCost(
+                        leg.isTransitLeg()
+                                ? (ConstrainedTransfer) leg.asTransitLeg().getTransferConstraintsAfterLeg()
+                                : null
+                ))
+                .sum();
     }
 }
