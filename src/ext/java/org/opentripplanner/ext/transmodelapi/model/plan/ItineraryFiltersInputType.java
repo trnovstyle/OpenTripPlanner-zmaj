@@ -16,7 +16,6 @@ public class ItineraryFiltersInputType {
   private static final String MIN_SAFE_TRANSFER_TIME_FACTOR = "minSafeTransferTimeFactor";
   private static final String TRANSIT_GENERALIZED_COST_LIMIT = "transitGeneralizedCostLimit";
   private static final String GROUP_SIMILARITY_KEEP_ONE = "groupSimilarityKeepOne";
-  private static final String GROUP_SIMILARITY_KEEP_THREE = "groupSimilarityKeepThree";
   private static final String GROUP_SIMILARITY_KEEP_N_ITINERARIES = "groupSimilarityKeepNumOfItineraries";
 
   public static GraphQLInputObjectType create(GqlUtil gqlUtil, ItineraryFilterParameters dft) {
@@ -52,21 +51,12 @@ public class ItineraryFiltersInputType {
         .field(GraphQLInputObjectField
             .newInputObjectField()
             .type(Scalars.GraphQLFloat)
-            .name(GROUP_SIMILARITY_KEEP_THREE)
+            .name(GROUP_SIMILARITY_KEEP_N_ITINERARIES)
             .description(
-                "Reduce the number of itineraries in each group to to maximum 3 itineraries. "
-                + "The itineraries are grouped by similar legs (on board same journey). So, if "
-                + " 68% of the distance is traveled by similar legs, then two itineraries are "
-                + "in the same group. Default value is 68%, must be at least 50%.")
-            .defaultValue(dft.groupSimilarityKeepThree)
+                "Reduce the number of itineraries to the requested number by reducing each "
+                    + "group of itineraries grouped by 68% similarity.")
+            .defaultValue(dft.groupSimilarityKeepNumOfItineraries)
             .build())
-        .field(GraphQLInputObjectField
-                .newInputObjectField()
-                .type(Scalars.GraphQLFloat)
-                .name(GROUP_SIMILARITY_KEEP_N_ITINERARIES)
-                .deprecate("Use " + GROUP_SIMILARITY_KEEP_THREE + " instead.")
-                .defaultValue(dft.groupSimilarityKeepThree)
-                .build())
         .build();
   }
 
@@ -79,11 +69,7 @@ public class ItineraryFiltersInputType {
       return;
     }
     setField(callWith, GROUP_SIMILARITY_KEEP_ONE, (Double v) -> target.groupSimilarityKeepOne = v);
-
-    // This is deprecated, sets same value as GROUP_SIMILARITY_KEEP_THREE
-    setField(callWith, GROUP_SIMILARITY_KEEP_N_ITINERARIES, (Double v) -> target.groupSimilarityKeepThree = v);
-
-    setField(callWith, GROUP_SIMILARITY_KEEP_THREE, (Double v) -> target.groupSimilarityKeepThree = v);
+    setField(callWith, GROUP_SIMILARITY_KEEP_N_ITINERARIES, (Double v) -> target.groupSimilarityKeepNumOfItineraries = v);
     setField(callWith, MIN_SAFE_TRANSFER_TIME_FACTOR, (Double v) -> target.minSafeTransferTimeFactor = v);
     setField(callWith, TRANSIT_GENERALIZED_COST_LIMIT, (DoubleFunction<Double> v) -> target.transitGeneralizedCostLimit = v);
   }

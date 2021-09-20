@@ -3,8 +3,8 @@ package org.opentripplanner.routing.algorithm.filterchain;
 import org.opentripplanner.model.base.ToStringBuilder;
 
 /**
- * Group itineraries by similarity and reduce the number of itineraries down to an given
- * maximum number of itineraries per group.
+ * Group itineraries by similarity and reduce the number of itineraries down to an approximate
+ * minimum number of itineraries for each group.
  * <p>
  * Group itineraries by the main legs and keeping approximately the given total number of
  * itineraries. The itineraries are grouped by the legs that account for more then 'p' % for the
@@ -43,21 +43,23 @@ public class GroupBySimilarity {
   public final double groupByP;
 
   /**
-   * Set a maximum number of itineraries to keep for each group.
+   * Set a guideline for the minimum total number of itineraries to keep. For example, if there is 2
+   * groups and the min-limit is 3, the filter will keep 2 samples in each group, keeping up to 4
+   * itineraries(approximately 3). Set this to 1 to keep ONE itinerary per group.
    */
-  public final int maxNumOfItinerariesPerGroup;
+  public final int approximateMinLimit;
 
 
-  public GroupBySimilarity(double groupByP, int maxNumOfItinerariesPerGroup) {
+  public GroupBySimilarity(double groupByP, int approximateMinLimit) {
     this.groupByP = groupByP;
-    this.maxNumOfItinerariesPerGroup = maxNumOfItinerariesPerGroup;
+    this.approximateMinLimit = approximateMinLimit;
   }
 
   @Override
   public String toString() {
     return ToStringBuilder.of(GroupBySimilarity.class)
         .addNum("groupByP", groupByP)
-        .addNum("maxNumOfItinerariesPerGroup", maxNumOfItinerariesPerGroup)
+        .addNum("approximateMinLimit", approximateMinLimit)
         .toString();
   }
 }

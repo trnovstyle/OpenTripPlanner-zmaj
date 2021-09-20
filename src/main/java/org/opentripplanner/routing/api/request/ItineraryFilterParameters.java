@@ -22,10 +22,12 @@ public class ItineraryFilterParameters {
   public double groupSimilarityKeepOne;
 
   /**
-   * Keep maximum THREE itineraries for each group with at least this part of the legs in common.
+   * Keep {@link RoutingRequest#numItineraries} itineraries for each group with at least this part of the legs
+   * in common.
    * Default value is 0.68 (68%), use a value less than 0.50 to turn off.
+   * @see org.opentripplanner.routing.algorithm.filterchain.ItineraryFilterChainBuilder#addGroupBySimilarity(org.opentripplanner.routing.algorithm.filterchain.GroupBySimilarity)
    */
-  public double groupSimilarityKeepThree;
+  public double groupSimilarityKeepNumOfItineraries;
 
 
   /**
@@ -94,7 +96,7 @@ public class ItineraryFilterParameters {
   private ItineraryFilterParameters() {
     this.debug = false;
     this.groupSimilarityKeepOne = 0.85;
-    this.groupSimilarityKeepThree = 0.68;
+    this.groupSimilarityKeepNumOfItineraries = 0.68;
     this.minSafeTransferTimeFactor = 0.0;
     this.bikeRentalDistanceRatio = 0.0;
     this.parkAndRideDurationRatio = 0.0;
@@ -111,7 +113,7 @@ public class ItineraryFilterParameters {
   public ItineraryFilterParameters(
       boolean debug,
       double groupSimilarityKeepOne,
-      double groupSimilarityKeepThree,
+      double groupSimilarityKeepNumOfItineraries,
       double minSafeTransferTimeFactor,
       DoubleFunction<Double> transitGeneralizedCostLimit,
       DoubleFunction<Double> nonTransitGeneralizedCostLimit,
@@ -120,7 +122,7 @@ public class ItineraryFilterParameters {
   ) {
     this.debug = debug;
     this.groupSimilarityKeepOne = groupSimilarityKeepOne;
-    this.groupSimilarityKeepThree = groupSimilarityKeepThree;
+    this.groupSimilarityKeepNumOfItineraries = groupSimilarityKeepNumOfItineraries;
     this.minSafeTransferTimeFactor = minSafeTransferTimeFactor;
     this.transitGeneralizedCostLimit = transitGeneralizedCostLimit;
     this.nonTransitGeneralizedCostLimit = nonTransitGeneralizedCostLimit;
