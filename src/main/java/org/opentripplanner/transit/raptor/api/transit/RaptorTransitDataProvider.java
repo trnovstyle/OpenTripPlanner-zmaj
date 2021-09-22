@@ -1,7 +1,6 @@
 package org.opentripplanner.transit.raptor.api.transit;
 
 
-import javax.annotation.Nullable;
 import java.util.Iterator;
 
 
@@ -70,12 +69,19 @@ public interface RaptorTransitDataProvider<T extends RaptorTripSchedule> {
      */
     int numberOfStops();
 
+    /**
+     * Create/provide the cost criteria calculator.
+     */
+    CostCalculator multiCriteriaCostCalculator();
+
 
     /**
-     * Return a the cost of boarding and alighting a trip at a particular stop.
-     *
-     * Nor extra costs exist this method returns {@code null}.
+     * Implement this method to provide a service to search for {@link RaptorTransferConstraint}.
+     * This is not used during the routing, but after a path is found to attach constraint
+     * information to the path.
+     * <p>
+     * The search should have good performance, but it is not a critical part of the overall
+     * performance.
      */
-    @Nullable
-    int[] stopBoarAlightCost();
+    RaptorPathTransferConstraintsSearch<T> transferConstraintsSearch();
 }
