@@ -3,6 +3,7 @@ package org.opentripplanner.transit.raptor.rangeraptor.transit;
 import javax.annotation.Nullable;
 import org.opentripplanner.model.base.ToStringBuilder;
 import org.opentripplanner.transit.raptor.api.transit.RaptorTimeTable;
+import org.opentripplanner.transit.raptor.api.transit.RaptorTransferConstraint;
 import org.opentripplanner.transit.raptor.api.transit.RaptorTripSchedule;
 import org.opentripplanner.transit.raptor.api.transit.RaptorTripScheduleBoardOrAlightEvent;
 
@@ -22,10 +23,9 @@ import org.opentripplanner.transit.raptor.api.transit.RaptorTripScheduleBoardOrA
  *
  * @param <T> The TripSchedule type defined by the user of the raptor API.
  */
-public final class
-TripScheduleAlightSearch<T extends RaptorTripSchedule>
-        implements TripScheduleSearch<T>, RaptorTripScheduleBoardOrAlightEvent<T>
-{
+public final class TripScheduleAlightSearch<T extends RaptorTripSchedule>
+        implements TripScheduleSearch<T>, RaptorTripScheduleBoardOrAlightEvent<T> {
+
     private final int nTripsBinarySearchThreshold;
     private final RaptorTimeTable<T> timeTable;
     private final int nTrips;
@@ -64,6 +64,10 @@ TripScheduleAlightSearch<T extends RaptorTripSchedule>
     public final int getStopPositionInPattern() {
         return stopPositionInPattern;
     }
+
+    @Nullable
+    @Override
+    public RaptorTransferConstraint getTransferConstraint() { return null; }
 
 
     /* TripScheduleSearch implementation */

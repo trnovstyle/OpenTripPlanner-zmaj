@@ -31,30 +31,34 @@ import org.opentripplanner.transit.raptor._data.transit.TestTransfer;
 /**
  * Test the PathBuilder to be sure that it works properly before using it in other tests.
  */
-public class PathBuilderTest implements RaptorTestConstants {
+public class TestPathBuilderTest implements RaptorTestConstants {
 
-  private final PathBuilder subject = new PathBuilder(ALIGHT_SLACK, COST_CALCULATOR);
+  private final TestPathBuilder subject = new TestPathBuilder(ALIGHT_SLACK, COST_CALCULATOR);
 
   @Test
   public void testSimplePathWithOneTransit() {
     int transitDuration = duration("5m");
-
-    int waitTime = BOARD_SLACK + ALIGHT_SLACK;
 
     var path = subject
         .access(time("10:00:15"), D1m, STOP_A)
         .bus("L1", time("10:02"), transitDuration, STOP_B)
         .egress(D2m);
 
-    int transitCost = COST_CALCULATOR.transitArrivalCost(
-            true, STOP_A, waitTime, transitDuration, TRANSIT_RELUCTANCE_INDEX, STOP_B
+    var transitLeg = path.accessLeg().nextLeg().asTransitLeg();
+    int boardCost = COST_CALCULATOR.boardingCost(
+        true, path.accessLeg().toTime(), STOP_A, transitLeg.fromTime(), transitLeg.trip(), null
     );
+
+    int transitCost = COST_CALCULATOR.transitArrivalCost(
+            boardCost, ALIGHT_SLACK, transitDuration, TRANSIT_RELUCTANCE_INDEX, STOP_B
+    );
+
     int accessEgressCost = TestTransfer.walkCost(D2m + D1m);
 
     assertEquals(accessEgressCost + transitCost, path.generalizedCost());
     assertEquals(
-        "Walk 1m ~ 1 ~ BUS L1 10:02 10:07 ~ 2 ~ Walk 2m [10:00:15 10:09:15 9m $798]",
-        path.toString()
+        "Walk 1m ~ A ~ BUS L1 10:02 10:07 ~ B ~ Walk 2m [10:00:15 10:09:15 9m $798]",
+        path.toString(this::stopIndexToName)
     );
   }
 
@@ -67,8 +71,8 @@ public class PathBuilderTest implements RaptorTestConstants {
         .bus(LINE_21, L21_START, L21_DURATION, STOP_D)
         .bus(LINE_31, L31_START, L31_DURATION, STOP_E)
         .egress(EGRESS_DURATION);
-    assertEquals(BASIC_PATH_AS_STRING, path.toString());
-    assertEquals(BASIC_PATH_AS_DETAILED_STRING, path.toStringDetailed());
+    assertEquals(BASIC_PATH_AS_STRING, path.toString(this::stopIndexToName));
+    assertEquals(BASIC_PATH_AS_DETAILED_STRING, path.toStringDetailed(this::stopIndexToName));
     assertEquals(TOTAL_COST, path.generalizedCost());
   }
 }
