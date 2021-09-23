@@ -144,7 +144,7 @@ public class QuayType {
                     .argument(GraphQLArgument.newArgument()
                             .name("omitNonBoarding")
                             .type(Scalars.GraphQLBoolean)
-                            .deprecate("Non-functional. Use arrivalDeparture instead.")
+                            .description("DEPRECATED and non-functional. Use arrivalDeparture instead.")
                             .defaultValue(false)
                             .build())
                     .argument(GraphQLArgument.newArgument()
