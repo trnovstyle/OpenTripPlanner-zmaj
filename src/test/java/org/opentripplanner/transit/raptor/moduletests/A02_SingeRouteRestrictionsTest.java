@@ -78,7 +78,7 @@ public class A02_SingeRouteRestrictionsTest implements RaptorTestConstants {
     var response = raptorService.route(request, data);
 
     assertEquals(
-        "Walk 30s ~ 2 ~ BUS R1 0:01 0:05 ~ 4 ~ Walk 20s [0:00:30 0:05:20 4m50s]",
+        "Walk 30s ~ B ~ BUS R1 0:01 0:05 ~ D ~ Walk 20s [0:00:30 0:05:20 4m50s]",
         pathsToString(response)
     );
   }
@@ -93,7 +93,7 @@ public class A02_SingeRouteRestrictionsTest implements RaptorTestConstants {
     var response = raptorService.route(request, data);
 
     assertEquals(
-        "Walk 30s ~ 2 ~ BUS R1 0:01 0:05 ~ 4 ~ Walk 20s [0:00:30 0:05:20 4m50s]",
+        "Walk 30s ~ B ~ BUS R1 0:01 0:05 ~ D ~ Walk 20s [0:00:30 0:05:20 4m50s]",
         pathsToString(response)
     );
   }
@@ -107,7 +107,7 @@ public class A02_SingeRouteRestrictionsTest implements RaptorTestConstants {
     var response = raptorService.route(request, data);
 
     assertEquals(
-        "Walk 30s ~ 2 ~ BUS R1 0:01 0:05 ~ 4 ~ Walk 20s [0:00:30 0:05:20 4m50s $940]",
+        "Walk 30s ~ B ~ BUS R1 0:01 0:05 ~ D ~ Walk 20s [0:00:30 0:05:20 4m50s $940]",
         pathsToString(response)
     );
   }
