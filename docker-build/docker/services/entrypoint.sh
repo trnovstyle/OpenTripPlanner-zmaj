@@ -13,7 +13,6 @@ NETEX_FILENAME="ST_netex.zip"
 OSM_FILENAME="sweden-filtered.osm.pbf"
 OSM_DK_FILENAME="denmark-oresund.osm.pbf"
 SA_NAME="ressa$ENVIRONMENT"
-GRAPH_NAME=""
 
 log_info "Running Entrypoint.sh.."
 
