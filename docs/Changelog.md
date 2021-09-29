@@ -50,6 +50,7 @@
 - Remove null default values for Transmodel API [#3613](https://github.com/opentripplanner/OpenTripPlanner/pull/3613)
 - Extract GBFS loading logic [#3608](https://github.com/opentripplanner/OpenTripPlanner/pull/3608)
 - Route not found in some conditions with boarding/alighting restrictions [#3621](https://github.com/opentripplanner/OpenTripPlanner/pull/3621)
+- Cost on transfer in Raptor [#3617](https://github.com/opentripplanner/OpenTripPlanner/pull/3617)
 
 
 ## 2.0.0 (2020-11-27)
