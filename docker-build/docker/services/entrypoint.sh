@@ -86,7 +86,8 @@ elif [ "$UPLOAD_TO_AZURE" = true ]; then
     exit 1
   fi
 else
-  log_error "$GRAPH_NAME does not exists"
+  log_error "$GRAPH_NAME does not exist"
+  exit 1
 fi
 
 cd /code || exit 1
