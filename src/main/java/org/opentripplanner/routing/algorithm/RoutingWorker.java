@@ -2,8 +2,11 @@ package org.opentripplanner.routing.algorithm;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import javax.annotation.Nullable;
 import org.opentripplanner.model.plan.Itinerary;
@@ -58,7 +61,7 @@ public class RoutingWorker {
         this.debugTimingAggregator.finishedPrecalculating();
 
         var itineraries = Collections.synchronizedList(new ArrayList<Itinerary>());
-        var routingErrors = Collections.synchronizedList(new ArrayList<RoutingError>());
+        var routingErrors = Collections.synchronizedSet(new HashSet<RoutingError>());
 
         if (OTPFeature.ParallelRouting.isOn()) {
             CompletableFuture.allOf(
@@ -82,6 +85,7 @@ public class RoutingWorker {
         // Filter itineraries
         var filteredItineraries = filterItineraries(
                 itineraries,
+                routingErrors,
                 filterOnLatestDepartureTime
         );
 
@@ -95,14 +99,14 @@ public class RoutingWorker {
         return new RoutingResponse(
             TripPlanMapper.mapTripPlan(request, filteredItineraries),
             createTripSearchMetadata(),
-            routingErrors,
+            new ArrayList<>(routingErrors),
             debugTimingAggregator
         );
     }
 
     private void routeDirectStreet(
             List<Itinerary> itineraries,
-            List<RoutingError> routingErrors
+            Collection<RoutingError> routingErrors
     ) {
         debugTimingAggregator.startedDirectStreetRouter();
         try {
@@ -116,7 +120,7 @@ public class RoutingWorker {
 
     private void routeDirectFlex(
             List<Itinerary> itineraries,
-            List<RoutingError> routingErrors
+            Collection<RoutingError> routingErrors
     ) {
         if (!OTPFeature.FlexRouting.isOn()) {
             return;
@@ -134,7 +138,7 @@ public class RoutingWorker {
 
     private void routeTransit(
             List<Itinerary> itineraries,
-            List<RoutingError> routingErrors
+            Collection<RoutingError> routingErrors
     ) {
         debugTimingAggregator.startedTransitRouting();
         try {
@@ -151,6 +155,7 @@ public class RoutingWorker {
 
     private List<Itinerary> filterItineraries(
             List<Itinerary> itineraries,
+            Collection<RoutingError> routingErrors,
             Instant filterOnLatestDepartureTime
     ) {
         ItineraryListFilterChain filterChain = RoutingRequestToFilterChainMapper.createFilterChain(
@@ -159,7 +164,7 @@ public class RoutingWorker {
             emptyDirectModeHandler.removeWalkAllTheWayResults(),
             it -> firstRemovedItinerary = it
         );
-        return filterChain.filter(itineraries);
+        return filterChain.filter(itineraries, routingErrors);
     }
 
     @Nullable
