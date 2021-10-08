@@ -29,7 +29,7 @@ org.opentripplanner.routing.algorithm.mapping.TransitSnapshotTest.test_trip_plan
             "vertexType": "NORMAL"
           },
           "generalizedCost": 7447,
-          "interlineWithPreviousLeg": false,
+          "interlinedWithPreviousLeg": false,
           "legGeometry": {
             "length": 205,
             "points": "kaytG~wqkV?T?fCAl@?R?jE?rC?t@?hEAvD?R?R?|@?dBAP?PAxD?nD?X?jE?bA?t@?N?Z?ZAX?^@bBrA?DF?l@V?Z??xB?t@?F?NLNBH?vB?\\?JAFEP?NCpD?lECfE?H?`E@T`@@LBBCD?D?HHCJAF@ZAL?FAJGTCJGLQPKLWVSVMLILY`@c@v@INKRGNELEPENKb@iAvGkAxGETCRGd@If@Eb@Ip@APANAJ?J?H?H?L?DG@E?A@?@?@AB?HOhCIvAFBCRGPKRERg@xCETGXg@zCETGZg@vCCPADERADi@|CEXABCTi@vCCRGZm@fD[jBm@jDCJAFEVk@|CCVCFALk@|CEVETk@|CERG\\SjASnAGVCPAFg@tCCPCRm@lDw@fEi@bDCNETKf@EVEHMNATAh@ElCIlD?D?VARA`@EpB?N?TEjBCfAAP?RC`BATClAI|DK?G?mCBkCDoCDmCBoCDkCBoCB[?sBD]?Y@eA@K?C?K?W@{A@M@C@I?_CB?G"
@@ -350,7 +350,7 @@ org.opentripplanner.routing.algorithm.mapping.TransitSnapshotTest.test_trip_plan
             "vertexType": "NORMAL"
           },
           "generalizedCost": 1398,
-          "interlineWithPreviousLeg": false,
+          "interlinedWithPreviousLeg": false,
           "legGeometry": {
             "length": 45,
             "points": "kaytG~wqkV?T?fCAl@?RmC?oCAmCAoC?_CAM?aC??A?A?A?A??AA?AAA??AAA???A?A?A???A@A??@A@?@??A@?@?BcC?mCAmCAmC?QBIYIWOH"
@@ -513,6 +513,7 @@ org.opentripplanner.routing.algorithm.mapping.TransitSnapshotTest.test_trip_plan
           },
           "generalizedCost": 1371,
           "headsign": "Beaverton TC",
+          "interlinedWithPreviousLeg": false,
           "intermediateStops": [ ],
           "legGeometry": {
             "length": 94,
@@ -659,7 +660,7 @@ org.opentripplanner.routing.algorithm.mapping.TransitSnapshotTest.test_trip_plan
             "vertexType": "TRANSIT"
           },
           "generalizedCost": 1511,
-          "interlineWithPreviousLeg": false,
+          "interlinedWithPreviousLeg": false,
           "legGeometry": {
             "length": 29,
             "points": "ugztGdzzkVL?ATClAI|DK?G?mCBkCDoCDmCBoCDkCBoCB[?sBD]?Y@eA@K?C?K?W@{A@M@C@I?_CB?G"
@@ -809,7 +810,7 @@ org.opentripplanner.routing.algorithm.mapping.TransitSnapshotTest.test_trip_plan
             "vertexType": "NORMAL"
           },
           "generalizedCost": 95,
-          "interlineWithPreviousLeg": false,
+          "interlinedWithPreviousLeg": false,
           "legGeometry": {
             "length": 4,
             "points": "kaytG~wqkV?T?fCG?"
@@ -921,6 +922,7 @@ org.opentripplanner.routing.algorithm.mapping.TransitSnapshotTest.test_trip_plan
           },
           "generalizedCost": 1814,
           "headsign": "Montgomery Park",
+          "interlinedWithPreviousLeg": false,
           "intermediateStops": [ ],
           "legGeometry": {
             "length": 135,
@@ -1067,7 +1069,7 @@ org.opentripplanner.routing.algorithm.mapping.TransitSnapshotTest.test_trip_plan
             "vertexType": "TRANSIT"
           },
           "generalizedCost": 405,
-          "interlineWithPreviousLeg": false,
+          "interlinedWithPreviousLeg": false,
           "legGeometry": {
             "length": 13,
             "points": "}~{tGnq{kV?LVAF?J?L?rBCLA?Q?EAyAEcH?G"
@@ -1200,7 +1202,7 @@ org.opentripplanner.routing.algorithm.mapping.TransitSnapshotTest.test_trip_plan
             "vertexType": "NORMAL"
           },
           "generalizedCost": 1398,
-          "interlineWithPreviousLeg": false,
+          "interlinedWithPreviousLeg": false,
           "legGeometry": {
             "length": 45,
             "points": "kaytG~wqkV?T?fCAl@?RmC?oCAmCAoC?_CAM?aC??A?A?A?A??AA?AAA??AAA???A?A?A???A@A??@A@?@??A@?@?BcC?mCAmCAmC?QBIYIWOH"
@@ -1363,6 +1365,7 @@ org.opentripplanner.routing.algorithm.mapping.TransitSnapshotTest.test_trip_plan
           },
           "generalizedCost": 1385,
           "headsign": "23rd Ave to Tichner",
+          "interlinedWithPreviousLeg": false,
           "intermediateStops": [ ],
           "legGeometry": {
             "length": 94,
@@ -1509,7 +1512,7 @@ org.opentripplanner.routing.algorithm.mapping.TransitSnapshotTest.test_trip_plan
             "vertexType": "TRANSIT"
           },
           "generalizedCost": 1511,
-          "interlineWithPreviousLeg": false,
+          "interlinedWithPreviousLeg": false,
           "legGeometry": {
             "length": 29,
             "points": "ugztGdzzkVL?ATClAI|DK?G?mCBkCDoCDmCBoCDkCBoCB[?sBD]?Y@eA@K?C?K?W@{A@M@C@I?_CB?G"
@@ -1659,7 +1662,7 @@ org.opentripplanner.routing.algorithm.mapping.TransitSnapshotTest.test_trip_plan
             "vertexType": "NORMAL"
           },
           "generalizedCost": 95,
-          "interlineWithPreviousLeg": false,
+          "interlinedWithPreviousLeg": false,
           "legGeometry": {
             "length": 4,
             "points": "kaytG~wqkV?T?fCG?"
@@ -1771,6 +1774,7 @@ org.opentripplanner.routing.algorithm.mapping.TransitSnapshotTest.test_trip_plan
           },
           "generalizedCost": 1884,
           "headsign": "NW 27th & Thurman",
+          "interlinedWithPreviousLeg": false,
           "intermediateStops": [ ],
           "legGeometry": {
             "length": 135,
@@ -1917,7 +1921,7 @@ org.opentripplanner.routing.algorithm.mapping.TransitSnapshotTest.test_trip_plan
             "vertexType": "TRANSIT"
           },
           "generalizedCost": 405,
-          "interlineWithPreviousLeg": false,
+          "interlinedWithPreviousLeg": false,
           "legGeometry": {
             "length": 13,
             "points": "}~{tGnq{kV?LVAF?J?L?rBCLA?Q?EAyAEcH?G"
@@ -2054,7 +2058,7 @@ org.opentripplanner.routing.algorithm.mapping.TransitSnapshotTest.test_trip_plan
             "vertexType": "NORMAL"
           },
           "generalizedCost": 636,
-          "interlineWithPreviousLeg": false,
+          "interlinedWithPreviousLeg": false,
           "legGeometry": {
             "length": 14,
             "points": "kaytG~wqkV?T?fCAl@?R?jE?rC?t@?hEAvD?RN?L??O"
@@ -2183,6 +2187,7 @@ org.opentripplanner.routing.algorithm.mapping.TransitSnapshotTest.test_trip_plan
           },
           "generalizedCost": 1158,
           "headsign": "Rose Qtr TC",
+          "interlinedWithPreviousLeg": false,
           "intermediateStops": [ ],
           "legGeometry": {
             "length": 62,
@@ -2330,6 +2335,7 @@ org.opentripplanner.routing.algorithm.mapping.TransitSnapshotTest.test_trip_plan
           },
           "generalizedCost": 1543,
           "headsign": "Montgomery Park",
+          "interlinedWithPreviousLeg": false,
           "intermediateStops": [ ],
           "legGeometry": {
             "length": 91,
@@ -2476,7 +2482,7 @@ org.opentripplanner.routing.algorithm.mapping.TransitSnapshotTest.test_trip_plan
             "vertexType": "TRANSIT"
           },
           "generalizedCost": 37,
-          "interlineWithPreviousLeg": false,
+          "interlinedWithPreviousLeg": false,
           "legGeometry": {
             "length": 7,
             "points": "sy{tGxc{kV???LABF?B??J"
@@ -2529,9 +2535,9 @@ org.opentripplanner.routing.algorithm.mapping.TransitSnapshotTest.test_trip_plan
       "streetOnly": false,
       "systemNotices": [ ],
       "tooSloped": false,
-      "transferPriorityCost": 0,
+      "transferPriorityCost": 33,
       "transitTimeSeconds": 1264,
-      "waitTimeOptimizedCost": 2927,
+      "waitTimeOptimizedCost": 26,
       "waitingTimeSeconds": 237,
       "walkOnly": false,
       "walkingAllTheWay": false
@@ -2594,7 +2600,7 @@ org.opentripplanner.routing.algorithm.mapping.TransitSnapshotTest.test_trip_plan
             "vertexType": "TRANSIT"
           },
           "generalizedCost": 6717,
-          "interlineWithPreviousLeg": false,
+          "interlinedWithPreviousLeg": false,
           "legGeometry": {
             "length": 208,
             "points": "ahztGxxrkV@Sb@?`@@T??V?vCAT?R?`D?T?RA`D?R?R?t@?n@?z@?T?R?jB?@?r@?R?R?tA?\\?l@?R?T?VAd@?jA?N?N?J?Z?jA?z@?P?Z?J@N?hA@x@Ap@ATETGpJCjEA|CArAAxAAxAAdBEzHClF?@Ax@GTAjBAZ?R@hC@h@Q@cBBM?M?_CDsA@Y?Q@O?K?Q?mBB[?C?W@[?]@E?IDI@]DO@SBM?S@G@A?GDEJQ|@AL?L@nA?j@@L?V?d@@~@@NI?E?W@Q?Q?m@@Q@AF?DAJBzB?V?NANM@K?GBEDEHIJUX_@f@KNQRSVGFCBQPIHGDGBIBK@W@a@?mA@E?C@C@A?CBQTKJEHIJeC~CYZo@v@g@d@IJAFAD?L@vC@hB@p@?X?T@P?N@P@nA?j@AX?L@`B@dA?R?RBbD?T?NBbD?R?P@|D@jB?x@@J?N?B?P?LBjD@N@fD?T?LBdD?R?PF`K?RDlJ?R?PFlJ?RDbH@xA?D?P?RDpH"
@@ -2887,7 +2893,7 @@ org.opentripplanner.routing.algorithm.mapping.TransitSnapshotTest.test_trip_plan
             "vertexType": "TRANSIT"
           },
           "generalizedCost": 137,
-          "interlineWithPreviousLeg": false,
+          "interlinedWithPreviousLeg": false,
           "legGeometry": {
             "length": 9,
             "points": "ahztGxxrkV@Sb@?`@@?a@?k@GGKY@A"
@@ -3016,6 +3022,7 @@ org.opentripplanner.routing.algorithm.mapping.TransitSnapshotTest.test_trip_plan
           },
           "generalizedCost": 1369,
           "headsign": "Beaverton TC",
+          "interlinedWithPreviousLeg": false,
           "intermediateStops": [ ],
           "legGeometry": {
             "length": 95,
@@ -3162,7 +3169,7 @@ org.opentripplanner.routing.algorithm.mapping.TransitSnapshotTest.test_trip_plan
             "vertexType": "TRANSIT"
           },
           "generalizedCost": 1388,
-          "interlineWithPreviousLeg": false,
+          "interlinedWithPreviousLeg": false,
           "legGeometry": {
             "length": 39,
             "points": "ikztGh~{kVNDEVUzACPOUQO_@Yc@[QMMEOKOIECGCIAMCGCGAECECECOOMOGKIFMLk@BsABGDGBoCBkCDoC@mCBmCDoCDmCD?qA"
@@ -3369,7 +3376,7 @@ org.opentripplanner.routing.algorithm.mapping.TransitSnapshotTest.test_trip_plan
             "vertexType": "TRANSIT"
           },
           "generalizedCost": 137,
-          "interlineWithPreviousLeg": false,
+          "interlinedWithPreviousLeg": false,
           "legGeometry": {
             "length": 9,
             "points": "ahztGxxrkV@Sb@?`@@?a@?k@GGKY@A"
@@ -3498,6 +3505,7 @@ org.opentripplanner.routing.algorithm.mapping.TransitSnapshotTest.test_trip_plan
           },
           "generalizedCost": 1399,
           "headsign": "23rd Ave to Tichner",
+          "interlinedWithPreviousLeg": false,
           "intermediateStops": [ ],
           "legGeometry": {
             "length": 95,
@@ -3644,7 +3652,7 @@ org.opentripplanner.routing.algorithm.mapping.TransitSnapshotTest.test_trip_plan
             "vertexType": "TRANSIT"
           },
           "generalizedCost": 1388,
-          "interlineWithPreviousLeg": false,
+          "interlinedWithPreviousLeg": false,
           "legGeometry": {
             "length": 39,
             "points": "ikztGh~{kVNDEVUzACPOUQO_@Yc@[QMMEOKOIECGCIAMCGCGAECECECOOMOGKIFMLk@BsABGDGBoCBkCDoC@mCBmCDoCDmCD?qA"
@@ -3851,7 +3859,7 @@ org.opentripplanner.routing.algorithm.mapping.TransitSnapshotTest.test_trip_plan
             "vertexType": "TRANSIT"
           },
           "generalizedCost": 137,
-          "interlineWithPreviousLeg": false,
+          "interlinedWithPreviousLeg": false,
           "legGeometry": {
             "length": 9,
             "points": "ahztGxxrkV@Sb@?`@@?a@?k@GGKY@A"
@@ -3980,6 +3988,7 @@ org.opentripplanner.routing.algorithm.mapping.TransitSnapshotTest.test_trip_plan
           },
           "generalizedCost": 1369,
           "headsign": "Beaverton TC",
+          "interlinedWithPreviousLeg": false,
           "intermediateStops": [ ],
           "legGeometry": {
             "length": 95,
@@ -4126,7 +4135,7 @@ org.opentripplanner.routing.algorithm.mapping.TransitSnapshotTest.test_trip_plan
             "vertexType": "TRANSIT"
           },
           "generalizedCost": 1388,
-          "interlineWithPreviousLeg": false,
+          "interlinedWithPreviousLeg": false,
           "legGeometry": {
             "length": 39,
             "points": "ikztGh~{kVNDEVUzACPOUQO_@Yc@[QMMEOKOIECGCIAMCGCGAECECECOOMOGKIFMLk@BsABGDGBoCBkCDoC@mCBmCDoCDmCD?qA"
@@ -4337,7 +4346,7 @@ org.opentripplanner.routing.algorithm.mapping.TransitSnapshotTest.test_trip_plan
             "vertexType": "TRANSIT"
           },
           "generalizedCost": 33,
-          "interlineWithPreviousLeg": false,
+          "interlinedWithPreviousLeg": false,
           "legGeometry": {
             "length": 4,
             "points": "ahztGxxrkV@Sb@??W"
@@ -4449,6 +4458,7 @@ org.opentripplanner.routing.algorithm.mapping.TransitSnapshotTest.test_trip_plan
           },
           "generalizedCost": 972,
           "headsign": "Rose Qtr TC",
+          "interlinedWithPreviousLeg": false,
           "intermediateStops": [ ],
           "legGeometry": {
             "length": 46,
@@ -4596,6 +4606,7 @@ org.opentripplanner.routing.algorithm.mapping.TransitSnapshotTest.test_trip_plan
           },
           "generalizedCost": 1598,
           "headsign": "Montgomery Park",
+          "interlinedWithPreviousLeg": false,
           "intermediateStops": [ ],
           "legGeometry": {
             "length": 96,
@@ -4742,7 +4753,7 @@ org.opentripplanner.routing.algorithm.mapping.TransitSnapshotTest.test_trip_plan
             "vertexType": "TRANSIT"
           },
           "generalizedCost": 353,
-          "interlineWithPreviousLeg": false,
+          "interlinedWithPreviousLeg": false,
           "legGeometry": {
             "length": 10,
             "points": "}~{tGnq{kV?LVAF?J?L?rBCLA?RDpH"
@@ -4812,9 +4823,9 @@ org.opentripplanner.routing.algorithm.mapping.TransitSnapshotTest.test_trip_plan
       "streetOnly": false,
       "systemNotices": [ ],
       "tooSloped": false,
-      "transferPriorityCost": 0,
+      "transferPriorityCost": 33,
       "transitTimeSeconds": 1133,
-      "waitTimeOptimizedCost": 2502,
+      "waitTimeOptimizedCost": 19,
       "waitingTimeSeconds": 237,
       "walkOnly": false,
       "walkingAllTheWay": false
@@ -4898,7 +4909,7 @@ org.opentripplanner.routing.algorithm.mapping.TransitSnapshotTest.test_trip_plan
             "vertexType": "TRANSIT"
           },
           "generalizedCost": 1087,
-          "interlineWithPreviousLeg": false,
+          "interlinedWithPreviousLeg": false,
           "legGeometry": {
             "length": 24,
             "points": "ahztGxxrkV@Sb@?`@@T?T@NBRIrA?lC@lC?R?zB@`C?J?J?J@tB?nC?|B?N@?R?|@Q?"
@@ -5044,6 +5055,7 @@ org.opentripplanner.routing.algorithm.mapping.TransitSnapshotTest.test_trip_plan
           },
           "generalizedCost": 1740,
           "headsign": "NW 27th & Thurman",
+          "interlinedWithPreviousLeg": false,
           "intermediateStops": [ ],
           "legGeometry": {
             "length": 120,
@@ -5190,7 +5202,7 @@ org.opentripplanner.routing.algorithm.mapping.TransitSnapshotTest.test_trip_plan
             "vertexType": "TRANSIT"
           },
           "generalizedCost": 462,
-          "interlineWithPreviousLeg": false,
+          "interlinedWithPreviousLeg": false,
           "legGeometry": {
             "length": 15,
             "points": "oo{tGxp{kVG@?NM?M?_CD?B?FM?G@K?GBwADK?DpH"
@@ -5387,7 +5399,7 @@ org.opentripplanner.routing.algorithm.mapping.TransitSnapshotTest.test_trip_plan
             "vertexType": "NORMAL"
           },
           "generalizedCost": 7384,
-          "interlineWithPreviousLeg": false,
+          "interlinedWithPreviousLeg": false,
           "legGeometry": {
             "length": 252,
             "points": "unytGpxqkVA??dACpB@P?f@?p@?j@?dAAhE?jE?vD?P?RK?GFCDCFADABADADAF?D?FADCF?B?B?@?D@DADABCBC?A?C?AA??GICAAAA?A?A?AACAC?A@ABABC@CDCBCBC@CBABABCJ?J?@?@MR?hE?fEAdB?dB?lE?`A?T?pBA|D?J?x@?r@y@??bBuA?y@AU?{@?O?}@?E?y@?_@Aa@?u@?W??J@N?hA@x@Ap@ATETGpJCjEA|CArAAxAAxAAdBEzHClF?@Ax@GTAjBAZ?R@hC@h@Q@cBBM?M?_CDsA@Y?Q@O?K?Q?mBB[?C?W@[?]@E?IDI@]DO@SBM?S@G@A?GDEJQ|@AL?L@nA?j@@L?V?d@@~@@NI?E?W@Q?Q?m@@Q@AF?DAJBzB?V?NANM@K?GBEDEHIJUX_@f@KNQRSVGFCBQPIHGDGBIBK@W@a@?mA@E?C@C@A?CBQTKJEHIJeC~CYZo@v@g@d@IJAFAD?L@vC@hB@p@?X?T@P?N@P@nA?j@AX?L@`B@dA?R?RBbD?T?NBbD?R?P@|D@jB?x@@J?N?B?P?LBjD@N@fD?T?LBdD?R?PF`K?RDlJ?R?PFlJ?J"
@@ -5778,7 +5790,7 @@ org.opentripplanner.routing.algorithm.mapping.TransitSnapshotTest.test_trip_plan
             "vertexType": "TRANSIT"
           },
           "generalizedCost": 6283,
-          "interlineWithPreviousLeg": false,
+          "interlinedWithPreviousLeg": false,
           "legGeometry": {
             "length": 202,
             "points": "ahztGxxrkV@Sb@?`@@T??V?vCAT?R?`D?T?RA`D?R?R?t@?n@?z@?T?R?jB?@?r@?R?R?tA?\\?l@?R?T?VAd@?jA?N?N?J?Z?jA?z@?P?Z?J@N?hA@x@Ap@ATETGpJCjEA|CArAAxAAxAAdBEzHClF?@Ax@GTAjBAZ?R@hC@h@Q@cBBM?M?_CDsA@Y?Q@O?K?Q?mBB[?C?W@[?]@E?IDI@]DO@SBM?S@G@A?GDEJQ|@AL?L@nA?j@@L?V?d@@~@@NI?E?W@Q?Q?m@@Q@AF?DAJBzB?V?NANM@K?GBEDEHIJUX_@f@KNQRSVGFCBQPIHGDGBIBK@W@a@?mA@E?C@C@A?CBQTKJEHIJeC~CYZo@v@g@d@IJAFAD?L@vC@hB@p@?X?T@P?N@P@nA?j@AX?L@`B@dA?R?RBbD?T?NBbD?R?P@|D@jB?x@@J?N?B?P?LBjD@N@fD?T?LBdD?R?PF`K?RDlJ?R?PFlJ?J"
@@ -6063,7 +6075,7 @@ org.opentripplanner.routing.algorithm.mapping.TransitSnapshotTest.test_trip_plan
             "vertexType": "TRANSIT"
           },
           "generalizedCost": 4557,
-          "interlineWithPreviousLeg": false,
+          "interlinedWithPreviousLeg": false,
           "legGeometry": {
             "length": 173,
             "points": "_s{tGvpukV??c@tADDFDDDHHYx@Wt@{@lBS^MROZ]h@Y`@[`@k@r@kAtASVEDa@f@EDm@l@s@p@JVA@GOCBzEfKxF`M|AfDJRLPVb@DBBBBBDBB@CRE\\C?A@A@ABAB?DAHATC\\AXAVCZATAPAPATG`AATAPAL?J?F?F?D?F@x@AJ@D@B@DAB?RK@I??TBlBCJ?D?BAFAB?DADABEFCDA@CDC?c@@{@@O?K??LCDC??LC?G?E@GBE?KCI?EFC@?N?F?D?BABA@AD?D?B?D@B@BABAB?D?DADABABABC@A@I@IZCFIJ?L@`B@dA?R?RBbD?T?NBbD?R?P@|D@jB?x@@J?N?B?P?LBjD@N@fD?T?LBdD?R?PF`K?RDlJ?R?PFlJ?RDbH@xA?D?P?RDpH"
