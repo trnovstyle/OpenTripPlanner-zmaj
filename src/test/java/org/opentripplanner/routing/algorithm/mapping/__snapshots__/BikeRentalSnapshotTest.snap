@@ -37,6 +37,7 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.accessBikeR
           }
         }
       },
+      "flaggedForDeletion": false,
       "generalizedCost": 2087,
       "legs": [
         {
@@ -770,6 +771,7 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.accessBikeR
           }
         }
       },
+      "flaggedForDeletion": false,
       "generalizedCost": 2577,
       "legs": [
         {
@@ -1262,6 +1264,7 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.accessBikeR
           }
         }
       },
+      "flaggedForDeletion": false,
       "generalizedCost": 2539,
       "legs": [
         {
@@ -1754,6 +1757,7 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.accessBikeR
           }
         }
       },
+      "flaggedForDeletion": false,
       "generalizedCost": 1805,
       "legs": [
         {
@@ -2144,6 +2148,7 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.accessBikeR
           }
         }
       },
+      "flaggedForDeletion": false,
       "generalizedCost": 2087,
       "legs": [
         {
@@ -2877,6 +2882,7 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.accessBikeR
           }
         }
       },
+      "flaggedForDeletion": false,
       "generalizedCost": 2087,
       "legs": [
         {
@@ -3588,6 +3594,7 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.directBikeR
         "details": { },
         "fare": { }
       },
+      "flaggedForDeletion": false,
       "generalizedCost": 915,
       "legs": [
         {
@@ -4060,6 +4067,7 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.directBikeR
         "details": { },
         "fare": { }
       },
+      "flaggedForDeletion": false,
       "generalizedCost": 652,
       "legs": [
         {
@@ -4409,6 +4417,7 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.directBikeR
         "details": { },
         "fare": { }
       },
+      "flaggedForDeletion": false,
       "generalizedCost": 652,
       "legs": [
         {
@@ -4786,6 +4795,7 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.egressBikeR
           }
         }
       },
+      "flaggedForDeletion": false,
       "generalizedCost": 1998,
       "legs": [
         {
@@ -5553,6 +5563,7 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.egressBikeR
           }
         }
       },
+      "flaggedForDeletion": false,
       "generalizedCost": 2503,
       "legs": [
         {
@@ -6011,6 +6022,7 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.egressBikeR
           }
         }
       },
+      "flaggedForDeletion": false,
       "generalizedCost": 2351,
       "legs": [
         {
@@ -6469,6 +6481,7 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.egressBikeR
           }
         }
       },
+      "flaggedForDeletion": false,
       "generalizedCost": 1998,
       "legs": [
         {
@@ -7236,6 +7249,7 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.egressBikeR
           }
         }
       },
+      "flaggedForDeletion": false,
       "generalizedCost": 2563,
       "legs": [
         {
@@ -7694,6 +7708,7 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.egressBikeR
           }
         }
       },
+      "flaggedForDeletion": false,
       "generalizedCost": 2351,
       "legs": [
         {
