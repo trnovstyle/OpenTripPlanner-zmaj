@@ -147,6 +147,7 @@ public final class RangeRaptorWorker<T extends RaptorTripSchedule> implements Wo
     @Override
     final public Collection<Path<T>> route() {
         timerRoute().time(() -> {
+            lifeCycle.notifyRouteSearchStart(calculator.searchForward());
             transitData.setup();
 
             // The main outer loop iterates backward over all minutes in the departure times window.
@@ -240,7 +241,7 @@ public final class RangeRaptorWorker<T extends RaptorTripSchedule> implements Wo
                         transitWorker.forEachBoarding(stopIndex, (int prevArrivalTime) -> {
 
                             boolean ok = boardWithConstrainedTransfer(
-                                    route.timetable(), txService, stopIndex, stopPos
+                                    txService, route.timetable(), stopIndex, stopPos
                             );
 
                             // Find the best trip and board [no guaranteed transfer exist]
@@ -278,8 +279,8 @@ public final class RangeRaptorWorker<T extends RaptorTripSchedule> implements Wo
     }
 
     private boolean boardWithConstrainedTransfer(
-            RaptorTimeTable<T> timetable,
             RaptorConstrainedTripScheduleBoardingSearch<T> txService,
+            RaptorTimeTable<T> targetTimetable,
             int targetStopIndex,
             int targetStopPos
     ) {
@@ -297,7 +298,7 @@ public final class RangeRaptorWorker<T extends RaptorTripSchedule> implements Wo
         );
 
         var result = txService.find(
-                timetable,
+                targetTimetable,
                 sourceStopArrival.trip(),
                 sourceStopArrival.stop(),
                 earliestBoardTime

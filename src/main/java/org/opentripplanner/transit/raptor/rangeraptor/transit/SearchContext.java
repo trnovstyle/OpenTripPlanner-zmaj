@@ -4,10 +4,12 @@ import static org.opentripplanner.transit.raptor.rangeraptor.transit.SlackProvid
 import static org.opentripplanner.transit.raptor.rangeraptor.transit.SlackProviderAdapter.reverseSlackProvider;
 
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.function.IntFunction;
 import java.util.function.ToIntFunction;
 import javax.annotation.Nullable;
-import org.opentripplanner.transit.raptor.api.debug.DebugLogger;
 import org.opentripplanner.transit.raptor.api.request.DebugRequest;
 import org.opentripplanner.transit.raptor.api.request.RaptorProfile;
 import org.opentripplanner.transit.raptor.api.request.RaptorRequest;
@@ -15,7 +17,6 @@ import org.opentripplanner.transit.raptor.api.request.RaptorTuningParameters;
 import org.opentripplanner.transit.raptor.api.request.SearchParams;
 import org.opentripplanner.transit.raptor.api.transit.CostCalculator;
 import org.opentripplanner.transit.raptor.api.transit.RaptorPathConstrainedTransferSearch;
-import org.opentripplanner.transit.raptor.api.transit.RaptorSlackProvider;
 import org.opentripplanner.transit.raptor.api.transit.RaptorTransfer;
 import org.opentripplanner.transit.raptor.api.transit.RaptorTransitDataProvider;
 import org.opentripplanner.transit.raptor.api.transit.RaptorTripPattern;
@@ -38,7 +39,6 @@ import org.opentripplanner.transit.raptor.rangeraptor.workerlifecycle.LifeCycleS
  * @param <T> The TripSchedule type defined by the user of the raptor API.
  */
 public class SearchContext<T extends RaptorTripSchedule> {
-    private static final DebugLogger NOOP_DEBUG_LOGGER = (topic, message) -> { };
     /**
      * The request input used to customize the worker to the clients needs.
      */
@@ -79,29 +79,36 @@ public class SearchContext<T extends RaptorTripSchedule> {
         );
         this.pathMapper = createPathMapper(
                 this.transit.transferConstraintsSearch(),
-                request.slackProvider(),
-                costCalculator,
-                lifeCycle(),
-                request.searchDirection().isForward()
+                this.costCalculator,
+                request,
+                lifeCycle()
         );
         this.timers = timers;
         this.debugFactory = new DebugHandlerFactory<>(debugRequest(request), lifeCycle());
     }
 
     public Collection<RaptorTransfer> accessPaths() {
-        return request.searchDirection().isForward()
-                ? request.searchParams().accessPaths()
-                : request.searchParams().egressPaths();
+        return accessOrEgressPaths(
+                request.searchDirection().isForward(),
+                profile(),
+                request.searchParams()
+        );
+
     }
 
     public Collection<RaptorTransfer> egressPaths() {
-        return request.searchDirection().isForward()
-                ? request.searchParams().egressPaths()
-                : request.searchParams().accessPaths();
+        return accessOrEgressPaths(
+                request.searchDirection().isInReverse(),
+                profile(),
+                request.searchParams()
+        );
     }
 
     public int[] egressStops() {
-        return egressPaths().stream().mapToInt(RaptorTransfer::stop).toArray();
+        return egressPaths().stream()
+                .mapToInt(RaptorTransfer::stop)
+                .distinct()
+                .toArray();
     }
 
     public SearchParams searchParams() {
@@ -162,11 +169,6 @@ public class SearchContext<T extends RaptorTripSchedule> {
         return debugFactory;
     }
 
-    public DebugLogger debugLogger() {
-        DebugLogger logger = request.debug().logger();
-        return logger != null ? logger : NOOP_DEBUG_LOGGER;
-    }
-
     /** Number of stops in transit graph. */
     public int nStops() {
         return transit.numberOfStops();
@@ -197,11 +199,9 @@ public class SearchContext<T extends RaptorTripSchedule> {
     }
 
     public boolean enableConstrainedTransfers() {
-        if(profile().isOneOf(RaptorProfile.BEST_TIME, RaptorProfile.NO_WAIT_BEST_TIME)) {
-            return false;
-        }
         return searchParams().constrainedTransfersEnabled();
     }
+
 
     /* private methods */
 
@@ -244,17 +244,61 @@ public class SearchContext<T extends RaptorTripSchedule> {
 
     private static <S extends RaptorTripSchedule> PathMapper<S> createPathMapper(
             RaptorPathConstrainedTransferSearch<S> txConstraintsSearch,
-            RaptorSlackProvider slackProvider,
-            CostCalculator costCalc,
-            WorkerLifeCycle lifeCycle,
-            boolean searchForward
+            CostCalculator costCalculator,
+            RaptorRequest<S> request,
+            WorkerLifeCycle lifeCycle
     ) {
-        return searchForward
-                ? new ForwardPathMapper<>(txConstraintsSearch, slackProvider, costCalc, lifeCycle)
-                : new ReversePathMapper<>(txConstraintsSearch, slackProvider, costCalc, lifeCycle);
+        return request.searchDirection().isForward()
+                ? new ForwardPathMapper<>(
+                        txConstraintsSearch,
+                        request.slackProvider(),
+                        costCalculator,
+                        lifeCycle,
+                        request.profile().useApproximateTripSearch()
+                )
+                : new ReversePathMapper<>(
+                        txConstraintsSearch,
+                        request.slackProvider(),
+                        costCalculator,
+                        lifeCycle,
+                        request.profile().useApproximateTripSearch()
+                );
     }
 
     public IntFunction<String> stopIndexTranslatorForDebugging() {
         return transit.stopIndexTranslatorForDebugging();
+    }
+
+    /**
+     * The multi-criteria state can handle multiple access/egress paths to a single stop, but the
+     * Standard and BestTime states do not. To get a deterministic behaviour we filter the
+     * paths and return the paths with the shortest duration for none multi-criteria search. If two
+     * paths have the same duration the first one is picked.
+     * <p>
+     * This method is static and package local to enable unit-testing.
+     */
+    static Collection<RaptorTransfer> accessOrEgressPaths(
+            boolean getAccess,
+            RaptorProfile profile,
+            SearchParams searchParams
+    ) {
+        var paths = getAccess
+                ? searchParams.accessPaths()
+                : searchParams.egressPaths();
+
+        if(profile.is(RaptorProfile.MULTI_CRITERIA)) {
+            return paths;
+        }
+
+        // For none MC-search we only want the fastest transfer for each stop,
+        // no duplicates are accepted
+        Map<Integer, RaptorTransfer> bestTimePaths = new HashMap<>();
+        for (RaptorTransfer it : paths) {
+            RaptorTransfer existing = bestTimePaths.get(it.stop());
+            if(existing == null || it.durationInSeconds() < existing.durationInSeconds()) {
+                bestTimePaths.put(it.stop(), it);
+            }
+        }
+        return List.copyOf(bestTimePaths.values());
     }
 }
