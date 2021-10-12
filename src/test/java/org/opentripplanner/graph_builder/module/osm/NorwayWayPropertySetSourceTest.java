@@ -1,11 +1,14 @@
 package org.opentripplanner.graph_builder.module.osm;
 
+import org.junit.Ignore;
 import org.junit.Test;
 import org.opentripplanner.openstreetmap.model.OSMWithTags;
 import org.opentripplanner.routing.edgetype.StreetTraversalPermission;
 
 import static org.junit.Assert.assertEquals;
 
+
+@Ignore
 public class NorwayWayPropertySetSourceTest {
   static WayPropertySet wps = new WayPropertySet();
 
