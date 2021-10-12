@@ -166,6 +166,7 @@ public class TripTimes implements Serializable, Comparable<TripTimes>, Cloneable
 
     /** A Set of stop indexes that are marked as timepoints in the GTFS input. */
     private final BitSet timepoints;
+    private final BitSet waitPoints;
 
     /* DRT service parameters */
     private DrtTravelTime maxTravelTime;
@@ -198,6 +199,7 @@ public class TripTimes implements Serializable, Comparable<TripTimes>, Cloneable
         final double[] serviceAreaRadius = new double[nStops];
         final String[] serviceArea = new String[nStops];
         final BitSet timepoints = new BitSet(nStops);
+        final BitSet waitPoints = new BitSet(nStops);
         // Times are always shifted to zero. This is essential for frequencies and deduplication.
         timeShift = stopTimes.iterator().next().getArrivalTime();
         double radius = 0;
@@ -211,6 +213,7 @@ public class TripTimes implements Serializable, Comparable<TripTimes>, Cloneable
             stopTimeIds[s] = st.getId();
             sequences[s] = st.getStopSequence();
             timepoints.set(s, st.getTimepoint() == 1);
+            waitPoints.set(s, st.getWaitPoint() == 1);
             continuousPickup[s] = st.getContinuousPickup();
             continuousDropOff[s] = st.getContinuousDropOff();
 
@@ -256,6 +259,7 @@ public class TripTimes implements Serializable, Comparable<TripTimes>, Cloneable
         this.departureTimes = null;
         this.isRecordedStop = null;
         this.timepoints = deduplicator.deduplicateBitSet(timepoints);
+        this.waitPoints = deduplicator.deduplicateBitSet(waitPoints);
         this.continuousPickup = deduplicator.deduplicateIntArray(continuousPickup);
         this.continuousDropOff = deduplicator.deduplicateIntArray(continuousDropOff);
         this.serviceAreaRadius = deduplicator.deduplicateDoubleArray(serviceAreaRadius);
@@ -283,6 +287,7 @@ public class TripTimes implements Serializable, Comparable<TripTimes>, Cloneable
         this.stopTimeIds = object.stopTimeIds;
         this.stopSequences = object.stopSequences;
         this.timepoints = object.timepoints;
+        this.waitPoints = object.waitPoints;
         this.pickups = object.pickups;
         this.dropoffs = object.dropoffs;
         this.continuousPickup = object.continuousPickup;
@@ -314,6 +319,7 @@ public class TripTimes implements Serializable, Comparable<TripTimes>, Cloneable
         this.stopTimeIds = null;
         this.stopSequences = source.stopSequences;
         this.timepoints = source.timepoints;
+        this.waitPoints = source.waitPoints;
         this.pickups = source.pickups;
         this.dropoffs = source.dropoffs;
         this.continuousPickup = source.continuousPickup;
@@ -787,6 +793,11 @@ public class TripTimes implements Serializable, Comparable<TripTimes>, Cloneable
     /** @return whether or not stopIndex is considered a timepoint in this TripTimes. */
     public boolean isTimepoint(final int stopIndex) {
         return timepoints.get(stopIndex);
+    }
+
+    /** @return wheter or not stopIndex is considered a timepoint in this tripTimes. */
+    public boolean isWaitPoint(final int stopIndex) {
+        return waitPoints.get(stopIndex);
     }
 
     /**

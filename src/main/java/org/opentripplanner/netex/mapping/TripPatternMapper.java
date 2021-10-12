@@ -278,6 +278,7 @@ public class TripPatternMapper {
         stopTime.setTrip(trip);
         stopTime.setStopSequence(stopSequence);
         stopTime.setStop(quay);
+        stopTime.setWaitPoint((stopPoint.isIsWaitPoint() ? 1 : 0));
 
         stopTime.setArrivalTime(
                 calculateOtpTime(new TimeWithOffset(passingTime.getArrivalTime(), passingTime.getArrivalDayOffset()),

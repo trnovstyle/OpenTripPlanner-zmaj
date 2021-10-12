@@ -27,6 +27,7 @@ public class TripTimeShort {
     public int arrivalDelay = UNDEFINED ;
     public int departureDelay = UNDEFINED ;
     public boolean timepoint = false;
+    public boolean waitPoint = false;
     public boolean realtime = false;
     public RealTimeState realtimeState = RealTimeState.SCHEDULED ;
     public long serviceDay;
@@ -82,6 +83,7 @@ public class TripTimeShort {
         dropoffType        = tt.getDropoffType(i);
 
         timepoint          = tt.isTimepoint(i);
+        waitPoint          = tt.isWaitPoint(i);
         tripId             = tt.trip.getId();
         realtimeState      = tt.getRealTimeState();
         blockId            = tt.trip.getBlockId();
