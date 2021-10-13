@@ -56,6 +56,7 @@
 - Refactor itinerary list filter chain [#3626](https://github.com/opentripplanner/OpenTripPlanner/pull/3626)
 - Add new routing errors for cases where all itineraries were filtered by post-processing [#3628](https://github.com/opentripplanner/OpenTripPlanner/pull/3628)
 - Cost on transfer in Raptor [#3617](https://github.com/opentripplanner/OpenTripPlanner/pull/3617)
+- Handle non-symmetric transfers in RAPTOR [#3634](https://github.com/opentripplanner/OpenTripPlanner/issues/3634).
 
 
 ## 2.0.0 (2020-11-27)
