@@ -1,7 +1,7 @@
 package org.opentripplanner.routing.algorithm.transferoptimization.model;
 
 
-import org.opentripplanner.routing.algorithm.raptor.transit.cost.RaptorCostConverter;
+import static org.opentripplanner.routing.algorithm.raptor.transit.cost.RaptorCostConverter.toRaptorCost;
 
 /**
  * This calculator uses the {@code minSafeTransferTime}(t0) and an inverse log function to calculate
@@ -141,10 +141,10 @@ public class TransferWaitTimeCalculator {
     this.a = (Math.E - 1.0) / minSafeTransferTime;
   }
 
-  int calculateOptimizedWaitCost(int waitTime) {
+  int calcOptimizedWaitTimeCost(int waitTime) {
     if(waitTime < 0 ) { return ZERO_COST; }
     assertMinSafeTransferTimeSet();
-    return RaptorCostConverter.toRaptorCost(n * t0 / (1d + (n - 1d) * Math.log1p(a * waitTime)));
+    return toRaptorCost(n * t0 / (1d + (n - 1d) * Math.log1p(a * waitTime)));
   }
 
   private void assertMinSafeTransferTimeSet() {
