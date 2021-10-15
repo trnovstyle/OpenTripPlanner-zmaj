@@ -37,6 +37,8 @@ public final class StopTime extends IdentityBean<AgencyAndId> implements Compara
 
     private int timepoint = MISSING_VALUE;
 
+    private int waitPoint = MISSING_VALUE;
+
     private int stopSequence;
 
     private String stopHeadsign;
@@ -172,6 +174,14 @@ public final class StopTime extends IdentityBean<AgencyAndId> implements Compara
 
     public void setTimepoint(int timepoint) {
         this.timepoint = timepoint;
+    }
+
+    public int getWaitPoint() {
+        return waitPoint;
+    }
+
+    public void setWaitPoint(int waitPoint) {
+        this.waitPoint = waitPoint;
     }
 
     public void clearTimepoint() {
