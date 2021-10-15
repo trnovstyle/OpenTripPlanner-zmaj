@@ -6,7 +6,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
-import java.util.function.IntFunction;
 import javax.annotation.Nullable;
 import org.opentripplanner.model.transfer.TransferService;
 import org.opentripplanner.routing.algorithm.raptor.transit.TransitLayer;
@@ -19,6 +18,7 @@ import org.opentripplanner.transit.raptor.api.transit.IntIterator;
 import org.opentripplanner.transit.raptor.api.transit.RaptorConstrainedTransfer;
 import org.opentripplanner.transit.raptor.api.transit.RaptorPathConstrainedTransferSearch;
 import org.opentripplanner.transit.raptor.api.transit.RaptorRoute;
+import org.opentripplanner.transit.raptor.api.transit.RaptorStopNameResolver;
 import org.opentripplanner.transit.raptor.api.transit.RaptorTransfer;
 import org.opentripplanner.transit.raptor.api.transit.RaptorTransitDataProvider;
 import org.opentripplanner.util.OTPFeature;
@@ -132,7 +132,7 @@ public class RaptorRoutingRequestTransitData implements RaptorTransitDataProvide
   }
 
   @Override
-  public IntFunction<String> stopIndexTranslatorForDebugging() {
+  public RaptorStopNameResolver stopNameResolver() {
     return (int stopIndex) -> {
       var s = transitLayer.getStopByIndex(stopIndex);
       return s==null ? "null" : s.getName() + "(" + stopIndex + ")";
