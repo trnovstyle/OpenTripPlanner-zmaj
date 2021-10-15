@@ -278,7 +278,6 @@ public class TripPatternMapper {
         stopTime.setTrip(trip);
         stopTime.setStopSequence(stopSequence);
         stopTime.setStop(quay);
-        stopTime.setWaitPoint((stopPoint.isIsWaitPoint() ? 1 : 0));
 
         stopTime.setArrivalTime(
                 calculateOtpTime(new TimeWithOffset(passingTime.getArrivalTime(), passingTime.getArrivalDayOffset()),
@@ -299,6 +298,7 @@ public class TripPatternMapper {
         );
 
         if (stopPoint != null) {
+            stopTime.setWaitPoint((Boolean.TRUE.equals(stopPoint.isIsWaitPoint()) ? 1 : 0));
             if (isFalse(stopPoint.isForAlighting())) {
                 stopTime.setDropOffType(PICKDROP_NONE);
             } else if (Boolean.TRUE.equals(stopPoint.isRequestStop())) {
