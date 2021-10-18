@@ -13,6 +13,7 @@ import org.opentripplanner.transit.raptor.api.path.PathBuilderLeg;
 import org.opentripplanner.transit.raptor.api.path.TransitPathLeg;
 import org.opentripplanner.transit.raptor.api.transit.CostCalculator;
 import org.opentripplanner.transit.raptor.api.transit.RaptorSlackProvider;
+import org.opentripplanner.transit.raptor.api.transit.RaptorStopNameResolver;
 import org.opentripplanner.transit.raptor.api.transit.RaptorTripSchedule;
 import org.opentripplanner.transit.raptor.api.view.BoardAndAlightTime;
 
@@ -37,9 +38,10 @@ public class OptimizedPathTail<T extends RaptorTripSchedule>
     public OptimizedPathTail(
             RaptorSlackProvider slackProvider,
             CostCalculator costCalculator,
-            TransferWaitTimeCalculator waitTimeCostCalculator
-            ) {
-        super(null, slackProvider, costCalculator);
+            TransferWaitTimeCalculator waitTimeCostCalculator,
+            RaptorStopNameResolver stopNameResolver
+    ) {
+        super(null, slackProvider, costCalculator, stopNameResolver);
         this.waitTimeCostCalculator = waitTimeCostCalculator;
     }
 
@@ -155,7 +157,7 @@ public class OptimizedPathTail<T extends RaptorTripSchedule>
 
     @Override
     public int waitTimeOptimizedCost() {
-        return waitTimeOptimizedCost;
+        return waitTimeOptimizedCost + generalizedCost();
     }
 
     @Override
@@ -212,17 +214,28 @@ public class OptimizedPathTail<T extends RaptorTripSchedule>
         if(waitTimeCostCalculator == null) { return; }
 
         int waitTime = pathLeg.waitTimeBeforeNextTransitIncludingSlack();
+
+        // if this leg is not a transit leg and no more transit legs exist after this
+        // we return without adding any new waitTimeOptimizedCost
         if(waitTime < 0) { return; }
 
+        // If the transfer is stay-seated or guaranteed, then no wait-time-optimized-cost is added.
+        // This can only happen if two alternative paths have the same priority cost; Hence have the
+        // equivalent same number of guaranteed/stay-seated transfers. In that case we would like to
+        // maximize the wait-time at all the other stops - except the facilitated ones.
+        if(isTransferFacilitated(pathLeg)) { return; }
+
+        this.waitTimeOptimizedCost += waitTimeCostCalculator.calcOptimizedWaitTimeCost(waitTime);
+    }
+
+
+    boolean isTransferFacilitated(PathBuilderLeg<?> pathLeg) {
         var tx = pathLeg.constrainedTransferAfterLeg();
 
-        if(tx != null) {
-            var c = (TransferConstraint)tx.getTransferConstraint();
-            // If the transfer is stay-seated or guaranteed, then no wait-time cost is added
-            if (c != null && c.isFacilitated()) { return; }
-        }
+        if(tx == null) { return false; }
 
-        int cost = waitTimeCostCalculator.calculateOptimizedWaitCost(waitTime);
-        this.waitTimeOptimizedCost += cost;
+        var c = (TransferConstraint)tx.getTransferConstraint();
+
+        return c != null && c.isFacilitated();
     }
 }
