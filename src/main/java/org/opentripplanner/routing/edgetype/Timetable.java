@@ -1134,6 +1134,7 @@ public class Timetable implements Serializable {
             stopTime.setArrivalTime(oldTimes.getScheduledArrivalTime(i));
             stopTime.setDepartureTime(oldTimes.getScheduledDepartureTime(i));
             stopTime.setStopHeadsign(oldTimes.getHeadsign(i));
+            stopTime.setWaitPoint(Boolean.TRUE.equals(oldTimes.isWaitPoint(i)) ? 1 : 0);
 
             // TODO: Do we need to set the StopTime.id?
             //stopTime.setId(oldTimes.getStopTimeIdByIndex(i));
