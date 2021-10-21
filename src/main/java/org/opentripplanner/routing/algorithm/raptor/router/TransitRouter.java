@@ -92,7 +92,8 @@ public class TransitRouter {
                 request,
                 requestTransitDataProvider.getStartOfTime(),
                 accessEgresses.getAccesses(),
-                accessEgresses.getEgresses()
+                accessEgresses.getEgresses(),
+                transitLayer
         );
 
         // Route transit
