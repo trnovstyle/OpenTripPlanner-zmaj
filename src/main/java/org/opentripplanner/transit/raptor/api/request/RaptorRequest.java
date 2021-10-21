@@ -32,6 +32,9 @@ public class RaptorRequest<T extends RaptorTripSchedule> {
     private final Set<String> timingTags;
 
 
+    // HACK SØRLANDSBANEN
+    public double extraSearchCoachReluctance = 0.0;
+
 
     static <T extends RaptorTripSchedule> RaptorRequest<T> defaults() {
         return new RaptorRequest<>();
@@ -56,6 +59,7 @@ public class RaptorRequest<T extends RaptorTripSchedule> {
         this.slackProvider = builder.slackProvider();
         this.timingTags = builder.timingTags();
         this.debug = builder.debug().build();
+        this.extraSearchCoachReluctance = builder.extraSearchCoachReluctance;
         verify();
     }
 
