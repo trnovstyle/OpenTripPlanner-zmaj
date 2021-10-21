@@ -1,6 +1,7 @@
 package org.opentripplanner.routing.algorithm.raptor.transit.cost;
 
 
+import java.util.function.Function;
 import javax.annotation.Nullable;
 import org.opentripplanner.transit.raptor.api.transit.CostCalculator;
 
@@ -111,4 +112,18 @@ public final class DefaultCostCalculator implements CostCalculator {
             + boardAndTransferCost * minNumTransfers
             + transitFactors.minFactor() * minTravelTime;
     }
+
+
+    /*--  HACK SØRLANDSBANEN  ::  BEGIN  --*/
+
+    public DefaultCostCalculator(
+            DefaultCostCalculator original, Function<FactorStrategy, FactorStrategy> modeReluctanceMapper
+    ) {
+        this.boardCostOnly = original.boardCostOnly;
+        this.boardAndTransferCost = original.boardAndTransferCost;
+        this.waitFactor = original.waitFactor;
+        this.transitFactors = modeReluctanceMapper.apply(original.transitFactors);
+        this.stopVisitCost = original.stopVisitCost;
+    }
+    /*--  HACK SØRLANDSBANEN  ::  END  --*/
 }

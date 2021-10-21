@@ -9,7 +9,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
-import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -29,10 +28,10 @@ import org.opentripplanner.common.geometry.SphericalDistanceLibrary;
 import org.opentripplanner.model.FeedScopedId;
 import org.opentripplanner.model.GenericLocation;
 import org.opentripplanner.model.Route;
-import org.opentripplanner.routing.algorithm.filterchain.ItineraryListFilter;
-import org.opentripplanner.model.modes.TransitMainMode;
-import org.opentripplanner.routing.algorithm.transferoptimization.api.TransferOptimizationParameters;
 import org.opentripplanner.model.modes.AllowedTransitMode;
+import org.opentripplanner.model.modes.TransitMainMode;
+import org.opentripplanner.routing.algorithm.filterchain.ItineraryListFilter;
+import org.opentripplanner.routing.algorithm.transferoptimization.api.TransferOptimizationParameters;
 import org.opentripplanner.routing.core.BicycleOptimizeType;
 import org.opentripplanner.routing.core.RouteMatcher;
 import org.opentripplanner.routing.core.RoutingContext;
@@ -304,6 +303,9 @@ public class RoutingRequest implements AutoCloseable, Cloneable, Serializable {
     public double bikeReluctance = 2.0;
 
     public double carReluctance = 2.0;
+
+    /** Zero means turned off. HACK SØRLANDSBANEN */
+    public double extraSearchCoachReluctance = 0.0;
 
     /** Used instead of walk reluctance for stairs */
     public double stairsReluctance = 2.0;

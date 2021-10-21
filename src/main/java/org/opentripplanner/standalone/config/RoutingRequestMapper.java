@@ -1,17 +1,13 @@
 package org.opentripplanner.standalone.config;
 
-import org.opentripplanner.model.modes.AllowedTransitMode;
 import org.opentripplanner.model.modes.TransitMainMode;
 import org.opentripplanner.routing.api.request.RequestModes;
 import org.opentripplanner.routing.api.request.RoutingRequest;
 import org.opentripplanner.routing.api.request.StreetMode;
 import org.opentripplanner.routing.api.request.TransferOptimizationRequest;
-import org.opentripplanner.routing.api.request.StreetMode;
 import org.opentripplanner.routing.core.TraverseMode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.HashSet;
 
 public class RoutingRequestMapper {
 
@@ -59,6 +55,7 @@ public class RoutingRequestMapper {
         request.carPickupCost = c.asInt("carPickupCost", dft.carPickupCost);
         request.carPickupTime = c.asInt("carPickupTime", dft.carPickupTime);
         request.carReluctance = c.asDouble("carReluctance", dft.carReluctance);
+        request.extraSearchCoachReluctance = c.asDouble("extraSearchCoachReluctance", dft.extraSearchCoachReluctance);
         request.carSpeed = c.asDouble("carSpeed", dft.carSpeed);
         request.itineraryFilters = ItineraryFiltersMapper.map(c.path("itineraryFilters"));
         request.disableAlertFiltering = c.asBoolean("disableAlertFiltering", dft.disableAlertFiltering);
