@@ -364,6 +364,9 @@ public class RoutingRequest implements AutoCloseable, Cloneable, Serializable {
     /** Multiplicative factor on expected turning time. */
     public double turnReluctance = 1.0;
 
+    /** Zero means turned off. HACK SØRLANDSBANEN */
+    public double extraSearchCoachReluctance = 0.0;
+
     /**
      * How long does it take to get an elevator, on average (actually, it probably should be a bit *more* than average, to prevent optimistic trips)?
      * Setting it to "seems like forever," while accurate, will probably prevent OTP from working correctly.
