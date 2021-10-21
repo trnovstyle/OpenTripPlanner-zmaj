@@ -2,7 +2,9 @@ package org.opentripplanner.routing.algorithm.raptor.transit.mappers;
 
 import java.time.ZonedDateTime;
 import java.util.Collection;
+import org.opentripplanner.ext.sorlandsbanen.EnturHackSorlandsBanen;
 import org.opentripplanner.routing.algorithm.raptor.transit.SlackProvider;
+import org.opentripplanner.routing.algorithm.raptor.transit.TransitLayer;
 import org.opentripplanner.routing.algorithm.raptor.transit.TripSchedule;
 import org.opentripplanner.routing.api.request.RoutingRequest;
 import org.opentripplanner.transit.raptor.api.request.Optimization;
@@ -18,7 +20,8 @@ public class RaptorRequestMapper {
             RoutingRequest request,
             ZonedDateTime startOfTime,
             Collection<? extends RaptorTransfer> accessPaths,
-            Collection<? extends RaptorTransfer> egressPaths
+            Collection<? extends RaptorTransfer> egressPaths,
+            TransitLayer transitLayer
     ) {
         RaptorRequestBuilder<TripSchedule> builder = new RaptorRequestBuilder<>();
 
@@ -60,6 +63,6 @@ public class RaptorRequestMapper {
             builder.searchParams().preferLateArrival(true);
         }
 
-        return builder.build();
+        return EnturHackSorlandsBanen.enableHack(builder.build(), request, transitLayer);
     }
 }
