@@ -1,7 +1,5 @@
 package org.opentripplanner.ext.transmodelapi;
 
-import static org.opentripplanner.ext.transmodelapi.mapping.TransitIdMapper.mapIDsToDomain;
-
 import graphql.GraphQLException;
 import graphql.schema.DataFetchingEnvironment;
 import java.time.Duration;
@@ -17,10 +15,7 @@ import java.util.Map;
 import java.util.function.DoubleFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import org.opentripplanner.api.common.Message;
 import org.opentripplanner.api.common.ParameterException;
-import org.opentripplanner.api.mapping.PlannerErrorMapper;
-import org.opentripplanner.api.model.error.PlannerError;
 import org.opentripplanner.ext.transmodelapi.mapping.TransitIdMapper;
 import org.opentripplanner.ext.transmodelapi.model.PlanResponse;
 import org.opentripplanner.ext.transmodelapi.model.TransportModeSlack;
@@ -37,11 +32,15 @@ import org.opentripplanner.routing.api.request.RequestModes;
 import org.opentripplanner.routing.api.request.RoutingRequest;
 import org.opentripplanner.routing.api.request.StreetMode;
 import org.opentripplanner.routing.api.response.RoutingError;
+import org.opentripplanner.routing.api.response.RoutingErrorCode;
 import org.opentripplanner.routing.api.response.RoutingResponse;
 import org.opentripplanner.routing.core.BicycleOptimizeType;
 import org.opentripplanner.standalone.server.Router;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+
+import static org.opentripplanner.ext.transmodelapi.mapping.TransitIdMapper.mapIDsToDomain;
 
 public class TransmodelGraphQLPlanner {
 
@@ -60,11 +59,7 @@ public class TransmodelGraphQLPlanner {
 
             response.plan = res.getTripPlan();
             response.metadata = res.getMetadata();
-
-            for (RoutingError routingError : res.getRoutingErrors()) {
-                response.messages.add(PlannerErrorMapper.mapMessage(routingError).message);
-            }
-
+            response.messages = res.getRoutingErrors();
             response.debugOutput = res.getDebugAggregator().finishedRendering();
         }
         catch (ParameterException e) {
@@ -73,9 +68,7 @@ public class TransmodelGraphQLPlanner {
         }
         catch (Exception e) {
             LOG.error("System error: " + e.getMessage(), e);
-            PlannerError error = new PlannerError();
-            error.setMsg(Message.SYSTEM_ERROR);
-            response.messages.add(error.message);
+            response.messages.add(new RoutingError(RoutingErrorCode.SYSTEM_ERROR, null));
         }
         return response;
     }
