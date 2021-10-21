@@ -100,7 +100,8 @@ public class TransitRouter {
                 request,
                 transitSearchTimeZero,
                 accessEgresses.getAccesses(),
-                accessEgresses.getEgresses()
+                accessEgresses.getEgresses(),
+                transitLayer
         );
 
         // Route transit
