@@ -1,29 +1,28 @@
 package org.opentripplanner.api.common;
 
+import java.time.Duration;
+import java.util.Date;
+import java.util.GregorianCalendar;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Set;
-import org.opentripplanner.api.parameter.QualifiedModeSet;
-import org.opentripplanner.model.FeedScopedId;
-import org.opentripplanner.routing.core.BicycleOptimizeType;
-import org.opentripplanner.routing.api.request.RoutingRequest;
-import org.opentripplanner.routing.api.request.BannedStopSet;
-import org.opentripplanner.standalone.server.OTPServer;
-import org.opentripplanner.standalone.server.Router;
-import org.opentripplanner.util.ResourceBundleSingleton;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import java.util.TimeZone;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeConstants;
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.XMLGregorianCalendar;
-import java.time.Duration;
-import java.util.Date;
-import java.util.GregorianCalendar;
-import java.util.HashMap;
-import java.util.List;
-import java.util.TimeZone;
+import org.opentripplanner.api.parameter.QualifiedModeSet;
+import org.opentripplanner.model.FeedScopedId;
+import org.opentripplanner.routing.api.request.BannedStopSet;
+import org.opentripplanner.routing.api.request.RoutingRequest;
+import org.opentripplanner.routing.core.BicycleOptimizeType;
+import org.opentripplanner.standalone.server.OTPServer;
+import org.opentripplanner.standalone.server.Router;
+import org.opentripplanner.util.ResourceBundleSingleton;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 /**
  * This class defines all the JAX-RS query parameters for a path search as fields, allowing them to 
  * be inherited by other REST resource classes (the trip planner and the Analyst WMS or tile 
@@ -184,6 +183,9 @@ public abstract class RoutingResource {
 
     @QueryParam("carReluctance")
     protected Double carReluctance;
+
+    @QueryParam("extraSearchCoachReluctance")
+    protected Double extraSearchCoachReluctance = null;
 
     /**
      * How much worse is waiting for a transit vehicle than being on a transit vehicle, as a
@@ -741,6 +743,9 @@ public abstract class RoutingResource {
 
         if (carReluctance != null)
             request.setCarReluctance(carReluctance);
+
+        if(extraSearchCoachReluctance != null)
+            request.extraSearchCoachReluctance = extraSearchCoachReluctance;
 
         if (walkReluctance != null)
             request.setWalkReluctance(walkReluctance);
