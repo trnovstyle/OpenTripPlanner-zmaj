@@ -5,12 +5,14 @@ import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Function;
 import javax.annotation.Nullable;
 import org.opentripplanner.model.transfer.TransferService;
 import org.opentripplanner.routing.algorithm.raptor.transit.RaptorTransferIndex;
 import org.opentripplanner.routing.algorithm.raptor.transit.TransitLayer;
 import org.opentripplanner.routing.algorithm.raptor.transit.TripSchedule;
 import org.opentripplanner.routing.algorithm.raptor.transit.cost.DefaultCostCalculator;
+import org.opentripplanner.routing.algorithm.raptor.transit.cost.FactorStrategy;
 import org.opentripplanner.routing.algorithm.raptor.transit.mappers.DateMapper;
 import org.opentripplanner.routing.algorithm.raptor.transit.mappers.McCostParamsMapper;
 import org.opentripplanner.routing.api.request.RoutingRequest;
@@ -164,4 +166,31 @@ public class RaptorRoutingRequestTransitData implements RaptorTransitDataProvide
     return validTransitDataEndTime;
   }
 
+
+  /*--  HACK SØRLANDSBANEN  ::  BEGIN  --*/
+
+  private RaptorRoutingRequestTransitData(
+          RaptorRoutingRequestTransitData original,
+          Function<FactorStrategy, FactorStrategy> mapFactors
+  ) {
+    this.transitLayer = original.transitLayer;
+    this.startOfTime = original.startOfTime;
+    this.activeTripPatternsPerStop = original.activeTripPatternsPerStop;
+    this.transfers = original.transfers;
+    this.transferService = original.transferService;
+    this.validTransitDataStartTime = original.validTransitDataStartTime;
+    this.validTransitDataEndTime = original.validTransitDataEndTime;
+    this.generalizedCostCalculator = new DefaultCostCalculator(
+            (DefaultCostCalculator) original.generalizedCostCalculator,
+            mapFactors
+    );
+  }
+
+  public RaptorTransitDataProvider<TripSchedule> enturHackSorlandsbanen(
+          Function<FactorStrategy, FactorStrategy> mapFactors
+  ) {
+    return new RaptorRoutingRequestTransitData(this, mapFactors);
+  }
+
+  /*--  HACK SØRLANDSBANEN  ::  END  --*/
 }

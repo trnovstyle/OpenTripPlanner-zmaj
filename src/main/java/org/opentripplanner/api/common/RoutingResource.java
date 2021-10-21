@@ -1,7 +1,6 @@
 package org.opentripplanner.api.common;
 
 import java.time.Duration;
-import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.List;
@@ -198,6 +197,9 @@ public abstract class RoutingResource {
 
     @QueryParam("carReluctance")
     protected Double carReluctance;
+
+    @QueryParam("extraSearchCoachReluctance")
+    protected Double extraSearchCoachReluctance = null;
 
     /**
      * How much worse is waiting for a transit vehicle than being on a transit vehicle, as a
@@ -765,6 +767,9 @@ public abstract class RoutingResource {
 
         if (carReluctance != null)
             request.setCarReluctance(carReluctance);
+
+        if(extraSearchCoachReluctance != null)
+            request.extraSearchCoachReluctance = extraSearchCoachReluctance;
 
         if (walkReluctance != null)
             request.setWalkReluctance(walkReluctance);
