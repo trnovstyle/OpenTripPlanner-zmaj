@@ -34,6 +34,7 @@ import org.opentripplanner.model.GenericLocation;
 import org.opentripplanner.model.Route;
 import org.opentripplanner.model.TransitMode;
 import org.opentripplanner.routing.algorithm.filterchain.ItineraryListFilter;
+import org.opentripplanner.routing.algorithm.filterchain.ItineraryListFilter;
 import org.opentripplanner.routing.algorithm.transferoptimization.api.TransferOptimizationParameters;
 import org.opentripplanner.model.plan.PageCursor;
 import org.opentripplanner.routing.core.BicycleOptimizeType;
@@ -327,6 +328,9 @@ public class RoutingRequest implements AutoCloseable, Cloneable, Serializable {
     public double bikeReluctance = 2.0;
 
     public double carReluctance = 2.0;
+
+    /** Zero means turned off. HACK SØRLANDSBANEN */
+    public double extraSearchCoachReluctance = 0.0;
 
     /** Used instead of walk reluctance for stairs */
     public double stairsReluctance = 2.0;
