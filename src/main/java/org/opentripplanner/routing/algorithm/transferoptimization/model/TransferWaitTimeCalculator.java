@@ -144,6 +144,10 @@ public class TransferWaitTimeCalculator {
   int calcOptimizedWaitTimeCost(int waitTime) {
     if(waitTime < 0 ) { return ZERO_COST; }
     assertMinSafeTransferTimeSet();
+    return shortWaitTimeCost(waitTime) + toRaptorCost(2*t0 - waitTime);
+  }
+
+  int shortWaitTimeCost(int waitTime) {
     return toRaptorCost(n * t0 / (1d + (n - 1d) * Math.log1p(a * waitTime)));
   }
 

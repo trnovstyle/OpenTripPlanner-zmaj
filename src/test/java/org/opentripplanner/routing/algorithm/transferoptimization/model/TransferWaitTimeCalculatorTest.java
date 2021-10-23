@@ -46,9 +46,9 @@ public class TransferWaitTimeCalculatorTest {
 
         int costT0 = RaptorCostConverter.toRaptorCost(t0);
 
-        assertEquals(n * costT0, subject.calcOptimizedWaitTimeCost(zero), EPSILON, "f(0) with " + testCase);
+        assertEquals((2+n) * costT0, subject.calcOptimizedWaitTimeCost(zero), EPSILON, "f(0) with " + testCase);
         assertEquals(
-                costT0,
+                2 * costT0,
                 subject.calcOptimizedWaitTimeCost(t0), EPSILON, "f(t0) with " + testCase
         );
       }
@@ -60,13 +60,13 @@ public class TransferWaitTimeCalculatorTest {
     subject = new TransferWaitTimeCalculator(2.0);
     subject.setMinSafeTransferTime(d2m);
 
-    assertEquals(23664.0, subject.calcOptimizedWaitTimeCost(1), EPSILON);
-    assertEquals(20715.0, subject.calcOptimizedWaitTimeCost(d12s), EPSILON);
-    assertEquals(18527.0, subject.calcOptimizedWaitTimeCost(d24s), EPSILON);
-    assertEquals(14814.0, subject.calcOptimizedWaitTimeCost(d1m), EPSILON);
-    assertEquals(9639.0, subject.calcOptimizedWaitTimeCost(d4m), EPSILON);
-    assertEquals( 7360.0, subject.calcOptimizedWaitTimeCost(d10m), EPSILON);
-    assertEquals( 2467.0, subject.calcOptimizedWaitTimeCost(d5d), EPSILON);
+    assertEquals(23664.0, subject.shortWaitTimeCost(1), EPSILON);
+    assertEquals(20715.0, subject.shortWaitTimeCost(d12s), EPSILON);
+    assertEquals(18527.0, subject.shortWaitTimeCost(d24s), EPSILON);
+    assertEquals(14814.0, subject.shortWaitTimeCost(d1m), EPSILON);
+    assertEquals(9639.0, subject.shortWaitTimeCost(d4m), EPSILON);
+    assertEquals( 7360.0, subject.shortWaitTimeCost(d10m), EPSILON);
+    assertEquals( 2467.0, subject.shortWaitTimeCost(d5d), EPSILON);
   }
 
   @Test
@@ -74,13 +74,13 @@ public class TransferWaitTimeCalculatorTest {
     subject = new TransferWaitTimeCalculator(5.0);
     subject.setMinSafeTransferTime(d10m);
 
-    assertEquals(296607.0, subject.calcOptimizedWaitTimeCost(1), EPSILON);
-    assertEquals(183569.0, subject.calcOptimizedWaitTimeCost(d1m), EPSILON);
-    assertEquals(137515.0, subject.calcOptimizedWaitTimeCost(d2m), EPSILON);
-    assertEquals(86196.0, subject.calcOptimizedWaitTimeCost(d5m), EPSILON);
-    assertEquals(43106.0, subject.calcOptimizedWaitTimeCost(d20m), EPSILON);
-    assertEquals(29870.0, subject.calcOptimizedWaitTimeCost(d50m), EPSILON);
-    assertEquals(10174.0, subject.calcOptimizedWaitTimeCost(d5d), EPSILON);
+    assertEquals(296607.0, subject.shortWaitTimeCost(1), EPSILON);
+    assertEquals(183569.0, subject.shortWaitTimeCost(d1m), EPSILON);
+    assertEquals(137515.0, subject.shortWaitTimeCost(d2m), EPSILON);
+    assertEquals(86196.0, subject.shortWaitTimeCost(d5m), EPSILON);
+    assertEquals(43106.0, subject.shortWaitTimeCost(d20m), EPSILON);
+    assertEquals(29870.0, subject.shortWaitTimeCost(d50m), EPSILON);
+    assertEquals(10174.0, subject.shortWaitTimeCost(d5d), EPSILON);
   }
 
   @Test

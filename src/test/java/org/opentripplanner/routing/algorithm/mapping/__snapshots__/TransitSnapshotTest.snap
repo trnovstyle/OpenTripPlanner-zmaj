@@ -2639,7 +2639,7 @@ org.opentripplanner.routing.algorithm.mapping.TransitSnapshotTest.test_trip_plan
       "tooSloped": false,
       "transferPriorityCost": 33,
       "transitTimeSeconds": 1264,
-      "waitTimeOptimizedCost": 26,
+      "waitTimeOptimizedCost": -108,
       "waitingTimeSeconds": 237,
       "walkOnly": false,
       "walkingAllTheWay": false
@@ -4927,7 +4927,7 @@ org.opentripplanner.routing.algorithm.mapping.TransitSnapshotTest.test_trip_plan
       "tooSloped": false,
       "transferPriorityCost": 33,
       "transitTimeSeconds": 1133,
-      "waitTimeOptimizedCost": 19,
+      "waitTimeOptimizedCost": -135,
       "waitingTimeSeconds": 237,
       "walkOnly": false,
       "walkingAllTheWay": false
@@ -5596,7 +5596,7 @@ org.opentripplanner.routing.algorithm.mapping.TransitSnapshotTest.test_trip_plan
       "tooSloped": false,
       "transferPriorityCost": 33,
       "transitTimeSeconds": 953,
-      "waitTimeOptimizedCost": 18,
+      "waitTimeOptimizedCost": -206,
       "waitingTimeSeconds": 307,
       "walkOnly": false,
       "walkingAllTheWay": false
