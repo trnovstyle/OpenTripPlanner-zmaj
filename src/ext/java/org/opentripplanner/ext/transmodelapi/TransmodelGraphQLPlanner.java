@@ -1,5 +1,7 @@
 package org.opentripplanner.ext.transmodelapi;
 
+import static org.opentripplanner.ext.transmodelapi.mapping.TransitIdMapper.mapIDsToDomain;
+
 import graphql.GraphQLException;
 import graphql.schema.DataFetchingEnvironment;
 import java.time.Duration;
@@ -15,7 +17,6 @@ import java.util.Map;
 import java.util.function.DoubleFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import org.opentripplanner.api.common.Message;
 import org.opentripplanner.api.common.ParameterException;
 import org.opentripplanner.ext.transmodelapi.mapping.TransitIdMapper;
 import org.opentripplanner.ext.transmodelapi.model.PlanResponse;
@@ -28,6 +29,7 @@ import org.opentripplanner.model.GenericLocation;
 import org.opentripplanner.model.modes.AllowedTransitMode;
 import org.opentripplanner.model.modes.TransitMainMode;
 import org.opentripplanner.model.modes.TransitMode;
+import org.opentripplanner.routing.algorithm.mapping.TripPlanMapper;
 import org.opentripplanner.routing.api.request.BannedStopSet;
 import org.opentripplanner.routing.api.request.RequestModes;
 import org.opentripplanner.routing.api.request.RoutingRequest;
@@ -39,20 +41,6 @@ import org.opentripplanner.routing.core.BicycleOptimizeType;
 import org.opentripplanner.standalone.server.Router;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.time.Duration;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.function.DoubleFunction;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-
-import static org.opentripplanner.ext.transmodelapi.mapping.TransitIdMapper.mapIDsToDomain;
 
 public class TransmodelGraphQLPlanner {
 
@@ -80,6 +68,7 @@ public class TransmodelGraphQLPlanner {
         }
         catch (Exception e) {
             LOG.error("System error: " + e.getMessage(), e);
+            response.plan = TripPlanMapper.mapTripPlan(request, List.of());
             response.messages.add(new RoutingError(RoutingErrorCode.SYSTEM_ERROR, null));
         }
         return response;
