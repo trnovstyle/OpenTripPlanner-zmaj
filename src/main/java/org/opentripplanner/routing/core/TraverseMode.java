@@ -1,5 +1,6 @@
 package org.opentripplanner.routing.core;
 
+import org.opentripplanner.model.modes.TransitMainMode;
 import org.opentripplanner.model.modes.TransitMode;
 
 import java.util.EnumSet;
@@ -36,27 +37,38 @@ public enum TraverseMode {
         return this == WALK;
     }
 
+    public TransitMainMode asTransitMode() {
+        switch (this) {
+            case RAIL:      return TransitMainMode.RAIL;
+            case BUS:       return TransitMainMode.BUS;
+            case SUBWAY:    return TransitMainMode.SUBWAY;
+            case TRAM:      return TransitMainMode.TRAM;
+            case FERRY:     return TransitMainMode.FERRY;
+            case AIRPLANE:  return TransitMainMode.AIRPLANE;
+            case CABLE_CAR: return TransitMainMode.CABLE_CAR;
+            case GONDOLA:   return TransitMainMode.GONDOLA;
+            case FUNICULAR: return TransitMainMode.FUNICULAR;
+            default:
+                throw new IllegalArgumentException("Not a transit mode: " + this);
+        }
+    }
+
     public static TraverseMode fromTransitMode(TransitMode transitMode) {
-        switch (transitMode.getMainMode()) {
-            case RAIL:
-                return TraverseMode.RAIL;
+        return fromTransitMainMode(transitMode.getMainMode());
+    }
+
+    public static TraverseMode fromTransitMainMode(TransitMainMode mainMode) {
+        switch (mainMode) {
+            case RAIL:      return TraverseMode.RAIL;
             case COACH:
-            case BUS:
-                return TraverseMode.BUS;
-            case SUBWAY:
-                return TraverseMode.SUBWAY;
-            case TRAM:
-                return TraverseMode.TRAM;
-            case FERRY:
-                return TraverseMode.FERRY;
-            case AIRPLANE:
-                return TraverseMode.AIRPLANE;
-            case CABLE_CAR:
-                return TraverseMode.CABLE_CAR;
-            case GONDOLA:
-                return TraverseMode.GONDOLA;
-            case FUNICULAR:
-                return TraverseMode.FUNICULAR;
+            case BUS:       return TraverseMode.BUS;
+            case SUBWAY:    return TraverseMode.SUBWAY;
+            case TRAM:      return TraverseMode.TRAM;
+            case FERRY:     return TraverseMode.FERRY;
+            case AIRPLANE:  return TraverseMode.AIRPLANE;
+            case CABLE_CAR: return TraverseMode.CABLE_CAR;
+            case GONDOLA:   return TraverseMode.GONDOLA;
+            case FUNICULAR: return TraverseMode.FUNICULAR;
             default:
                 throw new IllegalArgumentException();
         }

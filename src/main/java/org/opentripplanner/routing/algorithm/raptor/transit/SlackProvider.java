@@ -1,5 +1,6 @@
 package org.opentripplanner.routing.algorithm.raptor.transit;
 
+import org.opentripplanner.model.modes.TransitMainMode;
 import org.opentripplanner.routing.algorithm.raptor.transit.request.TripPatternForDates;
 import org.opentripplanner.routing.core.TraverseMode;
 import org.opentripplanner.transit.raptor.api.transit.RaptorSlackProvider;
@@ -71,9 +72,11 @@ public final class SlackProvider implements RaptorSlackProvider {
     }
 
     private static int[] slackByMode(Map<TraverseMode, Integer> modeSlack, int defaultSlack) {
-        int[] result = new int[TraverseMode.values().length];
+        int[] result = new int[TransitMainMode.values().length];
         for (TraverseMode mode : TraverseMode.values()) {
-            result[mode.ordinal()] = modeSlack.getOrDefault(mode, defaultSlack) ;
+            if(mode.isTransit() && mode != TraverseMode.TRANSIT) {
+                result[mode.asTransitMode().ordinal()] = modeSlack.getOrDefault(mode, defaultSlack);
+            }
         }
         return result;
     }
