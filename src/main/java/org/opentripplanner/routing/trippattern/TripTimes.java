@@ -627,7 +627,7 @@ public class TripTimes implements Serializable, Comparable<TripTimes>, Cloneable
      */
     public boolean timesIncreasing() {
         final int nStops = scheduledArrivalTimes.length;
-        int prevDep = -1;
+        int prevDep = Integer.MIN_VALUE;
         for (int s = 0; s < nStops; s++) {
             final int arr = getArrivalTime(s);
             final int dep = getDepartureTime(s);
