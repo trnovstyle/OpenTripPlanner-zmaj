@@ -82,29 +82,6 @@ steps:
         $ctx = New-AzStorageContext -StorageAccountName "tjpsageo" -StorageAccountKey $(TJPSAGEO-AZURE-BLOB-STORAGE-KEY)
         Set-AzStorageBlobContent -File $(Build.Repository.LocalPath)/docker-build/azure-deploy/swagger.json -Container "otp-service" -Blob "$(buildVersion)_swagger.json" -Context $ctx
 
-  - task: TriggerBuild@3
-    inputs:
-      definitionIsInCurrentTeamProject: false
-      buildDefinition: 'TokyoResesok-CD'
-      tfsServer: 'https://dev.azure.com/skanetrafiken2/'
-      teamProject: 'Infra'
-      queueBuildForUserThatTriggeredBuild: true
-      ignoreSslCertificateErrors: false
-      useSameSourceVersion: false
-      useCustomSourceVersion: false
-      useSameBranch: false
-      branchToUse: 'master'
-      waitForQueuedBuildsToFinish: false
-      storeInEnvironmentVariable: true
-      buildParameters: "ServiceName: resesok-otp, ServiceBuildVersion: $(buildVersion), ServiceBranchName: $(Build.SourceBranchName), ServiceSourceVersion: $(Build.SourceVersion), ServiceSourceVersionMessage: $(Build.SourceVersionMessage)"
-      authenticationMethod: 'OAuth Token'
-      password: $(System.AccessToken)
-      enableBuildInQueueCondition: false
-      dependentOnSuccessfulBuildCondition: false
-      dependentOnFailedBuildCondition: false
-      checkbuildsoncurrentbranch: false
-      failTaskIfConditionsAreNotFulfilled: false
-
   # Trigger deploy to PR environment
   - task: TriggerBuild@3
     inputs:
@@ -115,6 +92,63 @@ steps:
       useSameSourceVersion: false
       useCustomSourceVersion: false
       useSameBranch: true
+      waitForQueuedBuildsToFinish: false
+      storeInEnvironmentVariable: false
+      authenticationMethod: 'OAuth Token'
+      enableBuildInQueueCondition: false
+      dependentOnSuccessfulBuildCondition: false
+      dependentOnFailedBuildCondition: false
+      checkbuildsoncurrentbranch: false
+      failTaskIfConditionsAreNotFulfilled: false
+
+  - task: TriggerBuild@3
+    inputs:
+      definitionIsInCurrentTeamProject: true
+      buildDefinition: 'resesok-gtfs-adapter'
+      queueBuildForUserThatTriggeredBuild: true
+      ignoreSslCertificateErrors: false
+      useSameSourceVersion: false
+      useCustomSourceVersion: false
+      useSameBranch: false
+      branchToUse: 'master'
+      waitForQueuedBuildsToFinish: false
+      storeInEnvironmentVariable: false
+      authenticationMethod: 'OAuth Token'
+      enableBuildInQueueCondition: false
+      dependentOnSuccessfulBuildCondition: false
+      dependentOnFailedBuildCondition: false
+      checkbuildsoncurrentbranch: false
+      failTaskIfConditionsAreNotFulfilled: false
+
+  - task: TriggerBuild@3
+    inputs:
+      definitionIsInCurrentTeamProject: true
+      buildDefinition: 'resesok-graph'
+      queueBuildForUserThatTriggeredBuild: true
+      ignoreSslCertificateErrors: false
+      useSameSourceVersion: false
+      useCustomSourceVersion: false
+      useSameBranch: false
+      branchToUse: 'master'
+      waitForQueuedBuildsToFinish: false
+      storeInEnvironmentVariable: false
+      authenticationMethod: 'OAuth Token'
+      enableBuildInQueueCondition: false
+      dependentOnSuccessfulBuildCondition: false
+      dependentOnFailedBuildCondition: false
+      checkbuildsoncurrentbranch: false
+      failTaskIfConditionsAreNotFulfilled: false
+
+  - task: TriggerBuild@3
+    inputs:
+      definitionIsInCurrentTeamProject: true
+      buildDefinition: 'resesok-proxy'
+      queueBuildForUserThatTriggeredBuild: true
+      ignoreSslCertificateErrors: false
+      useSameSourceVersion: false
+      useCustomSourceVersion: false
+      useSameBranch: false
+      branchToUse: 'master'
       waitForQueuedBuildsToFinish: false
       storeInEnvironmentVariable: false
       authenticationMethod: 'OAuth Token'
