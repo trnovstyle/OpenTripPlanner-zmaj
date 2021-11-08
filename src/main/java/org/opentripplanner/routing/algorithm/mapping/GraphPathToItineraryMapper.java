@@ -123,7 +123,7 @@ public abstract class GraphPathToItineraryMapper {
         calculateElevations(itinerary, edges);
 
         itinerary.generalizedCost = (int) lastState.weight;
-        itinerary.arrivedAtDestinationWithRentedVehicle = lastState.isBikeRentingFromStation();
+        itinerary.arrivedAtDestinationWithRentedVehicle = lastState.isRentingVehicleFromStation();
 
         return itinerary;
     }
@@ -300,7 +300,7 @@ public abstract class GraphPathToItineraryMapper {
 
         leg.walkingBike = states[states.length - 1].isBackWalkingBike();
 
-        leg.rentedVehicle = states[0].isBikeRenting();
+        leg.rentedVehicle = states[0].isRentingVehicle();
 
         if (leg.rentedVehicle) {
             String vehicleRentalNetwork = states[0].getVehicleRentalNetwork();
@@ -424,6 +424,17 @@ public abstract class GraphPathToItineraryMapper {
      */
     private static TraverseMode resolveMode(State[] states) {
         TraverseMode returnMode = TraverseMode.WALK;
+
+        // Resolve correct mode if renting vehicle, and is not walking with it
+        if (states[0].isRentingVehicle() && !states[states.length - 1].isBackWalkingBike()) {
+            switch (states[0].stateData.rentalVehicleFormFactor) {
+                case BICYCLE:
+                case OTHER: return TraverseMode.BICYCLE;
+                case SCOOTER:
+                case MOPED: return TraverseMode.SCOOTER;
+                case CAR: return TraverseMode.CAR;
+            }
+        }
 
         for (State state : states) {
             TraverseMode mode = state.getBackMode();
@@ -799,11 +810,11 @@ public abstract class GraphPathToItineraryMapper {
 
     private static boolean isRentalPickUp(State state) {
         return state.getBackEdge() instanceof VehicleRentalEdge && (state.getBackState() == null || !state.getBackState()
-                .isBikeRenting());
+                .isRentingVehicle());
     }
 
     private static boolean isRentalDropOff(State state) {
-        return state.getBackEdge() instanceof VehicleRentalEdge && state.getBackState().isBikeRenting();
+        return state.getBackEdge() instanceof VehicleRentalEdge && state.getBackState().isRentingVehicle();
     }
 
     private static boolean isLink(Edge edge) {

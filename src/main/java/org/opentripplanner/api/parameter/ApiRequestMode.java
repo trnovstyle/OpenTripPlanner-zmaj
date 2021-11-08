@@ -10,6 +10,7 @@ import java.util.Collections;
 public enum ApiRequestMode {
   WALK(),
   BICYCLE(),
+  SCOOTER(),
   CAR(),
   TRAM(AllowedTransitMode.fromMainModeEnum(TransitMainMode.TRAM)),
   SUBWAY(AllowedTransitMode.fromMainModeEnum(TransitMainMode.SUBWAY)),

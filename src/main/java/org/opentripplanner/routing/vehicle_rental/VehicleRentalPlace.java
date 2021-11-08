@@ -1,6 +1,8 @@
 package org.opentripplanner.routing.vehicle_rental;
 
+import java.util.Set;
 import org.opentripplanner.model.FeedScopedId;
+import org.opentripplanner.routing.vehicle_rental.RentalVehicleType.FormFactor;
 import org.opentripplanner.util.I18NString;
 
 /**
@@ -51,10 +53,16 @@ public interface VehicleRentalPlace {
     boolean allowDropoffNow();
 
     /** Is the vehicle to be rented free-floating */
-    boolean isFloatingBike();
+    boolean isFloatingVehicle();
 
     /** Should the search be continued with CAR mode after renting a vehicle */
     boolean isCarStation();
+
+    /** What form factors are currently available for pick up */
+    Set<FormFactor> getAvailablePickupFormFactors(boolean includeRealtimeAvailability);
+
+    /** What form factors are currently available for drop off */
+    Set<FormFactor> getAvailableDropoffFormFactors(boolean includeRealtimeAvailability);
 
     /** Is it possible to arrive at the destination with a rented bicycle, without dropping it off */
     boolean isKeepingVehicleRentalAtDestinationAllowed();
