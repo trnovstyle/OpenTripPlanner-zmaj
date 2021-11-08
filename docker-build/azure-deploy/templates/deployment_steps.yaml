@@ -104,44 +104,6 @@ steps:
   - task: TriggerBuild@3
     inputs:
       definitionIsInCurrentTeamProject: true
-      buildDefinition: 'resesok-gtfs-adapter'
-      queueBuildForUserThatTriggeredBuild: true
-      ignoreSslCertificateErrors: false
-      useSameSourceVersion: false
-      useCustomSourceVersion: false
-      useSameBranch: false
-      branchToUse: 'master'
-      waitForQueuedBuildsToFinish: false
-      storeInEnvironmentVariable: false
-      authenticationMethod: 'OAuth Token'
-      enableBuildInQueueCondition: false
-      dependentOnSuccessfulBuildCondition: false
-      dependentOnFailedBuildCondition: false
-      checkbuildsoncurrentbranch: false
-      failTaskIfConditionsAreNotFulfilled: false
-
-  - task: TriggerBuild@3
-    inputs:
-      definitionIsInCurrentTeamProject: true
-      buildDefinition: 'resesok-graph'
-      queueBuildForUserThatTriggeredBuild: true
-      ignoreSslCertificateErrors: false
-      useSameSourceVersion: false
-      useCustomSourceVersion: false
-      useSameBranch: false
-      branchToUse: 'master'
-      waitForQueuedBuildsToFinish: false
-      storeInEnvironmentVariable: false
-      authenticationMethod: 'OAuth Token'
-      enableBuildInQueueCondition: false
-      dependentOnSuccessfulBuildCondition: false
-      dependentOnFailedBuildCondition: false
-      checkbuildsoncurrentbranch: false
-      failTaskIfConditionsAreNotFulfilled: false
-
-  - task: TriggerBuild@3
-    inputs:
-      definitionIsInCurrentTeamProject: true
       buildDefinition: 'resesok-proxy'
       queueBuildForUserThatTriggeredBuild: true
       ignoreSslCertificateErrors: false
