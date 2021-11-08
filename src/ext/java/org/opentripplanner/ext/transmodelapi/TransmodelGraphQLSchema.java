@@ -293,6 +293,7 @@ public class TransmodelGraphQLSchema {
             .newFieldDefinition()
             .name("stopPlace")
             .description("Get a single stopPlace based on its id)")
+            .withDirective(gqlUtil.timingData)
             .type(stopPlaceType)
             .argument(GraphQLArgument
                 .newArgument()
@@ -310,6 +311,7 @@ public class TransmodelGraphQLSchema {
             .newFieldDefinition()
             .name("stopPlaces")
             .description("Get all stopPlaces")
+            .withDirective(gqlUtil.timingData)
             .type(new GraphQLNonNull(new GraphQLList(stopPlaceType)))
             .argument(GraphQLArgument
                 .newArgument()
@@ -341,6 +343,7 @@ public class TransmodelGraphQLSchema {
             .newFieldDefinition()
             .name("stopPlacesByBbox")
             .description("Get all stop places within the specified bounding box")
+            .withDirective(gqlUtil.timingData)
             .type(new GraphQLNonNull(new GraphQLList(stopPlaceType)))
             .argument(GraphQLArgument
                 .newArgument()
@@ -400,6 +403,7 @@ public class TransmodelGraphQLSchema {
             .newFieldDefinition()
             .name("quay")
             .description("Get a single quay based on its id)")
+            .withDirective(gqlUtil.timingData)
             .type(quayType)
             .argument(GraphQLArgument
                 .newArgument()
@@ -415,6 +419,7 @@ public class TransmodelGraphQLSchema {
             .newFieldDefinition()
             .name("quays")
             .description("Get all quays")
+            .withDirective(gqlUtil.timingData)
             .type(new GraphQLNonNull(new GraphQLList(quayType)))
             .argument(GraphQLArgument
                 .newArgument()
@@ -458,6 +463,7 @@ public class TransmodelGraphQLSchema {
             .newFieldDefinition()
             .name("quaysByBbox")
             .description("Get all quays within the specified bounding box")
+            .withDirective(gqlUtil.timingData)
             .type(new GraphQLNonNull(new GraphQLList(quayType)))
             .argument(GraphQLArgument
                 .newArgument()
@@ -520,6 +526,7 @@ public class TransmodelGraphQLSchema {
             .name("quaysByRadius")
             .description(
                 "Get all quays within the specified walking radius from a location. The returned type has two fields quay and distance")
+            .withDirective(gqlUtil.timingData)
             .type(relay.connectionType("quayAtDistance",
                 relay.edgeType("quayAtDistance", quayAtDistance, null, new ArrayList<>()),
                 new ArrayList<>()
@@ -586,6 +593,8 @@ public class TransmodelGraphQLSchema {
           .name("nearest")
           .description(
               "Get all places (quays, stop places, car parks etc. with coordinates) within the specified radius from a location. The returned type has two fields place and distance. The search is done by walking so the distance is according to the network of walkables.")
+
+          .withDirective(gqlUtil.timingData)
           .type(relay.connectionType("placeAtDistance",
               relay.edgeType("placeAtDistance", placeAtDistanceType, null, new ArrayList<>()),
               new ArrayList<>()))
@@ -703,6 +712,7 @@ public class TransmodelGraphQLSchema {
             .newFieldDefinition()
             .name("authority")
             .description("Get an authority by ID")
+            .withDirective(gqlUtil.timingData)
             .type(authorityType)
             .argument(GraphQLArgument
                 .newArgument()
@@ -718,6 +728,7 @@ public class TransmodelGraphQLSchema {
             .newFieldDefinition()
             .name("authorities")
             .description("Get all authorities")
+            .withDirective(gqlUtil.timingData)
             .type(new GraphQLNonNull(new GraphQLList(authorityType)))
             .dataFetcher(environment -> {
               return new ArrayList<>(GqlUtil.getRoutingService(environment).getAgencies());
@@ -727,6 +738,7 @@ public class TransmodelGraphQLSchema {
             .newFieldDefinition()
             .name("operator")
             .description("Get a operator by ID")
+            .withDirective(gqlUtil.timingData)
             .type(operatorType)
             .argument(GraphQLArgument
                 .newArgument()
@@ -743,6 +755,7 @@ public class TransmodelGraphQLSchema {
             .newFieldDefinition()
             .name("operators")
             .description("Get all operators")
+            .withDirective(gqlUtil.timingData)
             .type(new GraphQLNonNull(new GraphQLList(operatorType)))
             .dataFetcher(environment -> {
               return new ArrayList<>(GqlUtil.getRoutingService(environment).getAllOperators());
@@ -752,6 +765,7 @@ public class TransmodelGraphQLSchema {
             .newFieldDefinition()
             .name("line")
             .description("Get a single line based on its id")
+            .withDirective(gqlUtil.timingData)
             .type(lineType)
             .argument(GraphQLArgument
                 .newArgument()
@@ -767,6 +781,7 @@ public class TransmodelGraphQLSchema {
             .newFieldDefinition()
             .name("lines")
             .description("Get all lines")
+            .withDirective(gqlUtil.timingData)
             .type(new GraphQLNonNull(new GraphQLList(lineType)))
             .argument(GraphQLArgument
                 .newArgument()
@@ -872,6 +887,7 @@ public class TransmodelGraphQLSchema {
             .newFieldDefinition()
             .name("serviceJourney")
             .description("Get a single service journey based on its id")
+            .withDirective(gqlUtil.timingData)
             .type(serviceJourneyType)
             .argument(GraphQLArgument
                 .newArgument()
@@ -888,6 +904,7 @@ public class TransmodelGraphQLSchema {
             .newFieldDefinition()
             .name("serviceJourneys")
             .description("Get all service journeys")
+            .withDirective(gqlUtil.timingData)
             .type(new GraphQLNonNull(new GraphQLList(serviceJourneyType)))
             .argument(GraphQLArgument
                 .newArgument()
@@ -948,6 +965,7 @@ public class TransmodelGraphQLSchema {
             .newFieldDefinition()
             .name("bikeRentalStations")
             .description("Get all bike rental stations")
+            .withDirective(gqlUtil.timingData)
             .argument(GraphQLArgument
                 .newArgument()
                 .name("ids")
@@ -973,6 +991,7 @@ public class TransmodelGraphQLSchema {
             .newFieldDefinition()
             .name("bikeRentalStation")
             .description("Get all bike rental stations")
+            .withDirective(gqlUtil.timingData)
             .type(bikeRentalStationType)
             .argument(GraphQLArgument
                 .newArgument()
@@ -996,6 +1015,7 @@ public class TransmodelGraphQLSchema {
             .name("bikeRentalStationsByBbox")
             .description(
                 "Get all bike rental stations within the specified bounding box.")
+            .withDirective(gqlUtil.timingData)
             .type(new GraphQLNonNull(new GraphQLList(bikeRentalStationType)))
             .argument(GraphQLArgument
                 .newArgument()
@@ -1030,6 +1050,7 @@ public class TransmodelGraphQLSchema {
             .newFieldDefinition()
             .name("bikePark")
             .description("Get a single bike park based on its id")
+            .withDirective(gqlUtil.timingData)
             .type(bikeParkType)
             .argument(GraphQLArgument
                 .newArgument()
@@ -1050,6 +1071,7 @@ public class TransmodelGraphQLSchema {
             .newFieldDefinition()
             .name("bikeParks")
             .description("Get all bike parks")
+            .withDirective(gqlUtil.timingData)
             .type(new GraphQLNonNull(new GraphQLList(bikeParkType)))
             .dataFetcher(environment -> GqlUtil.getRoutingService(environment)
                 .getVehicleParkingService()
@@ -1060,6 +1082,7 @@ public class TransmodelGraphQLSchema {
             .newFieldDefinition()
             .name("routingParameters")
             .description("Get default routing parameters.")
+            .withDirective(gqlUtil.timingData)
             .type(this.routing.graphQLType)
             .dataFetcher(environment -> routing.request)
             .build())
@@ -1067,6 +1090,7 @@ public class TransmodelGraphQLSchema {
             .newFieldDefinition()
             .name("situations")
             .description("Get all active situations.")
+            .withDirective(gqlUtil.timingData)
             .type(new GraphQLNonNull(new GraphQLList(ptSituationElementType)))
             .argument(GraphQLArgument
                 .newArgument()
@@ -1105,6 +1129,7 @@ public class TransmodelGraphQLSchema {
             .newFieldDefinition()
             .name("situation")
             .description("Get a single situation based on its situationNumber")
+            .withDirective(gqlUtil.timingData)
             .type(ptSituationElementType)
             .argument(GraphQLArgument
                 .newArgument()
@@ -1122,6 +1147,7 @@ public class TransmodelGraphQLSchema {
             .newFieldDefinition()
             .name("serverInfo")
             .description("Get OTP server information")
+            .withDirective(gqlUtil.timingData)
             .type(new GraphQLNonNull(serverInfoType))
             .dataFetcher(e -> projectInfo())
             .build())
