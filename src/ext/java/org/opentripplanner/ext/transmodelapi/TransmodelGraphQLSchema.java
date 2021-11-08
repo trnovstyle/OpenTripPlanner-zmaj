@@ -158,7 +158,6 @@ public class TransmodelGraphQLSchema {
     GraphQLOutputType bikeRentalStationType = BikeRentalStationType.create(placeInterface);
     GraphQLOutputType rentalVehicleType = RentalVehicleType.create(rentalVehicleTypeType, placeInterface);
     GraphQLOutputType bikeParkType = BikeParkType.createB(placeInterface);
-//  GraphQLOutputType carParkType = new GraphQLTypeReference("CarPark");
     GraphQLOutputType stopPlaceType = StopPlaceType.create(
         placeInterface,
         QuayType.REF,
@@ -1037,11 +1036,11 @@ public class TransmodelGraphQLSchema {
                 .type(new GraphQLNonNull(Scalars.GraphQLString))
                 .build())
             .dataFetcher(environment -> {
+              var bikeParkId = TransitIdMapper.mapIDToDomain(environment.getArgument("id"));
               return GqlUtil.getRoutingService(environment)
-                  .getVehicleRentalStationService()
+                  .getVehicleParkingService()
                   .getBikeParks()
-                  .stream()
-                  .filter(bikePark -> bikePark.id.equals(environment.getArgument("id")))
+                  .filter(bikePark -> bikePark.getId().equals(bikeParkId))
                   .findFirst()
                   .orElse(null);
             })
@@ -1051,11 +1050,10 @@ public class TransmodelGraphQLSchema {
             .name("bikeParks")
             .description("Get all bike parks")
             .type(new GraphQLNonNull(new GraphQLList(bikeParkType)))
-            .dataFetcher(environment -> {
-              return new ArrayList<>(GqlUtil.getRoutingService(environment)
-                  .getVehicleRentalStationService()
-                  .getBikeParks());
-            })
+            .dataFetcher(environment -> GqlUtil.getRoutingService(environment)
+                .getVehicleParkingService()
+                .getBikeParks()
+                .collect(Collectors.toCollection(ArrayList::new)))
             .build())
         .field(GraphQLFieldDefinition
             .newFieldDefinition()

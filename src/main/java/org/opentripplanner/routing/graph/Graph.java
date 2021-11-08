@@ -89,6 +89,7 @@ import org.opentripplanner.routing.services.TransitAlertService;
 import org.opentripplanner.routing.services.notes.StreetNotesService;
 import org.opentripplanner.routing.trippattern.Deduplicator;
 import org.opentripplanner.routing.util.ConcurrentPublished;
+import org.opentripplanner.routing.vehicle_parking.VehicleParkingService;
 import org.opentripplanner.routing.vehicle_rental.VehicleRentalStationService;
 import org.opentripplanner.routing.vertextype.TransitStopVertex;
 import org.opentripplanner.updater.GraphUpdaterConfigurator;
@@ -975,6 +976,10 @@ public class Graph implements Serializable {
 
     public VehicleRentalStationService getVehicleRentalStationService() {
         return getService(VehicleRentalStationService.class);
+    }
+
+    public VehicleParkingService getVehicleParkingService() {
+        return getService(VehicleParkingService.class);
     }
 
     public Collection<Notice> getNoticesByEntity(TransitEntity entity) {
