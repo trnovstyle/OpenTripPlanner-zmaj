@@ -13,6 +13,7 @@
 
 package org.opentripplanner.updater.stoptime;
 
+import com.esotericsoftware.minlog.Log;
 import com.google.common.base.Preconditions;
 import com.google.transit.realtime.GtfsRealtime.TripDescriptor;
 import com.google.transit.realtime.GtfsRealtime.TripUpdate;
@@ -55,16 +56,7 @@ import java.text.ParseException;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.BitSet;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
-import java.util.TimeZone;
+import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
 
 import static org.opentripplanner.model.StopPattern.PICKDROP_NONE;
@@ -203,7 +195,7 @@ public class TimetableSnapshotSource {
      * Method to apply a trip update list to the most recent version of the timetable snapshot. A
      * GTFS-RT feed is always applied against a single static feed (indicated by SIRI_FEED_ID).
 <<<<<<< HEAD
-     * 
+     *
 =======
      *
      * However, multi-feed support is not completed and we currently assume there is only one static
@@ -981,6 +973,18 @@ public class TimetableSnapshotSource {
     }
 
     private ServiceDate getServiceDateForEstimatedVehicleJourney(EstimatedVehicleJourney estimatedVehicleJourney) {
+
+        if (estimatedVehicleJourney.getFramedVehicleJourneyRef() != null &&
+                estimatedVehicleJourney.getFramedVehicleJourneyRef().getDataFrameRef() != null) {
+
+            String dataFrameRefValue = Objects.toString(estimatedVehicleJourney.getFramedVehicleJourneyRef().getDataFrameRef().getValue(), "");
+            try {
+                return ServiceDate.parseString(dataFrameRefValue, timeZone);
+            } catch (ParseException e) {
+                LOG.warn(e.getMessage());
+            }
+        }
+
         ZonedDateTime date;
         if (estimatedVehicleJourney.getRecordedCalls() != null && !estimatedVehicleJourney.getRecordedCalls().getRecordedCalls().isEmpty()){
             date = estimatedVehicleJourney.getRecordedCalls().getRecordedCalls().get(0).getAimedDepartureTime();
@@ -1521,7 +1525,7 @@ public class TimetableSnapshotSource {
      */
     private boolean cancelScheduledTrip(String feedId, String tripId, final ServiceDate serviceDate) {
         boolean success = false;
-        
+
         final TripPattern pattern = getPatternForTripId(feedId, tripId);
 
         if (pattern != null) {

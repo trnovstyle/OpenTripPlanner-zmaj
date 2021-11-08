@@ -57,6 +57,20 @@ public class ServiceDate implements Serializable, Comparable<ServiceDate> {
         this.day = day;
     }
 
+    /**
+     * Construct a new ServiceDate by specifying the numeric year, month, day and timezone
+     *
+     * @param year - numeric year (ex. 2010)
+     * @param month - numeric month of the year, where Jan = 1, Feb = 2, etc
+     * @param day - numeric day of month
+     */
+    public ServiceDate(int year, int month, int day, TimeZone timeZone) {
+        this.year = year;
+        this.month = month;
+        this.day = day;
+        this.timeZoneOverride = timeZone;
+    }
+
     public ServiceDate(ServiceDate o) {
         this(o.year, o.month, o.day);
     }
@@ -96,8 +110,18 @@ public class ServiceDate implements Serializable, Comparable<ServiceDate> {
      * @throws ParseException on parse error
      */
     public static ServiceDate parseString(String value) throws ParseException {
+        return parseString(value, TimeZone.getDefault());
+    }
 
-        Matcher matcher = PATTERN.matcher(value);
+    /**
+     * Parse a service date from a string in "YYYYMMDD" format with a given timezone.
+     *
+     * @param value a string of the form "YYYYMMDD"
+     * @return a new ServiceDate object
+     * @throws ParseException on parse error
+     */
+    public static ServiceDate parseString(String value, TimeZone timeZone) throws ParseException {
+        Matcher matcher = PATTERN.matcher(value.replace("-", ""));
 
         if (!matcher.matches())
             throw new ParseException("error parsing date: " + value, 0);
@@ -105,7 +129,7 @@ public class ServiceDate implements Serializable, Comparable<ServiceDate> {
         int year = Integer.parseInt(matcher.group(1));
         int month = Integer.parseInt(matcher.group(2));
         int day = Integer.parseInt(matcher.group(3));
-        return new ServiceDate(year, month, day);
+        return new ServiceDate(year, month, day, timeZone);
     }
 
     /** Map a list of epocSeconds to a list of ServiceDates. */
