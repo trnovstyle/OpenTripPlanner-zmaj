@@ -122,6 +122,9 @@ public class EnumTypes {
         .value("car_pickup", StreetMode.CAR_PICKUP, "Walk to a pickup point along "
             + "the road, drive to a drop-off point along the road, and walk the rest of the way. "
             + "This can include various taxi-services or kiss & ride.")
+        .value("car_rental", StreetMode.CAR_RENTAL, "Walk to a car rental point, "
+            + "drive to a car rental drop-off point and walk the rest of the way. This can include "
+            + "car rental at fixed locations or free-floating services.")
         .value("flexible", StreetMode.FLEXIBLE, "Walk to an eligible pickup area for "
             + "flexible transportation, ride to an eligible drop-off area and then walk the rest of "
             + "the way.")
