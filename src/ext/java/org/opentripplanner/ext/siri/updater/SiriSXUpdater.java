@@ -21,7 +21,7 @@ import org.slf4j.LoggerFactory;
 import uk.org.siri.siri20.ServiceDelivery;
 import uk.org.siri.siri20.Siri;
 
-public class SiriSXUpdater extends PollingGraphUpdater {
+public class SiriSXUpdater extends PollingGraphUpdater implements TransitAlertProvider {
     private static final Logger LOG = LoggerFactory.getLogger(SiriSXUpdater.class);
     private static final long RETRY_INTERVAL_MILLIS = 5000;
 
@@ -185,6 +185,7 @@ public class SiriSXUpdater extends PollingGraphUpdater {
     public void teardown() {
     }
 
+    @Override
     public TransitAlertService getTransitAlertService() {
         return transitAlertService;
     }
