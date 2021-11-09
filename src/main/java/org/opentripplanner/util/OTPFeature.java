@@ -29,7 +29,7 @@ public enum OTPFeature {
     FloatingBike(false),
     GoogleCloudStorage(false),
     ReportApi(false),
-    SandboxAPITransmodelApi(false),
+    SandboxAPITransmodelApi(true),
     SandboxAPILegacyGraphQLApi(false),
     SandboxAPIMapboxVectorTilesApi(false),
     SandboxExampleAPIGraphStatistics(false),
