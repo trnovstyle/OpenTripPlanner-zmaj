@@ -1,6 +1,7 @@
 package org.opentripplanner.updater.alerts;
 
 import com.google.transit.realtime.GtfsRealtime.FeedMessage;
+import org.opentripplanner.ext.siri.updater.TransitAlertProvider;
 import org.opentripplanner.routing.RoutingService;
 import org.opentripplanner.routing.graph.Graph;
 import org.opentripplanner.routing.impl.TransitAlertServiceImpl;
@@ -29,7 +30,7 @@ import java.util.Map;
  * myalert.feedId = TA
  * </pre>
  */
-public class GtfsRealtimeAlertsUpdater extends PollingGraphUpdater {
+public class GtfsRealtimeAlertsUpdater extends PollingGraphUpdater implements TransitAlertProvider {
     private static final Logger LOG = LoggerFactory.getLogger(GtfsRealtimeAlertsUpdater.class);
 
     private GraphUpdaterManager updaterManager;
@@ -113,6 +114,7 @@ public class GtfsRealtimeAlertsUpdater extends PollingGraphUpdater {
     public void teardown() {
     }
 
+    @Override
     public TransitAlertService getTransitAlertService() {
         return transitAlertService;
     }

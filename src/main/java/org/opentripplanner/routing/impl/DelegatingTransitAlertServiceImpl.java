@@ -1,12 +1,11 @@
 package org.opentripplanner.routing.impl;
 
-import org.opentripplanner.ext.siri.updater.SiriSXUpdater;
+import org.opentripplanner.ext.siri.updater.TransitAlertProvider;
 import org.opentripplanner.model.FeedScopedId;
 import org.opentripplanner.model.calendar.ServiceDate;
 import org.opentripplanner.routing.alertpatch.TransitAlert;
 import org.opentripplanner.routing.graph.Graph;
 import org.opentripplanner.routing.services.TransitAlertService;
-import org.opentripplanner.updater.alerts.GtfsRealtimeAlertsUpdater;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -20,15 +19,9 @@ public class DelegatingTransitAlertServiceImpl implements TransitAlertService {
   public DelegatingTransitAlertServiceImpl(Graph graph) {
     if (graph.updaterManager != null) {
       graph.updaterManager.getUpdaterList().stream()
-          .filter(SiriSXUpdater.class::isInstance)
-          .map(SiriSXUpdater.class::cast)
-          .map(SiriSXUpdater::getTransitAlertService)
-          .forEach(transitAlertServices::add);
-
-      graph.updaterManager.getUpdaterList().stream()
-          .filter(GtfsRealtimeAlertsUpdater.class::isInstance)
-          .map(GtfsRealtimeAlertsUpdater.class::cast)
-          .map(GtfsRealtimeAlertsUpdater::getTransitAlertService)
+          .filter(TransitAlertProvider.class::isInstance)
+          .map(TransitAlertProvider.class::cast)
+          .map(TransitAlertProvider::getTransitAlertService)
           .forEach(transitAlertServices::add);
     }
   }

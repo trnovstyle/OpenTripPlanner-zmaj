@@ -22,7 +22,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-public class SiriSXUpdater extends PollingGraphUpdater {
+public class SiriSXUpdater extends PollingGraphUpdater implements TransitAlertProvider {
     private static final Logger LOG = LoggerFactory.getLogger(SiriSXUpdater.class);
     private static final long RETRY_INTERVAL_MILLIS = 5000;
 
@@ -186,6 +186,7 @@ public class SiriSXUpdater extends PollingGraphUpdater {
     public void teardown() {
     }
 
+    @Override
     public TransitAlertService getTransitAlertService() {
         return transitAlertService;
     }
