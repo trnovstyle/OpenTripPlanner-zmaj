@@ -397,6 +397,9 @@ public class SiriAlertsUpdateHandler {
                             else {
                                 alert.addEntity(new EntitySelector.Trip(tripId, serviceDate));
                             }
+
+                        } else {
+                            LOG.warn("Did not found a match for DatedVehicleJourneyRef: {}", datedVehicleJourneyRef);
                         }
                     }
 
