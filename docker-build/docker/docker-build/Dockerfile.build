@@ -1,0 +1,22 @@
+FROM maven:3.6.3-jdk-11-slim
+
+ENV OTP_ROOT="/opt/opentripplanner"
+ENV OTP_SRC="."
+
+
+RUN mkdir /root/.m2
+RUN mkdir /root/tmp
+WORKDIR /root/tmp
+ADD docker-build/settings.xml /root/.m2/settings.xml
+ADD docker-build/pom.xml.orig /root/tmp/pom.xml 
+RUN ["/usr/local/bin/mvn-entrypoint.sh", "mvn", "verify", "clean", "--fail-never"]
+
+WORKDIR ${OTP_ROOT}
+
+#VOLUME /root/.m2
+
+ADD pom.xml ${OTP_ROOT}/pom.xml
+ADD src ${OTP_ROOT}/src
+ADD .git ${OTP_ROOT}/.git
+
+RUN mvn package -DskipTests

@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<settings xmlns="http://maven.apache.org/SETTINGS/1.0.0" 
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+          xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0 http://maven.apache.org/xsd/settings-1.0.0.xsd">
+
+	<proxies/>
+
+
+	<servers>	
+		<server>
+			<id>azure</id>
+			<username>Skanetrafiken2</username>
+			<password>pwjuusshfm4xvlv3nmnfgmj3py6zeikqkw2nqsdiydwfjlp7zsia</password>
+		</server>
+	</servers>	
+	<profiles>
+		<profile>
+			<id>azure-repo</id>
+			<repositories>
+				<repository>
+					<id>azure</id>
+					<url>https://pkgs.dev.azure.com/Skanetrafiken2/Tokyo/_packaging/Tokyo-Artifact-Feed/maven/v1</url>
+					<releases>
+						<enabled>true</enabled>
+					</releases>
+					<snapshots>
+						<enabled>true</enabled>
+					</snapshots>
+				</repository>
+			</repositories>
+		</profile>
+	</profiles>
+
+	<activeProfiles>
+		<activeProfile>azure-repo</activeProfile>
+	</activeProfiles>
+
+</settings>
