@@ -367,9 +367,11 @@ public class SiriAlertsUpdateHandler {
 
                         if (tripId != null) {
                             ServiceDate serviceDate = null;
+
                             if (dataFrameRef != null && dataFrameRef.getValue() != null) {
-                                ZonedDateTime startOfService = DateMapper.asStartOfService(LocalDate.parse(
-                                    dataFrameRef.getValue()), graph.getTimeZone().toZoneId());
+                                ZonedDateTimestartOfService = DateMapper.asStartOfService(
+                                        LocalDate.parse(dataFrameRef.getValue()), graph.getTimeZone().toZoneId()
+                                );
 
                                 serviceDate = new ServiceDate(startOfService.getYear(),
                                     startOfService.getMonthValue(),
@@ -378,24 +380,25 @@ public class SiriAlertsUpdateHandler {
 
                             }
 
+
                             if (!affectedStops.isEmpty()) {
                                 for (AffectedStopPointStructure affectedStop : affectedStops) {
-                                    FeedScopedId stop = siriFuzzyTripMatcher.getStop(affectedStop
-                                        .getStopPointRef()
-                                        .getValue());
+                                    FeedScopedId stop = siriFuzzyTripMatcher.getStop(affectedStop.getStopPointRef().getValue());
                                     if (stop == null) {
-                                        stop = new FeedScopedId(feedId,
-                                            affectedStop.getStopPointRef().getValue()
-                                        );
+                                        stop = new FeedScopedId(feedId, affectedStop.getStopPointRef().getValue()
+                                    );
                                     }
 
                                     alert.addEntity(new EntitySelector.StopAndTrip(stop, tripId, serviceDate));
                                 }
-                            }
-                            else {
+                                }
+                             else {
                                 alert.addEntity(new EntitySelector.Trip(tripId, serviceDate));
                             }
 
+                        } else {
+                            LOG.warn("Did not found a match for DatedVehicleJourneyRef: {}", datedVehicleJourneyRef);
+                            }
                         } else {
                             LOG.warn("Did not found a match for DatedVehicleJourneyRef: {}", datedVehicleJourneyRef);
                         }
