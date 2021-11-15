@@ -1,60 +1,119 @@
 # Pipeline for after pull request has been approved and development branch has been merged to release branch
 trigger:
-  - resesok-otp
-pool: 'TJP'
+- resesok-otp
+
+pool: TJP
+
+resources:
+  repositories:
+  - repository: self
+  - repository: Common
+    type: git
+    name: Infra/common-devops-templates
+    ref: refs/tags/3.1.0
 
 variables:
-  dockerRegistryServiceConnection: 'TJPCRPROD'
   buildVersion: '0.1.$(Build.BuildId)'
-  keyVaultName: 'TJP-INFRA-KV-DEV'
-  dockerRegistry: 'TJPCRPROD'
-  azureSubscription: 'TJPDevOps-CN'
-  otpVersion: ''
 
 steps:
-  - checkout: self
-    persistCredentials: true
-    clean: true
+- checkout: self
+  persistCredentials: true
+  clean: true
 
-  - task: DownloadSecureFile@1
-    displayName: 'Copy Maven authorization for Skånetrafiken Maven repository'
-    name: settingsSecurity
-    inputs:
-      secureFile: settings-security.xml
+- task: DownloadSecureFile@1
+  displayName: 'Get Maven authorization configuration'
+  name: settingsSecurity
+  inputs:
+    secureFile: settings-security.xml
 
-  - bash: echo $(cp -p $(settingsSecurity.secureFilePath) /tmp/settings-security.xml)
-    displayName: 'Copy Maven authorization configuration to Maven home directory'
+# security issue
+- bash: echo $(cp -p $(settingsSecurity.secureFilePath) /tmp/settings-security.xml)
+  displayName: 'Copy Maven authorization configuration'
 
-  - task: JavaToolInstaller@0
-    displayName: 'Use JDK 11'
-    inputs:
-      versionSpec: '11'
-      jdkArchitectureOption: 'x64'
-      jdkSourceOption: 'PreInstalled'
+- task: JavaToolInstaller@0
+  displayName: 'Use JDK 11'
+  inputs:
+    versionSpec: '11'
+    jdkArchitectureOption: 'x64'
+    jdkSourceOption: 'PreInstalled'
 
-    # Exports otpVersion as pipeline variable
-  - bash: docker-build/azure-deploy/version-check.sh
-    displayName: 'Check if new version is valid'
+# Exports otpVersion as pipeline variable
+- bash: docker-build/azure-deploy/version-check.sh
+  displayName: 'Export otpVersion if valid'
 
-  - task: Maven@3
-    displayName: 'Publish artifact with version number to Skånetrafiken Maven repository'
-    inputs:
-      goals: 'clean package deploy'
-      options: '-Pjunit-report --settings docker-build/azure-deploy/settings.xml -Dsettings.security=/tmp/settings-security.xml -B -U'
-      jdkVersionOption: '1.11'
-      jdkArchitectureOption: 'x64'
-      mavenOptions: '-Xmx1G' # Build agents are limited to 2Gb
+- task: Maven@3
+  displayName: 'Publish to Skånetrafiken Maven repository'
+  inputs:
+    goals: 'clean package deploy'
+    options: '-Pjunit-report --settings docker-build/azure-deploy/settings.xml -Dsettings.security=/tmp/settings-security.xml -B -U'
+    jdkVersionOption: '1.11'
+    jdkArchitectureOption: 'x64'
+    mavenOptions: '-Xmx2G'
 
-  - bash: docker-build/azure-deploy/git-version.sh
-    displayName: 'Create new git tag with current version'
-    env:
-      DEVOPS_ACCESSTOKEN: $(System.AccessToken)
-      OTP_VERSION: $(otpVersion)
+- bash: docker-build/azure-deploy/git-version.sh
+  displayName: 'Create new git tag with current version'
+  env:
+    DEVOPS_ACCESSTOKEN: $(System.AccessToken)
+    OTP_VERSION: $(otpVersion)
 
-  - task: PublishCodeCoverageResults@1
-    inputs:
-      codeCoverageTool: 'JaCoCo'
-      reportDirectory: $(System.DefaultWorkingDirectory)/target/site/jacoco-ut/**/*.*
-      summaryFileLocation: $(System.DefaultWorkingDirectory)/target/site/jacoco-ut/jacoco.xml
+- task: PublishCodeCoverageResults@1
+  displayName: 'Report code coverage'
+  inputs:
+    codeCoverageTool: 'JaCoCo'
+    reportDirectory: $(System.DefaultWorkingDirectory)/target/site/jacoco-ut/**/*.*
+    summaryFileLocation: $(System.DefaultWorkingDirectory)/target/site/jacoco-ut/jacoco.xml
 
-  - template: templates/deployment_steps.yaml
+- task: Bash@3
+  displayName: 'Copy data to docker build directory'
+  inputs:
+    filePath: docker-build/docker/copy-docker-data.sh
+
+- template: as-a-service/build.yaml@Common
+  parameters:
+    azureSubscription: 'ST IKT DEV'
+    chartName: otp
+    chartPath: docker-build/helm/otp
+    buildVersion: $(buildVersion)
+    images:
+    - name: otp
+      source: docker-build/docker
+
+# Trigger deploy to PR environment
+- task: TriggerBuild@3
+  displayName: 'Trigger resesok-otp-deploy-pr'
+  inputs:
+    definitionIsInCurrentTeamProject: true
+    buildDefinition: 'resesok-otp-deploy-pr'
+    queueBuildForUserThatTriggeredBuild: true
+    ignoreSslCertificateErrors: false
+    useSameSourceVersion: false
+    useCustomSourceVersion: false
+    useSameBranch: true
+    waitForQueuedBuildsToFinish: false
+    storeInEnvironmentVariable: false
+    authenticationMethod: 'OAuth Token'
+    enableBuildInQueueCondition: false
+    dependentOnSuccessfulBuildCondition: false
+    dependentOnFailedBuildCondition: false
+    checkbuildsoncurrentbranch: false
+    failTaskIfConditionsAreNotFulfilled: false
+
+- task: TriggerBuild@3
+  displayName: 'Trigger resesok-proxy'
+  inputs:
+    definitionIsInCurrentTeamProject: true
+    buildDefinition: resesok-proxy
+    queueBuildForUserThatTriggeredBuild: true
+    ignoreSslCertificateErrors: false
+    useSameSourceVersion: false
+    useCustomSourceVersion: false
+    useSameBranch: false
+    branchToUse: master
+    waitForQueuedBuildsToFinish: false
+    storeInEnvironmentVariable: false
+    authenticationMethod: 'OAuth Token'
+    enableBuildInQueueCondition: false
+    dependentOnSuccessfulBuildCondition: false
+    dependentOnFailedBuildCondition: false
+    checkbuildsoncurrentbranch: false
+    failTaskIfConditionsAreNotFulfilled: false
