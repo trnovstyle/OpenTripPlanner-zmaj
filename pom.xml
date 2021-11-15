@@ -39,6 +39,19 @@
         <argLine></argLine>
     </properties>
 
+    <distributionManagement>
+        <repository>
+            <id>skanetrafiken-releases</id>
+            <name>Skanetrafiken releases</name>
+            <url>https://nexus-dev.skanetrafiken.se/repository/maven-releases/</url>
+        </repository>
+        <snapshotRepository>
+            <id>skanetrafiken-snapshots</id>
+            <name>Skanetrafiken snapshots</name>
+            <url>https://nexus-dev.skanetrafiken.se/repository/maven-snapshots/</url>
+        </snapshotRepository>
+    </distributionManagement>
+
     <build>
         <!--
         Filtering will perform substitution on otp-project-info.properties,
