@@ -120,16 +120,7 @@ public class PruneNoThruIslands implements GraphBuilderModule {
         }
 
         // clean up pruned street vertices
-        int removed = 0;
-        List<Vertex> toRemove = new LinkedList<>();
-        for (Vertex v : graph.getVerticesOfType(StreetVertex.class)) {
-            if (v.getDegreeOut() + v.getDegreeIn() == 0)
-                toRemove.add(v);
-        }
-        for (Vertex v : toRemove) {
-            graph.remove(v);
-            removed += 1;
-        }
+        int removed = graph.removeEdgelessVertices();
         LOG.info("Removed {} edgeless street vertices", removed);
     }
 
