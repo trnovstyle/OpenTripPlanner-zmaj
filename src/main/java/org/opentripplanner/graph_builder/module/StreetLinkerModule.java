@@ -133,6 +133,10 @@ public class StreetLinkerModule implements GraphBuilderModule {
     for (VehicleParkingEntranceVertex vehicleParkingEntranceVertex : graph.getVerticesOfType(
         VehicleParkingEntranceVertex.class)) {
 
+      if (vehicleParkingEntranceHasLinks(vehicleParkingEntranceVertex)) {
+        continue;
+      }
+
       if (vehicleParkingEntranceVertex.getParkingEntrance().getVertex() == null) {
         linkVehicleParkingWithLinker(graph, vehicleParkingEntranceVertex);
         continue;
@@ -148,6 +152,11 @@ public class StreetLinkerModule implements GraphBuilderModule {
 
     }
     graph.hasLinkedBikeParks = true;
+  }
+
+  private boolean vehicleParkingEntranceHasLinks(VehicleParkingEntranceVertex vehicleParkingEntranceVertex) {
+    return !(vehicleParkingEntranceVertex.getIncoming().stream().allMatch(VehicleParkingEdge.class::isInstance)
+            && vehicleParkingEntranceVertex.getOutgoing().stream().allMatch(VehicleParkingEdge.class::isInstance));
   }
 
   private static void linkVehicleParkingWithLinker(Graph graph, VehicleParkingEntranceVertex vehicleParkingVertex) {
