@@ -3,7 +3,9 @@ package org.opentripplanner.netex.mapping;
 import org.opentripplanner.model.modes.TransitMode;
 import org.opentripplanner.model.modes.TransitModeService;
 import org.rutebanken.netex.model.AllVehicleModesOfTransportEnumeration;
+import org.rutebanken.netex.model.StopPlace;
 import org.rutebanken.netex.model.TransportSubmodeStructure;
+import org.rutebanken.netex.model.VehicleModeEnumeration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,6 +41,23 @@ class TransportModeMapper {
         return result;
     }
 
+    public TransitMode map(
+            StopPlace stopPlace
+    ) {
+        TransitMode result = null;
+        String submode = getSubmodeAsString(stopPlace);
+        if (submode != null) {
+            result = mapSubmodeFromConfiguration(submode);
+        }
+        // Fallback to main mode
+        if (result == null) {
+            result = mapVehicleMode(stopPlace.getTransportMode());
+        }
+
+        return result;
+    }
+
+
     private TransitMode mapAllVehicleModesOfTransport(AllVehicleModesOfTransportEnumeration mode) {
         switch (mode) {
             case AIR:
@@ -65,6 +84,34 @@ class TransportModeMapper {
         }
     }
 
+    private TransitMode mapVehicleMode(VehicleModeEnumeration mode) {
+        switch (mode) {
+            case AIR:
+                return TransitMode.AIRPLANE;
+            case BUS:
+                return TransitMode.BUS;
+            case CABLEWAY:
+                return TransitMode.CABLE_CAR;
+            case COACH:
+                return TransitMode.COACH;
+            case FUNICULAR:
+                return TransitMode.FUNICULAR;
+            case METRO:
+                return TransitMode.SUBWAY;
+            case RAIL:
+                return TransitMode.RAIL;
+            case TRAM:
+                return TransitMode.TRAM;
+            case WATER:
+            case FERRY:
+                return TransitMode.FERRY;
+            case TROLLEY_BUS:
+                return TransitMode.TROLLEYBUS;
+            default:
+                throw new IllegalArgumentException();
+        }
+    }
+
     private String getSubmodeAsString(TransportSubmodeStructure submode) {
         if (submode.getAirSubmode() != null) {
             return submode.getAirSubmode().value();
@@ -86,6 +133,29 @@ class TransportModeMapper {
             return submode.getWaterSubmode().value();
         }
         throw new IllegalArgumentException();
+    }
+
+    private String getSubmodeAsString(StopPlace stopPlace) {
+        if (stopPlace.getAirSubmode() != null) {
+            return stopPlace.getAirSubmode().value();
+        } else if (stopPlace.getBusSubmode() != null) {
+            return stopPlace.getBusSubmode().value();
+        } else if (stopPlace.getTelecabinSubmode() != null) {
+            return stopPlace.getTelecabinSubmode().value();
+        } else if (stopPlace.getCoachSubmode() != null) {
+            return stopPlace.getCoachSubmode().value();
+        } else if (stopPlace.getFunicularSubmode() != null) {
+            return stopPlace.getFunicularSubmode().value();
+        } else if (stopPlace.getMetroSubmode() != null) {
+            return stopPlace.getMetroSubmode().value();
+        } else if (stopPlace.getRailSubmode() != null) {
+            return stopPlace.getRailSubmode().value();
+        } else if (stopPlace.getTramSubmode() != null) {
+            return stopPlace.getTramSubmode().value();
+        } else if (stopPlace.getWaterSubmode() != null) {
+            return stopPlace.getWaterSubmode().value();
+        }
+        return null;
     }
 
     private TransitMode mapSubmodeFromConfiguration(

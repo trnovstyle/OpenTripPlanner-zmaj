@@ -17,6 +17,7 @@ import org.opentripplanner.graph_builder.Issue;
 import org.opentripplanner.model.FareZone;
 import org.opentripplanner.model.Station;
 import org.opentripplanner.model.Stop;
+import org.opentripplanner.model.modes.TransitModeService;
 import org.opentripplanner.netex.index.api.ReadOnlyHierarchicalVersionMapById;
 import org.opentripplanner.netex.issues.StopPlaceWithoutQuays;
 import org.opentripplanner.netex.mapping.support.FeedScopedIdFactory;
@@ -60,10 +61,11 @@ class StopAndStationMapper {
             FeedScopedIdFactory idFactory,
             ReadOnlyHierarchicalVersionMapById<Quay> quayIndex,
             TariffZoneMapper tariffZoneMapper,
-            DataImportIssueStore issueStore
+            DataImportIssueStore issueStore,
+            TransitModeService transitModeService
     ) {
         this.stationMapper = new StationMapper(issueStore, idFactory);
-        this.stopMapper = new StopMapper(idFactory, issueStore);
+        this.stopMapper = new StopMapper(idFactory, issueStore, transitModeService);
         this.tariffZoneMapper = tariffZoneMapper;
         this.quayIndex = quayIndex;
         this.issueStore = issueStore;
