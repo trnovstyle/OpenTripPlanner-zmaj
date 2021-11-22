@@ -85,6 +85,10 @@ class TransportModeMapper {
     }
 
     private TransitMode mapVehicleMode(VehicleModeEnumeration mode) {
+        if (mode == null) {
+            return null;
+        }
+        
         switch (mode) {
             case AIR:
                 return TransitMode.AIRPLANE;
