@@ -35,14 +35,9 @@ import uk.org.siri.siri20.VehicleActivityStructure;
 import uk.org.siri.siri20.VehicleModesEnumeration;
 import uk.org.siri.siri20.VehicleMonitoringDeliveryStructure;
 
+import java.text.ParseException;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.BitSet;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.TimeZone;
+import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
 
 import static org.opentripplanner.ext.siri.TimetableHelper.createModifiedStopTimes;
@@ -820,6 +815,17 @@ public class SiriTimetableSnapshotSource implements TimetableSnapshotProvider {
     }
 
     private ServiceDate getServiceDateForEstimatedVehicleJourney(EstimatedVehicleJourney estimatedVehicleJourney) {
+        if (estimatedVehicleJourney.getFramedVehicleJourneyRef() != null &&
+                estimatedVehicleJourney.getFramedVehicleJourneyRef().getDataFrameRef() != null) {
+
+            String dataFrameRefValue = Objects.toString(estimatedVehicleJourney.getFramedVehicleJourneyRef().getDataFrameRef().getValue(), "");
+            try {
+                return ServiceDate.parseString(dataFrameRefValue, timeZone);
+            } catch (ParseException e) {
+                LOG.warn(e.getMessage());
+            }
+        }
+
         ZonedDateTime date;
         if (estimatedVehicleJourney.getRecordedCalls() != null && !estimatedVehicleJourney.getRecordedCalls().getRecordedCalls().isEmpty()){
             date = estimatedVehicleJourney.getRecordedCalls().getRecordedCalls().get(0).getAimedDepartureTime();
@@ -833,7 +839,7 @@ public class SiriTimetableSnapshotSource implements TimetableSnapshotProvider {
         }
 
 
-        return new ServiceDate(date.getYear(), date.getMonthValue(), date.getDayOfMonth());
+        return new ServiceDate(date.withZoneSameInstant(timeZone.toZoneId()).toLocalDate(), timeZone);
     }
 
     private int calculateSecondsSinceMidnight(ZonedDateTime dateTime) {
