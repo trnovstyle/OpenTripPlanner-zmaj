@@ -38,6 +38,9 @@ public final class ServiceDate implements Serializable, Comparable<ServiceDate> 
 
     private static final TimeZone UTC_TIME_ZONE = TimeZone.getTimeZone("UTC");
 
+    // To avoid using system default timezone, an instance can explicitly define the timezone
+    private TimeZone timeZone;
+
     /**
      * The smallest possible ServiceDate allowed. Dates before 1 . JAN year 0 is not allowed.
      */
@@ -75,6 +78,12 @@ public final class ServiceDate implements Serializable, Comparable<ServiceDate> 
      * @param day - numeric day of month between 1 and 31.
      */
     public ServiceDate(int year, int month, int day) {
+        this(year, month, day, TimeZone.getDefault());
+    }
+
+
+    public ServiceDate(int year, int month, int day, TimeZone timeZone) {
+        this.timeZone = timeZone;
         // Preconditions
         verifyIsInRange(year, 0, 9999, "year");
         verifyIsInRange(month, 1, 12, "month");
@@ -125,12 +134,21 @@ public final class ServiceDate implements Serializable, Comparable<ServiceDate> 
         this(date.getYear(), date.getMonthValue(), date.getDayOfMonth());
     }
 
+    public ServiceDate(LocalDate localDate, TimeZone timeZone) {
+        this(localDate);
+        this.timeZone = timeZone;
+    }
+
     /**
      * Parse given input string in the "YYYYMMDD" or "YYYY-MM-DD" format.
      *
      * @throws ParseException on parse error
      */
     public static ServiceDate parseString(String value) throws ParseException {
+        return parseString(value, TimeZone.getDefault());
+    }
+
+    public static ServiceDate parseString(String value, TimeZone timeZone) throws ParseException {
 
         Matcher matcher = PATTERN.matcher(value);
 
@@ -141,7 +159,7 @@ public final class ServiceDate implements Serializable, Comparable<ServiceDate> 
         int year = Integer.parseInt(matcher.group(1));
         int month = Integer.parseInt(matcher.group(2));
         int day = Integer.parseInt(matcher.group(3));
-        return new ServiceDate(year, month, day);
+        return new ServiceDate(year, month, day, timeZone);
     }
 
     public int getYear() {
@@ -185,7 +203,7 @@ public final class ServiceDate implements Serializable, Comparable<ServiceDate> 
      */
     @Deprecated
     public Date getAsDate() {
-        return getAsDate(TimeZone.getDefault());
+        return getAsDate(timeZone);
     }
 
     private LocalDate toLocalDate() {
