@@ -400,16 +400,6 @@ public class SiriAlertsUpdateHandler {
                             LOG.warn("Did not found a match for DatedVehicleJourneyRef: {}", datedVehicleJourneyRef);
                         }
                     }
-
-                    if (lineRef != null) {
-
-                        Set<Route> affectedRoutes = siriFuzzyTripMatcher.getRoutes(lineRef);
-                        if (affectedRoutes != null) {
-                            for (Route route : affectedRoutes) {
-                                alert.addEntity(new EntitySelector.Route(route.getId()));
-                            }
-                        }
-                    }
                 }
             }
         }
