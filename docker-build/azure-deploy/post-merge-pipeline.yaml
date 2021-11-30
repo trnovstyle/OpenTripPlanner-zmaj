@@ -1,6 +1,6 @@
 # Pipeline for after pull request has been approved and development branch has been merged to release branch
 trigger:
-- resesok-otp
+- resesok-otp2
 
 pool: TJP
 
