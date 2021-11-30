@@ -1,17 +1,12 @@
 package org.opentripplanner.ext.siri.updater.azure;
 
-import java.time.LocalDate;
-import java.time.Period;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeParseException;
-
 public abstract class SiriAzureUpdaterParameters {
     private String configRef;
     private String type;
     private String serviceBusUrl;
     private String topicName;
     private String dataInitializationUrl;
+    private String feedId;
     private int timeout;
 
     public SiriAzureUpdaterParameters(String type) {
@@ -52,6 +47,14 @@ public abstract class SiriAzureUpdaterParameters {
 
     public void setDataInitializationUrl(String dataInitializationUrl) {
         this.dataInitializationUrl = dataInitializationUrl;
+    }
+
+    public String getFeedId() {
+        return feedId;
+    }
+
+    public void setFeedId(String feedId) {
+        this.feedId = feedId;
     }
 
     public int getTimeout() {

@@ -35,6 +35,7 @@ public abstract class AbstractAzureSiriUpdater implements GraphUpdater {
     protected final String topicName;
     private String subscriptionName;
     private final String serviceBusUrl;
+    protected String feedId;
 
     /**
      * The URL used to fetch all initial updates
@@ -53,6 +54,7 @@ public abstract class AbstractAzureSiriUpdater implements GraphUpdater {
 
         this.dataInitializationUrl = config.getDataInitializationUrl();
         this.timeout = config.getTimeout();
+        this.feedId = config.getFeedId();
     }
 
     /**
@@ -81,6 +83,8 @@ public abstract class AbstractAzureSiriUpdater implements GraphUpdater {
     public void run() throws Exception {
         Preconditions.checkNotNull(topicName, "'topic' must be set");
         Preconditions.checkNotNull(serviceBusUrl, "'servicebus-url' must be set");
+        Preconditions.checkNotNull(feedId, "'feedId' must be set");
+        Preconditions.checkState(feedId.length() > 0, "'feedId' must be set");
 
         // In Kubernetes this should be the POD identifier
         subscriptionName = System.getenv("HOSTNAME");
