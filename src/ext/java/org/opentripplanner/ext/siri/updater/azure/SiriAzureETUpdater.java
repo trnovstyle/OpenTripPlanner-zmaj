@@ -99,7 +99,7 @@ public class SiriAzureETUpdater extends AbstractAzureSiriUpdater {
                 return;
             }
 
-            updaterManager.execute(graph -> snapshotSource.applyEstimatedTimetable(graph, topicName, false, updates));
+            updaterManager.execute(graph -> snapshotSource.applyEstimatedTimetable(graph, feedId, false, updates));
         } catch (JAXBException | XMLStreamException e) {
             LOG.error(e.getLocalizedMessage(), e);
         }
@@ -116,7 +116,7 @@ public class SiriAzureETUpdater extends AbstractAzureSiriUpdater {
 
             updaterManager.execute(graph -> {
                 long t1 = System.currentTimeMillis();
-                snapshotSource.applyEstimatedTimetable(graph, topicName, false, updates);
+                snapshotSource.applyEstimatedTimetable(graph, feedId, false, updates);
 
                 setPrimed(true);
                 LOG.info("Azure ET updater initialized after {} ms: [time since startup: {}]",
