@@ -9,7 +9,7 @@ schedules:
   displayName: "Daily Night Run"
   branches:
     include:
-    - resesok-otp
+    - resesok-otp2
   # Schedule even if there are no changes in the code
   always: true
 
