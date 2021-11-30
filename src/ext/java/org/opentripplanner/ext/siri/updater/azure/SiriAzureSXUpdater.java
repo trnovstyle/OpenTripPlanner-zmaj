@@ -54,7 +54,7 @@ public class SiriAzureSXUpdater extends AbstractAzureSiriUpdater implements Tran
         this.transitAlertService = new TransitAlertServiceImpl(graph);
         SiriFuzzyTripMatcher fuzzyTripMatcher = new SiriFuzzyTripMatcher(new RoutingService(graph));
         if (updateHandler == null) {
-            updateHandler = new SiriAlertsUpdateHandler(topicName, graph);
+            updateHandler = new SiriAlertsUpdateHandler(feedId, graph);
         }
         updateHandler.setTransitAlertService(transitAlertService);
         updateHandler.setSiriFuzzyTripMatcher(fuzzyTripMatcher);

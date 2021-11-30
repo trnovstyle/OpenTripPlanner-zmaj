@@ -15,6 +15,7 @@ public abstract class SiriAzureUpdaterConfig {
         parameters.setConfigRef(configRef);
         parameters.setServiceBusUrl(c.asText("servicebus-url", null));
         parameters.setTopicName(c.asText("topic", null));
+        parameters.setFeedId(c.asText("feedId", null));
 
         if (c.exist("history")) {
             NodeAdapter history = c.path("history");

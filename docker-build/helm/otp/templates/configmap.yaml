@@ -19,6 +19,7 @@ data:
             "topic": "siri_et",
             "servicebus-url": "{{ .Values.realtime.serviceBusConnectionString }}",
             "customMidnight": {{ .Values.realtime.customMidnight }},
+            "feedId": "{{ .Values.realtime.feedId }}",
           {{- if .Values.realtime.siriEt.history.enabled }}
             "history": {
               "url": "{{ .Values.realtime.siriEt.history.url }}",
@@ -32,6 +33,7 @@ data:
             "topic": "siri_sx",
             "servicebus-url": "{{ .Values.realtime.serviceBusConnectionString }}",
             "customMidnight": {{ .Values.realtime.customMidnight }},
+            "feedId": "{{ .Values.realtime.feedId }}",
             {{- if .Values.realtime.siriSx.history.enabled }}
             "history": {
               "url": "{{ .Values.realtime.siriSx.history.url }}",

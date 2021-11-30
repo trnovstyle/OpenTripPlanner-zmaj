@@ -83,6 +83,7 @@ realtime:
   enabled: true
   serviceBusConnectionString: "set by Azure pipeline"
   customMidnight: 4
+  feedId: "ST"
   siriEt:
     history:
       enabled: true
