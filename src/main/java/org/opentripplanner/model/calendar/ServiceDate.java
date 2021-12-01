@@ -78,12 +78,17 @@ public final class ServiceDate implements Serializable, Comparable<ServiceDate> 
      * @param day - numeric day of month between 1 and 31.
      */
     public ServiceDate(int year, int month, int day) {
-        this(year, month, day, TimeZone.getDefault());
+        this(year, month, day, null);
     }
 
-
+    /**
+     * Construct a new ServiceDate by specifying the numeric year, month, day and timezone
+     *
+     * @param year - numeric year (ex. 2010)
+     * @param month - numeric month of the year, where Jan = 1, Feb = 2, etc
+     * @param day - numeric day of month
+     */
     public ServiceDate(int year, int month, int day, TimeZone timeZone) {
-        this.timeZone = timeZone;
         // Preconditions
         verifyIsInRange(year, 0, 9999, "year");
         verifyIsInRange(month, 1, 12, "month");
@@ -95,6 +100,7 @@ public final class ServiceDate implements Serializable, Comparable<ServiceDate> 
 
         // The sequence number is constructed to be 'yyyymmdd' (a valid integer)
         this.sequenceNumber = 10_000 * year + 100 * month + day;
+        this.timeZone = timeZone;
     }
 
     /**
@@ -197,14 +203,28 @@ public final class ServiceDate implements Serializable, Comparable<ServiceDate> 
 
     /**
      * @return calls {@link #getAsDate(TimeZone)} with the default timezone for
-     *         this VM
+     *         this VM if timeZone is nnull
      * @deprecated This is potentially dangerous to use. The TimeZone on the graph
      *             can be diffrent from the server default.
      */
     @Deprecated
     public Date getAsDate() {
-        return getAsDate(timeZone);
+        var z = timeZone == null ? TimeZone.getDefault() : timeZone;
+        return getAsDate(z);
     }
+
+    /**
+     * See {@link #getAsCalendar(TimeZone)} for more details.
+     *
+     * @param timeZone the target timezone to localize the service date to
+     * @return a localized date at "midnight" at the start of this service date in
+     *         the specified timezone
+     */
+    public Date getAsDate(TimeZone timeZone) {
+        Calendar c = getAsCalendar(timeZone);
+        return c.getTime();
+    }
+
 
     private LocalDate toLocalDate() {
         return LocalDate.of(year, month, day);
@@ -248,17 +268,6 @@ public final class ServiceDate implements Serializable, Comparable<ServiceDate> 
         return c;
     }
 
-    /**
-     * See {@link #getAsCalendar(TimeZone)} for more details.
-     *
-     * @param timeZone the target timezone to localize the service date to
-     * @return a localized date at "midnight" at the start of this service date in
-     *         the specified timezone
-     */
-    public Date getAsDate(TimeZone timeZone) {
-        Calendar c = getAsCalendar(timeZone);
-        return c.getTime();
-    }
 
     /**
      * @return a string in "YYYYMMDD" format
