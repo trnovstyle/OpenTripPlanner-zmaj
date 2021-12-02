@@ -203,7 +203,7 @@ public final class ServiceDate implements Serializable, Comparable<ServiceDate> 
 
     /**
      * @return calls {@link #getAsDate(TimeZone)} with the default timezone for
-     *         this VM if timeZone is nnull
+     *         this VM if timeZone is null
      * @deprecated This is potentially dangerous to use. The TimeZone on the graph
      *             can be diffrent from the server default.
      */
