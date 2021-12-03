@@ -37,3 +37,14 @@ function buildGraphFromNetexData {
   fi
 
 }
+
+# From OTP command line version extract all version info and send to stdout in format major.minor.patch-commitHash
+function getVersionString {
+  versionString="$1"
+
+  version=$(echo "$versionString" | sed 's/.*version: \([^ ]*\),.*/\1/')
+  commit=$(echo "$versionString" | sed 's/.*commit: \([^ ]*\),.*/\1/')
+
+  echo "$version-$commit"
+
+}
