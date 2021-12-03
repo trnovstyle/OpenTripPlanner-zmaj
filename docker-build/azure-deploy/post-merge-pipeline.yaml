@@ -37,24 +37,39 @@ steps:
     jdkArchitectureOption: 'x64'
     jdkSourceOption: 'PreInstalled'
 
-# Exports otpVersion as pipeline variable
-- bash: docker-build/azure-deploy/version-check.sh
-  displayName: 'Export otpVersion if valid'
-
-- task: Maven@3
-  displayName: 'Publish to Skånetrafiken Maven repository'
+- task: AzureKeyVault@1
+  displayName: 'Fetch Nexus password from KeyVault'
   inputs:
-    goals: 'clean package deploy'
-    options: '-Pjunit-report --settings docker-build/azure-deploy/settings.xml -Dsettings.security=/tmp/settings-security.xml -B -U'
-    jdkVersionOption: '1.11'
-    jdkArchitectureOption: 'x64'
-    mavenOptions: '-Xmx2G'
+    azureSubscription: 'ST IKT DEV'
+    KeyVaultName: TJP-INFRA-KV-DEV
+    secretsFilter: 'maven-build'
 
 - bash: docker-build/azure-deploy/git-version.sh
   displayName: 'Create new git tag with current version'
   env:
     DEVOPS_ACCESSTOKEN: $(System.AccessToken)
     OTP_VERSION: $(otpVersion)
+    MVN_PASSWORD: $(maven-build)
+
+- task: Maven@3
+  condition: eq(variables['SKIP_DEPLOY'], 'true')
+  displayName: 'Build but skip publish'
+  inputs:
+    goals: 'clean package'
+    options: '-Pjunit-report --settings docker-build/azure-deploy/settings.xml -Dsettings.security=/tmp/settings-security.xml -B -U'
+    jdkVersionOption: '1.11'
+    jdkArchitectureOption: 'x64'
+    mavenOptions: '-Xmx2G'
+
+- task: Maven@3
+  condition: eq(variables['SKIP_DEPLOY'], 'false')
+  displayName: 'Build and publish to Skånetrafiken Maven repository'
+  inputs:
+    goals: 'clean package deploy'
+    options: '-Pjunit-report --settings docker-build/azure-deploy/settings.xml -Dsettings.security=/tmp/settings-security.xml -B -U'
+    jdkVersionOption: '1.11'
+    jdkArchitectureOption: 'x64'
+    mavenOptions: '-Xmx2G'
 
 - task: PublishCodeCoverageResults@1
   displayName: 'Report code coverage'

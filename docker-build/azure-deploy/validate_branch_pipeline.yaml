@@ -4,6 +4,8 @@ pool: 'TJP'
 steps:
   - checkout: self
     persistCredentials: true
+  - checkout: git://Tokyo/resesok-otp@resesok-otp2
+    path: master
 
   - task: JavaToolInstaller@0
     displayName: 'Use JDK 11'
@@ -13,7 +15,7 @@ steps:
       jdkSourceOption: 'PreInstalled'
   # Look on SourceBranch and ensure that we can only merge from release branch
   # Otherwise exit with error code
-  - bash: docker-build/azure-deploy/release-check.sh
+  - bash: $(Agent.BuildDirectory)/s/resesok-otp/docker-build/azure-deploy/release-check.sh
     displayName: 'Validate source branch'
     env:
       SOURCE_BRANCH: $(System.PullRequest.SourceBranch)
