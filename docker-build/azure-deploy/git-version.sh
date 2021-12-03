@@ -1,6 +1,6 @@
 #!/bin/bash
 
-versionTag="$OTP_VERSION.RELEASE"
+versionTag="$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout).RELEASE"
 echo "New version : $versionTag"
 
 gitUser=$(git config user.name)
@@ -10,6 +10,15 @@ gitEmail=$(git config user.email)
 
 # Get rid of all local tags
 git -c http.extraheader="AUTHORIZATION: bearer $DEVOPS_ACCESSTOKEN" fetch --prune  origin --tags -f
+
+export MAVEN_OPTS="-Xmx2G"
+
+mvn clean package deploy -Pjunit-report --settings docker-build/azure-deploy/settings.xml -Dsettings.security=/tmp/settings-security.xml -B -U
+
+if [ $(git tag -l $versionTag) ]; then
+  echo "Tag already exists, skipping."
+  exit 0
+fi
 
 # tag the master branch
 echo "# Create local tag $versionTag"

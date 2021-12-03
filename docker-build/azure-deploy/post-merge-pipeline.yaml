@@ -37,21 +37,8 @@ steps:
     jdkArchitectureOption: 'x64'
     jdkSourceOption: 'PreInstalled'
 
-# Exports otpVersion as pipeline variable
-- bash: docker-build/azure-deploy/version-check.sh
-  displayName: 'Export otpVersion if valid'
-
-- task: Maven@3
-  displayName: 'Publish to Skånetrafiken Maven repository'
-  inputs:
-    goals: 'clean package deploy'
-    options: '-Pjunit-report --settings docker-build/azure-deploy/settings.xml -Dsettings.security=/tmp/settings-security.xml -B -U'
-    jdkVersionOption: '1.11'
-    jdkArchitectureOption: 'x64'
-    mavenOptions: '-Xmx2G'
-
 - bash: docker-build/azure-deploy/git-version.sh
-  displayName: 'Create new git tag with current version'
+  displayName: 'Create new git tag with current version and publish to nexus'
   env:
     DEVOPS_ACCESSTOKEN: $(System.AccessToken)
     OTP_VERSION: $(otpVersion)

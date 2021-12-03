@@ -65,10 +65,5 @@ old_version=$(echo $old_version | sed -e 's/^\([0-9]\+\.[0-9]\+\.[0-9]\+\).*/\1/
 vercomp $old_version $new_version
 compare_result=$?
 
-if [[ $compare_result == 1 ]] || [[ $compare_result == 0 ]]; then
-    echo "New version $new_version is lower than or equal to old version $old_version"
-    exit 1
-fi
-
 # Set DevOps Pipeline variable otpVersion to new version
 echo "##vso[task.setvariable variable=otpVersion]$new_version"
