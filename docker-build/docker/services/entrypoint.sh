@@ -19,12 +19,12 @@ log_info "Running Entrypoint.sh.."
 # If graph name not provided as env variable
 # Set name based on version and hash
 if [[ -z "${GRAPH_NAME}" ]]; then
-  if ! VERSION=$(java -jar /code/otp-shaded.jar --version|grep version|cut -d' ' -f2) ||
-   ! GIT_HASH=$(java -jar /code/otp-shaded.jar --version|grep commit|cut -d' ' -f2); then
+  otpVersion=$(java -jar /code/otp-shaded.jar --version)
+  if ! VERSION_HASH=$(getVersionString "$otpVersion"); then
     log_error "Failed to get OTP version or hash"
     exit 1
   fi
-  GRAPH_NAME=GRAPH-$VERSION-$GIT_HASH.zip
+  GRAPH_NAME=GRAPH-$VERSION_HASH.zip
   UPLOAD_TO_AZURE=true
 else
   log_info "Using custom graph file: $GRAPH_NAME. If file is missing no graph will be build."
@@ -78,7 +78,7 @@ elif [ "$UPLOAD_TO_AZURE" = true ]; then
       exit 1
     fi
     rm $GRAPH_DATA_PATH/$NETEX_FILENAME $GRAPH_DATA_PATH/$OSM_FILENAME
-    zip -j /code/${GRAPH_NAME} ${FILE_TMP_PATH}Graph.obj
+    zip -j /code/${GRAPH_NAME} ${FILE_TMP_PATH}graph.obj
     uploadToAzureStorage $SA_NAME $GRAPH_CONTAINER /code/${GRAPH_NAME} $GRAPH_NAME
   else
     ls -al $GRAPH_DATA_PATH
