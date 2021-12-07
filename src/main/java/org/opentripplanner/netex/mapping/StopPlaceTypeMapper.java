@@ -3,6 +3,7 @@ package org.opentripplanner.netex.mapping;
 import org.opentripplanner.model.modes.TransitMode;
 import org.opentripplanner.model.modes.TransitModeService;
 import org.rutebanken.netex.model.StopPlace;
+import org.rutebanken.netex.model.VehicleModeEnumeration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,24 +22,24 @@ class StopPlaceTypeMapper {
         this.transitModeService = transitModeService;
     }
 
-    public TransitMode map(
-            StopPlace stopPlace
-    ) {
+    public TransitMode map(StopPlace stopPlace) {
         TransitMode result = null;
         String submode = getSubmodeAsString(stopPlace);
         if (submode != null) {
             result = mapSubmodeFromConfiguration(submode);
         }
+
         // Fallback to main mode
-        if (result == null) {
-            result = mapVehicleMode(stopPlace);
+        VehicleModeEnumeration mode = stopPlace.getTransportMode();
+        if (result == null && mode != null) {
+            result = mapVehicleMode(mode);
         }
 
         return result;
     }
 
-    private TransitMode mapVehicleMode(StopPlace stopPlace) {
-        switch (stopPlace.getTransportMode()) {
+    private TransitMode mapVehicleMode(VehicleModeEnumeration mode) {
+        switch (mode) {
             case AIR:
                 return TransitMode.AIRPLANE;
             case BUS:
