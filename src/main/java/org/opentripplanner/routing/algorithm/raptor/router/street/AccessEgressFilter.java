@@ -5,7 +5,7 @@ import org.opentripplanner.model.Stop;
 import org.opentripplanner.model.TripPattern;
 import org.opentripplanner.routing.api.request.RoutingRequest;
 import org.opentripplanner.routing.api.request.StreetMode;
-import org.opentripplanner.routing.edgetype.ParkAndRideEdge;
+import org.opentripplanner.routing.edgetype.VehicleParkingEdge;
 import org.opentripplanner.routing.graph.Edge;
 import org.opentripplanner.routing.graph.GraphIndex;
 import org.opentripplanner.routing.graphfinder.NearbyStop;
@@ -139,8 +139,8 @@ public class AccessEgressFilter {
     // Get the car park used for the stops within range
     Set<Edge> parAndRideEdges = result
         .stream()
-        .filter(s -> s.edges.stream().anyMatch(e -> e instanceof ParkAndRideEdge))
-        .map(s -> s.edges.stream().filter(e -> e instanceof ParkAndRideEdge).findFirst().get())
+        .filter(s -> s.edges.stream().anyMatch(e -> e instanceof VehicleParkingEdge))
+        .map(s -> s.edges.stream().filter(e -> e instanceof VehicleParkingEdge).findFirst().get())
         .collect(Collectors.toSet());
 
     // Add all the stops that use the same car park as stops within range
@@ -161,7 +161,7 @@ public class AccessEgressFilter {
   private static Collection<NearbyStop> filterByDistanceOfNearestStop(
       Collection<NearbyStop> nearbyStops, double minDistance, double distanceFactor
   ) {
-    if (!nearbyStops.isEmpty()) { return nearbyStops; }
+    if (nearbyStops.isEmpty()) { return nearbyStops; }
 
     double closestStopDistance = nearbyStops.stream().sorted().findFirst().get().distance;
     double distanceLimit = Double.max(closestStopDistance * distanceFactor, minDistance);
