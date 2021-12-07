@@ -87,7 +87,9 @@ public class OTPAppConstruction {
                 config.buildConfig(),
                 config.submodesConfig(),
                 graphBuilderDataSources(),
-                baseGraph
+                baseGraph,
+                config.getCli().doLoadStreetGraph(),
+                config.getCli().doSaveStreetGraph()
         );
     }
 
