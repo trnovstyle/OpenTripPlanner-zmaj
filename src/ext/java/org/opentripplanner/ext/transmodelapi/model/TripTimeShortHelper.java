@@ -28,7 +28,7 @@ public class TripTimeShortHelper {
 
         ServiceDate serviceDate = leg.serviceDate;
         List<TripTimeOnDate> tripTimes = routingService.getTripTimesShort(leg.getTrip(), serviceDate);
-        long startTimeSeconds = (leg.startTime.toInstant().toEpochMilli() - serviceDate.getAsDate().getTime()) / 1000;
+        long startTimeSeconds = (leg.startTime.toInstant().toEpochMilli() - serviceDate.getAsDate(routingService.getTimeZone()).getTime()) / 1000;
 
         /* TODO OTP2 This method is only used for EstimatedCalls for from place. We have to decide
                      if EstimatedCalls are applicable to flex trips, and if that is the case, add
@@ -59,7 +59,7 @@ public class TripTimeShortHelper {
 
         ServiceDate serviceDate = leg.serviceDate;
         List<TripTimeOnDate> tripTimes = routingService.getTripTimesShort(leg.getTrip(), serviceDate);
-        long endTimeSeconds = (leg.endTime.toInstant().toEpochMilli() - serviceDate.getAsDate().getTime()) / 1000;
+        long endTimeSeconds = (leg.endTime.toInstant().toEpochMilli() - serviceDate.getAsDate(routingService.getTimeZone()).getTime()) / 1000;
 
         /* TODO OTP2 This method is only used for EstimatedCalls for to place. We have to decide
                      if EstimatedCalls are applicable to flex trips, and if that is the case, add
@@ -104,8 +104,8 @@ public class TripTimeShortHelper {
         List<TripTimeOnDate> tripTimes = routingService.getTripTimesShort(leg.getTrip(), serviceDate);
         List<TripTimeOnDate> filteredTripTimes = new ArrayList<>();
 
-        long startTimeSeconds = (leg.startTime.toInstant().toEpochMilli() - serviceDate.getAsDate().getTime()) / 1000;
-        long endTimeSeconds = (leg.endTime.toInstant().toEpochMilli() - serviceDate.getAsDate().getTime()) / 1000;
+        long startTimeSeconds = (leg.startTime.toInstant().toEpochMilli() - serviceDate.getAsDate(routingService.getTimeZone()).getTime()) / 1000;
+        long endTimeSeconds = (leg.endTime.toInstant().toEpochMilli() - serviceDate.getAsDate(routingService.getTimeZone()).getTime()) / 1000;
         boolean boardingStopFound = false;
         for (TripTimeOnDate tripTime : tripTimes) {
 

@@ -202,18 +202,6 @@ public final class ServiceDate implements Serializable, Comparable<ServiceDate> 
     }
 
     /**
-     * @return calls {@link #getAsDate(TimeZone)} with the default timezone for
-     *         this VM if timeZone is null
-     * @deprecated This is potentially dangerous to use. The TimeZone on the graph
-     *             can be diffrent from the server default.
-     */
-    @Deprecated
-    public Date getAsDate() {
-        var z = timeZone == null ? TimeZone.getDefault() : timeZone;
-        return getAsDate(z);
-    }
-
-    /**
      * See {@link #getAsCalendar(TimeZone)} for more details.
      *
      * @param timeZone the target timezone to localize the service date to
