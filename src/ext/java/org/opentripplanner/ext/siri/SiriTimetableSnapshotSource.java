@@ -835,7 +835,7 @@ public class SiriTimetableSnapshotSource implements TimetableSnapshotProvider {
 
                         // Check whether trip id has been used for previously ADDED/MODIFIED trip message and cancel
                         // previously created trip
-                        removePreviousRealtimeUpdate(feedId, trip.getId().getId(), serviceDate);
+                        cancelPreviouslyAddedTrip(feedId, trip.getId().getId(), serviceDate);
 
                         // Calculate modified stop-pattern
                         Timetable currentTimetable = getCurrentTimetable(pattern, serviceDate);
@@ -972,26 +972,31 @@ public class SiriTimetableSnapshotSource implements TimetableSnapshotProvider {
     }
 
     /**
-     * Removes previous trip-update from buffer if there is an update with given trip
+     * Cancel previously added trip from buffer if there is a previously added trip with given trip
      * id (without agency id) on service date
      *
      * @param feedId feed id the trip id belongs to
      * @param tripId trip id without agency id
      * @param serviceDate service date
-     * @return true if a previously added trip was removed
+     * @return true if a previously added trip was cancelled
      */
-    private boolean removePreviousRealtimeUpdate(final String feedId, final String tripId, final ServiceDate serviceDate) {
+    private boolean cancelPreviouslyAddedTrip(final String feedId, final String tripId, final ServiceDate serviceDate) {
         boolean success = false;
 
         final TripPattern pattern = buffer.getLastAddedTripPattern(new FeedScopedId(feedId, tripId), serviceDate);
         if (pattern != null) {
-            /*
-              Remove the previous realtime-added TripPattern from buffer.
-              Only one version of the realtime-update should exist
-             */
-            buffer.removeLastAddedTripPattern(pattern, serviceDate);
-            success = true;
-
+            // Cancel trip times for this trip in this pattern
+            final Timetable timetable = buffer.resolve(pattern, serviceDate);
+            final int tripIndex = timetable.getTripIndex(tripId);
+            if (tripIndex == -1) {
+                LOG.warn("Could not cancel previously added trip {}", tripId);
+            } else {
+                final TripTimes newTripTimes = new TripTimes(timetable.getTripTimes(tripIndex));
+                newTripTimes.cancelTrip();
+                buffer.update(pattern, newTripTimes, serviceDate);
+//                buffer.removeLastAddedTripPattern(feedId, tripId, serviceDate);
+                success = true;
+            }
         }
 
         return success;
