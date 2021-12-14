@@ -38,6 +38,9 @@ class StopPlaceTypeMapper {
     }
 
     private TransitMode mapVehicleMode(StopPlace stopPlace) {
+        if (stopPlace.getTransportMode() == null) {
+            return null;
+        }
         switch (stopPlace.getTransportMode()) {
             case AIR:
                 return TransitMode.AIRPLANE;
