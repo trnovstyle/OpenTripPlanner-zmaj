@@ -159,6 +159,30 @@ public class TimetableSnapshot {
 
         return pattern.getScheduledTimetable();
     }
+
+    public void removeRealtimeUpdatedTripTimes(TripPattern tripPattern, FeedScopedId tripId, ServiceDate serviceDate) {
+        SortedSet<Timetable> sortedTimetables = this.timetables.get(tripPattern);
+        if (sortedTimetables != null) {
+
+            TripTimes tripTimesToRemove = null;
+            for (Timetable timetable : sortedTimetables) {
+                if (timetable.isValidFor(serviceDate)) {
+                    final int tripIndex = timetable.getTripIndex(tripId);
+                    if (tripIndex != -1) {
+                        tripTimesToRemove = timetable.getTripTimes(tripIndex);
+                    } else {
+                        LOG.debug("No triptimes to remove");
+                    }
+                }
+            }
+
+            if (tripTimesToRemove != null) {
+                for (Timetable sortedTimetable : sortedTimetables) {
+                    sortedTimetable.getTripTimes().remove(tripTimesToRemove);
+                }
+            }
+        }
+    }
     
     /**
      * Get the last <b>added</b> trip pattern given a trip id (without agency) and a service date as
