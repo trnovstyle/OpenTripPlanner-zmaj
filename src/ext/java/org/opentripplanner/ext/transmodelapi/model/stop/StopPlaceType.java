@@ -93,7 +93,10 @@ public class StopPlaceType {
             .type(new GraphQLList(TRANSPORT_MODE))
             .dataFetcher(environment ->
                 ((MonoOrMultiModalStation) environment.getSource()).getChildStops()
-                    .stream().map(StopLocation::getVehicleType).collect(Collectors.toSet())
+                    .stream()
+                      .map(StopLocation::getVehicleType)
+                      .map(TransitMode::getMainMode)
+                      .collect(Collectors.toSet())
                 )
             .build())
         .field(GraphQLFieldDefinition.newFieldDefinition()
