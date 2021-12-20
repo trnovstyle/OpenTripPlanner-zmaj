@@ -10,7 +10,7 @@ resources:
   - repository: Common
     type: git
     name: Infra/common-devops-templates
-    ref: refs/tags/3.1.0
+    ref: refs/tags/3.1.1
 
 variables:
   buildVersion: '0.1.$(Build.BuildId)'
