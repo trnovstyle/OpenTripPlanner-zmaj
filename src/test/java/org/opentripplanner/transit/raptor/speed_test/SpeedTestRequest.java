@@ -1,9 +1,19 @@
 package org.opentripplanner.transit.raptor.speed_test;
 
+import static org.opentripplanner.model.TransitMode.BUS;
+import static org.opentripplanner.model.TransitMode.RAIL;
+import static org.opentripplanner.model.TransitMode.SUBWAY;
+import static org.opentripplanner.model.TransitMode.TRAM;
+import static org.opentripplanner.model.TransitMode.TROLLEYBUS;
 import static org.opentripplanner.transit.raptor._data.transit.TestTransfer.walk;
+import static org.opentripplanner.transit.raptor.api.request.RaptorProfile.MIN_TRAVEL_DURATION;
+import static org.opentripplanner.transit.raptor.api.request.RaptorProfile.MIN_TRAVEL_DURATION_BEST_TIME;
 
 import gnu.trove.iterator.TIntIntIterator;
 import gnu.trove.map.TIntIntMap;
+import java.util.EnumSet;
+import java.util.HashSet;
+import org.opentripplanner.model.TransitMode;
 import org.opentripplanner.model.modes.AllowedTransitMode;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -17,7 +27,6 @@ import org.opentripplanner.routing.algorithm.raptor.transit.SlackProvider;
 import org.opentripplanner.routing.algorithm.raptor.transit.TripSchedule;
 import org.opentripplanner.transit.raptor._data.debug.TestDebugLogger;
 import org.opentripplanner.transit.raptor.api.request.Optimization;
-import org.opentripplanner.transit.raptor.api.request.RaptorProfile;
 import org.opentripplanner.transit.raptor.api.request.RaptorRequest;
 import org.opentripplanner.transit.raptor.api.request.RaptorRequestBuilder;
 import org.opentripplanner.transit.raptor.api.transit.RaptorTransfer;
@@ -42,7 +51,12 @@ public class SpeedTestRequest {
     private final ZoneId inputZoneId;
     private final LocalDate date;
 
-    SpeedTestRequest(TestCase testCase, SpeedTestCmdLineOpts opts, SpeedTestConfig config, ZoneId inputZoneId) {
+    SpeedTestRequest(
+            TestCase testCase,
+            SpeedTestCmdLineOpts opts,
+            SpeedTestConfig config,
+            ZoneId inputZoneId
+    ) {
         this.testCase = testCase;
         this.opts = opts;
         this.config = config;
@@ -116,7 +130,7 @@ public class SpeedTestRequest {
         for (Optimization it : profile.optimizations) {
             builder.enableOptimization(it);
         }
-        if(profile.raptorProfile.isOneOf(RaptorProfile.NO_WAIT_STD, RaptorProfile.NO_WAIT_BEST_TIME)) {
+        if(profile.raptorProfile.isOneOf(MIN_TRAVEL_DURATION, MIN_TRAVEL_DURATION_BEST_TIME)) {
             builder.searchParams().searchOneIterationOnly();
         }
 
@@ -158,7 +172,10 @@ public class SpeedTestRequest {
         return paths;
     }
 
-    private static void addDebugOptions(RaptorRequestBuilder<TripSchedule> builder, SpeedTestCmdLineOpts opts) {
+    private static void addDebugOptions(
+            RaptorRequestBuilder<TripSchedule> builder,
+            SpeedTestCmdLineOpts opts
+    ) {
         List<Integer> stops = opts.debugStops();
         List<Integer> path = opts.debugPath();
 
