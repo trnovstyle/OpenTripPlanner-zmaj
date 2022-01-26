@@ -19,26 +19,26 @@ public class RaptorRequestMapper {
     private final RoutingRequest request;
     private final Collection<? extends RaptorTransfer> accessPaths;
     private final Collection<? extends RaptorTransfer> egressPaths;
-    private final long startOfTime;
     private final TransitLayer transitLayer;
+    private final long transitSearchTimeZeroEpocSecond;
 
     private RaptorRequestMapper(
             RoutingRequest request,
             Collection<? extends RaptorTransfer> accessPaths,
             Collection<? extends RaptorTransfer> egressPaths,
             TransitLayer transitLayer,
-            long startOfTime
+            long transitSearchTimeZeroEpocSecond
     ) {
         this.request = request;
         this.accessPaths = accessPaths;
         this.egressPaths = egressPaths;
         this.transitLayer = transitLayer;
-        this.startOfTime = startOfTime;
+        this.transitSearchTimeZeroEpocSecond = transitSearchTimeZeroEpocSecond;
     }
 
     public static RaptorRequest<TripSchedule> mapRequest(
             RoutingRequest request,
-            ZonedDateTime startOfTime,
+            ZonedDateTime transitSearchTimeZero,
             Collection<? extends RaptorTransfer> accessPaths,
             Collection<? extends RaptorTransfer> egressPaths,
             TransitLayer transitLayer
@@ -48,7 +48,7 @@ public class RaptorRequestMapper {
                 accessPaths,
                 egressPaths,
                 transitLayer,
-                startOfTime.toEpochSecond()
+                transitSearchTimeZero.toEpochSecond()
         ).doMap();
     }
 
@@ -58,7 +58,7 @@ public class RaptorRequestMapper {
         var searchParams = builder.searchParams();
 
         if(request.pageCursor ==  null) {
-            int time = relativeTime(request.getDateTimeCurrentPage());
+            int time = relativeTime(request.getDateTime());
             if (request.arriveBy) {
                 searchParams.latestArrivalTime(time);
             }
@@ -109,6 +109,6 @@ public class RaptorRequestMapper {
     }
 
     private int relativeTime(Instant time) {
-        return (int)(time.getEpochSecond() - startOfTime);
+        return (int)(time.getEpochSecond() - transitSearchTimeZeroEpocSecond);
     }
 }

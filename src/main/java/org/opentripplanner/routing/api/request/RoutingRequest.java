@@ -1,5 +1,7 @@
 package org.opentripplanner.routing.api.request;
 
+import static org.opentripplanner.util.time.DurationUtils.durationInSeconds;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.Serializable;
@@ -32,10 +34,12 @@ import org.opentripplanner.model.FeedScopedId;
 import org.opentripplanner.model.GenericLocation;
 import org.opentripplanner.model.Route;
 import org.opentripplanner.model.TransitMode;
+import org.opentripplanner.model.modes.AllowedTransitMode;
+import org.opentripplanner.model.plan.SortOrder;
+import org.opentripplanner.model.plan.pagecursor.PageCursor;
+import org.opentripplanner.model.plan.pagecursor.PageType;
 import org.opentripplanner.routing.algorithm.filterchain.ItineraryListFilter;
 import org.opentripplanner.routing.algorithm.transferoptimization.api.TransferOptimizationParameters;
-import org.opentripplanner.model.modes.AllowedTransitMode;
-import org.opentripplanner.model.plan.PageCursor;
 import org.opentripplanner.routing.core.BicycleOptimizeType;
 import org.opentripplanner.routing.core.RouteMatcher;
 import org.opentripplanner.routing.core.RoutingContext;
@@ -54,7 +58,6 @@ import org.opentripplanner.routing.spt.ShortestPathTree;
 import org.opentripplanner.routing.vehicle_rental.RentalVehicleType.FormFactor;
 import org.opentripplanner.routing.vehicle_rental.VehicleRentalStation;
 import org.opentripplanner.util.time.DateUtils;
-import org.opentripplanner.util.time.DurationUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -82,7 +85,7 @@ public class RoutingRequest implements AutoCloseable, Cloneable, Serializable {
 
     private static final Logger LOG = LoggerFactory.getLogger(RoutingRequest.class);
 
-    private static final long NOW_THRESHOLD_SEC = DurationUtils.duration("15h");
+    private static final long NOW_THRESHOLD_SEC = durationInSeconds("15h");
 
     /* FIELDS UNIQUELY IDENTIFYING AN SPT REQUEST */
 
@@ -175,7 +178,7 @@ public class RoutingRequest implements AutoCloseable, Cloneable, Serializable {
      * The epoch date/time in seconds that the trip should depart (or arrive, for requests where
      * arriveBy is true)
      */
-    private long dateTime = new Date().getTime() / 1000;
+    private Instant dateTime = Instant.now();
 
     /**
      * This is the time/duration in seconds from the earliest-departure-time(EDT) to
@@ -811,10 +814,6 @@ public class RoutingRequest implements AutoCloseable, Cloneable, Serializable {
         return streetSubRequestModes.isTransit();
     }
 
-    public long getSecondsSinceEpoch() {
-        return dateTime;
-    }
-
     public void setArriveBy(boolean arriveBy) {
         this.arriveBy = arriveBy;
     }
@@ -984,28 +983,16 @@ public class RoutingRequest implements AutoCloseable, Cloneable, Serializable {
     }
 
     /**
-     * When a client perform the first search it supply a search time - its is that
-     * time. The client may go to the next page, but the original datetime stay unchanged.
+     * The search time for the current request. If the client have moved to the next page
+     * then this is the adjusted search time - the dateTime passed in is ignored and replaced with
+     * by a time from the pageToken.
      */
-    public Instant getDateTimeOriginalSearch() {
-        return Instant.ofEpochSecond(dateTime);
-    }
-
-    /**
-     * The search time for the current page. If the client have moved to the next page
-     * then this is the adjusted search time. The search time is adjusted with according to
-     * the time-window used.
-     */
-    public Instant getDateTimeCurrentPage() {
-        return pageCursor == null ? Instant.ofEpochSecond(dateTime) : (
-                arriveBy
-                        ? pageCursor.latestArrivalTime
-                        : pageCursor.earliestDepartureTime
-        );
+    public Instant getDateTime() {
+        return dateTime;
     }
 
     public void setDateTime(Instant dateTime) {
-        this.dateTime = dateTime.getEpochSecond();
+        this.dateTime = dateTime;
     }
 
     public void setDateTime(String date, String time, TimeZone tz) {
@@ -1017,18 +1004,63 @@ public class RoutingRequest implements AutoCloseable, Cloneable, Serializable {
      * Is the trip originally planned withing the previous/next 15h?
      */
     public boolean isTripPlannedForNow() {
-        return Math.abs(Instant.now().getEpochSecond() - dateTime) < NOW_THRESHOLD_SEC;
+        return Duration.between(dateTime, Instant.now()).abs().toSeconds() < NOW_THRESHOLD_SEC;
     }
 
     /**
      * Currently only one itinerary is returned for a direct street search
      */
-    public int getNumItineraries() {
+    public int getNumItinerariesForDirectStreetSearch() {
         return 1;
     }
 
     public void setPageCursor(String pageCursor) {
         this.pageCursor = PageCursor.decode(pageCursor);
+    }
+
+    public SortOrder getItinerariesSortOrder() {
+        if(pageCursor != null) {
+            return pageCursor.originalSortOrder;
+        }
+        return arriveBy
+                ? SortOrder.STREET_AND_DEPARTURE_TIME
+                : SortOrder.STREET_AND_ARRIVAL_TIME;
+    }
+
+    /**
+     * Adjust the 'dateTime' if the page cursor is set to "goto next/previous page".
+     * The date-time is used for many things, for example finding the days to search,
+     * but the transit search is using the cursor[if exist], not the date-time.
+     */
+    public void applyPageCursor() {
+        if(pageCursor != null) {
+            // We switch to "depart-after" search when paging next(lat==null). It does not make
+            // sense anymore to keep the latest-arrival-time when going to the "next page".
+            if(pageCursor.latestArrivalTime == null) {
+                arriveBy = false;
+            }
+            setDateTime(arriveBy ? pageCursor.latestArrivalTime : pageCursor.earliestDepartureTime);
+            modes.directMode = StreetMode.NOT_SET;
+            LOG.debug("Request dateTime={} set from pageCursor.", dateTime);
+        }
+    }
+
+
+    /**
+     * When paging we must crop the list of itineraries in the right end according to the
+     * sorting of the original search and according to the page cursor type (next or previous).
+     * <p>
+     * We need to flip the cropping and crop the head/start of the itineraries when:
+     * <ul>
+     * <li>Paging to the previous page for a {@code depart-after/sort-on-arrival-time} search.
+     * <li>Paging to the next page for a {@code arrive-by/sort-on-departure-time} search.
+     * </ul>
+     */
+    public boolean maxNumberOfItinerariesCropHead() {
+        if(pageCursor == null) { return false; }
+
+        var previousPage = pageCursor.type == PageType.PREVIOUS_PAGE;
+        return pageCursor.originalSortOrder.isSortedByArrivalTimeAcceding() == previousPage;
     }
 
     public void setNumItineraries(int numItineraries) {
@@ -1040,9 +1072,9 @@ public class RoutingRequest implements AutoCloseable, Cloneable, Serializable {
     }
 
     public String toString(String sep) {
-        return from + sep + to + sep + getDateTimeOriginalSearch() + sep
+        return from + sep + to + sep + dateTime + sep
                 + arriveBy + sep + bicycleOptimizeType + sep + streetSubRequestModes.getAsStr() + sep
-                + getNumItineraries();
+                + getNumItinerariesForDirectStreetSearch();
     }
 
     public void removeMode(TraverseMode mode) {

@@ -16,7 +16,7 @@ import javax.xml.datatype.XMLGregorianCalendar;
 import org.opentripplanner.api.parameter.QualifiedModeSet;
 import org.opentripplanner.ext.dataoverlay.api.DataOverlayParameters;
 import org.opentripplanner.model.FeedScopedId;
-import org.opentripplanner.model.plan.PageCursor;
+import org.opentripplanner.model.plan.pagecursor.PageCursor;
 import org.opentripplanner.routing.api.request.BannedStopSet;
 import org.opentripplanner.routing.api.request.RoutingRequest;
 import org.opentripplanner.routing.core.BicycleOptimizeType;
@@ -83,12 +83,10 @@ public abstract class RoutingResource {
      * This is sometimes referred to as the Range Raptor Search Window - but should apply to all
      * scheduled/time dependent travels.
      * <p>
-     * Optional - it is NOT recommended to set this value, unless you use the value returned by the
-     * previous search. Then it can be used to get the next/previous "page". The value is
-     * dynamically assigned a suitable value, if not set. In a small to medium size operation
-     * you may use a fixed value, like 60 minutes. If you have a mixture of high frequency cities
-     * routes and infrequent long distant journeys, the best option is normally to use the dynamic
-     * auto assignment.
+     * Optional - The value is dynamically assigned a suitable value, if not set. In a small to
+     * medium size operation you may use a fixed value, like 60 minutes. If you have a mixture of
+     * high frequency cities routes and infrequent long distant journeys, the best option is
+     * normally to use the dynamic auto assignment.
      */
     @QueryParam("searchWindow")
     protected Integer searchWindow;
