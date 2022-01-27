@@ -10,6 +10,7 @@ import org.opentripplanner.routing.graph.Graph;
 import org.opentripplanner.updater.GraphUpdater;
 import org.opentripplanner.updater.GraphUpdaterManager;
 
+import org.opentripplanner.updater.WriteToGraphCallback;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,7 +25,7 @@ public abstract class AbstractAzureSiriUpdater implements GraphUpdater {
 
     private final Logger LOG = LoggerFactory.getLogger(getClass());
     private boolean isPrimed = false;
-    protected GraphUpdaterManager updaterManager;
+    protected WriteToGraphCallback saveResultOnGraph;
     protected SiriTimetableSnapshotSource snapshotSource;
     private final String configRef;
 
@@ -70,8 +71,8 @@ public abstract class AbstractAzureSiriUpdater implements GraphUpdater {
     protected abstract void errorConsumer(ServiceBusErrorContext errorContext);
 
     @Override
-    public void setGraphUpdaterManager(GraphUpdaterManager updaterManager) {
-        this.updaterManager = updaterManager;
+    public void setGraphUpdaterManager(WriteToGraphCallback saveResultOnGraph) {
+        this.saveResultOnGraph = saveResultOnGraph;
     }
 
     @Override

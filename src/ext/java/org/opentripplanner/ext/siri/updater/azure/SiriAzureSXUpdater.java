@@ -133,8 +133,7 @@ public class SiriAzureSXUpdater extends AbstractAzureSiriUpdater implements Tran
                 return;
             }
 
-            updaterManager.execute(graph -> updateHandler.update(siri.getServiceDelivery()));
-
+            super.saveResultOnGraph.execute(graph -> updateHandler.update(siri.getServiceDelivery()));
         } catch (JAXBException | XMLStreamException e) {
             LOG.error(e.getLocalizedMessage(), e);
         }
@@ -148,7 +147,7 @@ public class SiriAzureSXUpdater extends AbstractAzureSiriUpdater implements Tran
                 return;
             }
 
-            updaterManager.execute(graph -> {
+            super.saveResultOnGraph.execute(graph -> {
                 long t1 = System.currentTimeMillis();
                 updateHandler.update(siri.getServiceDelivery());
 
