@@ -14,7 +14,7 @@ import org.opentripplanner.routing.algorithm.raptor.transit.cost.McCostParamsBui
 import org.opentripplanner.routing.algorithm.transferoptimization.model.TripStopTime;
 import org.opentripplanner.routing.algorithm.transferoptimization.services.TransferServiceAdaptor;
 import org.opentripplanner.transit.raptor._data.RaptorTestConstants;
-import org.opentripplanner.transit.raptor._data.debug.TestDebugLogger;
+import org.opentripplanner.transit.raptor.rangeraptor.SystemErrDebugLogger;
 import org.opentripplanner.transit.raptor.api.request.RaptorRequestBuilder;
 import org.opentripplanner.transit.raptor.api.transit.CostCalculator;
 import org.opentripplanner.transit.raptor.api.transit.IntIterator;
@@ -34,6 +34,8 @@ public class TestTransitData implements RaptorTransitDataProvider<TestTripSchedu
   public static final TransferConstraint TX_GUARANTEED = TransferConstraint.create().guaranteed()
           .build();
   public static final TransferConstraint TX_NOT_ALLOWED = TransferConstraint.create().notAllowed()
+          .build();
+  public static final TransferConstraint TX_LONG_MIN_TIME = TransferConstraint.create().minTransferTime(3600)
           .build();
 
   private final List<List<RaptorTransfer>> transfersFromStop = new ArrayList<>();
@@ -139,7 +141,7 @@ public class TestTransitData implements RaptorTransitDataProvider<TestTripSchedu
     if(debug.stops().isEmpty()) {
       debug.addStops(stopsVisited());
     }
-    var logger = new TestDebugLogger(true);
+    var logger = new SystemErrDebugLogger(true);
 
     debug
         .stopArrivalListener(logger::stopArrivalLister)
