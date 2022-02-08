@@ -61,7 +61,6 @@ public class RoutingWorker {
     private SearchParams raptorSearchParamsUsed = null;
     private Itinerary firstRemovedItinerary = null;
     private final AdditionalSearchDays additionalSearchDays;
-    private final AdditionalSearchDays additionalSearchDays;
 
     public RoutingWorker(Router router, RoutingRequest request, ZoneId zoneId) {
         request.applyPageCursor();
@@ -71,21 +70,6 @@ public class RoutingWorker {
         this.pagingSearchWindowAdjuster = createPagingSearchWindowAdjuster(router.routerConfig);
         this.additionalSearchDays = createAdditionalSearchDays(
                 router.routerConfig.raptorTuningParameters(), zoneId, request
-        );
-
-        var searchDateTime =
-                ZonedDateTime.ofInstant(request.getDateTimeOriginalSearch(), zoneId);
-
-        var maxWindow = Duration.ofMinutes(router.routerConfig.raptorTuningParameters()
-                .dynamicSearchWindowCoefficients()
-                .maxWinTimeMinutes());
-
-        additionalSearchDays = new AdditionalSearchDays(
-                request.arriveBy,
-                searchDateTime,
-                request.searchWindow,
-                maxWindow,
-                request.maxJourneyDuration
         );
     }
 
@@ -225,8 +209,7 @@ public class RoutingWorker {
                     router,
                     transitSearchTimeZero,
                     additionalSearchDays,
-                    debugTimingAggregator,
-                    additionalSearchDays
+                    debugTimingAggregator
             );
             raptorSearchParamsUsed = transitResults.getSearchParams();
             itineraries.addAll(transitResults.getItineraries());

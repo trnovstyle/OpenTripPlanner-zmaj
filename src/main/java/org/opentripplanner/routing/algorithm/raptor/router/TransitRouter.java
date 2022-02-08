@@ -56,7 +56,6 @@ public class TransitRouter {
             Router router,
             ZonedDateTime transitSearchTimeZero,
             AdditionalSearchDays additionalSearchDays,
-            AdditionalSearchDays additionalSearchDays,
             DebugTimingAggregator debugTimingAggregator
     ) {
         this.request = request;
@@ -300,9 +299,8 @@ public class TransitRouter {
             Router router,
             ZonedDateTime transitSearchTimeZero,
             AdditionalSearchDays additionalSearchDays,
-            DebugTimingAggregator debugTimingAggregator,
-            AdditionalSearchDays additionalSearchDays
+            DebugTimingAggregator debugTimingAggregator
     ) {
-        return new TransitRouter(request, router, transitSearchTimeZero, additionalSearchDays, additionalSearchDays, debugTimingAggregator).route();
+        return new TransitRouter(request, router, transitSearchTimeZero, additionalSearchDays, debugTimingAggregator).route();
     }
 }
