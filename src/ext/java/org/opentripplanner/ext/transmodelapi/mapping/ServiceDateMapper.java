@@ -2,8 +2,9 @@ package org.opentripplanner.ext.transmodelapi.mapping;
 
 import org.opentripplanner.model.calendar.ServiceDate;
 
+import java.time.Instant;
 import java.time.LocalDate;
-import java.util.Date;
+import java.time.ZonedDateTime;
 import java.util.TimeZone;
 
 public class ServiceDateMapper {
@@ -22,10 +23,20 @@ public class ServiceDateMapper {
         .atStartOfDay(timeZone.toZoneId()).toEpochSecond();
   }
 
+  /**
+   * Get ServiceDate from epoch seconds, take consideration of time zone.
+   * @param secondsSinceEpoch Seconds since EPOCH
+   * @return Service date for given time zone
+   */
   public ServiceDate secondsSinceEpochToServiceDate(Long secondsSinceEpoch) {
-    if (secondsSinceEpoch == null) {
-      return new ServiceDate();
+
+    var zdt = ZonedDateTime.now(timeZone.toZoneId());
+
+    if (secondsSinceEpoch != null) {
+      zdt = ZonedDateTime.ofInstant(Instant.ofEpochSecond(secondsSinceEpoch), timeZone.toZoneId());
     }
-    return new ServiceDate(new Date(secondsSinceEpoch * 1000));
+
+    return new ServiceDate(zdt.getYear(), zdt.getMonthValue(), zdt.getDayOfMonth());
   }
+
 }
