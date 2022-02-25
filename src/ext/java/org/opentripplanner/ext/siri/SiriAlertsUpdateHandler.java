@@ -87,7 +87,7 @@ public class SiriAlertsUpdateHandler {
                 int expiredCounter = 0;
                 for (PtSituationElement sxElement : situations.getPtSituationElements()) {
                     boolean expireSituation = (sxElement.getProgress() != null &&
-                        sxElement.getProgress().equals(WorkflowStatusEnumeration.CLOSED));
+                            sxElement.getProgress().equals(WorkflowStatusEnumeration.CLOSED));
 
                     String situationNumber;
                     if (sxElement.getSituationNumber() != null) {
@@ -131,8 +131,8 @@ public class SiriAlertsUpdateHandler {
         TransitAlert alert = createAlertWithTexts(situation);
 
         if ((alert.alertHeaderText == null      || alert.alertHeaderText.toString().isEmpty()) &&
-            (alert.alertDescriptionText == null || alert.alertDescriptionText.toString().isEmpty()) &&
-            (alert.alertDetailText == null      || alert.alertDetailText.toString().isEmpty())) {
+                (alert.alertDescriptionText == null || alert.alertDescriptionText.toString().isEmpty()) &&
+                (alert.alertDetailText == null      || alert.alertDetailText.toString().isEmpty())) {
             LOG.debug("Empty Alert - ignoring situationNumber: {}", situation.getSituationNumber() != null ? situation.getSituationNumber().getValue():null);
             return null;
         }
@@ -324,7 +324,9 @@ public class SiriAlertsUpdateHandler {
 
                             ZonedDateTime startOfService = DateMapper.asStartOfService(originAimedDepartureTime);
 
-                            ServiceDate serviceDate = new ServiceDate(startOfService.toLocalDate());
+                            ServiceDate serviceDate = new ServiceDate(startOfService
+                                        .toLocalDate());
+
 
                             if (tripIdFromVehicleJourney != null) {
                                 tripIds.add(tripIdFromVehicleJourney);
@@ -371,11 +373,11 @@ public class SiriAlertsUpdateHandler {
                             ServiceDate serviceDate = null;
                             if (dataFrameRef != null && dataFrameRef.getValue() != null) {
                                 ZonedDateTime startOfService = DateMapper.asStartOfService(LocalDate.parse(
-                                    dataFrameRef.getValue()), graph.getTimeZone().toZoneId());
+                                        dataFrameRef.getValue()), graph.getTimeZone().toZoneId());
 
                                 serviceDate = new ServiceDate(startOfService.getYear(),
-                                    startOfService.getMonthValue(),
-                                    startOfService.getDayOfMonth()
+                                        startOfService.getMonthValue(),
+                                        startOfService.getDayOfMonth()
                                 );
 
                             }
@@ -383,11 +385,11 @@ public class SiriAlertsUpdateHandler {
                             if (!affectedStops.isEmpty()) {
                                 for (AffectedStopPointStructure affectedStop : affectedStops) {
                                     FeedScopedId stop = siriFuzzyTripMatcher.getStop(affectedStop
-                                        .getStopPointRef()
-                                        .getValue());
+                                            .getStopPointRef()
+                                            .getValue());
                                     if (stop == null) {
                                         stop = new FeedScopedId(feedId,
-                                            affectedStop.getStopPointRef().getValue()
+                                                affectedStop.getStopPointRef().getValue()
                                         );
                                     }
 
@@ -397,16 +399,9 @@ public class SiriAlertsUpdateHandler {
                             else {
                                 alert.addEntity(new EntitySelector.Trip(tripId, serviceDate));
                             }
-                        }
-                    }
 
-                    if (lineRef != null) {
-
-                        Set<Route> affectedRoutes = siriFuzzyTripMatcher.getRoutes(lineRef);
-                        if (affectedRoutes != null) {
-                            for (Route route : affectedRoutes) {
-                                alert.addEntity(new EntitySelector.Route(route.getId()));
-                            }
+                        } else {
+                            LOG.warn("Did not found a match for DatedVehicleJourneyRef: {}", datedVehicleJourneyRef);
                         }
                     }
                 }

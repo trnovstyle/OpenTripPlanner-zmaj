@@ -14,7 +14,7 @@
   <appender name="stdout" class="ch.qos.logback.core.ConsoleAppender">
     <encoder>
       <!-- print out file and line number in parenthesis, which Eclipse and IDEA will link -->
-      <pattern>%d{HH:mm:ss.SSS} %level \(%F:%L\) %msg%n</pattern>
+      <pattern>%yellow(%d{yyyy-MM-dd HH:mm:ss.SSS}) - [%magenta(%t)] %green(%-5level) %logger{0}.%M - %cyan(%msg%n)</pattern>
     </encoder>
   </appender>
 
@@ -34,7 +34,7 @@
 
   <logger name="org.opentripplanner.routing" level="info"/>
   <logger name="org.opentripplanner.routing.algorithm.transferoptimization" level="info"/>
-  
+
   <logger name="org.opentripplanner.routing.algorithm.GenericAStar" level="info"/>
 
   <!-- Avoid printing debug messages when walk limits are exceeded -->
@@ -62,5 +62,6 @@
   <logger name="com.sun.jersey" level="warn" />
   <!-- Suppress an inconsequential IOException that is logged at debug level. -->
   <logger name="org.glassfish.grizzly" level="info" />
+  <logger name="com.azure" level="warn" />
 
 </configuration>

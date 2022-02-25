@@ -1,5 +1,7 @@
 package org.opentripplanner.updater;
 
+import org.opentripplanner.ext.siri.updater.azure.SiriAzureETUpdaterParameters;
+import org.opentripplanner.ext.siri.updater.azure.SiriAzureSXUpdaterParameters;
 import org.opentripplanner.ext.vehiclerentalservicedirectory.api.VehicleRentalServiceDirectoryFetcherParameters;
 import org.opentripplanner.ext.siri.updater.SiriETGooglePubsubUpdaterParameters;
 import org.opentripplanner.ext.siri.updater.SiriETUpdaterParameters;
@@ -40,4 +42,8 @@ public interface UpdatersParameters {
   List<VehicleParkingUpdaterParameters> getVehicleParkingUpdaterParameters();
 
   List<WFSNotePollingGraphUpdaterParameters> getWinkkiPollingGraphUpdaterParameters();
+
+  List<SiriAzureETUpdaterParameters> getSiriAzureETUpdaterParameters();
+
+  List<SiriAzureSXUpdaterParameters> getSiriAzureSXUpdaterParameters();
 }
