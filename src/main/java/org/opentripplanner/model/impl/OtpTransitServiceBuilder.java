@@ -34,6 +34,7 @@ import org.opentripplanner.model.Stop;
 import org.opentripplanner.model.StopPattern;
 import org.opentripplanner.model.TransitEntity;
 import org.opentripplanner.model.Trip;
+import org.opentripplanner.model.TripOnServiceDate;
 import org.opentripplanner.model.TripPattern;
 import org.opentripplanner.model.TripStopTimes;
 import org.opentripplanner.model.Branding;
@@ -112,6 +113,8 @@ public class OtpTransitServiceBuilder {
     private final EntityById<Branding> brandingsById = new EntityById<>();
 
     private final Multimap<FeedScopedId, GroupOfRoutes> groupsOfRoutesByRouteId = ArrayListMultimap.create();
+    
+    private final EntityById<TripOnServiceDate> tripOnServiceDates = new EntityById<>();
 
     private final EntityById<GroupOfRoutes> groupOfRouteById = new EntityById<>();
 
@@ -242,6 +245,10 @@ public class OtpTransitServiceBuilder {
         return groupOfRouteById;
     }
 
+    public EntityById<TripOnServiceDate> getTripOnServiceDates() {
+        return tripOnServiceDates;
+    }
+
     /**
      * Find all serviceIds in both CalendarServices and CalendarServiceDates.
      */
@@ -313,6 +320,7 @@ public class OtpTransitServiceBuilder {
         removeStopTimesForNoneExistingTrips();
         fixOrRemovePatternsWhichReferenceNoneExistingTrips();
         removeTransfersForNoneExistingTrips();
+        removeTripOnServiceDateForNonExistingTrip();
     }
 
     /** Remove all trips which reference none existing service ids */
@@ -353,6 +361,21 @@ public class OtpTransitServiceBuilder {
         int orgSize = transfers.size();
         transfers.removeIf(this::transferTripReferencesDoNotExist);
         logRemove("Trip", orgSize, transfers.size(), "Transfer to/from trip does not exist.");
+    }
+
+    /**
+     * Remove TripOnServiceDates if there are no trips using them
+     */
+    private void removeTripOnServiceDateForNonExistingTrip() {
+        int orgSize = tripOnServiceDates.size();
+        for(TripOnServiceDate tripOnServiceDate : tripOnServiceDates.values()) {
+            if(!tripsById.containsKey(tripOnServiceDate.getTrip().getId())) {
+                logRemove(
+                        "TripOnServiceDate", orgSize, tripOnServiceDates.size(),
+                        "Trip for TripOnServiceDate does not exist."
+                );
+            }
+        }
     }
 
     /** Return {@code true} if the from/to trip reference is none null, but do not exist. */

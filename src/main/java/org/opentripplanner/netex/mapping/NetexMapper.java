@@ -34,6 +34,7 @@ import org.opentripplanner.netex.mapping.support.FeedScopedIdFactory;
 import org.opentripplanner.routing.trippattern.Deduplicator;
 import org.rutebanken.netex.model.Authority;
 import org.rutebanken.netex.model.Branding;
+import org.rutebanken.netex.model.DatedServiceJourney;
 import org.rutebanken.netex.model.FlexibleLine;
 import org.rutebanken.netex.model.FlexibleStopPlace;
 import org.rutebanken.netex.model.GroupOfLines;
@@ -83,6 +84,8 @@ public class NetexMapper {
      * OTPTransitService, so we need to temporally cash this here.
      */
     private final Map<String, StopTime> stopTimesByNetexId = new HashMap<>();
+
+    private final ArrayListMultimap<String, DatedServiceJourney> datedServiceJourneysBySjId = ArrayListMultimap.create();
 
 
     public NetexMapper(
@@ -356,11 +359,12 @@ public class NetexMapper {
     }
 
     private void mapDatedServiceJourneys() {
+        datedServiceJourneysBySjId.putAll(DatedServiceJourneyMapper.indexDSJBySJId(
+                currentNetexIndex.getDatedServiceJourneys()
+        ));
         tripCalendarBuilder.addDatedServiceJourneys(
             currentNetexIndex.getOperatingDayById(),
-            DatedServiceJourneyMapper.indexDSJBySJId(
-                currentNetexIndex.getDatedServiceJourneys()
-            )
+                datedServiceJourneysBySjId
         );
     }
 
@@ -419,6 +423,8 @@ public class NetexMapper {
                 currentNetexIndex.getDestinationDisplayById(),
                 currentNetexIndex.getServiceJourneyById(),
                 currentNetexIndex.getFlexibleLineById(),
+                currentNetexIndex.getOperatingDayById(),
+                datedServiceJourneysBySjId,
                 serviceIds,
                 deduplicator
         );
@@ -435,6 +441,7 @@ public class NetexMapper {
             }
             stopTimesByNetexId.putAll(result.stopTimeByNetexId);
             groupMapper.scheduledStopPointsIndex.putAll(result.scheduledStopPointsIndex);
+            transitBuilder.getTripOnServiceDates().addAll(result.tripOnServiceDates);
         }
     }
 

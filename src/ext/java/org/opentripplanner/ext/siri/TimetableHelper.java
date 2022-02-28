@@ -317,7 +317,7 @@ public class TimetableHelper {
         }
 
         if (!newTimes.timesIncreasing()) {
-            LOG.info("TripTimes are non-increasing after applying SIRI delay propagation - LineRef {}, TripId {}.", journey.getLineRef().getValue(), tripId);
+//            LOG.info("TripTimes are non-increasing after applying SIRI delay propagation - LineRef {}, TripId {}.", journey.getLineRef().getValue(), tripId);
             return null;
         }
 
@@ -683,7 +683,7 @@ public class TimetableHelper {
         }
 
         if (!newTimes.timesIncreasing()) {
-            LOG.info("TripTimes are non-increasing after applying SIRI delay propagation - delay: {}", delay);
+//            LOG.info("TripTimes are non-increasing after applying SIRI delay propagation - delay: {}", delay);
             return null;
         }
 
