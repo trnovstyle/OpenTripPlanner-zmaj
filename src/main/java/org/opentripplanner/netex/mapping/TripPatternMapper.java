@@ -56,7 +56,7 @@ class TripPatternMapper {
     private final Multimap<String, ServiceJourney> serviceJourniesByPatternId = ArrayListMultimap.create();
 
     private ReadOnlyHierarchicalMapById<OperatingDay> operatingDayById;
-    private final Map<String, List<DatedServiceJourney>> datedServiceJourneys;
+    private final ArrayListMultimap<String, DatedServiceJourney> datedServiceJourneys;
 
     private final TripMapper tripMapper;
 
@@ -83,7 +83,7 @@ class TripPatternMapper {
             ReadOnlyHierarchicalMap<String, ServiceJourney> serviceJourneyById,
             ReadOnlyHierarchicalMapById<FlexibleLine> flexibleLinesById,
             ReadOnlyHierarchicalMapById<OperatingDay> operatingDayById,
-            Map<String, List<DatedServiceJourney>> datedServiceJourneys,
+            ArrayListMultimap<String, DatedServiceJourney> datedServiceJourneys,
             Map<String, FeedScopedId> serviceIds,
             Deduplicator deduplicator
     ) {
@@ -144,7 +144,8 @@ class TripPatternMapper {
 
             if(datedServiceJourneys.containsKey(serviceJourney.getId())) {
                 for (DatedServiceJourney datedServiceJourney : datedServiceJourneys.get(
-                        serviceJourney.getId())) {
+                        serviceJourney.getId())
+                ) {
                     var opDay = operatingDayById.lookup(
                             datedServiceJourney.getOperatingDayRef().getRef());
                     if (opDay == null) {
@@ -158,7 +159,8 @@ class TripPatternMapper {
                                     trip, serviceDate,
                                     TripServiceAlterationMapper.mapAlteration(
                                             datedServiceJourney.getServiceAlteration())
-                            ));
+                            )
+                    );
                 }
             }
             // Unable to map ServiceJourney, problem logged by the mapper above
