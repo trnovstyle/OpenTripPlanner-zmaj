@@ -48,12 +48,8 @@ public class EstimatedCallType {
             .field(GraphQLFieldDefinition.newFieldDefinition()
                     .name("quay")
                     .type(quayType)
-                    .dataFetcher(environment -> {
-                      return GqlUtil.getRoutingService(environment).getStopForId((
-                          (TripTimeOnDate) environment.getSource()
-                      ).getStopId());
-                        }
-                    ).build())
+                    .dataFetcher(environment -> ((TripTimeOnDate) environment.getSource()).getStop())
+                    .build())
             .field(GraphQLFieldDefinition.newFieldDefinition()
                            .name("aimedArrivalTime")
                            .description("Scheduled time of arrival at quay. Not affected by read time updated")
