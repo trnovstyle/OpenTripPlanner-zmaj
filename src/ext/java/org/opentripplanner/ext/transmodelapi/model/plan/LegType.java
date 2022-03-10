@@ -197,7 +197,10 @@ public class LegType {
             .withDirective(gqlUtil.timingData)
             .description("EstimatedCall for the quay where the leg originates.")
             .type(estimatedCallType)
-            .dataFetcher(env -> TripTimeShortHelper.getTripTimeShortForFromPlace(env.getSource()))
+            .dataFetcher(env -> TripTimeShortHelper.getTripTimeShortForFromPlace(
+                    env.getSource(),
+                    GqlUtil.getRoutingService(env)
+            ))
             .build())
         .field(GraphQLFieldDefinition
             .newFieldDefinition()
@@ -205,7 +208,10 @@ public class LegType {
             .withDirective(gqlUtil.timingData)
             .description("EstimatedCall for the quay where the leg ends.")
             .type(estimatedCallType)
-            .dataFetcher(env -> TripTimeShortHelper.getTripTimeShortForToPlace(env.getSource()))
+            .dataFetcher(env -> TripTimeShortHelper.getTripTimeShortForToPlace(
+                    env.getSource(),
+                    GqlUtil.getRoutingService(env)
+            ))
             .build())
         .field(GraphQLFieldDefinition
             .newFieldDefinition()
@@ -263,7 +269,10 @@ public class LegType {
                 "For ride legs, estimated calls for quays between the Place where the leg originates and the Place where the leg ends. For non-ride legs, empty list."
             )
             .type(new GraphQLNonNull(new GraphQLList(new GraphQLNonNull(estimatedCallType))))
-            .dataFetcher(env -> TripTimeShortHelper.getIntermediateTripTimeShortsForLeg((env.getSource())))
+            .dataFetcher(env -> TripTimeShortHelper.getIntermediateTripTimeShortsForLeg(
+                    env.getSource(),
+                    GqlUtil.getRoutingService(env)
+            ))
             .build())
         .field(GraphQLFieldDefinition
             .newFieldDefinition()
@@ -272,8 +281,10 @@ public class LegType {
             .description(
                 "For ride legs, all estimated calls for the service journey. For non-ride legs, empty list.")
             .type(new GraphQLNonNull(new GraphQLList(new GraphQLNonNull(estimatedCallType))))
-            .dataFetcher(env -> TripTimeShortHelper.getAllTripTimeShortsForLegsTrip(env.getSource())
-            )
+            .dataFetcher(env -> TripTimeShortHelper.getAllTripTimeShortsForLegsTrip(
+                    env.getSource(),
+                    GqlUtil.getRoutingService(env)
+            ))
             .build())
         //                .field(GraphQLFieldDefinition.newFieldDefinition()
         //                        .name("via")
