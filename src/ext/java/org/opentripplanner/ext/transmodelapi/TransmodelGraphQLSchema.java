@@ -80,6 +80,8 @@ import org.opentripplanner.ext.transmodelapi.model.stop.RentalVehicleType;
 import org.opentripplanner.ext.transmodelapi.model.stop.StopPlaceType;
 import org.opentripplanner.ext.transmodelapi.model.stop.TariffZoneType;
 import org.opentripplanner.ext.transmodelapi.model.timetable.BookingArrangementType;
+import org.opentripplanner.ext.transmodelapi.model.timetable.DatedServiceJourneyQuery;
+import org.opentripplanner.ext.transmodelapi.model.timetable.DatedServiceJourneyType;
 import org.opentripplanner.ext.transmodelapi.model.timetable.InterchangeType;
 import org.opentripplanner.ext.transmodelapi.model.timetable.ServiceJourneyType;
 import org.opentripplanner.ext.transmodelapi.model.timetable.TimetabledPassingTimeType;
@@ -220,6 +222,10 @@ public class TransmodelGraphQLSchema {
           gqlUtil
       );
 
+
+      GraphQLOutputType datedServiceJourneyType =
+              DatedServiceJourneyType.create(serviceJourneyType);
+
       GraphQLOutputType timetabledPassingTime  = TimetabledPassingTimeType.create(
           bookingArrangementType,
           noticeType,
@@ -242,8 +248,8 @@ public class TransmodelGraphQLSchema {
             estimatedCallType,
             lineType,
             serviceJourneyType,
-            ptSituationElementType
-
+            ptSituationElementType,
+            datedServiceJourneyType
         );
 
         GraphQLFieldDefinition tripQuery = TripQuery.create(routing, tripType, gqlUtil);
@@ -1144,6 +1150,7 @@ public class TransmodelGraphQLSchema {
             .type(new GraphQLNonNull(serverInfoType))
             .dataFetcher(e -> projectInfo())
             .build())
+        .field(DatedServiceJourneyQuery.createGetById(datedServiceJourneyType))
         .build();
 
         Set<GraphQLType> dictionary = new HashSet<>();
@@ -1179,7 +1186,8 @@ public class TransmodelGraphQLSchema {
         GraphQLOutputType estimatedCallType,
         GraphQLOutputType lineType,
         GraphQLOutputType serviceJourneyType,
-        GraphQLOutputType ptSituationElementType
+        GraphQLOutputType ptSituationElementType,
+        GraphQLOutputType datedServiceJourneyType
     ) {
       GraphQLObjectType tripMetadataType = TripMetadataType.create(gqlUtil);
       GraphQLObjectType placeType = PlanPlaceType.create(bikeRentalStationType, rentalVehicleType, quayType);
@@ -1194,6 +1202,7 @@ public class TransmodelGraphQLSchema {
           estimatedCallType,
           lineType,
           serviceJourneyType,
+          datedServiceJourneyType,
           ptSituationElementType,
           placeType,
           pathGuidanceType,
