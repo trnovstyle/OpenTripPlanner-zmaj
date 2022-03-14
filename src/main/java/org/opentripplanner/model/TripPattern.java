@@ -146,8 +146,8 @@ public final class TripPattern extends TransitEntity implements Cloneable, Seria
 
     /**
      * This will copy the geometry from another TripPattern to this one. It checks if each hop is
-     * between the same stops before copying that hop geometry. If the stops are different, a
-     * straight-line hop-geometry will be used instead.
+     * between the same stops before copying that hop geometry. If the stops are different, old
+     * geometry will be used but with overwrite on first and last point (to match new stop places
      *
      * @param other TripPattern to copy geometry from
      */
@@ -161,20 +161,52 @@ public final class TripPattern extends TransitEntity implements Cloneable, Seria
         int sizeOfShortestPattern = Math.min(numberOfStops(), other.numberOfStops());
 
         for (int i = 0; i < sizeOfShortestPattern - 1; i++) {
-            if (other.getHopGeometry(i) != null
-                && other.getStop(i).equals(this.getStop(i))
-                && other.getStop(i + 1).equals(this.getStop(i + 1))) {
+
+            boolean stopsAreSame = other.getStop(i).equals(this.getStop(i)) && other.getStop(i + 1)
+                    .equals(this.getStop(i + 1));
+            boolean parentStationsAreSame = other.getStop(i)
+                    .getParentStation()
+                    .equals(this.getStop(i).getParentStation()) && other.getStop(i + 1)
+                    .getParentStation()
+                    .equals(this.getStop(i + 1).getParentStation());
+
+            LineString hopGeometry = other.getHopGeometry(i);
+
+            if (hopGeometry != null && stopsAreSame) {
                 // Copy hop geometry from previous pattern
                 this.setHopGeometry(i, other.getHopGeometry(i));
-            } else {
+            }
+            else if (hopGeometry != null && parentStationsAreSame) {
+                // Use old geometry but patch first and last point with new stops
+                Coordinate newStart;
+                newStart = new Coordinate(
+                        other.getStop(i).getCoordinate().longitude(),
+                        other.getStop(i).getCoordinate().latitude()
+                );
+
+                Coordinate newEnd;
+                newEnd = new Coordinate(
+                        other.getStop(i + 1).getCoordinate().longitude(),
+                        other.getStop(i + 1).getCoordinate().latitude()
+                );
+
+                Coordinate[] coordinates = other.getHopGeometry(i).getCoordinates().clone();
+                coordinates[0].setCoordinate(newStart);
+                coordinates[coordinates.length - 1].setCoordinate(newEnd);
+
+                this.setHopGeometry(
+                        i, GeometryUtils.getGeometryFactory().createLineString(coordinates));
+            }
+            else {
                 // Create new straight-line geometry for hop
-                this.setHopGeometry(i,
-                    GeometryUtils.getGeometryFactory().createLineString(
-                        new Coordinate[]{
-                            coordinate(stopPattern.getStop(i)),
-                            coordinate(stopPattern.getStop(i + 1))
-                        }
-                    )
+                this.setHopGeometry(
+                        i,
+                        GeometryUtils.getGeometryFactory().createLineString(
+                                new Coordinate[]{
+                                        coordinate(stopPattern.getStop(i)),
+                                        coordinate(stopPattern.getStop(i + 1))
+                                }
+                        )
                 );
             }
         }
