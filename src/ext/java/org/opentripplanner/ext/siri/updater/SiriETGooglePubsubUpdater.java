@@ -341,11 +341,13 @@ public class SiriETGooglePubsubUpdater implements GraphUpdater {
 
                 saveResultOnGraph.execute(graph -> {
                     snapshotSource.applyEstimatedTimetable(graph, feedId, false, estimatedTimetableDeliveries);
+
+                    // Ack only after all work for the message is complete.
+                    if (consumer != null) {
+                        consumer.ack();
+                    }
                 });
             }
-
-            // Ack only after all work for the message is complete.
-            consumer.ack();
         }
     }
 
