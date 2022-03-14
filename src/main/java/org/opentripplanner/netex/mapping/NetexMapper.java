@@ -356,12 +356,14 @@ public class NetexMapper {
     }
 
     private void mapDatedServiceJourneys() {
-        datedServiceJourneysBySjId.putAll(DatedServiceJourneyMapper.indexDSJBySJId(
-                currentNetexIndex.getDatedServiceJourneys()
-        ));
+        Multimap<String, DatedServiceJourney> dsjBySJId =
+            DatedServiceJourneyMapper.indexDSJBySJId(
+                    currentNetexIndex.getDatedServiceJourneys()
+            );
+        datedServiceJourneysBySjId.putAll(dsjBySJId);
         tripCalendarBuilder.addDatedServiceJourneys(
             currentNetexIndex.getOperatingDayById(),
-            datedServiceJourneysBySjId
+            dsjBySJId
         );
     }
 
