@@ -19,7 +19,7 @@ public class TripTimeShortHelper {
     private TripTimeShortHelper() { }
 
     /**
-     * Find trip time short for the from place in transit leg, or null.
+     * Find trip time short for the from place in transit leg, or null. Use routingService.
      */
     @Nullable
     public static TripTimeOnDate getTripTimeShortForFromPlace(Leg leg, RoutingService routingService) {
@@ -44,7 +44,33 @@ public class TripTimeShortHelper {
     }
 
     /**
-     * Find trip time short for the to place in transit leg, or null.
+     * Find trip time short for the from place in transit leg, or null.
+     */
+    @Nullable
+    public static TripTimeOnDate getTripTimeShortForFromPlace(Leg leg) {
+        if (!leg.isScheduledTransitLeg()) { return null; }
+        ScheduledTransitLeg transitLeg = leg.asScheduledTransitLeg();
+        return new TripTimeOnDate(
+                transitLeg.getTripTimes(),
+                transitLeg.getBoardStopPosInPattern(),
+                transitLeg.getTripPattern(),
+                transitLeg.getServiceDateMidnight()
+        );
+
+        /* TODO OTP2 This method is only used for EstimatedCalls for from place. We have to decide
+                     if EstimatedCalls are applicable to flex trips, and if that is the case, add
+                     the necessary mappings.
+        if (leg.isFlexible()) {
+            TripTimeShort tripTimeShort = tripTimes.get(leg.from.stopSequence);
+            tripTimeShort.scheduledDeparture = (int) startTimeSeconds;
+            tripTimeShort.realtimeDeparture = (int) startTimeSeconds;
+            return tripTimeShort;
+        }
+         */
+    }
+
+    /**
+     * Find trip time short for the to place in transit leg, or null. Use routing service.
      */
     @Nullable
     public static TripTimeOnDate getTripTimeShortForToPlace(Leg leg, RoutingService routingService) {
@@ -68,9 +94,34 @@ public class TripTimeShortHelper {
         return tripTimes.get(leg.getAlightStopPosInPattern());
     }
 
+    /**
+     * Find trip time short for the to place in transit leg, or null.
+     */
+    @Nullable
+    public static TripTimeOnDate getTripTimeShortForToPlace(Leg leg) {
+        if (!leg.isScheduledTransitLeg()) { return null; }
+        ScheduledTransitLeg transitLeg = leg.asScheduledTransitLeg();
+        return new TripTimeOnDate(
+                transitLeg.getTripTimes(),
+                transitLeg.getAlightStopPosInPattern(),
+                transitLeg.getTripPattern(),
+                transitLeg.getServiceDateMidnight()
+        );
+
+        /* TODO OTP2 This method is only used for EstimatedCalls for to place. We have to decide
+                     if EstimatedCalls are applicable to flex trips, and if that is the case, add
+                     the necessary mappings.
+        if (leg.isFlexible()) {
+            TripTimeShort tripTimeShort = tripTimes.get(leg.to.stopSequence);
+            tripTimeShort.scheduledArrival = (int) endTimeSeconds;
+            tripTimeShort.realtimeArrival = (int) endTimeSeconds;
+            return tripTimeShort;
+        }
+        */
+    }
 
     /**
-     * Find trip time shorts for all stops for the full trip of a leg.
+     * Find trip time shorts for all stops for the full trip of a leg. Use routing service.
      */
     public static List<TripTimeOnDate> getAllTripTimeShortsForLegsTrip(Leg leg, RoutingService routingService) {
         if (!leg.isTransitLeg()) { return List.of(); }
@@ -81,7 +132,21 @@ public class TripTimeShortHelper {
     }
 
     /**
-     * Find trip time shorts for all intermediate stops for a leg.
+     * Find trip time shorts for all stops for the full trip of a leg.
+     */
+    public static List<TripTimeOnDate> getAllTripTimeShortsForLegsTrip(Leg leg) {
+        if (!leg.isScheduledTransitLeg()) { return List.of(); }
+        ScheduledTransitLeg transitLeg = leg.asScheduledTransitLeg();
+        TripTimes tripTimes = transitLeg.getTripTimes();
+        TripPattern tripPattern = transitLeg.getTripPattern();
+        Instant serviceDateMidnight = transitLeg.getServiceDateMidnight();
+        return IntStream.range(0, tripPattern.numberOfStops())
+                .mapToObj(i -> new TripTimeOnDate(tripTimes, i, tripPattern, serviceDateMidnight))
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Find trip time shorts for all intermediate stops for a leg. Use routing service.
      */
     public static List<TripTimeOnDate> getIntermediateTripTimeShortsForLeg(Leg leg, RoutingService routingService) {
         if (!leg.isTransitLeg()) { return List.of(); }
@@ -91,5 +156,19 @@ public class TripTimeShortHelper {
 
         List<TripTimeOnDate> tripTimes = routingService.getTripTimesShort(leg.getTrip(), serviceDate);
         return tripTimes.subList(leg.getBoardStopPosInPattern() + 1, leg.getAlightStopPosInPattern());
+    }
+
+    /**
+     * Find trip time shorts for all intermediate stops for a leg.
+     */
+    public static List<TripTimeOnDate> getIntermediateTripTimeShortsForLeg(Leg leg) {
+        if (!leg.isScheduledTransitLeg()) { return List.of(); }
+        ScheduledTransitLeg transitLeg = leg.asScheduledTransitLeg();
+        TripTimes tripTimes = transitLeg.getTripTimes();
+        TripPattern tripPattern = transitLeg.getTripPattern();
+        Instant serviceDateMidnight = transitLeg.getServiceDateMidnight();
+        return IntStream.range(leg.getBoardStopPosInPattern() + 1, leg.getAlightStopPosInPattern())
+                .mapToObj(i -> new TripTimeOnDate(tripTimes, i, tripPattern, serviceDateMidnight))
+                .collect(Collectors.toList());
     }
 }

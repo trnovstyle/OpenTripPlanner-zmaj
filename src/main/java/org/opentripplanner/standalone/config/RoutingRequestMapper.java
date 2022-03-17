@@ -67,7 +67,7 @@ public class RoutingRequestMapper {
         request.elevatorHopCost = c.asInt("elevatorHopCost", dft.elevatorHopCost);
         request.elevatorHopTime = c.asInt("elevatorHopTime", dft.elevatorHopTime);
         request.geoidElevation = c.asBoolean("geoidElevation", dft.geoidElevation);
-        request.ignoreRealtimeUpdates = c.asBoolean("ignoreRealtimeUpdates", dft.ignoreRealtimeUpdates);
+            request.ignoreRealtimeUpdates = c.asBoolean("ignoreRealtimeUpdates", dft.ignoreRealtimeUpdates);
         request.carPickup = c.asBoolean("kissAndRide", dft.carPickup);
         request.locale = c.asLocale("locale", dft.locale);
         // 'maxTransfers' is configured in the Raptor tuning parameters, not here
