@@ -87,6 +87,9 @@ public class TripPatternForDateMapper {
             if (tripTimes.getRealTimeState() == RealTimeState.CANCELED) {
                 continue;
             }
+            if (tripTimes.isReplaced()) {
+                continue;
+            }
 
             times.add(tripTimes);
         }

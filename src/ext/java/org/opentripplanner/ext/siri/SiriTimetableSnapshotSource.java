@@ -802,7 +802,7 @@ public class SiriTimetableSnapshotSource implements TimetableSnapshotProvider {
                           to replace previous update regardless of realtimestate
                          */
 
-                        cancelScheduledTrip(feedId, trip.getId().getId(), serviceDate);
+                        setScheduledTripAsReplaced(feedId, trip.getId().getId(), serviceDate);
 
                         // Check whether trip id has been used for previously ADDED/MODIFIED trip message and remove
                         // previously created trip
@@ -941,15 +941,15 @@ public class SiriTimetableSnapshotSource implements TimetableSnapshotProvider {
     }
 
     /**
-     * Cancel scheduled trip in buffer given trip id (without agency id) on service date
-     *
+     * Set scheduled trip as replaced by realtime data. Performed on buffer for given trip id
+     * (without agency id) on service date
      * @param tripId trip id without agency id
      * @param serviceDate service date
-     * @return true if scheduled trip was cancelled
+     * @return true if scheduled trip was set as replaced
      */
-    private boolean cancelScheduledTrip(String feedId, String tripId, final ServiceDate serviceDate) {
+    private boolean setScheduledTripAsReplaced(String feedId, String tripId, final ServiceDate serviceDate) {
         boolean success = false;
-        
+
         final TripPattern pattern = getPatternForTripId(feedId, tripId);
 
         if (pattern != null) {
@@ -958,10 +958,10 @@ public class SiriTimetableSnapshotSource implements TimetableSnapshotProvider {
             final int tripIndex = timetable.getTripIndex(tripId);
 
             if (tripIndex == -1) {
-                LOG.warn("Could not cancel scheduled trip {}", tripId);
+                LOG.warn("Could not set scheduled trip {} as replaced", tripId);
             } else {
                 final TripTimes newTripTimes = new TripTimes(timetable.getTripTimes(tripIndex));
-                newTripTimes.cancelTrip();
+                newTripTimes.setReplaced(true);
                 buffer.update(pattern, newTripTimes, serviceDate);
                 success = true;
             }

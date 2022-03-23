@@ -139,6 +139,12 @@ public class TripTimes implements Serializable, Comparable<TripTimes> {
     private static final String[] EMPTY_STRING_ARRAY = new String[0];
 
     /**
+     * This field is used to indicate that scheduled trip has been replaced by realtime trip
+     * and should not be used for routing anymore
+     */
+    private boolean replaced = false;
+
+    /**
      * The provided stopTimes are assumed to be pre-filtered, valid, and monotonically increasing.
      * The non-interpolated stoptimes should already be marked at timepoints by a previous filtering step.
      */
@@ -200,6 +206,7 @@ public class TripTimes implements Serializable, Comparable<TripTimes> {
         this.originalGtfsStopSequence = object.originalGtfsStopSequence;
         this.realTimeState = object.realTimeState;
         this.timepoints = object.timepoints;
+        this.replaced = object.replaced;
     }
 
     public void setServiceCode(int serviceCode) {
@@ -549,5 +556,13 @@ public class TripTimes implements Serializable, Comparable<TripTimes> {
     /** The trips whose arrivals and departures are represented by this TripTimes */
     public Trip getTrip() {
         return trip;
+    }
+
+    public boolean isReplaced() {
+        return replaced;
+    }
+
+    public void setReplaced(boolean replaced) {
+        this.replaced = replaced;
     }
 }
