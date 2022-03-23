@@ -5,6 +5,7 @@ import java.io.ObjectOutputStream;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import javax.annotation.Nonnull;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.LineString;
@@ -893,6 +894,8 @@ public class StreetEdge extends Edge implements BikeWalkableEdge, Cloneable, Car
         // Copy turn restriction which have a .from of this edge (present on the original street edge)
         if (splitEdges.second != null) {
             edge.getTurnRestrictions()
+                    .stream()
+                    .filter(Objects::nonNull)
                     .forEach(existingTurnRestriction -> applyRestrictionsToNewEdge(
                             splitEdges.second, existingTurnRestriction.to,
                             existingTurnRestriction
