@@ -4,6 +4,7 @@ import graphql.Scalars;
 import graphql.schema.GraphQLArgument;
 import graphql.schema.GraphQLFieldDefinition;
 import graphql.schema.GraphQLOutputType;
+import org.opentripplanner.ext.transmodelapi.mapping.TransitIdMapper;
 import org.opentripplanner.ext.transmodelapi.support.GqlUtil;
 import org.opentripplanner.model.FeedScopedId;
 
@@ -23,8 +24,7 @@ public class DatedServiceJourneyQuery {
                         .name("id")
                         .type(Scalars.GraphQLString))
                 .dataFetcher(environment -> {
-                    FeedScopedId id =
-                            FeedScopedId.parseId(environment.getArgument("datedServiceJourneyId"));
+                    FeedScopedId id = TransitIdMapper.mapIDToDomain(environment.getArgument("id"));
 
                     return GqlUtil.getRoutingService(environment)
                             .getTripOnServiceDateById(id);
