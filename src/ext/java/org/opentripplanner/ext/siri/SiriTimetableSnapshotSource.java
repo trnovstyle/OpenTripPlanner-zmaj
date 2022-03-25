@@ -567,17 +567,11 @@ public class SiriTimetableSnapshotSource implements TimetableSnapshotProvider {
                 stopTime.setDepartureTime(calculateSecondsSinceMidnight(departureTime, aimedDepartureTime));
             }
 
-            if (estimatedCall.getArrivalBoardingActivity() == ArrivalBoardingActivityEnumeration.ALIGHTING) {
-                stopTime.setDropOffType(SCHEDULED);
-            } else {
-                stopTime.setDropOffType(NONE);
-            }
+            var pickUpType = TimetableHelper.mapPickUpType(stopTime.getPickupType(), estimatedCall.getDepartureBoardingActivity());
+            pickUpType.ifPresent(stopTime::setPickupType);
 
-            if (estimatedCall.getDepartureBoardingActivity() == DepartureBoardingActivityEnumeration.BOARDING) {
-                stopTime.setPickupType(SCHEDULED);
-            } else {
-                stopTime.setPickupType(NONE);
-            }
+            var dropOffType = TimetableHelper.mapDropOffType(stopTime.getDropOffType(), estimatedCall.getArrivalBoardingActivity());
+            dropOffType.ifPresent(stopTime::setDropOffType);
 
             if (estimatedCall.getDestinationDisplaies() != null && !estimatedCall.getDestinationDisplaies().isEmpty()) {
                 NaturalLanguageStringStructure destinationDisplay = estimatedCall.getDestinationDisplaies().get(0);
