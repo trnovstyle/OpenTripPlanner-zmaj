@@ -39,6 +39,7 @@ import org.opentripplanner.transit.raptor.rangeraptor.workerlifecycle.LifeCycleS
  * @param <T> The TripSchedule type defined by the user of the raptor API.
  */
 public class SearchContext<T extends RaptorTripSchedule> {
+
     /**
      * The request input used to customize the worker to the clients needs.
      */
@@ -115,6 +116,11 @@ public class SearchContext<T extends RaptorTripSchedule> {
     public SearchParams searchParams() {
         return request.searchParams();
     }
+
+    public boolean wheelchairAccess() {
+        return this.request.searchParams().wheelchairAccess();
+    }
+
 
     public RaptorProfile profile() {
         return request.profile();
@@ -252,13 +258,13 @@ public class SearchContext<T extends RaptorTripSchedule> {
     ) {
         return request.searchDirection().isForward()
                 ? new ForwardPathMapper<>(
-                        txConstraintsSearch,
-                        request.slackProvider(),
-                        costCalculator,
-                        stopNameResolver,
-                        lifeCycle,
-                        request.profile().useApproximateTripSearch()
-                )
+                txConstraintsSearch,
+                request.slackProvider(),
+                costCalculator,
+                stopNameResolver,
+                lifeCycle,
+                request.profile().useApproximateTripSearch()
+        )
                 : new ReversePathMapper<>(
                         txConstraintsSearch,
                         request.slackProvider(),

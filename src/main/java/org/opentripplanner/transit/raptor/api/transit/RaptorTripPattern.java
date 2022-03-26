@@ -2,9 +2,9 @@ package org.opentripplanner.transit.raptor.api.transit;
 
 
 /**
- * This interface represent a trip pattern. A trip-pattern in the raptor context is
- * just a list of stops visited by ALL trips in the pattern. The stops must be ordered
- * in the same sequence, with no gaps, as the trips visit the stops.
+ * This interface represent a trip pattern. A trip-pattern in the raptor context is just a list of
+ * stops visited by ALL trips in the pattern. The stops must be ordered in the same sequence, with
+ * no gaps, as the trips visit the stops.
  */
 public interface RaptorTripPattern {
 
@@ -21,15 +21,21 @@ public interface RaptorTripPattern {
      * accessible to wheelchairs (if requested).
      *
      * @param stopPositionInPattern stop position number in pattern, starting at 0.
+     * @param wheelchairAccess      Check if wheelchair access exists for given stop.
      */
-    boolean boardingPossibleAt(int stopPositionInPattern);
+    boolean boardingPossibleAt(
+            int stopPositionInPattern,
+            boolean wheelchairAccess
+    );
 
 
     /**
-     * Same as {@link #boardingPossibleAt(int)}, but for getting off a trip.
+     * Same as {@link #boardingPossibleAt(int, boolean)}, but for getting off a trip.
+     *
      * @param stopPositionInPattern stop position number in pattern, starting at 0.
+     * @param wheelchairAccess      Check if wheelchair access exists for given stop.
      */
-    boolean alightingPossibleAt(int stopPositionInPattern);
+    boolean alightingPossibleAt(int stopPositionInPattern, boolean wheelchairAccess);
 
     /**
      * Number of stops in pattern.

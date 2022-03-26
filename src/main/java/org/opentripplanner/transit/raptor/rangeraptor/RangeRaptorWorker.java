@@ -16,13 +16,13 @@ import org.opentripplanner.transit.raptor.api.transit.RaptorTimeTable;
 import org.opentripplanner.transit.raptor.api.transit.RaptorTransfer;
 import org.opentripplanner.transit.raptor.api.transit.RaptorTransitDataProvider;
 import org.opentripplanner.transit.raptor.api.transit.RaptorTripSchedule;
+import org.opentripplanner.transit.raptor.api.transit.RaptorTripScheduleSearch;
 import org.opentripplanner.transit.raptor.api.transit.TransitArrival;
 import org.opentripplanner.transit.raptor.api.view.Worker;
 import org.opentripplanner.transit.raptor.rangeraptor.debug.WorkerPerformanceTimers;
 import org.opentripplanner.transit.raptor.rangeraptor.transit.RoundTracker;
 import org.opentripplanner.transit.raptor.rangeraptor.transit.TransitCalculator;
 import org.opentripplanner.transit.raptor.rangeraptor.transit.TripScheduleBoardSearch;
-import org.opentripplanner.transit.raptor.api.transit.RaptorTripScheduleSearch;
 import org.opentripplanner.transit.raptor.rangeraptor.workerlifecycle.LifeCycleEventPublisher;
 
 
@@ -97,9 +97,11 @@ public final class RangeRaptorWorker<T extends RaptorTripSchedule> implements Wo
 
     private boolean inFirstIteration = true;
 
-   private boolean hasTimeDependentAccess = false;
+    private boolean hasTimeDependentAccess = false;
 
     private int iterationDepartureTime;
+
+    private boolean wheelchairBoarding;
 
 
     public RangeRaptorWorker(
@@ -112,7 +114,8 @@ public final class RangeRaptorWorker<T extends RaptorTripSchedule> implements Wo
             TransitCalculator<T> calculator,
             LifeCycleEventPublisher lifeCyclePublisher,
             WorkerPerformanceTimers timers,
-            boolean enableTransferConstraints
+            boolean enableTransferConstraints,
+            boolean wheelchairBoarding
     ) {
         this.transitWorker = transitWorker;
         this.state = state;
@@ -129,6 +132,7 @@ public final class RangeRaptorWorker<T extends RaptorTripSchedule> implements Wo
         // "everyone" by providing access to it in the context.
         this.roundTracker = (RoundTracker) roundProvider;
         this.lifeCycle = lifeCyclePublisher;
+        this.wheelchairBoarding = wheelchairBoarding;
     }
 
     /**
@@ -227,11 +231,11 @@ public final class RangeRaptorWorker<T extends RaptorTripSchedule> implements Wo
 
                     // attempt to alight if we're on board, this is done above the board search
                     // so that we don't alight on first stop boarded
-                    if (calculator.alightingPossibleAt(pattern, stopPos)) {
+                    if (calculator.alightingPossibleAt(pattern, stopPos, wheelchairBoarding)) {
                         transitWorker.alight(stopIndex, stopPos, alightSlack);
                     }
 
-                    if(calculator.boardingPossibleAt(pattern, stopPos)) {
+                    if (calculator.boardingPossibleAt(pattern, stopPos, wheelchairBoarding)) {
                         // MC Raptor have many, while RR have one boarding
                         transitWorker.forEachBoarding(stopIndex, (int prevArrivalTime) -> {
 

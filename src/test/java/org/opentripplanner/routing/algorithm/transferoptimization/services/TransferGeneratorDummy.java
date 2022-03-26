@@ -23,7 +23,8 @@ public class TransferGeneratorDummy {
     return new TransferGenerator<>(null, null, null) {
       @Override
       public List<List<TripToTripTransfer<TestTripSchedule>>> findAllPossibleTransfers(
-              List<TransitPathLeg<TestTripSchedule>> transitLegs
+              List<TransitPathLeg<TestTripSchedule>> transitLegs,
+              boolean wheelchairAccess
       ) {
         return Arrays.asList(transfers);
       }

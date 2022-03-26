@@ -33,6 +33,8 @@ public class OptimizePathDomainServiceTest implements RaptorTestConstants {
     private static final int TRANSFER_COST_SEC = 20;
     private static final double WAIT_RELUCTANCE = 1.0;
 
+    private static final boolean WHEELCHAIR_ACCESS = false;
+
     private static final RaptorSlackProvider SLACK_PROVIDER = RaptorSlackProvider
             .defaultSlackProvider(TRANSFER_SLACK, BOARD_SLACK, ALIGHT_SLACK);
 
@@ -77,7 +79,7 @@ public class OptimizePathDomainServiceTest implements RaptorTestConstants {
         var subject = subject(transfers, null);
 
         // When
-        var result = subject.findBestTransitPath(original);
+        var result = subject.findBestTransitPath(original, WHEELCHAIR_ACCESS);
 
         // Then expect a set containing the original path
         assertEquals(
@@ -120,7 +122,7 @@ public class OptimizePathDomainServiceTest implements RaptorTestConstants {
         var subject = subject(transfers, TRANS_WAIT_TIME_CALC);
 
         // When
-        var result = subject.findBestTransitPath(original);
+        var result = subject.findBestTransitPath(original, WHEELCHAIR_ACCESS);
 
         // Insert wait-time cost summary info
         var expected = original.toStringDetailed(this::stopIndexToName)
@@ -182,7 +184,7 @@ public class OptimizePathDomainServiceTest implements RaptorTestConstants {
         var subject = subject(transfers, null);
 
         // Find the path with the lowest cost
-        var result = subject.findBestTransitPath(original);
+        var result = subject.findBestTransitPath(original, WHEELCHAIR_ACCESS);
 
         assertEquals(
                 "A ~ BUS T1 10:02 10:10 ~ B ~ BUS T2 10:12 10:35 ~ F ~ "
@@ -197,7 +199,7 @@ public class OptimizePathDomainServiceTest implements RaptorTestConstants {
         subject = subject(transfers, TRANS_WAIT_TIME_CALC);
 
         // Find the path with the lowest cost
-        result = subject.findBestTransitPath(original);
+        result = subject.findBestTransitPath(original, WHEELCHAIR_ACCESS);
 
         assertEquals(
                 "A ~ BUS T1 10:02 10:10 ~ B ~ Walk 30s ~ C ~ BUS T2 10:15 10:35 ~ F "
@@ -242,7 +244,7 @@ public class OptimizePathDomainServiceTest implements RaptorTestConstants {
         var subject = subject(transfers, null);
 
         // Find the path with the lowest cost
-        var result = subject.findBestTransitPath(original);
+        var result = subject.findBestTransitPath(original, WHEELCHAIR_ACCESS);
 
         assertEquals(1, result.size(), result.toString());
 

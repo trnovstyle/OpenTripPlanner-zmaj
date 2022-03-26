@@ -1,8 +1,10 @@
 package org.opentripplanner.routing.algorithm.raptoradapter.transit.request;
 
-import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.IntUnaryOperator;
+import org.opentripplanner.model.StopLocation;
+import org.opentripplanner.model.WheelChairBoarding;
 import org.opentripplanner.model.base.ToStringBuilder;
 import org.opentripplanner.routing.algorithm.raptoradapter.transit.TripPatternForDate;
 import org.opentripplanner.routing.algorithm.raptoradapter.transit.TripPatternWithRaptorStopIndexes;
@@ -142,12 +144,39 @@ public class TripPatternForDates
     }
 
     @Override
-    public boolean boardingPossibleAt(int stopPositionInPattern) {
+    public boolean boardingPossibleAt(
+            int stopPositionInPattern,
+            boolean wheelchairAccess
+    ) {
+
+        if (wheelchairAccess) {
+            var wheelchairPossible =
+                    Optional.ofNullable(tripPattern.getPattern().getStop(stopPositionInPattern))
+                            .map(StopLocation::getWheelchairBoarding)
+                            .map(WheelChairBoarding.POSSIBLE::equals)
+                            .orElse(false);
+            if (!wheelchairPossible) {
+                return false;
+            }
+        }
+
         return tripPattern.getPattern().canBoard(stopPositionInPattern);
     }
 
     @Override
-    public boolean alightingPossibleAt(int stopPositionInPattern) {
+    public boolean alightingPossibleAt(int stopPositionInPattern, boolean wheelchairAccess) {
+
+        if (wheelchairAccess) {
+            var wheelchairPossible =
+                    Optional.ofNullable(tripPattern.getPattern().getStop(stopPositionInPattern))
+                            .map(StopLocation::getWheelchairBoarding)
+                            .map(WheelChairBoarding.POSSIBLE::equals)
+                            .orElse(false);
+            if (!wheelchairPossible) {
+                return false;
+            }
+        }
+
         return tripPattern.getPattern().canAlight(stopPositionInPattern);
     }
 

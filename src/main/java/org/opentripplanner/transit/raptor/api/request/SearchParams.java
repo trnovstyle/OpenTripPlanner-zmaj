@@ -41,6 +41,7 @@ public class SearchParams {
     private final boolean constrainedTransfersEnabled;
     private final Collection<RaptorTransfer> accessPaths;
     private final Collection<RaptorTransfer> egressPaths;
+    private final boolean wheelchairAccess;
 
     /**
      * Default values is defined in the default constructor.
@@ -57,6 +58,7 @@ public class SearchParams {
         constrainedTransfersEnabled = false;
         accessPaths = List.of();
         egressPaths = List.of();
+        wheelchairAccess = false;
     }
 
     SearchParams(SearchParamsBuilder<?> builder) {
@@ -71,10 +73,15 @@ public class SearchParams {
         this.constrainedTransfersEnabled = builder.constrainedTransfersEnabled();
         this.accessPaths = List.copyOf(builder.accessPaths());
         this.egressPaths = List.copyOf(builder.egressPaths());
+        this.wheelchairAccess = builder.wheelchairAccess();
     }
 
     static SearchParams defaults() {
         return new SearchParams();
+    }
+
+    public boolean wheelchairAccess() {
+        return this.wheelchairAccess;
     }
 
     /**

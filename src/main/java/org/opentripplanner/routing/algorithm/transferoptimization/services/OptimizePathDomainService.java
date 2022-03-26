@@ -99,12 +99,15 @@ public class OptimizePathDomainService<T extends RaptorTripSchedule> {
     this.stopNameTranslator = stopNameTranslator;
   }
 
-  public Set<OptimizedPath<T>> findBestTransitPath(Path<T> originalPath) {
+  public Set<OptimizedPath<T>> findBestTransitPath(
+          Path<T> originalPath,
+          boolean wheelchairAccess
+  ) {
     List<TransitPathLeg<T>> transitLegs = originalPath.transitLegs().collect(Collectors.toList());
 
     // Find all possible transfers between each pair of transit legs, and sort on arrival time
     var possibleTransfers = sortTransfersOnArrivalTimeInDecOrder(
-            transferGenerator.findAllPossibleTransfers(transitLegs)
+            transferGenerator.findAllPossibleTransfers(transitLegs, wheelchairAccess)
     );
 
     // Combine transit legs and transfers

@@ -42,13 +42,16 @@ public class TransferGeneratorTest implements RaptorTestConstants {
 
     private final TestTransitData data = new TestTransitData();
 
-    private final TransferServiceAdaptor<TestTripSchedule> TS_ADAPTOR = data.transferServiceAdaptor();
+    private final TransferServiceAdaptor<TestTripSchedule> TS_ADAPTOR =
+            data.transferServiceAdaptor();
+
+    private static final boolean WHEELCHAIR_ACCESS = false;
 
     @Test
     void findTransferPathWithoutTransfers() {
         data.withRoutes(
                 route("L1", STOP_A, STOP_B, STOP_C)
-                .withTimetable(schedule("10:00 10:20 10:30"))
+                        .withTimetable(schedule("10:00 10:20 10:30"))
 
         );
         var schedule = data.getRoute(0).getTripSchedule(0);
@@ -62,7 +65,9 @@ public class TransferGeneratorTest implements RaptorTestConstants {
 
         var subject = new TransferGenerator<>(TS_ADAPTOR, SLACK_PROVIDER, data);
 
-        assertEquals("[]", subject.findAllPossibleTransfers(transitLegs).toString()
+        assertEquals(
+                "[]",
+                subject.findAllPossibleTransfers(transitLegs, WHEELCHAIR_ACCESS).toString()
         );
     }
 
@@ -81,7 +86,7 @@ public class TransferGeneratorTest implements RaptorTestConstants {
         var subject = new TransferGenerator<>(TS_ADAPTOR, SLACK_PROVIDER, data);
         assertEquals(
                 "[[TripToTripTransfer{from: [2 10:10 BUS L1], to: [2 10:12 BUS L1]}]]",
-                subject.findAllPossibleTransfers(transitLegs).toString()
+                subject.findAllPossibleTransfers(transitLegs, WHEELCHAIR_ACCESS).toString()
         );
 
         // The only possible place to transfer between B and D is stop C:
@@ -89,7 +94,7 @@ public class TransferGeneratorTest implements RaptorTestConstants {
         subject = new TransferGenerator<>(TS_ADAPTOR, SLACK_PROVIDER, data);
         assertEquals(
                 "[[TripToTripTransfer{from: [3 10:20 BUS L1], to: [3 10:22 BUS L1]}]]",
-                subject.findAllPossibleTransfers(transitLegs).toString()
+                subject.findAllPossibleTransfers(transitLegs, WHEELCHAIR_ACCESS).toString()
         );
 
         // Between A and D transfers may happen at stop B and C. The transfers should be sorted on
@@ -99,7 +104,7 @@ public class TransferGeneratorTest implements RaptorTestConstants {
         assertEquals(
                 "[[TripToTripTransfer{from: [2 10:10 BUS L1], to: [2 10:12 BUS L1]}, "
                         + "TripToTripTransfer{from: [3 10:20 BUS L1], to: [3 10:22 BUS L1]}]]",
-                subject.findAllPossibleTransfers(transitLegs).toString()
+                subject.findAllPossibleTransfers(transitLegs, WHEELCHAIR_ACCESS).toString()
         );
     }
 
@@ -133,7 +138,7 @@ public class TransferGeneratorTest implements RaptorTestConstants {
 
         var subject = new TransferGenerator<>(TS_ADAPTOR, SLACK_PROVIDER, data);
 
-        var result = subject.findAllPossibleTransfers(transitLegs);
+        var result = subject.findAllPossibleTransfers(transitLegs, WHEELCHAIR_ACCESS);
 
         assertEquals(
                 "[["
@@ -162,7 +167,7 @@ public class TransferGeneratorTest implements RaptorTestConstants {
 
         var subject = new TransferGenerator<>(TS_ADAPTOR, SLACK_PROVIDER, data);
 
-        var result = subject.findAllPossibleTransfers(transitLegs);
+        var result = subject.findAllPossibleTransfers(transitLegs, WHEELCHAIR_ACCESS);
         assertEquals(
                 "[["
                         + "TripToTripTransfer{from: [2 10:10 BUS L1], to: [5 10:12 BUS L2], transfer: On-Street 1m ~ 5}, "
@@ -196,7 +201,7 @@ public class TransferGeneratorTest implements RaptorTestConstants {
 
         var subject = new TransferGenerator<>(TS_ADAPTOR, slackProvider, data);
 
-        var result = subject.findAllPossibleTransfers(transitLegs);
+        var result = subject.findAllPossibleTransfers(transitLegs, WHEELCHAIR_ACCESS);
         assertEquals(
                 "[["
                         + "TripToTripTransfer{from: [2 10:10 BUS L1], to: [2 10:20 BUS L2]}"
@@ -229,7 +234,7 @@ public class TransferGeneratorTest implements RaptorTestConstants {
 
         var subject = new TransferGenerator<>(TS_ADAPTOR, SLACK_PROVIDER, data);
 
-        var result = subject.findAllPossibleTransfers(transitLegs);
+        var result = subject.findAllPossibleTransfers(transitLegs, WHEELCHAIR_ACCESS);
 
         // Transfer at B is not allowed
         assertEquals(
@@ -264,7 +269,7 @@ public class TransferGeneratorTest implements RaptorTestConstants {
 
         var subject = new TransferGenerator<>(TS_ADAPTOR, SLACK_PROVIDER, data);
 
-        var result = subject.findAllPossibleTransfers(transitLegs);
+        var result = subject.findAllPossibleTransfers(transitLegs, WHEELCHAIR_ACCESS);
 
         // Transfer at B is not allowed
         assertEquals(
@@ -291,7 +296,7 @@ public class TransferGeneratorTest implements RaptorTestConstants {
 
         var subject = new TransferGenerator<>(TS_ADAPTOR, SLACK_PROVIDER, data);
 
-        var result = subject.findAllPossibleTransfers(transitLegs);
+        var result = subject.findAllPossibleTransfers(transitLegs, WHEELCHAIR_ACCESS);
 
         // Transfer at C is not allowed
         assertEquals(
@@ -319,7 +324,7 @@ public class TransferGeneratorTest implements RaptorTestConstants {
 
         var subject = new TransferGenerator<>(TS_ADAPTOR, SLACK_PROVIDER, data);
 
-        var result = subject.findAllPossibleTransfers(transitLegs);
+        var result = subject.findAllPossibleTransfers(transitLegs, WHEELCHAIR_ACCESS);
 
         // Transfer at D is not allowed
         assertEquals(
@@ -369,14 +374,14 @@ public class TransferGeneratorTest implements RaptorTestConstants {
         var tripB = l2.getTripSchedule(0);
 
         data.withConstrainedTransfer(tripA, STOP_B, tripB, STOP_B, transfer);
-        var result = subject.findAllPossibleTransfers(transitLegs);
+        var result = subject.findAllPossibleTransfers(transitLegs, WHEELCHAIR_ACCESS);
 
         // The same stop transfer is no longer an option
         assertEquals("[[" + expCxD + ", " + expExE + "]]", result.toString());
 
         data.clearConstrainedTransfers();
         data.withConstrainedTransfer(tripA, STOP_C, tripB, STOP_D, transfer);
-        result = subject.findAllPossibleTransfers(transitLegs);
+        result = subject.findAllPossibleTransfers(transitLegs, WHEELCHAIR_ACCESS);
 
         // The same stop transfer is no longer an option
         assertEquals("[[" + expBxB + ", " + expExE + "]]", result.toString());
@@ -408,7 +413,7 @@ public class TransferGeneratorTest implements RaptorTestConstants {
 
         var subject = new TransferGenerator<>(TS_ADAPTOR, SLACK_PROVIDER, data);
 
-        var result = subject.findAllPossibleTransfers(transitLegs);
+        var result = subject.findAllPossibleTransfers(transitLegs, WHEELCHAIR_ACCESS);
 
         assertEquals(
                 "[["

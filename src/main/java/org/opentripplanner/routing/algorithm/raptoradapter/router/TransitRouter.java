@@ -114,14 +114,15 @@ public class TransitRouter {
 
         if(OTPFeature.OptimizeTransfers.isOn()) {
             paths = TransferOptimizationServiceConfigurator.createOptimizeTransferService(
-                    transitLayer::getStopByIndex,
-                    requestTransitDataProvider.stopNameResolver(),
-                    router.graph.getTransferService(),
-                    requestTransitDataProvider,
-                    transitLayer.getStopIndex().stopBoardAlightCosts,
-                    raptorRequest,
-                    request.transferOptimization
-            ).optimize(transitResponse.paths());
+                            transitLayer::getStopByIndex,
+                            requestTransitDataProvider.stopNameResolver(),
+                            router.graph.getTransferService(),
+                            requestTransitDataProvider,
+                            transitLayer.getStopIndex().stopBoardAlightCosts,
+                            raptorRequest,
+                            request.transferOptimization
+                    )
+                    .optimize(transitResponse.paths(), request.wheelchairAccessible);
         }
 
         // Create itineraries

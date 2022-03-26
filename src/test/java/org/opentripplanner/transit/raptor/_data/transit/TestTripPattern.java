@@ -12,26 +12,36 @@ public class TestTripPattern implements RaptorTripPattern {
   private final int[] stopIndexes;
 
   /**
-   * 0 - 000 : No restriction
-   * 1 - 001 : No Boarding.
-   * 2 - 010 : No Alighting.
-   * 4 - 100 : No wheelchair.
+   * 0 - 000 : No restriction 1 - 001 : No Boarding. 2 - 010 : No Alighting. 4 - 100 : No
+   * wheelchair.
    */
   private final int[] restrictions;
+  // If true, wheelchairAccess is possible at stop of given index
+  private final int[] wheelchairAccess;
 
-  private TestTripPattern(String name, int[] stopIndexes, int[] restrictions) {
+  private TestTripPattern(
+          String name,
+          int[] stopIndexes,
+          int[] restrictions,
+          int[] wheelchairAccess
+  ) {
     this.name = name;
     this.stopIndexes = stopIndexes;
     this.restrictions = restrictions;
+    this.wheelchairAccess = wheelchairAccess;
   }
 
-  public static TestTripPattern pattern(String name, int ... stopIndexes) {
-    return new TestTripPattern(name, stopIndexes, new int[stopIndexes.length]);
+  public static TestTripPattern pattern(String name, int... stopIndexes) {
+    return new TestTripPattern(
+            name, stopIndexes, new int[stopIndexes.length], new int[stopIndexes.length]);
   }
 
-  /** Create a pattern with name 'R1' and given stop indexes */
-  public static TestTripPattern pattern(int ... stopIndexes) {
-    return new TestTripPattern("R1", stopIndexes, new int[stopIndexes.length]);
+  /**
+   * Create a pattern with name 'R1' and given stop indexes
+   */
+  public static TestTripPattern pattern(int... stopIndexes) {
+    return new TestTripPattern(
+            "R1", stopIndexes, new int[stopIndexes.length], new int[stopIndexes.length]);
   }
 
   /**
@@ -63,21 +73,35 @@ public class TestTripPattern implements RaptorTripPattern {
     }
   }
 
+  public void setNoWheelchairAccess(int index) {
+    this.wheelchairAccess[index] = 1;
+  }
+
   public String getName() {
     return name;
   }
 
-  @Override public int stopIndex(int stopPositionInPattern) {
+  @Override
+  public int stopIndex(int stopPositionInPattern) {
     return stopIndexes[stopPositionInPattern];
   }
 
   @Override
-  public boolean boardingPossibleAt(int stopPositionInPattern) {
+  public boolean boardingPossibleAt(int stopPositionInPattern, boolean wheelchairBoarding) {
+
+    if (wheelchairBoarding && this.wheelchairAccess[stopPositionInPattern] == 1) {
+      return false;
+    }
+
     return isNotRestricted(stopPositionInPattern, BOARDING_MASK);
   }
 
   @Override
-  public boolean alightingPossibleAt(int stopPositionInPattern) {
+  public boolean alightingPossibleAt(int stopPositionInPattern, boolean wheelchairAlighting) {
+    if (wheelchairAlighting && this.wheelchairAccess[stopPositionInPattern] == 1) {
+      return false;
+    }
+
     return isNotRestricted(stopPositionInPattern, ALIGHTING_MASK);
   }
 

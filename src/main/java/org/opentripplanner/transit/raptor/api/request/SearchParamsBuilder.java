@@ -29,6 +29,7 @@ public class SearchParamsBuilder<T extends RaptorTripSchedule> {
     private boolean constrainedTransfersEnabled;
     private final Collection<RaptorTransfer> accessPaths = new ArrayList<>();
     private final Collection<RaptorTransfer> egressPaths = new ArrayList<>();
+    private boolean wheelchairAccess;
 
     public SearchParamsBuilder(RaptorRequestBuilder<T> parent, SearchParams defaults) {
         this.parent = parent;
@@ -43,6 +44,17 @@ public class SearchParamsBuilder<T extends RaptorTripSchedule> {
         this.constrainedTransfersEnabled = defaults.constrainedTransfersEnabled();
         this.accessPaths.addAll(defaults.accessPaths());
         this.egressPaths.addAll(defaults.egressPaths());
+        this.wheelchairAccess = defaults.wheelchairAccess();
+    }
+
+
+    public SearchParamsBuilder<T> wheelchairAccess(boolean wheelchairAccess) {
+        this.wheelchairAccess = wheelchairAccess;
+        return this;
+    }
+
+    public boolean wheelchairAccess() {
+        return this.wheelchairAccess;
     }
 
     public int earliestDepartureTime() {

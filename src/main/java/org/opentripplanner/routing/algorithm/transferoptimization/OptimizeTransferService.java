@@ -41,7 +41,7 @@ public class OptimizeTransferService<T extends RaptorTripSchedule> {
     this.transferWaitTimeCostCalculator = null;
   }
 
-  public List<Path<T>> optimize(Collection<Path<T>> paths) {
+  public List<Path<T>> optimize(Collection<Path<T>> paths, boolean wheelchairAccess) {
     setup(paths);
 
     long start = LOG.isDebugEnabled() ? System.currentTimeMillis() : 0;
@@ -49,7 +49,7 @@ public class OptimizeTransferService<T extends RaptorTripSchedule> {
     List<Path<T>> results = new ArrayList<>();
 
     for (Path<T> path : paths) {
-      results.addAll(optimize(path));
+      results.addAll(optimize(path, wheelchairAccess));
     }
 
     if(LOG.isDebugEnabled()) {
@@ -75,11 +75,11 @@ public class OptimizeTransferService<T extends RaptorTripSchedule> {
    * Optimize a single transfer, finding all possible permutations of transfers for the path and
    * filtering the list down one path, or a few equally good paths.
    */
-  private Collection<OptimizedPath<T>> optimize(Path<T> path) {
+  private Collection<OptimizedPath<T>> optimize(Path<T> path, boolean wheelchairAccess) {
     // Skip transfer optimization if no transfers exist.
     if (path.numberOfTransfersExAccessEgress() == 0) {
       return List.of(new OptimizedPath<>(path));
     }
-    return optimizePathDomainService.findBestTransitPath(path);
+    return optimizePathDomainService.findBestTransitPath(path, wheelchairAccess);
   }
 }

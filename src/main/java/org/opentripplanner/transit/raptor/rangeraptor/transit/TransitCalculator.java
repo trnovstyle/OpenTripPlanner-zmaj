@@ -218,13 +218,26 @@ public interface TransitCalculator<T extends RaptorTripSchedule> {
      * normal search. For a backwards search, it checks for alighting instead. This should include
      * checks like: Does the pattern allow boarding at the given stop? Is this accessible to
      * wheelchairs (if requested).
+     *
+     * @param pattern          Trip pattern
+     * @param stopPos          stop position number in pattern, starting at 0.
+     * @param wheelchairAccess Check if wheelchair access exists for given stop.
      */
-    boolean boardingPossibleAt(RaptorTripPattern pattern, int stopPos);
+    boolean boardingPossibleAt(
+            RaptorTripPattern pattern,
+            int stopPos,
+            boolean wheelchairAccess
+    );
 
     /**
-     * Same as {@link #boardingPossibleAt(RaptorTripPattern, int)}, but for switched alighting/boarding.
+     * Same as {@link #boardingPossibleAt(RaptorTripPattern, int, boolean)}, but for switched
+     * alighting/boarding.
+     *
+     * @param pattern          Trip pattern
+     * @param stopPos          stop position number in pattern, starting at 0.
+     * @param wheelchairAccess Check if wheelchair access exists for given stop.
      */
-    boolean alightingPossibleAt(RaptorTripPattern pattern, int stopPos);
+    boolean alightingPossibleAt(RaptorTripPattern pattern, int stopPos, boolean wheelchairAccess);
 
     /**
      * Returns an iterator over all transfers "from" (or "to" for reverse searches) a stopIndex.

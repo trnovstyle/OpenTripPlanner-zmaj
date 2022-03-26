@@ -149,8 +149,12 @@ final class ReverseTransitCalculator<T extends RaptorTripSchedule> implements Tr
     }
 
     @Override
-    public boolean alightingPossibleAt(RaptorTripPattern pattern, int stopPos) {
-        return pattern.boardingPossibleAt(stopPos);
+    public boolean alightingPossibleAt(
+            RaptorTripPattern pattern,
+            int stopPos,
+            boolean wheelchairAccess
+    ) {
+        return pattern.boardingPossibleAt(stopPos, wheelchairAccess);
     }
 
     @Override
@@ -159,8 +163,12 @@ final class ReverseTransitCalculator<T extends RaptorTripSchedule> implements Tr
     }
 
     @Override
-    public boolean boardingPossibleAt(RaptorTripPattern pattern, int stopPos) {
-        return pattern.alightingPossibleAt(stopPos);
+    public boolean boardingPossibleAt(
+            RaptorTripPattern pattern,
+            int stopPos,
+            boolean wheelchairAccess
+    ) {
+        return pattern.alightingPossibleAt(stopPos, wheelchairAccess);
     }
 
     @Override

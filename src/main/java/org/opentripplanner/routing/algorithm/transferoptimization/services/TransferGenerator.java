@@ -55,7 +55,8 @@ public class TransferGenerator<T extends RaptorTripSchedule> {
   }
 
   public List<List<TripToTripTransfer<T>>> findAllPossibleTransfers(
-          List<TransitPathLeg<T>> transitLegs
+          List<TransitPathLeg<T>> transitLegs,
+          boolean wheelchairAccess
   ) {
     List<List<TripToTripTransfer<T>>> result = new ArrayList<>();
     var fromLeg = transitLegs.get(0);
@@ -66,7 +67,7 @@ public class TransferGenerator<T extends RaptorTripSchedule> {
       toLeg = transitLegs.get(i);
 
       var transfers = findTransfers(
-              fromLeg.trip(), earliestDeparture, toLeg.trip()
+              fromLeg.trip(), earliestDeparture, toLeg.trip(), wheelchairAccess
       );
 
       result.add(transfers);
@@ -87,32 +88,39 @@ public class TransferGenerator<T extends RaptorTripSchedule> {
   private List<TripToTripTransfer<T>> findTransfers(
           T fromTrip,
           StopTime fromTripDeparture,
-          T toTrip
+          T toTrip,
+          boolean wheelchairAccess
   ) {
     this.fromTrip = fromTrip;
     this.toTrip = toTrip;
 
     int firstStopPos = firstPossibleArrivalStopPos(fromTrip, fromTripDeparture);
-    return  findAllTransfers(firstStopPos);
+    return findAllTransfers(firstStopPos, wheelchairAccess);
   }
 
-  /** Given the trip and departure, find the first possible stop position to alight. */
+  /**
+   * Given the trip and departure, find the first possible stop position to alight.
+   */
   private int firstPossibleArrivalStopPos(T trip, StopTime departure) {
     return 1 + trip.findDepartureStopPosition(departure.time(), departure.stop());
   }
 
-  private List<TripToTripTransfer<T>> findAllTransfers(int stopPos) {
+  private List<TripToTripTransfer<T>> findAllTransfers(
+          int stopPos,
+          boolean wheelchairAccess
+  ) {
 
     final List<TripToTripTransfer<T>> result = new ArrayList<>();
 
     while (stopPos < fromTrip.pattern().numberOfStopsInPattern()) {
-      boolean alightingPossible = fromTrip.pattern().alightingPossibleAt(stopPos);
+      boolean alightingPossible =
+              fromTrip.pattern().alightingPossibleAt(stopPos, wheelchairAccess);
       if (alightingPossible) {
         var from = TripStopTime.arrival(fromTrip, stopPos);
 
         // First add high priority transfers
-        result.addAll(transferFromSameStop(from));
-        result.addAll(findStandardTransfers(from));
+        result.addAll(transferFromSameStop(from, wheelchairAccess));
+        result.addAll(findStandardTransfers(from, wheelchairAccess));
       }
 
       ++stopPos;
@@ -120,11 +128,14 @@ public class TransferGenerator<T extends RaptorTripSchedule> {
     return result;
   }
 
-  private Collection<TripToTripTransfer<T>> transferFromSameStop(TripStopTime<T> from) {
+  private Collection<TripToTripTransfer<T>> transferFromSameStop(
+          TripStopTime<T> from,
+          boolean wheelchairAccess
+  ) {
     final int stop = from.stop();
     var tx = transferServiceAdaptor.findTransfer(from, toTrip, stop);
 
-    if(tx != null && tx.getTransferConstraint().isNotAllowed()) {
+    if (tx != null && tx.getTransferConstraint().isNotAllowed()) {
       return List.of();
     }
 
@@ -134,11 +145,11 @@ public class TransferGenerator<T extends RaptorTripSchedule> {
 
     final int toTripStopPos = toTrip.findDepartureStopPosition(earliestDepartureTime, stop);
 
-    if(toTripStopPos < 0) { return List.of(); }
+    if (toTripStopPos < 0) {return List.of();}
 
-    boolean boardingPossible = toTrip.pattern().boardingPossibleAt(toTripStopPos);
+    boolean boardingPossible = toTrip.pattern().boardingPossibleAt(toTripStopPos, wheelchairAccess);
 
-    if (!boardingPossible) { return List.of(); }
+    if (!boardingPossible) {return List.of();}
 
     return List.of(
             new TripToTripTransfer<>(
@@ -150,7 +161,10 @@ public class TransferGenerator<T extends RaptorTripSchedule> {
     );
   }
 
-  private Collection<? extends TripToTripTransfer<T>> findStandardTransfers(TripStopTime<T> from) {
+  private Collection<? extends TripToTripTransfer<T>> findStandardTransfers(
+          TripStopTime<T> from,
+          boolean wheelchairAccess
+  ) {
     final List<TripToTripTransfer<T>> result = new ArrayList<>();
     Iterator<? extends RaptorTransfer> transfers = stdTransfers.getTransfersFromStop(from.stop());
 
@@ -159,18 +173,19 @@ public class TransferGenerator<T extends RaptorTripSchedule> {
       int toStop = it.stop();
 
       ConstrainedTransfer tx = transferServiceAdaptor.findTransfer(from, toTrip, toStop);
-      if(tx != null && tx.getTransferConstraint().isNotAllowed()) {
+      if (tx != null && tx.getTransferConstraint().isNotAllowed()) {
         continue;
       }
 
       int earliestDepartureTime = earliestDepartureTime(from.time(), it.durationInSeconds(), tx);
       int toTripStopPos = toTrip.findDepartureStopPosition(earliestDepartureTime, toStop);
 
-      if(toTripStopPos < 0) { continue; }
+      if (toTripStopPos < 0) {continue;}
 
       var to = TripStopTime.departure(toTrip, toTripStopPos);
 
-      boolean boardingPossible = to.trip().pattern().boardingPossibleAt(to.stopPosition());
+      boolean boardingPossible =
+              to.trip().pattern().boardingPossibleAt(to.stopPosition(), wheelchairAccess);
 
       if (boardingPossible) {
         result.add(new TripToTripTransfer<>(from, to, it, tx));
