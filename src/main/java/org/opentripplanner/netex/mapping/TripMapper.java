@@ -1,10 +1,15 @@
 package org.opentripplanner.netex.mapping;
 
+import java.util.Map;
+import java.util.Set;
+import javax.annotation.Nullable;
+import javax.xml.bind.JAXBElement;
 import org.opentripplanner.common.model.T2;
 import org.opentripplanner.model.FeedScopedId;
 import org.opentripplanner.model.Operator;
 import org.opentripplanner.model.TransitMode;
 import org.opentripplanner.model.Trip;
+import org.opentripplanner.model.WheelChairBoarding;
 import org.opentripplanner.model.impl.EntityById;
 import org.opentripplanner.netex.index.api.ReadOnlyHierarchicalMap;
 import org.opentripplanner.netex.mapping.support.FeedScopedIdFactory;
@@ -15,11 +20,6 @@ import org.rutebanken.netex.model.Route;
 import org.rutebanken.netex.model.ServiceJourney;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.annotation.Nullable;
-import javax.xml.bind.JAXBElement;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * This maps a NeTEx ServiceJourney to an OTP Trip. A ServiceJourney can be connected to a Line (OTP
@@ -59,21 +59,28 @@ class TripMapper {
     /**
      * Map a service journey to a trip.
      * <p>
+     *
      * @return valid trip or {@code null} if unable to map to a valid trip.
      */
     @Nullable
-    Trip mapServiceJourney(ServiceJourney serviceJourney){
+    Trip mapServiceJourney(ServiceJourney serviceJourney) {
         FeedScopedId serviceId = serviceIds.get(serviceJourney.getId());
 
-        if(serviceId == null) {
-            LOG.warn("Unable to map ServiceJourney, missing Route. SJ id: {}", serviceJourney.getId());
+        if (serviceId == null) {
+            LOG.warn(
+                    "Unable to map ServiceJourney, missing Route. SJ id: {}",
+                    serviceJourney.getId()
+            );
             return null;
         }
 
         org.opentripplanner.model.Route route = resolveRoute(serviceJourney);
 
-        if(route == null) {
-            LOG.warn("Unable to map ServiceJourney, missing serviceId. SJ id: {}", serviceJourney.getId());
+        if (route == null) {
+            LOG.warn(
+                    "Unable to map ServiceJourney, missing serviceId. SJ id: {}",
+                    serviceJourney.getId()
+            );
             return null;
         }
 
@@ -83,8 +90,15 @@ class TripMapper {
         trip.setServiceId(serviceId);
         trip.setShapeId(getShapeId(serviceJourney));
 
+        var wheelChairBoarding = WheelChairMapper.wheelChairBoarding(
+                serviceJourney.getAccessibilityAssessment(),
+                WheelChairBoarding.NO_INFORMATION
+        );
+
+        trip.setWheelchairAccessible(wheelChairBoarding.gtfsCode);
+
         if (serviceJourney.getPrivateCode() != null) {
-          trip.setInternalPlanningCode(serviceJourney.getPrivateCode().getValue());
+            trip.setInternalPlanningCode(serviceJourney.getPrivateCode().getValue());
         }
 
         trip.setTripShortName(serviceJourney.getPublicCode());
@@ -92,8 +106,8 @@ class TripMapper {
 
         if (serviceJourney.getTransportMode() != null) {
             T2<TransitMode, String> transitMode = transportModeMapper.map(
-                serviceJourney.getTransportMode(),
-                serviceJourney.getTransportSubmode()
+                    serviceJourney.getTransportMode(),
+                    serviceJourney.getTransportSubmode()
             );
             trip.setMode(transitMode.first);
             trip.setNetexSubmode(transitMode.second);
@@ -102,7 +116,7 @@ class TripMapper {
         trip.setDirection(DirectionMapper.map(resolveDirectionType(serviceJourney)));
 
         trip.setAlteration(
-            TripServiceAlterationMapper.mapAlteration(serviceJourney.getServiceAlteration())
+                TripServiceAlterationMapper.mapAlteration(serviceJourney.getServiceAlteration())
         );
 
         return trip;

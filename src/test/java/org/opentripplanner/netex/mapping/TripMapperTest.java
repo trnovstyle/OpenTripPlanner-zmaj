@@ -1,27 +1,30 @@
 package org.opentripplanner.netex.mapping;
 
-import org.junit.Test;
-import org.opentripplanner.model.FeedScopedId;
-import org.opentripplanner.model.Route;
-import org.opentripplanner.model.Trip;
-import org.opentripplanner.model.impl.OtpTransitServiceBuilder;
-import org.opentripplanner.netex.index.hierarchy.HierarchicalMap;
-import org.opentripplanner.netex.index.hierarchy.HierarchicalMapById;
-import org.rutebanken.netex.model.JourneyPattern;
-import org.rutebanken.netex.model.JourneyPatternRefStructure;
-import org.rutebanken.netex.model.LineRefStructure;
-import org.rutebanken.netex.model.RouteRefStructure;
-import org.rutebanken.netex.model.ServiceAlterationEnumeration;
-import org.rutebanken.netex.model.ServiceJourney;
-
-import javax.xml.bind.JAXBElement;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.opentripplanner.netex.mapping.MappingSupport.ID_FACTORY;
+import static org.opentripplanner.netex.mapping.MappingSupport.createWrappedRef;
 
 import java.util.Collections;
 import java.util.Map;
-
-import static org.junit.Assert.assertEquals;
-import static org.opentripplanner.netex.mapping.MappingSupport.ID_FACTORY;
-import static org.opentripplanner.netex.mapping.MappingSupport.createWrappedRef;
+import javax.xml.bind.JAXBElement;
+import org.junit.jupiter.api.Test;
+import org.opentripplanner.model.FeedScopedId;
+import org.opentripplanner.model.Route;
+import org.opentripplanner.model.Trip;
+import org.opentripplanner.model.WheelChairBoarding;
+import org.opentripplanner.model.impl.OtpTransitServiceBuilder;
+import org.opentripplanner.netex.index.hierarchy.HierarchicalMap;
+import org.opentripplanner.netex.index.hierarchy.HierarchicalMapById;
+import org.rutebanken.netex.model.AccessibilityAssessment;
+import org.rutebanken.netex.model.AccessibilityLimitation;
+import org.rutebanken.netex.model.AccessibilityLimitations_RelStructure;
+import org.rutebanken.netex.model.JourneyPattern;
+import org.rutebanken.netex.model.JourneyPatternRefStructure;
+import org.rutebanken.netex.model.LimitationStatusEnumeration;
+import org.rutebanken.netex.model.LineRefStructure;
+import org.rutebanken.netex.model.RouteRefStructure;
+import org.rutebanken.netex.model.ServiceJourney;
 
 public class TripMapperTest {
 
@@ -35,20 +38,36 @@ public class TripMapperTest {
     );
 
     @Test
-    public void mapTrip() {
-        OtpTransitServiceBuilder transitBuilder = new OtpTransitServiceBuilder();
-        Route route = new Route(ID_FACTORY.createId(ROUTE_ID));
-        transitBuilder.getRoutes().add(route);
+    public void mapTripWithWheelchairAccess() {
 
-        TripMapper tripMapper = new TripMapper(
-            ID_FACTORY,
-            transitBuilder.getOperatorsById(),
-            transitBuilder.getRoutes(),
-            new HierarchicalMapById<>(),
-            new HierarchicalMap<>(),
-            Map.of(SERVICE_JOURNEY_ID, SERVICE_ID),
-            Collections.emptySet()
+        var tripMapper = initTripMapper();
+        var serviceJourney = createExampleServiceJourney();
+
+        var wheelchairLimitation = LimitationStatusEnumeration.TRUE;
+        var limitation = new AccessibilityLimitation();
+        var limitations = new AccessibilityLimitations_RelStructure();
+        var access = new AccessibilityAssessment();
+
+        limitation.withWheelchairAccess(wheelchairLimitation);
+        limitations.withAccessibilityLimitation(limitation);
+        access.withLimitations(limitations);
+
+        serviceJourney.withAccessibilityAssessment(access);
+        serviceJourney.setLineRef(LINE_REF);
+
+        var trip = tripMapper.mapServiceJourney(serviceJourney);
+
+        assertNotNull(trip, "trip must not be null");
+        assertEquals(
+                trip.getWheelchairAccessible(), WheelChairBoarding.POSSIBLE.gtfsCode,
+                "Wheelchair accessibility not possible on trip"
         );
+    }
+
+    @Test
+    public void mapTrip() {
+
+        var tripMapper = initTripMapper();
 
         ServiceJourney serviceJourney = createExampleServiceJourney();
 
@@ -61,16 +80,14 @@ public class TripMapperTest {
 
     @Test
     public void mapTripWithRouteRefViaJourneyPattern() {
-        OtpTransitServiceBuilder transitBuilder = new OtpTransitServiceBuilder();
-        Route route = new Route(ID_FACTORY.createId(ROUTE_ID));
-        transitBuilder.getRoutes().add(route);
 
         JourneyPattern journeyPattern = new JourneyPattern().withId(JOURNEY_PATTERN_ID);
         journeyPattern.setRouteRef(new RouteRefStructure().withRef(ROUTE_ID));
 
         ServiceJourney serviceJourney = createExampleServiceJourney();
         serviceJourney.setJourneyPatternRef(
-                MappingSupport.createWrappedRef(JOURNEY_PATTERN_ID, JourneyPatternRefStructure.class)
+                MappingSupport.createWrappedRef(
+                        JOURNEY_PATTERN_ID, JourneyPatternRefStructure.class)
         );
 
         org.rutebanken.netex.model.Route netexRoute = new org.rutebanken.netex.model.Route();
@@ -82,15 +99,7 @@ public class TripMapperTest {
         HierarchicalMapById<JourneyPattern> journeyPatternById = new HierarchicalMapById<>();
         journeyPatternById.add(journeyPattern);
 
-        TripMapper tripMapper = new TripMapper(
-                ID_FACTORY,
-                transitBuilder.getOperatorsById(),
-                transitBuilder.getRoutes(),
-                routeById,
-                journeyPatternById,
-                Map.of(SERVICE_JOURNEY_ID, SERVICE_ID),
-                Collections.emptySet()
-        );
+        var tripMapper = initTripMapper(routeById, journeyPatternById);
 
         Trip trip = tripMapper.mapServiceJourney(serviceJourney);
 
@@ -102,9 +111,34 @@ public class TripMapperTest {
         serviceJourney.setId("RUT:ServiceJourney:1");
         serviceJourney.setDayTypes(NetexTestDataSample.createEveryDayRefs());
         serviceJourney.setJourneyPatternRef(createWrappedRef(
-            "RUT:JourneyPattern:1",
-            JourneyPatternRefStructure.class
+                "RUT:JourneyPattern:1",
+                JourneyPatternRefStructure.class
         ));
         return serviceJourney;
     }
+
+    private TripMapper initTripMapper() {
+        return initTripMapper(new HierarchicalMap<>(), new HierarchicalMap<>());
+    }
+
+    private TripMapper initTripMapper(
+            HierarchicalMap<String, org.rutebanken.netex.model.Route> routeById,
+            HierarchicalMap<String, JourneyPattern> journeyPatternsById
+    ) {
+        OtpTransitServiceBuilder transitBuilder = new OtpTransitServiceBuilder();
+        Route route = new Route(ID_FACTORY.createId(ROUTE_ID));
+        transitBuilder.getRoutes().add(route);
+
+        return new TripMapper(
+                ID_FACTORY,
+                transitBuilder.getOperatorsById(),
+                transitBuilder.getRoutes(),
+                routeById,
+                journeyPatternsById,
+                Map.of(SERVICE_JOURNEY_ID, SERVICE_ID),
+                Collections.emptySet()
+        );
+
+    }
+
 }
