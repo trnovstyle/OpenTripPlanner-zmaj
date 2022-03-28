@@ -1,34 +1,34 @@
 version: 2.1
+executors:
+  cci-toolbox-java11:
+    docker:
+      - image: eu.gcr.io/entur-system-1287/circleci-toolbox-image-java11
+        auth:
+          username: _json_key
+          password: $DOCKER_PASSWORD
+    environment:
+      DEBIAN_FRONTEND: "noninteractive"
+      MAVEN_OPTS: -Xmx6G
+    resource_class: large
 aliases:
   - &post_build
     name: Update deployment with OTP version
     command: |
       chmod u+x .circleci/update_deployment_config
       .circleci/update_deployment_config
-  - &jfrog-login
-    name: Rename jfrog environment variable for maven setting.xml
-    command: |
-      echo "export JFROG_USER=$ARTIFACTORY_USER"  >> $BASH_ENV
-      echo "export JFROG_PASS=$ARTIFACTORY_PASSWORD"  >> $BASH_ENV
 jobs:
   build:
-    resource_class: large
-    docker:
-    - image: cimg/openjdk:11.0
-    environment:
-      MAVEN_OPTS: -Xmx6G
+    executor: cci-toolbox-java11
     steps:
       - checkout
       - restore_cache: # The cache key is static, change it if OTP is updated with new dependencies.
-          key: dep-cache-otp2-280322001
-      - run: wget https://raw.githubusercontent.com/entur/circleci-toolbox-image-java11/master/tools/m2/settings.xml -O .circleci/settings.xml
-      - run: *jfrog-login
-      - run: mvn org.apache.maven.plugins:maven-dependency-plugin:3.1.0:go-offline -s .circleci/settings.xml
+          key: dep-cache-otp2
+      - run: mvn org.apache.maven.plugins:maven-dependency-plugin:3.1.0:go-offline -s /tools/m2/settings.xml
       - save_cache:
           paths:
             - ~/.m2
           key: dep-cache-otp2
-      - run: mvn install org.apache.maven.plugins:maven-deploy-plugin:2.8.2:deploy -s .circleci/settings.xml -DaltDeploymentRepository=snapshots::default::https://entur2.jfrog.io/entur2/libs-release-local
+      - run: mvn install org.apache.maven.plugins:maven-deploy-plugin:2.8.2:deploy -s /tools/m2/settings.xml -DaltDeploymentRepository=snapshots::default::https://entur2.jfrog.io/entur2/libs-release-local
       - run: *post_build
 workflows:
   version: 2.1
@@ -36,7 +36,7 @@ workflows:
     jobs:
       - build:
           name: build-release
-          context: global
+          context: dev
           filters:
             branches:
               only:
