@@ -86,6 +86,12 @@ public class ItineraryFilterParameters {
    */
   public DoubleFunction<Double> nonTransitGeneralizedCostLimit;
 
+  /**
+   * This is used to filter out journeys that have either same first or last trip.
+   * If two journeys starts or ends with exactly same transit leg (same trip id and same service day),
+   * one of them will be filtered out.
+   */
+  public boolean filterItinerariesWithSameFirstOrLastTrip;
 
   private ItineraryFilterParameters() {
     this.debug = false;
@@ -98,6 +104,7 @@ public class ItineraryFilterParameters {
         RequestFunctions.createLinearFunction(3600, 2);
     this.nonTransitGeneralizedCostLimit =
         RequestFunctions.createLinearFunction(3600, 2);
+    this.filterItinerariesWithSameFirstOrLastTrip = false;
   }
 
   public static ItineraryFilterParameters createDefault() {
@@ -112,7 +119,8 @@ public class ItineraryFilterParameters {
       DoubleFunction<Double> transitGeneralizedCostLimit,
       DoubleFunction<Double> nonTransitGeneralizedCostLimit,
       double bikeRentalDistanceRatio,
-      double parkAndRideDurationRatio
+      double parkAndRideDurationRatio,
+      boolean filterItinerariesWithSameFirstOrLastTrip
   ) {
     this.debug = debug;
     this.groupSimilarityKeepOne = groupSimilarityKeepOne;
@@ -122,5 +130,6 @@ public class ItineraryFilterParameters {
     this.nonTransitGeneralizedCostLimit = nonTransitGeneralizedCostLimit;
     this.bikeRentalDistanceRatio = bikeRentalDistanceRatio;
     this.parkAndRideDurationRatio = parkAndRideDurationRatio;
+    this.filterItinerariesWithSameFirstOrLastTrip = filterItinerariesWithSameFirstOrLastTrip;
   }
 }
