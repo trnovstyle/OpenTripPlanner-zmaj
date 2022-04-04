@@ -226,7 +226,7 @@ public class StopTimesHelper {
     //
     // The {@link MinMaxPriorityQueue} is marked beta, but we do not have a god alternative.
     MinMaxPriorityQueue<TripTimeOnDate> pq = MinMaxPriorityQueue
-            .orderedBy(Comparator.comparing((TripTimeOnDate tts) -> tts.getServiceDay()
+            .orderedBy(Comparator.comparing((TripTimeOnDate tts) -> tts.getServiceDayMidnight()
                 + tts.getRealtimeDeparture()))
             .maximumSize(numberOfDepartures)
             .create();

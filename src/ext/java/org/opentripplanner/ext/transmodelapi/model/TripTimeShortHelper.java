@@ -27,6 +27,7 @@ public class TripTimeShortHelper {
                 transitLeg.getTripTimes(),
                 transitLeg.getBoardStopPosInPattern(),
                 transitLeg.getTripPattern(),
+                transitLeg.getServiceDate(),
                 transitLeg.getServiceDateMidnight()
         );
         /* TODO OTP2 This method is only used for EstimatedCalls for from place. We have to decide
@@ -52,6 +53,7 @@ public class TripTimeShortHelper {
                 transitLeg.getTripTimes(),
                 transitLeg.getAlightStopPosInPattern(),
                 transitLeg.getTripPattern(),
+                transitLeg.getServiceDate(),
                 transitLeg.getServiceDateMidnight()
         );
         /* TODO OTP2 This method is only used for EstimatedCalls for to place. We have to decide
@@ -78,7 +80,7 @@ public class TripTimeShortHelper {
         TripPattern tripPattern = transitLeg.getTripPattern();
         Instant serviceDateMidnight = transitLeg.getServiceDateMidnight();
         return IntStream.range(0, tripPattern.numberOfStops())
-                .mapToObj(i -> new TripTimeOnDate(tripTimes, i, tripPattern, serviceDateMidnight))
+                .mapToObj(i -> new TripTimeOnDate(tripTimes, i, tripPattern, transitLeg.getServiceDate(), serviceDateMidnight))
                 .collect(Collectors.toList());
     }
 
@@ -92,7 +94,7 @@ public class TripTimeShortHelper {
         TripPattern tripPattern = transitLeg.getTripPattern();
         Instant serviceDateMidnight = transitLeg.getServiceDateMidnight();
         return IntStream.range(leg.getBoardStopPosInPattern() + 1, leg.getAlightStopPosInPattern())
-                .mapToObj(i -> new TripTimeOnDate(tripTimes, i, tripPattern, serviceDateMidnight))
+                .mapToObj(i -> new TripTimeOnDate(tripTimes, i, tripPattern, transitLeg.getServiceDate(), serviceDateMidnight))
                 .collect(Collectors.toList());
     }
 }

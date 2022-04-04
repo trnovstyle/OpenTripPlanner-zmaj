@@ -56,7 +56,7 @@ public class EstimatedCallType {
                            .type(new GraphQLNonNull(gqlUtil.dateTimeScalar))
                            .dataFetcher(
                                    environment -> 1000 * (
-                                       ((TripTimeOnDate) environment.getSource()).getServiceDay()
+                                       ((TripTimeOnDate) environment.getSource()).getServiceDayMidnight()
                                            + ((TripTimeOnDate) environment.getSource()).getScheduledArrival()
                                    ))
                            .build())
@@ -68,7 +68,7 @@ public class EstimatedCallType {
                                    environment -> {
                                        TripTimeOnDate tripTimeOnDate = environment.getSource();
                                        return 1000 * (
-                                           tripTimeOnDate.getServiceDay()
+                                           tripTimeOnDate.getServiceDayMidnight()
                                                + tripTimeOnDate.getRealtimeArrival()
                                        );
                                    })
@@ -82,7 +82,7 @@ public class EstimatedCallType {
                                   TripTimeOnDate tripTimeOnDate = environment.getSource();
                                   if (tripTimeOnDate.getActualArrival() == -1) { return null; }
                                   return 1000 * (
-                                      tripTimeOnDate.getServiceDay() +
+                                      tripTimeOnDate.getServiceDayMidnight() +
                                     tripTimeOnDate.getActualArrival());
                               })
                            .build())
@@ -92,7 +92,7 @@ public class EstimatedCallType {
                            .type(new GraphQLNonNull(gqlUtil.dateTimeScalar))
                            .dataFetcher(
                                    environment -> 1000 * (
-                                       ((TripTimeOnDate) environment.getSource()).getServiceDay()
+                                       ((TripTimeOnDate) environment.getSource()).getServiceDayMidnight()
                                            + ((TripTimeOnDate) environment.getSource()).getScheduledDeparture()
                                    ))
                            .build())
@@ -104,7 +104,7 @@ public class EstimatedCallType {
                                    environment -> {
                                        TripTimeOnDate tripTimeOnDate = environment.getSource();
                                        return 1000 * (
-                                           tripTimeOnDate.getServiceDay()
+                                           tripTimeOnDate.getServiceDayMidnight()
                                                + tripTimeOnDate.getRealtimeDeparture()
                                        );
                                    })
@@ -118,7 +118,7 @@ public class EstimatedCallType {
                                     TripTimeOnDate tripTimeOnDate = environment.getSource();
                                     if (tripTimeOnDate.getActualDeparture() == -1) { return null; }
                                     return 1000 * (
-                                        tripTimeOnDate.getServiceDay() +
+                                        tripTimeOnDate.getServiceDayMidnight() +
                                         tripTimeOnDate.getActualDeparture());
                               })
                            .build())
@@ -191,7 +191,7 @@ public class EstimatedCallType {
                     .name("date")
                     .type(gqlUtil.dateScalar)
                     .description("The date the estimated call is valid for.")
-                    .dataFetcher(environment -> ((TripTimeOnDate) environment.getSource()).getServiceDay())
+                    .dataFetcher(environment -> ((TripTimeOnDate) environment.getSource()).getServiceDayMidnight())
                     .build())
             .field(GraphQLFieldDefinition.newFieldDefinition()
                     .name("serviceJourney")
@@ -260,7 +260,7 @@ public class EstimatedCallType {
 
     TransitAlertService alertPatchService = routingService.getTransitAlertService();
 
-    final ServiceDate serviceDate = new ServiceDate(LocalDate.ofEpochDay(1+tripTimeOnDate.getServiceDay()/(24*3600)));
+    final ServiceDate serviceDate = tripTimeOnDate.getServiceDay();
 
     // Quay
     allAlerts.addAll(alertPatchService.getStopAlerts(stopId));
@@ -281,7 +281,7 @@ public class EstimatedCallType {
       allAlerts.addAll(
               alertPatchService.getDirectionAndRouteAlerts(trip.getDirection().gtfsCode, routeId));
 
-    long serviceDayMillis = 1000L * tripTimeOnDate.getServiceDay();
+    long serviceDayMillis = 1000L * tripTimeOnDate.getServiceDayMidnight();
     long arrivalMillis = 1000L * tripTimeOnDate.getRealtimeArrival();
     long departureMillis = 1000L * tripTimeOnDate.getRealtimeDeparture();
 
