@@ -49,7 +49,7 @@ public abstract class GtfsTest {
     TimetableSnapshotSource timetableSnapshotSource;
     TransitAlertServiceImpl alertPatchServiceImpl;
     public Router router;
-    private GtfsFeedId feedId;
+    public GtfsFeedId feedId;
 
     public abstract String getFeedName();
 
