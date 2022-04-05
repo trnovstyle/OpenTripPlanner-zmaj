@@ -38,7 +38,7 @@ public record ScheduledTransitLegReference(FeedScopedId tripId,
 
         // Otherwise use scheduled pattern
         if (tripPattern == null) {
-            tripPattern = routingService.getTripPatternForId(tripId);
+            tripPattern = routingService.getPatternForTrip().get(trip);
         }
 
         // no matching pattern found anywhere
