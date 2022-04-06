@@ -158,16 +158,15 @@ public class LegacyGraphQLTripImpl implements LegacyGraphQLDataFetchers.LegacyGr
         ServiceDay serviceDate = null;
 
         var args = new LegacyGraphQLTypes.LegacyGraphQLTripDepartureStoptimeArgs(environment.getArguments());
-        if (args.getLegacyGraphQLServiceDate() != null)
-        new ServiceDay(
+        if (args.getLegacyGraphQLServiceDate() != null) {
+          serviceDate = new ServiceDay(
             routingService.getServiceCodes(),
             ServiceDate.parseString(args.getLegacyGraphQLServiceDate()),
             routingService.getCalendarService(),
             getAgency(environment).getId()
-        );
-
-        return new TripTimeOnDate(triptimes, 0, tripPattern, serviceDate
-        );
+          );
+        }
+        return new TripTimeOnDate(triptimes, 0, tripPattern, serviceDate);
       } catch (ParseException e) {
         //Invalid date format
         return null;
@@ -188,14 +187,14 @@ public class LegacyGraphQLTripImpl implements LegacyGraphQLDataFetchers.LegacyGr
         ServiceDay serviceDate = null;
 
         var args = new LegacyGraphQLTypes.LegacyGraphQLTripArrivalStoptimeArgs(environment.getArguments());
-        if (args.getLegacyGraphQLServiceDate() != null)
-          new ServiceDay(
+        if (args.getLegacyGraphQLServiceDate() != null) {
+          serviceDate = new ServiceDay(
               routingService.getServiceCodes(),
               ServiceDate.parseString(args.getLegacyGraphQLServiceDate()),
               routingService.getCalendarService(),
               getAgency(environment).getId()
           );
-
+        }
         return new TripTimeOnDate(triptimes, triptimes.getNumStops() - 1, tripPattern, serviceDate
         );
       } catch (ParseException e) {

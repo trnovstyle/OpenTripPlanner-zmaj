@@ -15,6 +15,7 @@ import org.opentripplanner.model.Route;
 import org.opentripplanner.model.StreetNote;
 import org.opentripplanner.model.Trip;
 import org.opentripplanner.model.calendar.ServiceDate;
+import org.opentripplanner.model.plan.legreference.LegReference;
 import org.opentripplanner.model.transfer.ConstrainedTransfer;
 import org.opentripplanner.routing.alertpatch.TransitAlert;
 import org.opentripplanner.routing.core.TraverseMode;
@@ -361,5 +362,9 @@ public interface Leg {
 
     default void addAlert(TransitAlert alert) {
         throw new UnsupportedOperationException();
+    }
+
+    default LegReference getLegReference() {
+        return null;
     }
 }

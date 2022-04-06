@@ -226,7 +226,7 @@ public class StopTimesHelper {
     //
     // The {@link MinMaxPriorityQueue} is marked beta, but we do not have a god alternative.
     MinMaxPriorityQueue<TripTimeOnDate> pq = MinMaxPriorityQueue
-            .orderedBy(Comparator.comparing((TripTimeOnDate tts) -> tts.getServiceDay()
+            .orderedBy(Comparator.comparing((TripTimeOnDate tts) -> tts.getServiceDayMidnight()
                 + tts.getRealtimeDeparture()))
             .maximumSize(numberOfDepartures)
             .create();
@@ -299,7 +299,7 @@ public class StopTimesHelper {
     return replacement != null && !replacement.equals(pattern);
   }
 
-  private static boolean skipByTripCancellation(TripTimes tripTimes, boolean includeCancellations) {
+  static boolean skipByTripCancellation(TripTimes tripTimes, boolean includeCancellations) {
     return (tripTimes.isCanceled()
         || tripTimes.getTrip().getTripAlteration().isCanceledOrReplaced())
         && !includeCancellations;
