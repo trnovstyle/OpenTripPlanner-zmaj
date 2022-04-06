@@ -1,6 +1,11 @@
 version: 2.1
 
 aliases:
+  - &jfrog-login
+    name: Rename jfrog environment variable for maven setting.xml
+    command: |
+      echo "export JFROG_USER=$ARTIFACTORY_USER"  >> $BASH_ENV
+      echo "export JFROG_PASS=$ARTIFACTORY_PASSWORD"  >> $BASH_ENV
   - &post_build
     name: Update deployment with OTP version
     command: |
@@ -22,6 +27,7 @@ jobs:
       - restore_cache: # The cache key is static, change it if OTP is updated with new dependencies.
           key: dep-cache-otp2-2022-04-01
       - run: wget https://raw.githubusercontent.com/entur/circleci-toolbox-image-java11/master/tools/m2/settings.xml -O .circleci/settings.xml
+      - run: *jfrog-login
       - run: mvn org.apache.maven.plugins:maven-dependency-plugin:3.1.0:go-offline -s .circleci/settings.xml
       - save_cache:
           paths:
@@ -36,7 +42,7 @@ workflows:
     jobs:
       - build:
           name: build-release
-          context: dev
+          context: global
           filters:
             branches:
               only:
