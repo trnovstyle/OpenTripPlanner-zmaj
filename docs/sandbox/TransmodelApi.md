@@ -26,6 +26,7 @@
 - Fix coercion of default parameter for maximumDistance in nearest [#3846](https://github.com/opentripplanner/OpenTripPlanner/pull/3846)
 - Expose stopPositionInPattern on EstimatedCall [#3846](https://github.com/opentripplanner/OpenTripPlanner/pull/3846)
 - Allow selecting first or last quays in a ServiceJourney [#3846](https://github.com/opentripplanner/OpenTripPlanner/pull/3846)
+- Make language nullable in MultilingualString, as it is not set in NonLocalizedString [#4074](https://github.com/opentripplanner/OpenTripPlanner/pull/4074)
 
 ## Documentation
 
