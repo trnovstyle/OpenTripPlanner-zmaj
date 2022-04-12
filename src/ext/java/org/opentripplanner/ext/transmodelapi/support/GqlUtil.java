@@ -16,6 +16,7 @@ import org.opentripplanner.ext.transmodelapi.mapping.TransitIdMapper;
 import org.opentripplanner.ext.transmodelapi.model.scalars.DateScalarFactory;
 import org.opentripplanner.ext.transmodelapi.model.scalars.DateTimeScalarFactory;
 import org.opentripplanner.ext.transmodelapi.model.scalars.DoubleFunctionScalarFactory;
+import org.opentripplanner.ext.transmodelapi.model.scalars.LocalDateScalarFactory;
 import org.opentripplanner.ext.transmodelapi.model.scalars.LocalTimeScalarFactory;
 import org.opentripplanner.ext.transmodelapi.model.scalars.TimeScalarFactory;
 import org.opentripplanner.routing.RoutingService;
@@ -35,6 +36,7 @@ public class GqlUtil {
   public final GraphQLObjectType timeScalar;
   public final ServiceDateMapper serviceDateMapper;
   public final GraphQLDirective timingData;
+  public final GraphQLScalarType localDateScalar;
 
   /** private to prevent util class from instantiation */
   public GqlUtil(TimeZone timeZone) {
@@ -43,7 +45,8 @@ public class GqlUtil {
     this.doubleFunctionScalar = DoubleFunctionScalarFactory.createDoubleFunctionScalar();
     this.localTimeScalar = LocalTimeScalarFactory.createLocalTimeScalar();
     this.timeScalar = TimeScalarFactory.createSecondsSinceMidnightAsTimeObject();
-    this.serviceDateMapper =  new ServiceDateMapper(timeZone);
+    this.localDateScalar = LocalDateScalarFactory.createLocalDateScalar();
+    this.serviceDateMapper = new ServiceDateMapper(timeZone);
     this.timingData = GraphQLDirective.newDirective()
             .name("timingData")
             .description("Add timing data to prometheus, if Actuator API is enabled")

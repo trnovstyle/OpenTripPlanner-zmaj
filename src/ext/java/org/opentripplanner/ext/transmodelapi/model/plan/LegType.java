@@ -1,7 +1,5 @@
 package org.opentripplanner.ext.transmodelapi.model.plan;
 
-import static org.opentripplanner.ext.transmodelapi.model.EnumTypes.MODE;
-
 import graphql.Scalars;
 import graphql.scalars.ExtendedScalars;
 import graphql.schema.DataFetchingEnvironment;
@@ -10,46 +8,53 @@ import graphql.schema.GraphQLList;
 import graphql.schema.GraphQLNonNull;
 import graphql.schema.GraphQLObjectType;
 import graphql.schema.GraphQLOutputType;
-import java.util.List;
-import java.util.Objects;
-import java.util.stream.Collectors;
 import org.opentripplanner.ext.transmodelapi.model.EnumTypes;
 import org.opentripplanner.ext.transmodelapi.model.TransmodelTransportSubmode;
 import org.opentripplanner.ext.transmodelapi.model.TripTimeShortHelper;
 import org.opentripplanner.ext.transmodelapi.support.GqlUtil;
+import org.opentripplanner.model.calendar.ServiceDate;
 import org.opentripplanner.model.plan.Leg;
 import org.opentripplanner.model.plan.StopArrival;
 import org.opentripplanner.util.PolylineEncoder;
 
-public class LegType {
-  public static GraphQLObjectType create(
-      GraphQLOutputType bookingArrangementType,
-      GraphQLOutputType interchangeType,
-      GraphQLOutputType linkGeometryType,
-      GraphQLOutputType authorityType,
-      GraphQLOutputType operatorType,
-      GraphQLOutputType quayType,
-      GraphQLOutputType estimatedCallType,
-      GraphQLOutputType lineType,
-      GraphQLOutputType serviceJourneyType,
-      GraphQLOutputType datedServiceJourneyType,
-      GraphQLOutputType ptSituationElementType,
-      GraphQLObjectType placeType,
-      GraphQLObjectType pathGuidanceType,
-      GqlUtil gqlUtil
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
-  ) {
-    return GraphQLObjectType
-        .newObject()
-        .name("Leg")
-        .description(
-            "Part of a trip pattern. Either a ride on a public transport vehicle or access or path link to/from/between places")
-        .field(GraphQLFieldDefinition
-            .newFieldDefinition()
-            .name("aimedStartTime")
-            .description("The aimed date and time this leg starts.")
-            .type(new GraphQLNonNull(gqlUtil.dateTimeScalar))
-            .dataFetcher(
+import static org.opentripplanner.ext.transmodelapi.model.EnumTypes.MODE;
+
+public class LegType {
+
+    public static GraphQLObjectType create(
+            GraphQLOutputType bookingArrangementType,
+            GraphQLOutputType interchangeType,
+            GraphQLOutputType linkGeometryType,
+            GraphQLOutputType authorityType,
+            GraphQLOutputType operatorType,
+            GraphQLOutputType quayType,
+            GraphQLOutputType estimatedCallType,
+            GraphQLOutputType lineType,
+            GraphQLOutputType serviceJourneyType,
+            GraphQLOutputType datedServiceJourneyType,
+            GraphQLOutputType ptSituationElementType,
+            GraphQLObjectType placeType,
+            GraphQLObjectType pathGuidanceType,
+            GqlUtil gqlUtil
+
+    ) {
+        return GraphQLObjectType
+                .newObject()
+                .name("Leg")
+                .description(
+                        "Part of a trip pattern. Either a ride on a public transport vehicle or access or path link to/from/between places")
+                .field(GraphQLFieldDefinition
+                        .newFieldDefinition()
+                        .name("aimedStartTime")
+                        .description("The aimed date and time this leg starts.")
+                        .type(new GraphQLNonNull(gqlUtil.dateTimeScalar))
+                        .dataFetcher(
                 // startTime is already adjusted for realtime - need to subtract delay to get aimed time
                 env -> leg(env).getStartTime().getTimeInMillis() - (1000L * leg(
                         env).getDepartureDelay()
@@ -246,7 +251,7 @@ public class LegType {
             .type(datedServiceJourneyType)
             .dataFetcher(env -> {
                 var trip = leg(env).getTrip();
-                if(trip == null) {
+                if (trip == null) {
                     return null;
                 }
                 var tripId = leg(env).getTrip().getId();
@@ -255,24 +260,41 @@ public class LegType {
                 return GqlUtil.getRoutingService(env)
                         .getTripOnServiceDateForTripAndDay(tripId, serviceDate);
             }).build())
+                .field(GraphQLFieldDefinition
+                        .newFieldDefinition()
+                        .name("serviceDate")
+                        .description(
+                                "For transit legs, the service date of the trip. For non-transit legs, null.")
+                        .type(gqlUtil.localDateScalar)
+                        .dataFetcher(environment ->
+                                Optional.ofNullable((Leg) environment.getSource())
+                                        .map(Leg::getServiceDate)
+                                        .map(ServiceDate::toLocalDate)
+                                        .orElse(null)
+                        )
+                        .build())
         .field(GraphQLFieldDefinition
-            .newFieldDefinition()
-            .name("intermediateQuays")
-            .description(
-                "For ride legs, intermediate quays between the Place where the leg originates and the Place where the leg ends. For non-ride legs, empty list.")
-            .type(new GraphQLNonNull(new GraphQLList(new GraphQLNonNull(quayType))))
-            .dataFetcher(env -> {
-              List<StopArrival> stops = ((Leg) env.getSource()).getIntermediateStops();
-              if (stops == null || stops.isEmpty()) {
-                return List.of();
-              }
-              else {
-                return (
-                    stops.stream().map(stop -> stop.place.stop).filter(Objects::nonNull).collect(Collectors.toList())
-                );
-              }
-            })
-            .build())
+                .newFieldDefinition()
+                .name("intermediateQuays")
+                .description(
+                        "For ride legs, intermediate quays between the Place where the leg originates and the Place where the leg ends. For non-ride legs, empty list.")
+                .type(new GraphQLNonNull(new GraphQLList(new GraphQLNonNull(quayType))))
+                .dataFetcher(env -> {
+                    List<StopArrival> stops =
+                            ((Leg) env.getSource()).getIntermediateStops();
+                    if (stops == null || stops.isEmpty()) {
+                        return List.of();
+                    }
+                    else {
+                        return (
+                                stops.stream()
+                                        .map(stop -> stop.place.stop)
+                                        .filter(Objects::nonNull)
+                                        .collect(Collectors.toList())
+                        );
+                    }
+                })
+                .build())
         .field(GraphQLFieldDefinition
             .newFieldDefinition()
             .name("intermediateEstimatedCalls")

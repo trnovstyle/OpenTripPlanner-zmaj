@@ -30,6 +30,7 @@ public class DateScalarFactory {
                     // the original service date.
                     return ((Instant.ofEpochSecond((Long) input))).atZone(timeZone.toZoneId()).toLocalDateTime().plusHours(1).toLocalDate().format(FORMATTER);
                 }
+
                 return null;
             }
 
