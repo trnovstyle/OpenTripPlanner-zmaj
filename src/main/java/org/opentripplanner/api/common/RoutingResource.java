@@ -200,6 +200,9 @@ public abstract class RoutingResource {
   @QueryParam("carReluctance")
   protected Double carReluctance;
 
+  @QueryParam("extraSearchCoachReluctance")
+  protected Double extraSearchCoachReluctance = null;
+
   /**
    * How much worse is waiting for a transit vehicle than being on a transit vehicle, as a
    * multiplier. The default value treats wait and on-vehicle time as the same.
@@ -760,6 +763,9 @@ public abstract class RoutingResource {
     if (bikeWalkingReluctance != null) request.setBikeWalkingReluctance(bikeWalkingReluctance);
 
     if (carReluctance != null) request.setCarReluctance(carReluctance);
+
+    if (extraSearchCoachReluctance != null) request.extraSearchCoachReluctance =
+      extraSearchCoachReluctance;
 
     if (walkReluctance != null) request.setWalkReluctance(walkReluctance);
 
