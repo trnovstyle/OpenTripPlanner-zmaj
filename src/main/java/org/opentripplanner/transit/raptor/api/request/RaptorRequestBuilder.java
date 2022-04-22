@@ -30,6 +30,10 @@ public class RaptorRequestBuilder<T extends RaptorTripSchedule> {
   private final DebugRequestBuilder debug;
   private SearchDirection searchDirection;
   private RaptorSlackProvider slackProvider;
+
+  /** HACK SØRLANDSBANEN */
+  public double extraSearchCoachReluctance;
+
   // Algorithm
   private RaptorProfile profile;
 
@@ -51,6 +55,9 @@ public class RaptorRequestBuilder<T extends RaptorTripSchedule> {
 
     // Debug
     this.debug = new DebugRequestBuilder(defaults.debug());
+
+    // HACK SØRLANDSBANEN
+    this.extraSearchCoachReluctance = defaults.extraSearchCoachReluctance;
   }
 
   public SearchParamsBuilder<T> searchParams() {
