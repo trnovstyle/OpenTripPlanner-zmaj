@@ -3,7 +3,9 @@ package org.opentripplanner.routing.algorithm.raptoradapter.transit.mappers;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.Collection;
+import org.opentripplanner.ext.sorlandsbanen.EnturHackSorlandsBanen;
 import org.opentripplanner.routing.algorithm.raptoradapter.transit.SlackProvider;
+import org.opentripplanner.routing.algorithm.raptoradapter.transit.TransitLayer;
 import org.opentripplanner.routing.algorithm.raptoradapter.transit.TripSchedule;
 import org.opentripplanner.routing.api.request.RoutingRequest;
 import org.opentripplanner.transit.raptor.api.request.Optimization;
@@ -22,15 +24,19 @@ public class RaptorRequestMapper {
   private final Collection<? extends RaptorTransfer> egressPaths;
   private final long transitSearchTimeZeroEpocSecond;
 
+  private final TransitLayer transitLayer;
+
   private RaptorRequestMapper(
     RoutingRequest request,
     Collection<? extends RaptorTransfer> accessPaths,
     Collection<? extends RaptorTransfer> egressPaths,
+    TransitLayer transitLayer,
     long transitSearchTimeZeroEpocSecond
   ) {
     this.request = request;
     this.accessPaths = accessPaths;
     this.egressPaths = egressPaths;
+    this.transitLayer = transitLayer;
     this.transitSearchTimeZeroEpocSecond = transitSearchTimeZeroEpocSecond;
   }
 
@@ -38,12 +44,14 @@ public class RaptorRequestMapper {
     RoutingRequest request,
     ZonedDateTime transitSearchTimeZero,
     Collection<? extends RaptorTransfer> accessPaths,
-    Collection<? extends RaptorTransfer> egressPaths
+    Collection<? extends RaptorTransfer> egressPaths,
+    TransitLayer transitLayer
   ) {
     return new RaptorRequestMapper(
       request,
       accessPaths,
       egressPaths,
+      transitLayer,
       transitSearchTimeZero.toEpochSecond()
     )
       .doMap();
@@ -126,7 +134,7 @@ public class RaptorRequestMapper {
       builder.searchParams().preferLateArrival(true);
     }
 
-    return builder.build();
+    return EnturHackSorlandsBanen.enableHack(builder.build(), request, transitLayer);
   }
 
   private int relativeTime(Instant time) {

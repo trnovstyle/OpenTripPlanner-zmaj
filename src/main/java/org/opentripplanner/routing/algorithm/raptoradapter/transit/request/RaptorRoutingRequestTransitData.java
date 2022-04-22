@@ -4,6 +4,7 @@ import java.time.ZonedDateTime;
 import java.util.BitSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.function.Function;
 import javax.annotation.Nullable;
 import org.opentripplanner.model.transfer.TransferService;
 import org.opentripplanner.routing.algorithm.raptoradapter.transit.RaptorTransferIndex;
@@ -11,6 +12,7 @@ import org.opentripplanner.routing.algorithm.raptoradapter.transit.TransitLayer;
 import org.opentripplanner.routing.algorithm.raptoradapter.transit.TripSchedule;
 import org.opentripplanner.routing.algorithm.raptoradapter.transit.cost.CostCalculatorFactory;
 import org.opentripplanner.routing.algorithm.raptoradapter.transit.cost.DefaultCostCalculator;
+import org.opentripplanner.routing.algorithm.raptoradapter.transit.cost.FactorStrategy;
 import org.opentripplanner.routing.algorithm.raptoradapter.transit.cost.WheelchairCostCalculator;
 import org.opentripplanner.routing.algorithm.raptoradapter.transit.mappers.DateMapper;
 import org.opentripplanner.routing.algorithm.raptoradapter.transit.mappers.McCostParamsMapper;
@@ -194,4 +196,32 @@ public class RaptorRoutingRequestTransitData implements RaptorTransitDataProvide
   public int getValidTransitDataEndTime() {
     return validTransitDataEndTime;
   }
+
+  /*--  HACK SØRLANDSBANEN  ::  BEGIN  --*/
+
+  private RaptorRoutingRequestTransitData(
+    RaptorRoutingRequestTransitData original,
+    Function<FactorStrategy, FactorStrategy> mapFactors
+  ) {
+    this.transitLayer = original.transitLayer;
+    this.transitSearchTimeZero = original.transitSearchTimeZero;
+    this.activeTripPatternsPerStop = original.activeTripPatternsPerStop;
+    this.patternIndex = original.patternIndex;
+    this.transfers = original.transfers;
+    this.transferService = original.transferService;
+    this.validTransitDataStartTime = original.validTransitDataStartTime;
+    this.validTransitDataEndTime = original.validTransitDataEndTime;
+    this.generalizedCostCalculator =
+      new DefaultCostCalculator(
+        (DefaultCostCalculator) original.generalizedCostCalculator,
+        mapFactors
+      );
+  }
+
+  public RaptorTransitDataProvider<TripSchedule> enturHackSorlandsbanen(
+    Function<FactorStrategy, FactorStrategy> mapFactors
+  ) {
+    return new RaptorRoutingRequestTransitData(this, mapFactors);
+  }
+  /*--  HACK SØRLANDSBANEN  ::  END  --*/
 }

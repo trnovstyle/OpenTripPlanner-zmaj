@@ -30,6 +30,9 @@ public class RaptorRequest<T extends RaptorTripSchedule> {
   private final RaptorSlackProvider slackProvider;
   private final Set<RoutingTag> tags;
 
+  // HACK SØRLANDSBANEN
+  public double extraSearchCoachReluctance = 0.0;
+
   private RaptorRequest() {
     searchParams = SearchParams.defaults();
     profile = RaptorProfile.MULTI_CRITERIA;
@@ -49,6 +52,7 @@ public class RaptorRequest<T extends RaptorTripSchedule> {
     this.slackProvider = builder.slackProvider();
     this.tags = Set.copyOf(builder.tags());
     this.debug = builder.debug().build();
+    this.extraSearchCoachReluctance = builder.extraSearchCoachReluctance;
     verify();
   }
 
