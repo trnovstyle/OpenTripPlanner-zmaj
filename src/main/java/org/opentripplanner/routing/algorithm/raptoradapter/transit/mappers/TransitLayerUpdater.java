@@ -18,6 +18,7 @@ import org.slf4j.LoggerFactory;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Update the TransitLayer from a set of TimeTables. A shallow copy is made of the TransitLayer
@@ -168,7 +169,8 @@ public class TransitLayerUpdater {
       for (TripPatternForDate tripPatternForDate : previouslyUsedPatterns) {
         if (tripPatternForDate.getLocalDate().equals(date)) {
           var oldTimeTable = timetables.get(tripPatternForDate.getTripPattern().getPattern());
-          var toRemove = oldTimeTable.stream()
+          var toRemove = Optional.ofNullable(oldTimeTable).stream()
+                  .flatMap(Collection::stream)
                   .filter(tt -> tt.getServiceDate().equals(new ServiceDate(date)))
                   .findFirst()
                   .map(tt -> tt.getTripTimes().isEmpty())

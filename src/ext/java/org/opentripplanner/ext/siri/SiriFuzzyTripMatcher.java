@@ -1,12 +1,9 @@
 package org.opentripplanner.ext.siri;
 
 import java.time.ZonedDateTime;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.ArrayList;
+import java.util.*;
+import java.util.function.Supplier;
+
 import org.opentripplanner.model.FeedScopedId;
 import org.opentripplanner.model.Route;
 import org.opentripplanner.model.Station;
@@ -20,11 +17,7 @@ import org.opentripplanner.routing.algorithm.raptoradapter.transit.mappers.DateM
 import org.opentripplanner.routing.trippattern.TripTimes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.org.siri.siri20.EstimatedCall;
-import uk.org.siri.siri20.EstimatedVehicleJourney;
-import uk.org.siri.siri20.RecordedCall;
-import uk.org.siri.siri20.VehicleActivityStructure;
-import uk.org.siri.siri20.VehicleModesEnumeration;
+import uk.org.siri.siri20.*;
 
 /**
  * This class is used for matching TripDescriptors without trip_ids to scheduled GTFS data and to
@@ -88,16 +81,16 @@ public class SiriFuzzyTripMatcher {
     }
 
     Trip findTripByDatedVehicleJourneyRef(EstimatedVehicleJourney journey) {
-        String serviceJourneyId = resolveDatedVehicleJourneyRef(journey);
-        if (serviceJourneyId != null) {
+        Optional<String> serviceJourneyId = resolveDatedVehicleJourneyRef(journey);
+        if (serviceJourneyId.isPresent()) {
             for (String feedId : routingService.getFeedIds()) {
                 Trip trip = routingService
-                    .getTripForId().get(new FeedScopedId(feedId, serviceJourneyId));
+                    .getTripForId().get(new FeedScopedId(feedId, serviceJourneyId.get()));
                 if (trip != null) {
                     return trip;
                 } else {
                     //Attempt to find trip using datedServiceJourneyId
-                    TripOnServiceDate tripOnServiceDate = routingService.getTripOnServiceDateById().get(new FeedScopedId(feedId, serviceJourneyId));
+                    TripOnServiceDate tripOnServiceDate = routingService.getTripOnServiceDateById().get(new FeedScopedId(feedId, serviceJourneyId.get()));
                     if(tripOnServiceDate != null) {
                         return tripOnServiceDate.getTrip();
                     }
@@ -107,15 +100,35 @@ public class SiriFuzzyTripMatcher {
         return null;
     }
 
-    private String resolveDatedVehicleJourneyRef(EstimatedVehicleJourney journey) {
-
-        if (journey.getFramedVehicleJourneyRef() != null) {
-            return journey.getFramedVehicleJourneyRef().getDatedVehicleJourneyRef();
-        } else if (journey.getDatedVehicleJourneyRef() != null) {
-            return journey.getDatedVehicleJourneyRef().getValue();
+    /**
+     * This method returns an ID from the EstimatedVehicleJourney object in the order of priority:
+     * EstimatedVehicleJourney
+     * 1. FramedVehicleJourney.DatedVehicleJourneyRef
+     * 2. DatedVehicleJourneyRef
+     * 3. EstimatedVehicleJourneyCode
+     *
+     * @param estimatedVehicleJourney The EstimatedVehicleJourney to get ID from
+     * @return An ID to represent the newly created DatedServiceJourney
+     */
+    public Optional<String> resolveDatedVehicleJourneyRef(EstimatedVehicleJourney estimatedVehicleJourney) {
+        if (estimatedVehicleJourney == null) {
+            return Optional.empty();
         }
+        Optional<String> framedDatedVehicleJourneyRef =
+                Optional.ofNullable(estimatedVehicleJourney.getFramedVehicleJourneyRef())
+                        .map(FramedVehicleJourneyRefStructure::getDatedVehicleJourneyRef);
 
-        return null;
+       Supplier<Optional<String>> datedVehicleJourneyRef = () ->
+               Optional.ofNullable(estimatedVehicleJourney.getDatedVehicleJourneyRef())
+                .map(DatedVehicleJourneyRef::getValue);
+
+        Supplier<Optional<String>> estimatedVehicleJourneyCode = () ->
+                Optional.ofNullable(estimatedVehicleJourney.getEstimatedVehicleJourneyCode());
+
+        return framedDatedVehicleJourneyRef
+                .or(datedVehicleJourneyRef)
+                .or(estimatedVehicleJourneyCode)
+                .or(Optional::empty);
     }
 
     /**
@@ -129,9 +142,9 @@ public class SiriFuzzyTripMatcher {
         }
 
         if (trips == null || trips.isEmpty()) {
-            String serviceJourneyId = resolveDatedVehicleJourneyRef(journey);
-            if (serviceJourneyId != null) {
-                trips = getCachedTripsBySiriId(serviceJourneyId);
+            Optional<String> serviceJourneyId = resolveDatedVehicleJourneyRef(journey);
+            if (serviceJourneyId.isPresent()) {
+                trips = getCachedTripsBySiriId(serviceJourneyId.get());
             }
         }
         if (trips == null || trips.isEmpty()) {

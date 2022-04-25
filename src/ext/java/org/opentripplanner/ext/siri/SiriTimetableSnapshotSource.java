@@ -3,8 +3,6 @@ package org.opentripplanner.ext.siri;
 import static org.opentripplanner.ext.siri.TimetableHelper.createModifiedStopTimes;
 import static org.opentripplanner.ext.siri.TimetableHelper.createModifiedStops;
 import static org.opentripplanner.ext.siri.TimetableHelper.createUpdatedTripTimes;
-import static org.opentripplanner.model.PickDrop.NONE;
-import static org.opentripplanner.model.PickDrop.SCHEDULED;
 
 import com.google.common.base.Preconditions;
 import java.time.ZonedDateTime;
@@ -43,23 +41,12 @@ import org.rutebanken.netex.model.BusSubmodeEnumeration;
 import org.rutebanken.netex.model.RailSubmodeEnumeration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.org.siri.siri20.ArrivalBoardingActivityEnumeration;
-import uk.org.siri.siri20.DepartureBoardingActivityEnumeration;
-import uk.org.siri.siri20.EstimatedCall;
-import uk.org.siri.siri20.EstimatedTimetableDeliveryStructure;
-import uk.org.siri.siri20.EstimatedVehicleJourney;
-import uk.org.siri.siri20.EstimatedVersionFrameStructure;
-import uk.org.siri.siri20.NaturalLanguageStringStructure;
-import uk.org.siri.siri20.RecordedCall;
-import uk.org.siri.siri20.VehicleActivityCancellationStructure;
-import uk.org.siri.siri20.VehicleActivityStructure;
-import uk.org.siri.siri20.VehicleModesEnumeration;
-import uk.org.siri.siri20.VehicleMonitoringDeliveryStructure;
+import uk.org.siri.siri20.*;
 
 import java.text.ParseException;
-import java.time.ZonedDateTime;
 import java.util.*;
-import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 import static org.opentripplanner.ext.siri.SiriTransportModeMapper.mapTransitMainMode;
 import static org.opentripplanner.ext.siri.TimetableHelper.createUpdatedTripTimes;
@@ -434,6 +421,8 @@ public class SiriTimetableSnapshotSource implements TimetableSnapshotProvider {
         // Added ServiceJourneyId
         String newServiceJourneyRef = estimatedVehicleJourney.getEstimatedVehicleJourneyCode();
         Preconditions.checkNotNull(newServiceJourneyRef, "EstimatedVehicleJourneyCode is required");
+
+        // EstimatedVehicleJourneyCode OR FramedVehicleJourneyRef
 
         // Replaced/duplicated ServiceJourneyId
 //        VehicleJourneyRef existingServiceJourneyRef = estimatedVehicleJourney.getVehicleJourneyRef();
@@ -896,7 +885,6 @@ public class SiriTimetableSnapshotSource implements TimetableSnapshotProvider {
             pattern.setServices(services);
         }
 
-
         /*
          * Update pattern with triptimes so get correct dwell times and lower bound on running times.
          * New patterns only affects a single trip, previously added tripTimes is no longer valid, and is therefore removed
@@ -908,24 +896,20 @@ public class SiriTimetableSnapshotSource implements TimetableSnapshotProvider {
         // Remove trip times to avoid real time trip times being visible for ignoreRealtimeInformation queries
         pattern.getScheduledTimetable().getTripTimes().clear();
 
-        // Add to buffer as-is to include it in the 'lastAddedTripPattern'
-        //TODO - Should this update be done twice?
-        buffer.update(pattern, updatedTripTimes, serviceDate);
+        var dsjId = siriFuzzyTripMatcher.resolveDatedVehicleJourneyRef(estimatedVehicleJourney);
 
         // Add TripOnServiceDate to buffer if a dated service journey id is supplied in the SIRI message
-        if(estimatedVehicleJourney.getDatedVehicleJourneyRef() != null || estimatedVehicleJourney.getFramedVehicleJourneyRef().getDatedVehicleJourneyRef() != null) {
-            TripAlteration tripAlteration;
-            var dsjId = estimatedVehicleJourney.getDatedVehicleJourneyRef() == null ? estimatedVehicleJourney.getFramedVehicleJourneyRef().getDatedVehicleJourneyRef(): estimatedVehicleJourney.getDatedVehicleJourneyRef().getValue();
+        if (dsjId.isPresent()) {
 
             FeedScopedId datedServiceJourneyId = new FeedScopedId(feedId,
-                    dsjId
+                    dsjId.get()
             );
             var tripOnServiceDate = new TripOnServiceDate(datedServiceJourneyId,
                             trip,
                             serviceDate,
                     null);
 
-            buffer.addLastAddedTripOnServiceDate(trip, serviceDate,datedServiceJourneyId, tripOnServiceDate);
+            buffer.addLastAddedTripOnServiceDate(trip, serviceDate, datedServiceJourneyId, tripOnServiceDate);
         }
 
         //TODO - SIRI: Add pattern to index?
