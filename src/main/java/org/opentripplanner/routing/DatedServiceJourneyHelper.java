@@ -2,6 +2,7 @@ package org.opentripplanner.routing;
 
 import org.opentripplanner.common.model.T2;
 import org.opentripplanner.model.FeedScopedId;
+import org.opentripplanner.model.TimetableSnapshot;
 import org.opentripplanner.model.TripOnServiceDate;
 import org.opentripplanner.model.calendar.ServiceDate;
 
@@ -22,20 +23,21 @@ public class DatedServiceJourneyHelper {
             ServiceDate serviceDate
     ) {
 
-        var tuple = new T2<>(tripId, serviceDate);
+        var tripIdAndServiceDate = new TimetableSnapshot.TripIdAndServiceDate(tripId, serviceDate);
         if (routingService.getTimetableSnapshot() != null) {
             if (routingService
                     .getTimetableSnapshot()
                     .getLastAddedTripOnServiceDateByTripIdAndServiceDate()
-                    .containsKey(tuple)
+                    .containsKey(tripIdAndServiceDate)
             ) {
 
                 return routingService
                         .getTimetableSnapshot()
                         .getLastAddedTripOnServiceDateByTripIdAndServiceDate()
-                        .get(tuple);
+                        .get(tripIdAndServiceDate);
             }
         }
+        var tuple = new T2<>(tripId, serviceDate);
         return routingService.getTripOnServiceDateForTripAndDay().get(tuple);
     }
 
