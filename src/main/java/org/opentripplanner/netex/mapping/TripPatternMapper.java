@@ -158,7 +158,8 @@ class TripPatternMapper {
                             new TripOnServiceDate(idFactory.createId(datedServiceJourney.getId()),
                                     trip, serviceDate,
                                     TripServiceAlterationMapper.mapAlteration(
-                                            datedServiceJourney.getServiceAlteration())
+                                            datedServiceJourney.getServiceAlteration()),
+                                    List.of()
                             )
                     );
                 }

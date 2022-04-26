@@ -3,12 +3,7 @@ package org.opentripplanner.ext.transmodelapi.model.timetable;
 import static org.opentripplanner.ext.transmodelapi.model.EnumTypes.SERVICE_ALTERATION;
 
 import graphql.Scalars;
-import graphql.schema.DataFetchingEnvironment;
-import graphql.schema.GraphQLFieldDefinition;
-import graphql.schema.GraphQLNonNull;
-import graphql.schema.GraphQLObjectType;
-import graphql.schema.GraphQLOutputType;
-import graphql.schema.GraphQLTypeReference;
+import graphql.schema.*;
 import org.opentripplanner.ext.transmodelapi.support.GqlUtil;
 import org.opentripplanner.model.TripOnServiceDate;
 
@@ -46,6 +41,12 @@ public class DatedServiceJourneyType {
                         .description("Alterations specified on the Trip in the planned data")
                         .type(SERVICE_ALTERATION)
                         .dataFetcher(environment -> tripOnServiceDate(environment).getTripAlteration())
+                ).field(GraphQLFieldDefinition
+                        .newFieldDefinition()
+                        .name("replacementFor")
+                        .description("List of the dated service journeys this dated service journeys replaces")
+                        .type(new GraphQLNonNull(new GraphQLList(new GraphQLNonNull(REF))))
+                        .dataFetcher(environment -> tripOnServiceDate(environment).getReplacementFor())
                 )
                 .build();
     }
