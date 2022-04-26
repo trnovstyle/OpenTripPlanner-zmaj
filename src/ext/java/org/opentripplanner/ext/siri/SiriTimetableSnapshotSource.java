@@ -729,7 +729,7 @@ public class SiriTimetableSnapshotSource implements TimetableSnapshotProvider {
                     times.add(exactUpdatedTripTimes);
                     patterns.add(exactPattern);
                 } else {
-//                    LOG.info("Failed to update TripTimes for trip found by exact match {}", tripMatchedByServiceJourneyId.getId());
+                    LOG.info("Failed to update TripTimes for trip found by exact match {}", tripMatchedByServiceJourneyId.getId());
                     return false;
                 }
             }
@@ -904,10 +904,25 @@ public class SiriTimetableSnapshotSource implements TimetableSnapshotProvider {
             FeedScopedId datedServiceJourneyId = new FeedScopedId(feedId,
                     dsjId.get()
             );
+
+            // VehicleJourneyRef is the reference to the serviceJourney being replaced.
+            var replacementRef = Optional.ofNullable(estimatedVehicleJourney.getVehicleJourneyRef());
+            List<TripOnServiceDate> listOfReplacedVehicleJourneys = new ArrayList<>();
+            replacementRef.ifPresent(ref -> {
+                var id = new FeedScopedId(
+                        feedId,
+                        ref.getValue()
+                );
+                var replacedTrip = buffer.getLastAddedTripOnServiceDate().get(id);
+                listOfReplacedVehicleJourneys.add(replacedTrip);
+            });
+
+
             var tripOnServiceDate = new TripOnServiceDate(datedServiceJourneyId,
                             trip,
                             serviceDate,
-                    null);
+                    null,
+                            listOfReplacedVehicleJourneys);
 
             buffer.addLastAddedTripOnServiceDate(trip, serviceDate, datedServiceJourneyId, tripOnServiceDate);
         }
@@ -916,6 +931,24 @@ public class SiriTimetableSnapshotSource implements TimetableSnapshotProvider {
 
         // Add new trip times to the buffer and return success
         return buffer.update(pattern, updatedTripTimes, serviceDate);
+    }
+
+    private Optional<TripOnServiceDate> resolveTripOnServiceDate(
+            String feedId,
+            VehicleJourneyRef replacementRef
+    ) {
+        var feedScopedId = new FeedScopedId(
+                feedId,
+                replacementRef.getValue()
+        );
+        if (buffer.getLastAddedTripOnServiceDate().containsKey(feedScopedId)) {
+            return Optional.of(buffer.getLastAddedTripOnServiceDate().get(feedScopedId));
+        } else if(routingService.getTripOnServiceDateById().containsKey(feedScopedId)) {
+            return Optional.of(routingService.getTripOnServiceDateById().get(feedScopedId));
+        } else {
+            LOG.warn("Replaced vehicle journey {} not found", feedScopedId);
+            return Optional.empty();
+        }
     }
 
     /**
