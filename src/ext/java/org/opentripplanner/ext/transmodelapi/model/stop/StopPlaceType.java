@@ -398,7 +398,7 @@ public class StopPlaceType {
       );
 
     if (!limitOnDestinationDisplay) {
-      return tripTimesStream.limit(numberOfDepartures);
+      return tripTimesStream;
     }
     // Group by line and destination display, limit departures per group and merge
     return tripTimesStream
@@ -411,8 +411,7 @@ public class StopPlaceType {
           .sorted(TripTimeOnDate.compareByDeparture())
           .distinct()
           .limit(departuresPerLineAndDestinationDisplay)
-      )
-      .limit(numberOfDepartures);
+      );
   }
 
   public static MonoOrMultiModalStation fetchStopPlaceById(
