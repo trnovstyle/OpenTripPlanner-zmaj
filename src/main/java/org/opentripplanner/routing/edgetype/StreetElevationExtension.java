@@ -9,6 +9,9 @@ import org.opentripplanner.routing.util.SlopeCosts;
 
 public class StreetElevationExtension implements Serializable {
 
+  /**
+   * Distance of the edge projected on a 2d plane.
+   */
   private final double distanceMeters;
 
   private final byte[] compactedElevationProfile;
@@ -23,6 +26,11 @@ public class StreetElevationExtension implements Serializable {
 
   private final double effectiveWalkDistance;
 
+  /**
+   * Physical distance which takes the elevation into account. The distanceMeters is a 2d distance.
+   */
+  private final double distanceWithElevation;
+
   private final float maxSlope;
 
   private final boolean flattened;
@@ -35,6 +43,7 @@ public class StreetElevationExtension implements Serializable {
     double effectiveBikeDistanceFactor,
     double effectiveBikeWorkFactor,
     double effectiveWalkDistanceFactor,
+    double lengthMultiplier,
     float maxSlope,
     boolean flattened
   ) {
@@ -43,6 +52,7 @@ public class StreetElevationExtension implements Serializable {
     this.effectiveBikeDistance = effectiveBikeDistanceFactor * distanceMeters;
     this.effectiveBikeWorkCost = effectiveBikeWorkFactor * distanceMeters;
     this.effectiveWalkDistance = effectiveWalkDistanceFactor * distanceMeters;
+    this.distanceWithElevation = lengthMultiplier * distanceMeters;
     this.maxSlope = maxSlope;
     this.flattened = flattened;
 
@@ -94,6 +104,10 @@ public class StreetElevationExtension implements Serializable {
 
   public double getEffectiveWalkDistance() {
     return effectiveWalkDistance;
+  }
+
+  public double getDistanceWithElevation() {
+    return distanceWithElevation;
   }
 
   public float getMaxSlope() {
@@ -160,6 +174,7 @@ public class StreetElevationExtension implements Serializable {
       effectiveBikeDistanceFactor,
       effectiveBikeWorkFactor,
       effectiveWalkDistanceFactor,
+      costs.lengthMultiplier,
       maxSlope,
       flattened
     );
