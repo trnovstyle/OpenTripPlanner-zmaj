@@ -1,0 +1,39 @@
+trigger: none
+pool: TJP
+
+schedules:
+  # We want to deploy automatically every night because of NeTEx changes
+  # and because we want to get rid of old realtime messages to match other environments
+  # Run every night 02:00, UTC time
+  - cron: "0 2 * * *"
+    displayName: "Daily Night Run"
+    branches:
+      include:
+        - release/*
+    # Schedule even if there are no changes in the code
+    always: true
+
+resources:
+  repositories:
+    - repository: self
+    - repository: Common
+      type: git
+      name: Infra/common-devops-templates
+      ref: refs/tags/3.1.1
+
+steps:
+  - template: internal-tasks/get-kubeconfig.yaml@Common
+    displayName: Get correct k8s context
+    parameters:
+      environment: PR
+      azureSubscription: 'ST IKT DEV'
+
+  - task: AzureCLI@2
+    displayName: Restart OTP in PR cluster with kubectl
+    inputs:
+      azureSubscription: 'ST IKT DEV'
+      scriptType: bash
+      scriptLocation: inlineScript
+      inlineScript: |
+        kubectl delete pods -l app=otp -n otp
+
