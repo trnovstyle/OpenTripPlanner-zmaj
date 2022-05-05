@@ -23,7 +23,6 @@ resources:
 
 steps:
   - template: internal-tasks/get-kubeconfig.yaml@Common
-    displayName: Get correct k8s context
     parameters:
       environment: PR
       azureSubscription: 'ST IKT DEV'
