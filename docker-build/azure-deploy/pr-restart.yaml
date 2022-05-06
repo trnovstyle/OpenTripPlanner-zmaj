@@ -1,18 +1,6 @@
 trigger: none
 pool: TJP
 
-schedules:
-  # We want to deploy automatically every night because of NeTEx changes
-  # and because we want to get rid of old realtime messages to match other environments
-  # Run every night 02:00, UTC time
-  - cron: "0 2 * * *"
-    displayName: "Daily Night Run"
-    branches:
-      include:
-        - release/*
-    # Schedule even if there are no changes in the code
-    always: true
-
 resources:
   repositories:
     - repository: self
