@@ -5,16 +5,19 @@ import org.opentripplanner.model.transfer.TransferPoint;
 
 public class TestTransferPoint implements TransferPoint {
     private final int stop;
+    // We need this because trip pattern can pass through same stop more than once
+    private final int stopPosition;
     private final TestTripSchedule schedule;
     private final boolean applyToAllTrips;
 
     public TestTransferPoint(
             int stop,
-            TestTripSchedule schedule,
+            int stopPosition, TestTripSchedule schedule,
             boolean applyToAllTrips
 
     ) {
         this.stop = stop;
+        this.stopPosition = stopPosition;
         this.schedule = schedule;
         this.applyToAllTrips = applyToAllTrips;
     }
@@ -25,7 +28,7 @@ public class TestTransferPoint implements TransferPoint {
     }
 
     public int getStopPosition() {
-        return schedule.pattern().findStopPositionAfter(0, stop);
+        return this.stopPosition;
     }
 
     @Override
@@ -35,6 +38,10 @@ public class TestTransferPoint implements TransferPoint {
 
     public boolean matches(TestTripSchedule schedule, int stop) {
         return this.schedule == schedule && this.stop == stop;
+    }
+
+    public boolean matches(TestTripSchedule schedule, int stop, int stopPosition) {
+        return this.schedule == schedule && this.stop == stop && this.stopPosition == stopPosition;
     }
 
     @Override
