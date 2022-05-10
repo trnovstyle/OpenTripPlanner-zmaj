@@ -108,6 +108,7 @@ public class TimetableHelper {
 
         boolean isJourneyPredictionInaccurate =  (journey.isPredictionInaccurate() != null && journey.isPredictionInaccurate());
 
+        int totalStops = timetable.getPattern().getStops().size();
         int departureFromPreviousStop = 0;
         int lastArrivalDelay = 0;
         int lastDepartureDelay = 0;
@@ -157,7 +158,8 @@ public class TimetableHelper {
                         newTimes.setRecorded(callCounter, true);
                     }
 
-                    int realtimeArrivalTime = getRealtimeTimeByPriority(zoneId,
+                    int realtimeArrivalTime = getRealtimeTimeByPriority(
+                            zoneId,
                             departureDate,
                             recordedCall.getActualArrivalTime(),
                             recordedCall.getExpectedArrivalTime(),
@@ -180,8 +182,17 @@ public class TimetableHelper {
                            recordedCall.getAimedDepartureTime(),
                            -1);
 
-                    realtimeDepartureTime = handleMissingRealtime(realtimeDepartureTime, realtimeArrivalTime, departureTime);
-                    realtimeArrivalTime = handleMissingRealtime(realtimeArrivalTime, realtimeDepartureTime, arrivalTime);
+                    if (callCounter == 0) {
+                        realtimeArrivalTime = handleMissingRealtime(realtimeArrivalTime, realtimeDepartureTime, arrivalTime);
+                    } else {
+                        realtimeArrivalTime = handleMissingRealtime(realtimeArrivalTime, arrivalTime);
+                    }
+
+                    if (callCounter == (totalStops - 1)) {
+                        realtimeDepartureTime = handleMissingRealtime(realtimeDepartureTime, realtimeArrivalTime, departureTime);
+                    } else {
+                        realtimeDepartureTime = handleMissingRealtime(realtimeDepartureTime, departureTime);
+                    }
 
                     int arrivalDelay = realtimeArrivalTime - arrivalTime;
                     newTimes.updateArrivalDelay(callCounter, arrivalDelay);
@@ -258,12 +269,21 @@ public class TimetableHelper {
                         int realtimeDepartureTime = getRealtimeTimeByPriority(zoneId,
                                         departureDate,
                                         null,
-                                        estimatedCall.getExpectedArrivalTime(),
-                                        estimatedCall.getAimedArrivalTime(),
+                                        estimatedCall.getExpectedDepartureTime(),
+                                        estimatedCall.getAimedDepartureTime(),
                                         -1);
 
-                        realtimeDepartureTime = handleMissingRealtime(realtimeDepartureTime, realtimeArrivalTime, departureTime);
-                        realtimeArrivalTime = handleMissingRealtime(realtimeArrivalTime, realtimeDepartureTime, arrivalTime);
+                        if (callCounter == 0) {
+                            realtimeArrivalTime = handleMissingRealtime(realtimeArrivalTime, realtimeDepartureTime, arrivalTime);
+                        } else {
+                            realtimeArrivalTime = handleMissingRealtime(realtimeArrivalTime, arrivalTime);
+                        }
+
+                        if (callCounter == (totalStops - 1)) {
+                            realtimeDepartureTime = handleMissingRealtime(realtimeDepartureTime, realtimeArrivalTime, departureTime);
+                        } else {
+                            realtimeDepartureTime = handleMissingRealtime(realtimeDepartureTime, departureTime);
+                        }
 
 
                         int arrivalDelay = realtimeArrivalTime - arrivalTime;
@@ -335,13 +355,23 @@ public class TimetableHelper {
         return newTimes;
     }
 
-    private static int handleMissingRealtime(int originalTime, int alternativeTime, int defaultTime) {
-        if (originalTime != -1) {
-            return originalTime;
-        } else if (alternativeTime != -1) {
-             return alternativeTime;
+    /**
+     * Loop through all passed times, return the first non-negative one or the last one
+     */
+    private static int handleMissingRealtime(int... times) {
+        if (times.length == 0) {
+            throw new IllegalArgumentException("Need at least one value");
         }
-        return defaultTime;
+
+        int time = -1;
+        for (int t : times) {
+            time = t;
+            if (time >= 0) {
+                break;
+            }
+        }
+
+        return time;
     }
 
     private static int getRealtimeTimeByPriority(ZoneId zoneId,
