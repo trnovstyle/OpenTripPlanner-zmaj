@@ -13,7 +13,7 @@ public final class Trip extends TransitEntity {
 
     private TransitMode mode;
 
-    private String netexSubmode;
+    private TransitSubMode subMode;
 
     private FeedScopedId serviceId;
 
@@ -59,7 +59,7 @@ public final class Trip extends TransitEntity {
         this.operator = obj.operator;
         this.serviceId = obj.serviceId;
         this.mode = obj.mode;
-        this.netexSubmode = obj.netexSubmode;
+        this.subMode = obj.subMode;
         this.tripShortName = obj.tripShortName;
         this.tripHeadsign = obj.tripHeadsign;
         this.routeShortName = obj.routeShortName;
@@ -115,12 +115,12 @@ public final class Trip extends TransitEntity {
         this.mode = mode.equals(getRoute().getMode()) ? null : mode;
     }
 
-    public String getNetexSubmode() {
-        return netexSubmode == null ? getRoute().getNetexSubmode() : netexSubmode;
+    public TransitSubMode getSubMode() {
+        return subMode == null ? getRoute().getSubMode() : subMode;
     }
 
-    public void setNetexSubmode(String netexSubmode) {
-        this.netexSubmode = netexSubmode == null || netexSubmode.equals(getRoute().getNetexSubmode()) ? null : netexSubmode;
+    public void setSubMode(TransitSubMode subMode) {
+        this.subMode = subMode == null || subMode.equals(getRoute().getSubMode()) ? null : subMode;
     }
 
     /**

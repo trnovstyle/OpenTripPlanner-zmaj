@@ -5,11 +5,7 @@ import java.util.Set;
 import javax.annotation.Nullable;
 import javax.xml.bind.JAXBElement;
 import org.opentripplanner.common.model.T2;
-import org.opentripplanner.model.FeedScopedId;
-import org.opentripplanner.model.Operator;
-import org.opentripplanner.model.TransitMode;
-import org.opentripplanner.model.Trip;
-import org.opentripplanner.model.WheelChairBoarding;
+import org.opentripplanner.model.*;
 import org.opentripplanner.model.impl.EntityById;
 import org.opentripplanner.netex.index.api.ReadOnlyHierarchicalMap;
 import org.opentripplanner.netex.mapping.support.FeedScopedIdFactory;
@@ -105,12 +101,12 @@ class TripMapper {
         trip.setTripOperator(findOperator(serviceJourney));
 
         if (serviceJourney.getTransportMode() != null) {
-            T2<TransitMode, String> transitMode = transportModeMapper.map(
+            T2<TransitMode, TransitSubMode> transitMode = transportModeMapper.map(
                     serviceJourney.getTransportMode(),
                     serviceJourney.getTransportSubmode()
             );
             trip.setMode(transitMode.first);
-            trip.setNetexSubmode(transitMode.second);
+            trip.setSubMode(transitMode.second);
         }
 
         trip.setDirection(DirectionMapper.map(resolveDirectionType(serviceJourney)));

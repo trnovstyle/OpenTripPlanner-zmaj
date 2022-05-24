@@ -29,6 +29,7 @@ import org.opentripplanner.ext.transmodelapi.support.DataFetcherDecorator;
 import org.opentripplanner.ext.transmodelapi.support.GqlUtil;
 import org.opentripplanner.model.FeedScopedId;
 import org.opentripplanner.model.GenericLocation;
+import org.opentripplanner.model.TransitSubMode;
 import org.opentripplanner.model.modes.AllowedTransitMode;
 import org.opentripplanner.model.TransitMode;
 import org.opentripplanner.routing.algorithm.mapping.TripPlanMapper;
@@ -257,7 +258,7 @@ public class TransmodelGraphQLPlanner {
                             for (TransmodelTransportSubmode transitMode : transportSubModes) {
                                 transitModes.add(new AllowedTransitMode(
                                         mainMode,
-                                        transitMode.getValue()
+                                        TransitSubMode.safeValueOf(transitMode.getValue())
                                 ));
                             }
                         }

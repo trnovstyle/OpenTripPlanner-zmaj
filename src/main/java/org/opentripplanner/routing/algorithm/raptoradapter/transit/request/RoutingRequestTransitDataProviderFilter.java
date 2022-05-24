@@ -3,11 +3,9 @@ package org.opentripplanner.routing.algorithm.raptoradapter.transit.request;
 import java.util.EnumSet;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import org.opentripplanner.model.BikeAccess;
-import org.opentripplanner.model.FeedScopedId;
-import org.opentripplanner.model.TransitMode;
+
+import org.opentripplanner.model.*;
 import org.opentripplanner.model.modes.AllowedTransitMode;
-import org.opentripplanner.model.Trip;
 import org.opentripplanner.routing.algorithm.raptoradapter.transit.TripPatternForDate;
 import org.opentripplanner.routing.api.request.RoutingRequest;
 import org.opentripplanner.routing.api.request.StreetMode;
@@ -52,7 +50,7 @@ public class RoutingRequestTransitDataProviderFilter implements TransitDataProvi
     } else {
       transitModeIsAllowed = (Trip trip) -> {
         TransitMode transitMode = trip.getMode();
-        String netexSubmode = trip.getNetexSubmode();
+        TransitSubMode netexSubmode = trip.getSubMode();
         return allowedTransitModes.stream().anyMatch(m -> m.allows(transitMode, netexSubmode));
       };
     }

@@ -16,7 +16,6 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
@@ -113,8 +112,8 @@ public final class TripPattern extends TransitEntity implements Cloneable, Seria
         return route.getMode();
     }
 
-    public final String getNetexSubmode() {
-        return route.getNetexSubmode();
+    public final TransitSubMode getsubMode() {
+        return route.getSubMode();
     }
 
     public LineString getHopGeometry(int stopPosInPattern) {
@@ -634,10 +633,9 @@ public final class TripPattern extends TransitEntity implements Cloneable, Seria
             .allMatch(t -> t != null && seen.add(t));
     }
 
-    public boolean matchesModeOrSubMode(TransitMode mode, String transportSubmode) {
-        return getMode().equals(mode) || (
-                getNetexSubmode() != null && getNetexSubmode().equals(transportSubmode)
-        );
+    public boolean matchesModeOrSubMode(TransitMode mode, TransitSubMode transportSubmode) {
+        return getMode().equals(mode) || getsubMode() == transportSubmode;
+
     }
 
     public String toString () {

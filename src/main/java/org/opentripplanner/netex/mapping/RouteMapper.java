@@ -8,13 +8,7 @@ import javax.annotation.Nullable;
 import javax.xml.bind.annotation.adapters.HexBinaryAdapter;
 import org.opentripplanner.common.model.T2;
 import org.opentripplanner.graph_builder.DataImportIssueStore;
-import org.opentripplanner.model.Agency;
-import org.opentripplanner.model.BikeAccess;
-import org.opentripplanner.model.FeedScopedId;
-import org.opentripplanner.model.GroupOfRoutes;
-import org.opentripplanner.model.Operator;
-import org.opentripplanner.model.TransitMode;
-import org.opentripplanner.model.Branding;
+import org.opentripplanner.model.*;
 import org.opentripplanner.model.impl.EntityById;
 import org.opentripplanner.netex.index.api.NetexEntityIndexReadOnlyView;
 import org.opentripplanner.netex.mapping.support.FeedScopedIdFactory;
@@ -81,12 +75,12 @@ class RouteMapper {
         otpRoute.setLongName(line.getName().getValue());
         otpRoute.setShortName(line.getPublicCode());
 
-        T2<TransitMode, String> mode = transportModeMapper.map(
+        T2<TransitMode, TransitSubMode> mode = transportModeMapper.map(
                 line.getTransportMode(),
                 line.getTransportSubmode()
         );
         otpRoute.setMode(mode.first);
-        otpRoute.setNetexSubmode(mode.second);
+        otpRoute.setSubMode(mode.second);
         if (line instanceof FlexibleLine_VersionStructure) {
             otpRoute.setFlexibleLineType(((FlexibleLine_VersionStructure) line)
                 .getFlexibleLineType().value());

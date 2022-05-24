@@ -3,6 +3,7 @@ package org.opentripplanner.gtfs.mapping;
 import org.opentripplanner.graph_builder.DataImportIssueStore;
 import org.opentripplanner.model.Route;
 import org.opentripplanner.model.TransitMode;
+import org.opentripplanner.model.TransitSubMode;
 import org.opentripplanner.util.MapUtils;
 
 import java.util.Collection;
@@ -11,6 +12,7 @@ import java.util.Map;
 
 /** Responsible for mapping GTFS Route into the OTP model. */
 class RouteMapper {
+    private static final String UNKNOWN = "unknown";
     private final AgencyMapper agencyMapper;
     private final BrandingMapper brandingMapper;
 
@@ -52,6 +54,7 @@ class RouteMapper {
         else {
             lhs.setMode(mode);
         }
+        lhs.setSubMode(TransitSubMode.UNKNOWN);
         lhs.setDesc(rhs.getDesc());
         lhs.setUrl(rhs.getUrl());
         lhs.setColor(rhs.getColor());

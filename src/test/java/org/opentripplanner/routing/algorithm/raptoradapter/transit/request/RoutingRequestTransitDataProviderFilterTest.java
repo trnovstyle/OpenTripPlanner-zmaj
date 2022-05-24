@@ -10,16 +10,7 @@ import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.opentripplanner.ext.transmodelapi.model.TransmodelTransportSubmode;
-import org.opentripplanner.model.BikeAccess;
-import org.opentripplanner.model.FeedScopedId;
-import org.opentripplanner.model.Route;
-import org.opentripplanner.model.Stop;
-import org.opentripplanner.model.StopPattern;
-import org.opentripplanner.model.StopTime;
-import org.opentripplanner.model.TransitMode;
-import org.opentripplanner.model.Trip;
-import org.opentripplanner.model.TripAlteration;
-import org.opentripplanner.model.TripPattern;
+import org.opentripplanner.model.*;
 import org.opentripplanner.model.modes.AllowedTransitMode;
 import org.opentripplanner.routing.algorithm.raptoradapter.transit.TripPatternForDate;
 import org.opentripplanner.routing.algorithm.raptoradapter.transit.TripPatternWithRaptorStopIndexes;
@@ -71,8 +62,8 @@ public class RoutingRequestTransitDataProviderFilterTest {
     TripTimes tripTimes = createTestTripTimes();
     final var BUS = TransitMode.BUS;
     final var RAIL = TransitMode.RAIL;
-    final var LOCAL_BUS = TransmodelTransportSubmode.LOCAL_BUS.getValue();
-    final var REGIONAL_BUS = TransmodelTransportSubmode.REGIONAL_BUS.getValue();
+    final var LOCAL_BUS = TransitSubMode.LOCALBUS;
+    final var REGIONAL_BUS = TransitSubMode.REGIONALBUS;
 
     assertFalse(validateModesOnTripTimes(Set.of(), tripTimes));
     assertFalse(validateModesOnTripTimes(Set.of(new AllowedTransitMode(BUS, REGIONAL_BUS)), tripTimes));
@@ -168,7 +159,7 @@ public class RoutingRequestTransitDataProviderFilterTest {
     trip.setBikesAllowed(BikeAccess.NOT_ALLOWED);
     trip.setRoute(new Route(new FeedScopedId("TEST", "ROUTE")));
     trip.setMode(TransitMode.BUS);
-    trip.setNetexSubmode(TransmodelTransportSubmode.LOCAL_BUS.getValue());
+    trip.setSubMode(TransitSubMode.LOCALBUS);
 
     StopTime stopTime = new StopTime();
     stopTime.setStop(STOP_FOR_TEST);

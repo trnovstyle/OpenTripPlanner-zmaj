@@ -27,7 +27,7 @@ public final class Route extends TransitEntity {
 
     // TODO: consolidate these
     private Integer gtfsType;
-    private String netexSubmode;
+    private TransitSubMode subMode;
 
     private String desc;
 
@@ -184,12 +184,12 @@ public final class Route extends TransitEntity {
         return "<Route " + getId() + " " + getName() + ">";
     }
 
-    public String getNetexSubmode() {
-        return netexSubmode;
+    public TransitSubMode getSubMode() {
+        return subMode;
     }
 
-    public void setNetexSubmode(String netexSubmode) {
-        this.netexSubmode = netexSubmode;
+    public void setSubMode(TransitSubMode subMode) {
+        this.subMode = subMode;
     }
 
     public List<GroupOfRoutes> getGroupsOfRoutes() {

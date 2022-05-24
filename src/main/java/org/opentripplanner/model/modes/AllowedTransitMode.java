@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.opentripplanner.model.TransitMode;
+import org.opentripplanner.model.TransitSubMode;
 
 /**
  * Used to filter out modes for routing requests. If both mainMode and subMode are specified, they
@@ -15,13 +16,13 @@ public class AllowedTransitMode {
 
   private final TransitMode mainMode;
 
-  private final String subMode;
+  private final TransitSubMode subMode;
 
   public static AllowedTransitMode fromMainModeEnum(TransitMode mainMode) {
     return new AllowedTransitMode(mainMode, null);
   }
 
-  public AllowedTransitMode(TransitMode mainMode, String subMode) {
+  public AllowedTransitMode(TransitMode mainMode, TransitSubMode subMode) {
     this.mainMode = mainMode;
     this.subMode = subMode;
   }
@@ -29,13 +30,10 @@ public class AllowedTransitMode {
   /**
    * Check if this filter allows the provided TransitMode
    */
-  public boolean allows(TransitMode transitMode, String netexSubMode) {
-    boolean mainModeMatch = mainMode == transitMode;
-    boolean submodeMatch = subMode == null ||
-            subMode.equals(netexSubMode) ||
-            (subMode.equals("unknown") && netexSubMode == null);
-
-    return mainModeMatch && submodeMatch;
+  public boolean allows(TransitMode transitMode, TransitSubMode subMode) {
+    return mainMode == transitMode && (
+            this.subMode == null || this.subMode.equals(subMode)
+    );
   }
 
   public TransitMode getMainMode() {

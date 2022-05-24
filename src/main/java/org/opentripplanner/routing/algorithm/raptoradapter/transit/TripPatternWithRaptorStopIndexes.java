@@ -3,6 +3,7 @@ package org.opentripplanner.routing.algorithm.raptoradapter.transit;
 import java.util.Objects;
 import org.opentripplanner.model.FeedScopedId;
 import org.opentripplanner.model.TransitMode;
+import org.opentripplanner.model.TransitSubMode;
 import org.opentripplanner.model.TripPattern;
 import org.opentripplanner.routing.algorithm.raptoradapter.transit.constrainedtransfer.ConstrainedBoardingSearch;
 import org.opentripplanner.routing.algorithm.raptoradapter.transit.constrainedtransfer.TransferForPattern;
@@ -51,8 +52,8 @@ public class TripPatternWithRaptorStopIndexes {
         return pattern.getMode();
     }
 
-    public String getNetexSubmode() {
-        return pattern.getNetexSubmode();
+    public TransitSubMode getsubMode() {
+        return pattern.getsubMode();
     }
 
     public int[] getStopIndexes() {

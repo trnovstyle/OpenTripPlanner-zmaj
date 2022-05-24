@@ -17,7 +17,6 @@ import org.opentripplanner.model.plan.Leg;
 import org.opentripplanner.model.plan.StopArrival;
 import org.opentripplanner.util.PolylineEncoder;
 
-import java.time.LocalDate;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -99,8 +98,8 @@ public class LegType {
             .type(EnumTypes.TRANSPORT_SUBMODE)
             .dataFetcher(environment ->
                 ((Leg) environment.getSource()).getTrip() != null &&
-                    ((Leg) environment.getSource()).getTrip().getNetexSubmode() != null
-                    ? TransmodelTransportSubmode.fromValue(((Leg) environment.getSource()).getTrip().getNetexSubmode())
+                    ((Leg) environment.getSource()).getTrip().getSubMode() != null
+                    ? TransmodelTransportSubmode.fromValue(((Leg) environment.getSource()).getTrip().getSubMode().rawValue())
                     : null
             )
             .build())
