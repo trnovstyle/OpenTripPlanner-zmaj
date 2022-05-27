@@ -72,6 +72,8 @@ class StopTimesMapper {
 
     private String currentHeadSign;
 
+    private List<String> currentHeadSignVias;
+
     StopTimesMapper(
             DataImportIssueStore issueStore,
             FeedScopedIdFactory idFactory,
@@ -209,8 +211,6 @@ class StopTimesMapper {
             return null;
         }
 
-        List<String> vias = null;
-
         if (stopPoint != null) {
             if (isFalse(stopPoint.isForAlighting())) {
                 stopTime.setDropOffType(NONE);
@@ -232,29 +232,30 @@ class StopTimesMapper {
                 DestinationDisplay destinationDisplay =
                         destinationDisplayById.lookup(stopPoint.getDestinationDisplayRef().getRef());
 
-                Vias_RelStructure viaValues = null;
-
                 if (destinationDisplay != null) {
                     currentHeadSign = destinationDisplay.getFrontText().getValue();
-                    viaValues = destinationDisplay.getVias();
-                }
+                    Vias_RelStructure viaValues = destinationDisplay.getVias();
+                    if (viaValues != null && viaValues.getVia() != null) {
+                        currentHeadSignVias = viaValues.getVia().stream()
+                                .map(Via_VersionedChildStructure::getDestinationDisplayRef)
+                                .filter(Objects::nonNull)
+                                .map(VersionOfObjectRefStructure::getRef)
+                                .filter(Objects::nonNull)
+                                .map(destinationDisplayById::lookup)
+                                .filter(Objects::nonNull)
+                                .map(DestinationDisplay_VersionStructure::getFrontText)
+                                .filter(Objects::nonNull)
+                                .map(MultilingualString::getValue)
+                                .filter(Objects::nonNull)
+                                .collect(Collectors.toList());
 
-                if (viaValues != null && viaValues.getVia() != null) {
-                    vias = viaValues.getVia().stream()
-                            .map(Via_VersionedChildStructure::getDestinationDisplayRef)
-                            .filter(Objects::nonNull)
-                            .map(VersionOfObjectRefStructure::getRef)
-                            .filter(Objects::nonNull)
-                            .map(destinationDisplayById::lookup)
-                            .filter(Objects::nonNull)
-                            .map(DestinationDisplay_VersionStructure::getFrontText)
-                            .filter(Objects::nonNull)
-                            .map(MultilingualString::getValue)
-                            .collect(Collectors.toList());
-
-                    if (vias.isEmpty()) {
-                        vias = null;
+                        if (currentHeadSignVias.isEmpty()) {
+                            currentHeadSignVias = null;
+                        }
+                    } else {
+                        currentHeadSignVias = null;
                     }
+
                 }
             }
         }
@@ -268,7 +269,10 @@ class StopTimesMapper {
         if (currentHeadSign != null) {
             stopTime.setStopHeadsign(currentHeadSign);
         }
-        stopTime.setHeadsignVias(vias);
+        if (currentHeadSignVias != null) {
+            stopTime.setHeadsignVias(currentHeadSignVias);
+        }
+
         return stopTime;
     }
 
