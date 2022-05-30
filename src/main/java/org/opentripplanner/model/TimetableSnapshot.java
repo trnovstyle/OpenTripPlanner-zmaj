@@ -164,7 +164,10 @@ public class TimetableSnapshot {
         return pattern.getScheduledTimetable();
     }
 
-    public void removeRealtimeUpdatedTripTimes(TripPattern tripPattern, FeedScopedId tripId, ServiceDate serviceDate) {
+    public void removeRealtimeUpdatedTripTimes(TripPattern tripPattern,
+            FeedScopedId tripId,
+            ServiceDate serviceDate) {
+
         SortedSet<Timetable> sortedTimetables = this.timetables.get(tripPattern);
         if (sortedTimetables != null) {
 
@@ -184,7 +187,11 @@ public class TimetableSnapshot {
 
             if (tripTimesToRemove != null) {
                 for (Timetable sortedTimetable : sortedTimetables) {
-                    sortedTimetable.getTripTimes().remove(tripTimesToRemove);
+                    var isDirty = sortedTimetable.getTripTimes().remove(tripTimesToRemove);
+                    if (isDirty) {
+                        LOG.debug("TripTimes removed for trip: {} - timetable is labeled as dirty", tripId);
+                        this.dirtyTimetables.add(sortedTimetable);
+                    }
                 }
             }
         }
