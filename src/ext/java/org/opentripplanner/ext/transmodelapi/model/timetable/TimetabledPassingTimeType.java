@@ -69,7 +69,7 @@ public class TimetabledPassingTimeType {
               return GqlUtil.getRoutingService(environment)
                   .getPatternForTrip()
                   .get(((TripTimeOnDate) environment.getSource()).getTrip())
-                  .getBoardType(((TripTimeOnDate) environment.getSource()).getStopIndex()) != PickDrop.NONE;
+                  .getBoardType(((TripTimeOnDate) environment.getSource()).getStopIndex()).isRoutable();
             })
             .build())
         .field(GraphQLFieldDefinition
@@ -81,8 +81,7 @@ public class TimetabledPassingTimeType {
               return GqlUtil.getRoutingService(environment)
                   .getPatternForTrip()
                   .get(((TripTimeOnDate) environment.getSource()).getTrip())
-                  .getAlightType(((TripTimeOnDate) environment.getSource()).getStopIndex())
-                  != PickDrop.NONE;
+                  .getAlightType(((TripTimeOnDate) environment.getSource()).getStopIndex()).isRoutable();
             })
             .build())
         .field(GraphQLFieldDefinition

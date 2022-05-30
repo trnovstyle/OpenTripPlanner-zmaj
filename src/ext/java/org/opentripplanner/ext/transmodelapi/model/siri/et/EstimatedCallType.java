@@ -161,7 +161,7 @@ public class EstimatedCallType {
                     + "If the cancellation flag is set, boarding is not possible, even if this field "
                     + "is set to true.")
                 .dataFetcher(environment ->
-                    ((TripTimeOnDate) environment.getSource()).getPickupType() != NONE
+                    ((TripTimeOnDate) environment.getSource()).getPickupType().isRoutable()
                 ).build())
             .field(GraphQLFieldDefinition.newFieldDefinition()
                 .name("forAlighting")
@@ -170,7 +170,7 @@ public class EstimatedCallType {
                     + "If the cancellation flag is set, alighting is not possible, even if this field "
                     + "is set to true.")
                 .dataFetcher(environment ->
-                    ((TripTimeOnDate) environment.getSource()).getDropoffType() != NONE
+                    ((TripTimeOnDate) environment.getSource()).getDropoffType().isRoutable()
                 ).build())
             .field(GraphQLFieldDefinition.newFieldDefinition()
                     .name("requestStop")
