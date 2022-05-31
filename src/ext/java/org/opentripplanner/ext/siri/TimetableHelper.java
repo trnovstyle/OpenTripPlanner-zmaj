@@ -133,6 +133,7 @@ public class TimetableHelper {
                 }
 
                 if (foundMatch) {
+
                     if (departureDate == null) {
                         departureDate = recordedCall.getAimedDepartureTime();
                         if (departureDate == null) {
@@ -621,16 +622,19 @@ public class TimetableHelper {
                         CallStatusEnumeration arrivalStatus = estimatedCall.getArrivalStatus();
                         if (arrivalStatus == CallStatusEnumeration.CANCELLED) {
                             stopTime.cancelDropOff();
+                        } else {
+                            var dropOffType = mapDropOffType(stopTime.getDropOffType(), estimatedCall.getArrivalBoardingActivity());
+                            dropOffType.ifPresent(stopTime::setDropOffType);
                         }
-                        var dropOffType = mapDropOffType(stopTime.getDropOffType(), estimatedCall.getArrivalBoardingActivity());
-                        dropOffType.ifPresent(stopTime::setDropOffType);
+
 
                         CallStatusEnumeration departureStatus = estimatedCall.getDepartureStatus();
                         if (departureStatus == CallStatusEnumeration.CANCELLED) {
                             stopTime.cancelPickup();
+                        } else {
+                            var pickUpType = mapPickUpType(stopTime.getPickupType(), estimatedCall.getDepartureBoardingActivity());
+                            pickUpType.ifPresent(stopTime::setPickupType);
                         }
-                        var pickUpType = mapPickUpType(stopTime.getPickupType(), estimatedCall.getDepartureBoardingActivity());
-                        pickUpType.ifPresent(stopTime::setPickupType);
 
                         if (estimatedCall.isCancellation() != null && estimatedCall.isCancellation()) {
                             stopTime.cancel();
