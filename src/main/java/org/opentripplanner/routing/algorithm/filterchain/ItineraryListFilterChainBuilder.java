@@ -47,6 +47,7 @@ public class ItineraryListFilterChainBuilder {
   private boolean removeWalkAllTheWayResults;
   private boolean sameFirstOrLastTripFilter;
   private DoubleFunction<Double> transitGeneralizedCostLimit;
+  private double waitAtBeginningOrEndCostFactor;
   private double bikeRentalDistanceRatio;
   private double parkAndRideDurationRatio;
   private DoubleFunction<Double> nonTransitGeneralizedCostLimit;
@@ -98,12 +99,14 @@ public class ItineraryListFilterChainBuilder {
   }
 
   /**
-   * This function is used to compute a max-limit for generalized-cost. The limit is applied to
-   * itineraries with at least one transit leg. Street-only itineraries are not considered.
+   * This function is used to compute a max-limit for generalized-cost, together with
+   * waitAtBeginningOrEndCostFactor. The limit is applied to itineraries with at least one transit
+   * leg. Street-only itineraries are not considered.
    * <p>
-   * The smallest transit leg generalized-cost value is used as input to the function. For example
-   * if the function is {@code f(x) = 1800 + 2.0 x} and the smallest cost is {@code 5000}, then all
-   * transit itineraries with a cost larger than {@code 1800 + 2 * 5000 = 11 800} is dropped.
+   * All itineraries are compared to each other using this function. For example if the function is
+   * {@code f(x) = 1800 + 2.0 x} and one of the itineraries has a cost of {@code 5000}, then all
+   * transit itineraries with a cost larger than {@code 1800 + 2 * 5000 = 11 800} plus the cost for
+   * wait time multiplied by waitAtBeginningOrEndCostFactor are dropped.
    */
   public ItineraryListFilterChainBuilder withTransitGeneralizedCostLimit(
     DoubleFunction<Double> value
@@ -113,7 +116,16 @@ public class ItineraryListFilterChainBuilder {
   }
 
   /**
-   * This is a a bit similar to {@link #withTransitGeneralizedCostLimit(DoubleFunction)}, with a few
+   * The factor by which waiting times at the beginning or end of the itinerary are multiplied by,
+   * when calculating the limit for the transit itineraries.
+   */
+  public ItineraryListFilterChainBuilder withWaitAtBeginningOrEndCostFactor(double value) {
+    this.waitAtBeginningOrEndCostFactor = value;
+    return this;
+  }
+
+  /**
+   * This is a bit similar to {@link #withTransitGeneralizedCostLimit(DoubleFunction)}, with a few
    * important differences.
    * <p>
    * This function is used to compute a max-limit for generalized-cost. The limit is applied to
@@ -243,7 +255,12 @@ public class ItineraryListFilterChainBuilder {
     // Filter transit itineraries on generalized-cost
     if (transitGeneralizedCostLimit != null) {
       filters.add(
-        new DeletionFlaggingFilter(new TransitGeneralizedCostFilter(transitGeneralizedCostLimit))
+        new DeletionFlaggingFilter(
+          new TransitGeneralizedCostFilter(
+            transitGeneralizedCostLimit,
+            waitAtBeginningOrEndCostFactor
+          )
+        )
       );
     }
 

@@ -420,13 +420,9 @@ public class RoutingRequest implements Cloneable, Serializable {
   public double waitReluctance = 1.0;
 
   /**
-   * How much less bad is waiting at the beginning of the trip (replaces waitReluctance on the first
-   * boarding)
-   *
-   * @deprecated TODO OTP2 Probably a regression, but I'm not sure it worked correctly in OTP 1.X
-   * either. It could be a part of itinerary-filtering after a Raptor search.
+   * How much less bad is waiting at the beginning or end of the trip. This is used to limit which
+   * itineraries are considered for filtering itineraries
    */
-  @Deprecated
   public double waitAtBeginningFactor = 0.4;
 
   /**
