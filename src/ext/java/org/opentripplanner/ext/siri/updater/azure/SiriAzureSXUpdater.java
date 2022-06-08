@@ -91,7 +91,7 @@ public class SiriAzureSXUpdater extends AbstractAzureSiriUpdater implements Tran
                 .addParameter("publishToDateTime", toDateTime.format(DateTimeFormatter.ISO_LOCAL_DATE))
                 .build();
 
-        LOG.info("Fetching initial Siri SX data from {}, timeout is {}ms", url, timeout);
+        LOG.info("Fetching initial Siri SX data from {}, timeout is {}ms", uri, timeout);
 
         final long t1 = System.currentTimeMillis();
         HashMap<String, String> headers = new HashMap<>();

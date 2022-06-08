@@ -69,7 +69,7 @@ public class SiriAzureETUpdater extends AbstractAzureSiriUpdater {
                 .build();
 
         startTime = now();
-        LOG.info("Fetching initial Siri ET data from {}, timeout is {}ms", url, timeout);
+        LOG.info("Fetching initial Siri ET data from {}, timeout is {}ms", uri, timeout);
 
         HashMap<String, String> headers = new HashMap<>();
         headers.put("Accept", "application/xml");
