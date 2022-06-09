@@ -22,6 +22,10 @@ public class SameFirstOrLastTripFilter implements ItineraryListFilter {
 
         OUTER_LOOP:
         for (Itinerary it : itineraries) {
+            if (it.isFlaggedForDeletion()) {
+                continue;
+            }
+
             GroupBySameFirstOrLastTrip currentGroup = new GroupBySameFirstOrLastTrip(it);
 
             for (GroupBySameFirstOrLastTrip group : groups) {
