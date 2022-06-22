@@ -435,11 +435,11 @@ public class TripTimes implements Serializable, Comparable<TripTimes> {
             final int dep = getDepartureTime(s);
 
             if (dep < arr) {
-//                LOG.warn("Negative dwell time in TripTimes at stop index {}.", s);
+                LOG.warn("Negative dwell time in TripTimes at stop index {}.", s);
                 return false;
             }
             if (prevDep > arr) {
-//                LOG.warn("Negative running time in TripTimes after stop index {}.", s);
+                LOG.warn("Negative running time in TripTimes after stop index {}.", s);
                 return false;
             }
             prevDep = dep;

@@ -530,65 +530,116 @@ public class SiriTimetableSnapshotSource implements TimetableSnapshotProvider {
 
         List<StopLocation> addedStops = new ArrayList<>();
         List<StopTime> aimedStopTimes = new ArrayList<>();
+        List<EstimatedCall> estimatedCalls;
+        List<RecordedCall> recordedCalls;
 
-        // TODO - SIRI: Handle RecordedCalls. Finding departureTime++ from first stop will fail when
-        //              trip passes midnight, and the first stops are RecordedCalls.
+        if(estimatedVehicleJourney.getRecordedCalls() != null && estimatedVehicleJourney.getRecordedCalls().getRecordedCalls() != null) {
+            recordedCalls = estimatedVehicleJourney.getRecordedCalls().getRecordedCalls();
+        } else {
+            recordedCalls = List.of();
+        }
+
+        if(estimatedVehicleJourney.getEstimatedCalls() != null && estimatedVehicleJourney.getEstimatedCalls().getEstimatedCalls() != null) {
+            estimatedCalls = estimatedVehicleJourney.getEstimatedCalls().getEstimatedCalls();
+        } else {
+            estimatedCalls = List.of();
+        }
+
+        int numStops = recordedCalls.size() + estimatedCalls.size();
 
         ZonedDateTime departureTime = null;
-
-        List<EstimatedCall> estimatedCalls = estimatedVehicleJourney.getEstimatedCalls().getEstimatedCalls();
-        for (int i = 0; i < estimatedCalls.size(); i++) {
-            EstimatedCall estimatedCall = estimatedCalls.get(i);
-
-            var stop = getStopForStopId(feedId,estimatedCall.getStopPointRef().getValue());
-
+        List<Object> alreadyVisited = new ArrayList<>();
+        for (int i = 0; i < numStops; i++) {
             StopTime stopTime = new StopTime();
-            stopTime.setStop(stop);
             stopTime.setStopSequence(i);
             stopTime.setTrip(trip);
 
-            ZonedDateTime aimedArrivalTime = estimatedCall.getAimedArrivalTime();
-            ZonedDateTime aimedDepartureTime = estimatedCall.getAimedDepartureTime();
+            if(i < recordedCalls.size()) {
+                for (RecordedCall recordedCall : recordedCalls) {
+                    if(alreadyVisited.contains(recordedCall)) {
+                        continue;
+                    }
+                    var stop = getStopForStopId(feedId,recordedCall.getStopPointRef().getValue());
+                    stopTime.setStop(stop);
 
-            if (departureTime == null) {
-                departureTime = aimedDepartureTime;
+                    if (departureTime == null) {
+                        departureTime = getDepartureTimeFromRecordedCall(recordedCall);
+                    }
+
+                    if(getArrivalTimeFromRecordedCall(recordedCall) != null) {
+                        stopTime.setArrivalTime(calculateSecondsSinceMidnight(departureTime, getArrivalTimeFromRecordedCall(recordedCall)));
+                    }
+                    stopTime.setDepartureTime(calculateSecondsSinceMidnight(departureTime, getDepartureTimeFromRecordedCall(recordedCall)));
+
+                    if (recordedCall.isCancellation() != null && recordedCall.isCancellation()) {
+                        stopTime.cancel();
+                    }
+
+                    if(i == 0) {
+                        stopTime.setArrivalTime(stopTime.getDepartureTime());
+                    } else if (i == (numStops - 1)) {
+                        stopTime.setDepartureTime(stopTime.getArrivalTime());
+                    }
+
+                    addedStops.add(stop);
+                    aimedStopTimes.add(stopTime);
+                    alreadyVisited.add(recordedCall);
+                    break;
+                }
+            } else {
+                for (EstimatedCall estimatedCall : estimatedCalls) {
+                    if(alreadyVisited.contains(estimatedCall)) {
+                        continue;
+                    }
+                    var stop = getStopForStopId(feedId,estimatedCall.getStopPointRef().getValue());
+                    stopTime.setStop(stop);
+
+                    ZonedDateTime aimedArrivalTime = estimatedCall.getAimedArrivalTime();
+                    ZonedDateTime aimedDepartureTime = estimatedCall.getAimedDepartureTime();
+
+                    if (departureTime == null) {
+                        departureTime = aimedDepartureTime;
+                    }
+
+                    if (aimedArrivalTime != null) {
+                        stopTime.setArrivalTime(calculateSecondsSinceMidnight(departureTime, aimedArrivalTime));
+                    }
+                    if (aimedDepartureTime != null) {
+                        stopTime.setDepartureTime(calculateSecondsSinceMidnight(departureTime, aimedDepartureTime));
+                    }
+
+                    var pickUpType = TimetableHelper.mapPickUpType(stopTime.getPickupType(), estimatedCall.getDepartureBoardingActivity());
+                    pickUpType.ifPresent(stopTime::setPickupType);
+
+                    var dropOffType = TimetableHelper.mapDropOffType(stopTime.getDropOffType(), estimatedCall.getArrivalBoardingActivity());
+                    dropOffType.ifPresent(stopTime::setDropOffType);
+
+                    if (estimatedCall.getDestinationDisplaies() != null && !estimatedCall.getDestinationDisplaies().isEmpty()) {
+                        NaturalLanguageStringStructure destinationDisplay = estimatedCall.getDestinationDisplaies().get(0);
+                        stopTime.setStopHeadsign(destinationDisplay.getValue());
+                    } else if (trip.getTripHeadsign() == null) {
+                        // Fallback to empty string
+                        stopTime.setStopHeadsign("");
+                    }
+
+                    if (i == 0) {
+                        // Fake arrival on first stop
+                        stopTime.setArrivalTime(stopTime.getDepartureTime());
+                    } else if (i == (numStops - 1)) {
+                        // Fake departure from last stop
+                        stopTime.setDepartureTime(stopTime.getArrivalTime());
+                    }
+
+                    if (estimatedCall.isCancellation() != null && estimatedCall.isCancellation()) {
+                        stopTime.cancel();
+                    }
+
+                    addedStops.add(stop);
+                    aimedStopTimes.add(stopTime);
+                    alreadyVisited.add(estimatedCall);
+                    break;
+                }
             }
-
-            if (aimedArrivalTime != null) {
-                stopTime.setArrivalTime(calculateSecondsSinceMidnight(departureTime, aimedArrivalTime));
-            }
-            if (aimedDepartureTime != null) {
-                stopTime.setDepartureTime(calculateSecondsSinceMidnight(departureTime, aimedDepartureTime));
-            }
-
-            var pickUpType = TimetableHelper.mapPickUpType(stopTime.getPickupType(), estimatedCall.getDepartureBoardingActivity());
-            pickUpType.ifPresent(stopTime::setPickupType);
-
-            var dropOffType = TimetableHelper.mapDropOffType(stopTime.getDropOffType(), estimatedCall.getArrivalBoardingActivity());
-            dropOffType.ifPresent(stopTime::setDropOffType);
-
-            if (estimatedCall.getDestinationDisplaies() != null && !estimatedCall.getDestinationDisplaies().isEmpty()) {
-                NaturalLanguageStringStructure destinationDisplay = estimatedCall.getDestinationDisplaies().get(0);
-                stopTime.setStopHeadsign(destinationDisplay.getValue());
-            } else if (trip.getTripHeadsign() == null) {
-                // Fallback to empty string
-                stopTime.setStopHeadsign("");
-            }
-
-            if (i == 0) {
-                // Fake arrival on first stop
-                stopTime.setArrivalTime(stopTime.getDepartureTime());
-            } else if (i == (estimatedCalls.size() - 1)) {
-                // Fake departure from last stop
-                stopTime.setDepartureTime(stopTime.getArrivalTime());
-            }
-
-            if (estimatedCall.isCancellation() != null && estimatedCall.isCancellation()) {
-                stopTime.cancel();
-            }
-
-            addedStops.add(stop);
-            aimedStopTimes.add(stopTime);
         }
 
         StopPattern stopPattern = new StopPattern(aimedStopTimes);
@@ -603,36 +654,30 @@ public class SiriTimetableSnapshotSource implements TimetableSnapshotProvider {
 
         // If added trip is updated with realtime - loop through and add delays
         for (int i = 0; i < estimatedCalls.size(); i++) {
+            int stopTimesIndex = i + recordedCalls.size();
             EstimatedCall estimatedCall = estimatedCalls.get(i);
             ZonedDateTime expectedArrival = estimatedCall.getExpectedArrivalTime();
             ZonedDateTime expectedDeparture = estimatedCall.getExpectedDepartureTime();
 
-            int aimedArrivalTime = aimedStopTimes.get(i).getArrivalTime();
-            int aimedDepartureTime = aimedStopTimes.get(i).getDepartureTime();
+            int aimedArrivalTime = aimedStopTimes.get(stopTimesIndex).getArrivalTime();
+            int aimedDepartureTime = aimedStopTimes.get(stopTimesIndex).getDepartureTime();
 
             if (expectedArrival != null) {
                 int expectedArrivalTime = calculateSecondsSinceMidnight(departureTime, expectedArrival);
-                tripTimes.updateArrivalDelay(i, expectedArrivalTime - aimedArrivalTime);
+                tripTimes.updateArrivalDelay(stopTimesIndex, expectedArrivalTime - aimedArrivalTime);
             }
             if (expectedDeparture != null) {
                 int expectedDepartureTime = calculateSecondsSinceMidnight(departureTime, expectedDeparture);
-                tripTimes.updateDepartureDelay(i, expectedDepartureTime - aimedDepartureTime);
+                tripTimes.updateDepartureDelay(stopTimesIndex, expectedDepartureTime - aimedDepartureTime);
             }
 
             if (estimatedCall.isCancellation() != null && estimatedCall.isCancellation()) {
-                tripTimes.setCancelled(i);
+                tripTimes.setCancelled(stopTimesIndex);
             }
 
             boolean isCallPredictionInaccurate = estimatedCall.isPredictionInaccurate() != null && estimatedCall.isPredictionInaccurate();
-            tripTimes.setPredictionInaccurate(i, (isJourneyPredictionInaccurate | isCallPredictionInaccurate));
+            tripTimes.setPredictionInaccurate(stopTimesIndex, (isJourneyPredictionInaccurate | isCallPredictionInaccurate));
 
-            if (i == 0) {
-                // Fake arrival on first stop
-                tripTimes.updateArrivalTime(i,tripTimes.getDepartureTime(i));
-            } else if (i == (estimatedCalls.size() - 1)) {
-                // Fake departure from last stop
-                tripTimes.updateDepartureTime(i,tripTimes.getArrivalTime(i));
-            }
         }
 
         // Adding trip to index necessary to include values in graphql-queries
@@ -653,6 +698,26 @@ public class SiriTimetableSnapshotSource implements TimetableSnapshotProvider {
         Preconditions.checkState(tripTimes.timesIncreasing(), "Non-increasing triptimes for added trip");
 
         return addTripToGraphAndBuffer(feedId, graph, trip, aimedStopTimes, addedStops, tripTimes, serviceDate, estimatedVehicleJourney);
+    }
+
+    private ZonedDateTime getDepartureTimeFromRecordedCall(RecordedCall recordedCall) {
+        if (recordedCall.getActualDepartureTime() != null) {
+            return recordedCall.getActualDepartureTime();
+        } else if (recordedCall.getExpectedDepartureTime() != null) {
+            return recordedCall.getExpectedDepartureTime();
+        } else {
+            return recordedCall.getAimedDepartureTime();
+        }
+    }
+
+    private ZonedDateTime getArrivalTimeFromRecordedCall(RecordedCall recordedCall) {
+        if (recordedCall.getActualArrivalTime() != null) {
+            return recordedCall.getActualArrivalTime();
+        } else if (recordedCall.getExpectedArrivalTime() != null) {
+            return recordedCall.getExpectedArrivalTime();
+        } else {
+            return recordedCall.getAimedArrivalTime();
+        }
     }
 
     /**
