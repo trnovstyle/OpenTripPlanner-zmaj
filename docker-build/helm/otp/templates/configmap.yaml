@@ -15,6 +15,12 @@ data:
         "pagingSearchWindowAdjustments": ["24h", "0h"],
         "dynamicSearchWindow" : {
           "maxWinTimeMinutes" : 3840
+        },
+        "stopTransferCost": {
+          "DISCOURAGED" : 3000,
+          "ALLOWED" : 150,
+          "RECOMMENDED" : 60,
+          "PREFERRED" : 0
         }
       },
       "updaters": [
