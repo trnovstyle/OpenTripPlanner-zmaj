@@ -5,12 +5,10 @@ import static org.opentripplanner.model.PickDrop.NONE;
 import static org.opentripplanner.model.PickDrop.SCHEDULED;
 import static org.opentripplanner.model.PickDrop.CANCELLED;
 
-import java.sql.Date;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.function.Supplier;
-import java.util.stream.Stream;
 import javax.xml.datatype.Duration;
 
 import org.opentripplanner.model.*;
@@ -108,7 +106,6 @@ public class TimetableHelper {
 
         boolean isJourneyPredictionInaccurate =  (journey.isPredictionInaccurate() != null && journey.isPredictionInaccurate());
 
-        int totalStops = timetable.getPattern().getStops().size();
         int departureFromPreviousStop = 0;
         int lastArrivalDelay = 0;
         int lastDepartureDelay = 0;
@@ -142,62 +139,17 @@ public class TimetableHelper {
                         departureDate = departureDate.minusDays(calculateDayOffset(oldTimes));
                     }
 
-                    if (recordedCall.isCancellation() != null && recordedCall.isCancellation()) {
-                        modifiedStopTimes.get(callCounter).cancel();
-                        newTimes.setCancelled(callCounter);
-                    }
-
-                    int arrivalTime = newTimes.getArrivalTime(callCounter);
-                    if (recordedCall.getActualArrivalTime() != null) {
-                        //Flag as recorded
-                        newTimes.setRecorded(callCounter, true);
-                    }
-
-                    int realtimeArrivalTime = getRealtimeTimeByPriority(
-                            zoneId,
+                    applyUpdates(
                             departureDate,
-                            recordedCall.getActualArrivalTime(),
-                            recordedCall.getExpectedArrivalTime(),
-                            recordedCall.getAimedArrivalTime(),
-                            -1);
+                            modifiedStopTimes,
+                            newTimes,
+                            zoneId,
+                            callCounter,
+                            recordedCall
+                    );
 
-
-
-                    int departureTime = newTimes.getDepartureTime(callCounter);
-                    if (recordedCall.getActualDepartureTime() != null) {
-                        //Flag as recorded
-                        newTimes.setRecorded(callCounter, true);
-                    }
-
-                    int realtimeDepartureTime = getRealtimeTimeByPriority(
-                           zoneId,
-                           departureDate,
-                           recordedCall.getActualDepartureTime(),
-                           recordedCall.getExpectedDepartureTime(),
-                           recordedCall.getAimedDepartureTime(),
-                           -1);
-
-                    if (callCounter == 0) {
-                        realtimeArrivalTime = handleMissingRealtime(realtimeArrivalTime, realtimeDepartureTime, arrivalTime);
-                    } else {
-                        realtimeArrivalTime = handleMissingRealtime(realtimeArrivalTime, arrivalTime);
-                    }
-
-                    if (callCounter == (totalStops - 1)) {
-                        realtimeDepartureTime = handleMissingRealtime(realtimeDepartureTime, realtimeArrivalTime, departureTime);
-                    } else {
-                        realtimeDepartureTime = handleMissingRealtime(realtimeDepartureTime, departureTime);
-                    }
-
-                    int arrivalDelay = realtimeArrivalTime - arrivalTime;
-                    newTimes.updateArrivalDelay(callCounter, arrivalDelay);
-                    lastArrivalDelay = arrivalDelay;
-
-
-                    int departureDelay = realtimeDepartureTime - departureTime;
-                    newTimes.updateDepartureDelay(callCounter, departureDelay);
-                    lastDepartureDelay = departureDelay;
-
+                    lastArrivalDelay = newTimes.getArrivalDelay(callCounter);
+                    lastDepartureDelay = newTimes.getDepartureDelay(callCounter);
                     departureFromPreviousStop = newTimes.getDepartureTime(callCounter);
 
                     alreadyVisited.add(recordedCall);
@@ -232,64 +184,21 @@ public class TimetableHelper {
                             departureDate = departureDate.minusDays(calculateDayOffset(oldTimes));
                         }
 
-                        if (estimatedCall.isCancellation() != null && estimatedCall.isCancellation()) {
-                            modifiedStopTimes.get(callCounter).cancel();
-                            newTimes.setCancelled(callCounter);
-                        }
-
-                        boolean isCallPredictionInaccurate = estimatedCall.isPredictionInaccurate() != null && estimatedCall.isPredictionInaccurate();
-
                         // Set flag for inaccurate prediction if either call OR journey has inaccurate-flag set.
+                        boolean isCallPredictionInaccurate = estimatedCall.isPredictionInaccurate() != null && estimatedCall.isPredictionInaccurate();
                         newTimes.setPredictionInaccurate(callCounter, (isJourneyPredictionInaccurate | isCallPredictionInaccurate));
 
-                        // Update dropoff-/pickuptype only if status is cancelled
-                        CallStatusEnumeration arrivalStatus = estimatedCall.getArrivalStatus();
-                        if (arrivalStatus == CallStatusEnumeration.CANCELLED) {
-                            modifiedStopTimes.get(callCounter).cancelDropOff();
-                        }
-
-                        CallStatusEnumeration departureStatus = estimatedCall.getDepartureStatus();
-                        if (departureStatus == CallStatusEnumeration.CANCELLED) {
-                            modifiedStopTimes.get(callCounter).cancelPickup();
-                        }
-
-                        int arrivalTime = newTimes.getArrivalTime(callCounter);
-                        int realtimeArrivalTime = getRealtimeTimeByPriority(zoneId,
+                        applyUpdates(
                                 departureDate,
-                                null,
-                                estimatedCall.getExpectedArrivalTime(),
-                                estimatedCall.getAimedArrivalTime(),
-                                -1);
+                                modifiedStopTimes,
+                                newTimes,
+                                zoneId,
+                                callCounter,
+                                estimatedCall
+                        );
 
-                        int departureTime = newTimes.getDepartureTime(callCounter);
-                        int realtimeDepartureTime = getRealtimeTimeByPriority(zoneId,
-                                        departureDate,
-                                        null,
-                                        estimatedCall.getExpectedDepartureTime(),
-                                        estimatedCall.getAimedDepartureTime(),
-                                        -1);
-
-                        if (callCounter == 0) {
-                            realtimeArrivalTime = handleMissingRealtime(realtimeArrivalTime, realtimeDepartureTime, arrivalTime);
-                        } else {
-                            realtimeArrivalTime = handleMissingRealtime(realtimeArrivalTime, arrivalTime);
-                        }
-
-                        if (callCounter == (totalStops - 1)) {
-                            realtimeDepartureTime = handleMissingRealtime(realtimeDepartureTime, realtimeArrivalTime, departureTime);
-                        } else {
-                            realtimeDepartureTime = handleMissingRealtime(realtimeDepartureTime, departureTime);
-                        }
-
-
-                        int arrivalDelay = realtimeArrivalTime - arrivalTime;
-                        newTimes.updateArrivalDelay(callCounter, arrivalDelay);
-                        lastArrivalDelay = arrivalDelay;
-
-                        int departureDelay = realtimeDepartureTime - departureTime;
-                        newTimes.updateDepartureDelay(callCounter, departureDelay);
-                        lastDepartureDelay = departureDelay;
-
+                        lastArrivalDelay = newTimes.getArrivalDelay(callCounter);
+                        lastDepartureDelay = newTimes.getDepartureDelay(callCounter);
                         departureFromPreviousStop = newTimes.getDepartureTime(callCounter);
 
                         alreadyVisited.add(estimatedCall);
@@ -825,5 +734,130 @@ public class TimetableHelper {
             }
         }
         return null;
+    }
+
+    public static void applyUpdates(
+            ZonedDateTime departureDate,
+            List<StopTime> stopTimes,
+            TripTimes tripTimes,
+            ZoneId zoneId,
+            int index,
+            RecordedCall recordedCall
+    ) {
+        if (recordedCall.isCancellation() != null && recordedCall.isCancellation()) {
+            stopTimes.get(index).cancel();
+            tripTimes.setCancelled(index);
+        }
+
+        int arrivalTime = tripTimes.getArrivalTime(index);
+        if (recordedCall.getActualArrivalTime() != null) {
+            //Flag as recorded
+            tripTimes.setRecorded(index, true);
+        }
+
+        int realtimeArrivalTime = getRealtimeTimeByPriority(
+                zoneId,
+                departureDate,
+                recordedCall.getActualArrivalTime(),
+                recordedCall.getExpectedArrivalTime(),
+                recordedCall.getAimedArrivalTime(),
+                -1
+        );
+
+        int departureTime = tripTimes.getDepartureTime(index);
+        if (recordedCall.getActualDepartureTime() != null) {
+            //Flag as recorded
+            tripTimes.setRecorded(index, true);
+        }
+
+        int realtimeDepartureTime = getRealtimeTimeByPriority(
+                zoneId,
+                departureDate,
+                recordedCall.getActualDepartureTime(),
+                recordedCall.getExpectedDepartureTime(),
+                recordedCall.getAimedDepartureTime(),
+                -1
+        );
+
+        if (index == 0) {
+            realtimeArrivalTime = handleMissingRealtime(realtimeArrivalTime, realtimeDepartureTime, arrivalTime);
+        } else {
+            realtimeArrivalTime = handleMissingRealtime(realtimeArrivalTime, arrivalTime);
+        }
+
+        if (index == (stopTimes.size() - 1)) {
+            realtimeDepartureTime = handleMissingRealtime(realtimeDepartureTime, realtimeArrivalTime, departureTime);
+        } else {
+            realtimeDepartureTime = handleMissingRealtime(realtimeDepartureTime, departureTime);
+        }
+
+        int arrivalDelay = realtimeArrivalTime - arrivalTime;
+        tripTimes.updateArrivalDelay(index, arrivalDelay);
+
+        int departureDelay = realtimeDepartureTime - departureTime;
+        tripTimes.updateDepartureDelay(index, departureDelay);
+    }
+
+    public static void applyUpdates(
+            ZonedDateTime departureDate,
+            List<StopTime> stopTimes,
+            TripTimes tripTimes,
+            ZoneId zoneId,
+            int index,
+            EstimatedCall estimatedCall
+    ) {
+        if (estimatedCall.isCancellation() != null && estimatedCall.isCancellation()) {
+            stopTimes.get(index).cancel();
+            tripTimes.setCancelled(index);
+        }
+
+        // Update dropoff-/pickuptype only if status is cancelled
+        CallStatusEnumeration arrivalStatus = estimatedCall.getArrivalStatus();
+        if (arrivalStatus == CallStatusEnumeration.CANCELLED) {
+            stopTimes.get(index).cancelDropOff();
+        }
+
+        CallStatusEnumeration departureStatus = estimatedCall.getDepartureStatus();
+        if (departureStatus == CallStatusEnumeration.CANCELLED) {
+            stopTimes.get(index).cancelPickup();
+        }
+
+        int arrivalTime = tripTimes.getArrivalTime(index);
+        int realtimeArrivalTime = getRealtimeTimeByPriority(
+                zoneId,
+                departureDate,
+                null,
+                estimatedCall.getExpectedArrivalTime(),
+                estimatedCall.getAimedArrivalTime(),
+                -1
+        );
+
+        int departureTime = tripTimes.getDepartureTime(index);
+        int realtimeDepartureTime = getRealtimeTimeByPriority(
+                zoneId,
+                departureDate,
+                null,
+                estimatedCall.getExpectedDepartureTime(),
+                estimatedCall.getAimedDepartureTime(),
+                -1
+        );
+
+        if (index == 0) {
+            realtimeArrivalTime = handleMissingRealtime(realtimeArrivalTime, realtimeDepartureTime, arrivalTime);
+        } else {
+            realtimeArrivalTime = handleMissingRealtime(realtimeArrivalTime, arrivalTime);
+        }
+
+        if (index == (stopTimes.size() - 1)) {
+            realtimeDepartureTime = handleMissingRealtime(realtimeDepartureTime, realtimeArrivalTime, departureTime);
+        } else {
+            realtimeDepartureTime = handleMissingRealtime(realtimeDepartureTime, departureTime);
+        }
+
+        int arrivalDelay = realtimeArrivalTime - arrivalTime;
+        tripTimes.updateArrivalDelay(index, arrivalDelay);
+
+        int departureDelay = realtimeDepartureTime - departureTime;
+        tripTimes.updateDepartureDelay(index, departureDelay);
     }
 }
