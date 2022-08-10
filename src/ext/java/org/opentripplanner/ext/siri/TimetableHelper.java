@@ -5,8 +5,10 @@ import static org.opentripplanner.model.PickDrop.NONE;
 import static org.opentripplanner.model.PickDrop.SCHEDULED;
 import static org.opentripplanner.model.PickDrop.CANCELLED;
 
+import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.time.format.DateTimeParseException;
 import java.util.*;
 import java.util.function.Supplier;
 import javax.xml.datatype.Duration;
@@ -93,6 +95,12 @@ public class TimetableHelper {
         if (modifiedStopTimes == null) {
             return null;
         }
+
+        if (modifiedStopTimes.size() != (estimatedCalls.size() + recordedCalls.size())) {
+            LOG.warn("Stop amount in ET message does not match with amount stops in trip.");
+            return null;
+        }
+
         TripTimes newTimes = new TripTimes(trip, modifiedStopTimes, graph.deduplicator);
 
         //Populate missing data from existing TripTimes
@@ -101,7 +109,7 @@ public class TimetableHelper {
         ZoneId zoneId = graph.getTimeZone().toZoneId();
 
         int callCounter = 0;
-        ZonedDateTime departureDate = null;
+        final ZonedDateTime serviceDate = getServiceDate(journey, zoneId, oldTimes);
         Set<Object> alreadyVisited = new HashSet<>();
 
         boolean isJourneyPredictionInaccurate =  (journey.isPredictionInaccurate() != null && journey.isPredictionInaccurate());
@@ -131,16 +139,8 @@ public class TimetableHelper {
 
                 if (foundMatch) {
 
-                    if (departureDate == null) {
-                        departureDate = recordedCall.getAimedDepartureTime();
-                        if (departureDate == null) {
-                            departureDate = recordedCall.getAimedArrivalTime();
-                        }
-                        departureDate = departureDate.minusDays(calculateDayOffset(oldTimes));
-                    }
-
                     applyUpdates(
-                            departureDate,
+                            serviceDate,
                             modifiedStopTimes,
                             newTimes,
                             zoneId,
@@ -176,20 +176,13 @@ public class TimetableHelper {
                     }
 
                     if (foundMatch) {
-                        if (departureDate == null) {
-                            departureDate = estimatedCall.getAimedDepartureTime();
-                            if (departureDate == null) {
-                                departureDate = estimatedCall.getAimedArrivalTime();
-                            }
-                            departureDate = departureDate.minusDays(calculateDayOffset(oldTimes));
-                        }
 
                         // Set flag for inaccurate prediction if either call OR journey has inaccurate-flag set.
                         boolean isCallPredictionInaccurate = estimatedCall.isPredictionInaccurate() != null && estimatedCall.isPredictionInaccurate();
                         newTimes.setPredictionInaccurate(callCounter, (isJourneyPredictionInaccurate | isCallPredictionInaccurate));
 
                         applyUpdates(
-                                departureDate,
+                                serviceDate,
                                 modifiedStopTimes,
                                 newTimes,
                                 zoneId,
@@ -258,6 +251,30 @@ public class TimetableHelper {
 
         LOG.debug("A valid TripUpdate object was applied using the Timetable class update method.");
         return newTimes;
+    }
+
+    private static ZonedDateTime getServiceDate(EstimatedVehicleJourney journey, ZoneId zoneId, TripTimes oldTimes){
+        if (journey.getFramedVehicleJourneyRef() != null && journey.getFramedVehicleJourneyRef().getDataFrameRef() != null) {
+            var dataFrame = journey.getFramedVehicleJourneyRef().getDataFrameRef();
+            if (dataFrame != null) {
+                try {
+                    return LocalDate.parse(dataFrame.getValue()).atStartOfDay(zoneId);
+                } catch (DateTimeParseException ignored) {
+                    LOG.warn("Invalid dataFrame format: {}", dataFrame.getValue());
+                }
+            }
+        }
+
+        var recordedCalls = journey.getRecordedCalls();
+        var estimatedCalls = journey.getEstimatedCalls();
+        ZonedDateTime firstDeparture;
+        if (recordedCalls.getRecordedCalls().isEmpty()) {
+            firstDeparture = estimatedCalls.getEstimatedCalls().get(0).getAimedDepartureTime();
+        } else {
+            firstDeparture = recordedCalls.getRecordedCalls().get(0).getAimedDepartureTime();
+        }
+
+        return firstDeparture.minusDays(calculateDayOffset(oldTimes)).withZoneSameInstant(zoneId);
     }
 
     private static int calculateDayOffset(TripTimes oldTimes) {
