@@ -88,6 +88,10 @@ public class RoutingRequestTransitDataProviderFilter implements TransitDataProvi
       return tripTimes.getTrip().getWheelchairAccessible() == 1;
     }
 
+    if (tripTimes.isReplaced()) {
+      return false;
+    }
+
     if (!includePlannedCancellations) {
       return !tripTimes.getTrip().getTripAlteration().isCanceledOrReplaced();
     }

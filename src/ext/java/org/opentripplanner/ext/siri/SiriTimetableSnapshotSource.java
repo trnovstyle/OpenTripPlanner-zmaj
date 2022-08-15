@@ -413,9 +413,9 @@ public class SiriTimetableSnapshotSource implements TimetableSnapshotProvider {
      *
      */
     private Timetable getCurrentTimetable(TripPattern tripPattern, ServiceDate serviceDate) {
-        TimetableSnapshot timetableSnapshot=getTimetableSnapshot();
+        TimetableSnapshot timetableSnapshot=snapshot;
         if (timetableSnapshot!=null) {
-            return getTimetableSnapshot().resolve(tripPattern, serviceDate);
+            return timetableSnapshot.resolve(tripPattern, serviceDate);
         }
         return tripPattern.getScheduledTimetable();
     }
@@ -1206,8 +1206,9 @@ public class SiriTimetableSnapshotSource implements TimetableSnapshotProvider {
         }
 
         TripPattern lastAddedTripPattern = null;
-        if (getTimetableSnapshot() != null) {
-            lastAddedTripPattern  = getTimetableSnapshot().getLastAddedTripPattern(trip.getId(), journeyDate);
+        var timetableSnapshot = snapshot;
+        if (timetableSnapshot != null) {
+            lastAddedTripPattern  = timetableSnapshot.getLastAddedTripPattern(trip.getId(), journeyDate);
         }
 
         TripPattern tripPattern;

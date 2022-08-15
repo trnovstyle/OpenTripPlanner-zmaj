@@ -202,7 +202,7 @@ public class LegType {
             .description("EstimatedCall for the quay where the leg originates.")
             .type(estimatedCallType)
             .dataFetcher(env -> {
-                if (isIgnoreRealtimeUpdates(env)) {
+                if (!((Leg) env.getSource()).getRealTime()) {
                     return TripTimeShortHelper.getTripTimeShortForFromPlace(
                             env.getSource(),
                             GqlUtil.getRoutingService(env)
@@ -219,7 +219,7 @@ public class LegType {
             .description("EstimatedCall for the quay where the leg ends.")
             .type(estimatedCallType)
             .dataFetcher(env -> {
-                if (isIgnoreRealtimeUpdates(env)) {
+                if (!((Leg) env.getSource()).getRealTime()) {
                     return TripTimeShortHelper.getTripTimeShortForToPlace(
                             env.getSource(),
                             GqlUtil.getRoutingService(env)
@@ -303,7 +303,7 @@ public class LegType {
             )
             .type(new GraphQLNonNull(new GraphQLList(new GraphQLNonNull(estimatedCallType))))
             .dataFetcher(env -> {
-                if (isIgnoreRealtimeUpdates(env)) {
+                if (!((Leg) env.getSource()).getRealTime()) {
                     return TripTimeShortHelper.getIntermediateTripTimeShortsForLeg(
                             env.getSource(),
                             GqlUtil.getRoutingService(env)
@@ -321,7 +321,7 @@ public class LegType {
                 "For ride legs, all estimated calls for the service journey. For non-ride legs, empty list.")
             .type(new GraphQLNonNull(new GraphQLList(new GraphQLNonNull(estimatedCallType))))
             .dataFetcher(env -> {
-                if (isIgnoreRealtimeUpdates(env)) {
+                if (!((Leg) env.getSource()).getRealTime()) {
                     return TripTimeShortHelper.getAllTripTimeShortsForLegsTrip(
                             env.getSource(),
                             GqlUtil.getRoutingService(env)
@@ -383,9 +383,5 @@ public class LegType {
 
   private static Leg leg(DataFetchingEnvironment environment) {
       return environment.getSource();
-  }
-
-  private static boolean isIgnoreRealtimeUpdates(DataFetchingEnvironment env) {
-      return (boolean) env.getVariables().getOrDefault("ignoreRealtimeUpdates", false);
   }
 }
