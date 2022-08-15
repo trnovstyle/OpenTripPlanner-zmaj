@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.IntUnaryOperator;
 import org.opentripplanner.model.StopLocation;
+import org.opentripplanner.model.TransitMode;
 import org.opentripplanner.model.WheelChairBoarding;
 import org.opentripplanner.model.base.ToStringBuilder;
 import org.opentripplanner.routing.algorithm.raptoradapter.transit.TripPatternForDate;
@@ -233,6 +234,11 @@ public class TripPatternForDates
         return direction.isForward()
                 ? new TripFrequencyBoardSearch<>(this)
                 : new TripFrequencyAlightSearch<>(this);
+    }
+
+    @Override
+    public TransitMode getTransitMode() {
+        return tripPattern.getTransitMode();
     }
 
     @Override

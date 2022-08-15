@@ -338,7 +338,8 @@ public class BasicPathTestCase implements RaptorTestConstants {
                 ALIGHT_SLACK,
                 alightTime - boardTime,
                 trip.transitReluctanceFactorIndex(),
-                alightStop
+                alightStop,
+                trip
         );
     }
 }

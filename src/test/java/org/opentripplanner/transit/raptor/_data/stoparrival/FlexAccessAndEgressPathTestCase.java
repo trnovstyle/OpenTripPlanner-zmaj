@@ -83,11 +83,7 @@ public class FlexAccessAndEgressPathTestCase implements RaptorTestConstants {
 
     // Wait at least 1m45s (45s BOARD_SLACK and 60s TRANSFER_SLACK)
     public static final int L1_TRANSIT_DURATION = L1_END - L1_START;
-    public static final int L1_COST_EX_WAIT =
-            COST_CALCULATOR.transitArrivalCost(
-                    COST_CALCULATOR.boardingCostRegularTransfer(false, L1_START, STOP_B, L1_START),
-                    ZERO, L1_TRANSIT_DURATION, TRANSIT_RELUCTANCE_INDEX, STOP_C
-    );
+
     // Transfers (C ~ Walk 2m ~ D) (Used in Case B only)
     public static final int TX2_START = time("10:20:15");
     public static final int TX2_END = time("10:22:15");
@@ -124,6 +120,12 @@ public class FlexAccessAndEgressPathTestCase implements RaptorTestConstants {
             .schedule(pattern(LINE_B, STOP_B, STOP_C))
             .times(L1_START, L1_END)
             .build();
+
+    public static final int L1_COST_EX_WAIT =
+            COST_CALCULATOR.transitArrivalCost(
+                    COST_CALCULATOR.boardingCostRegularTransfer(false, L1_START, STOP_B, L1_START),
+                    ZERO, L1_TRANSIT_DURATION, TRANSIT_RELUCTANCE_INDEX, STOP_C, TRIP_A
+                    );
 
     private static final int TOT_COST_A = toRaptorCost(2564);
     private static final int TOT_COST_W_OPENING_HOURS_A = toRaptorCost(3512);

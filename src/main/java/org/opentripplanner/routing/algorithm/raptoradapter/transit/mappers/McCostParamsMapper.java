@@ -2,6 +2,8 @@ package org.opentripplanner.routing.algorithm.raptoradapter.transit.mappers;
 
 import java.util.Arrays;
 import java.util.Map;
+import java.util.Set;
+
 import org.opentripplanner.model.TransitMode;
 import org.opentripplanner.routing.algorithm.raptoradapter.transit.cost.McCostParams;
 import org.opentripplanner.routing.algorithm.raptoradapter.transit.cost.McCostParamsBuilder;
@@ -26,6 +28,9 @@ public class McCostParamsMapper {
         builder.transitReluctanceFactors(
                 mapTransitReluctance(request.transitReluctanceForMode())
         );
+
+        builder.unpreferredModes(request.unpreferredModes);
+        builder.unpreferredModeCost(request.unpreferredModeCost);
 
         return builder.build();
     }

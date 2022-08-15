@@ -446,7 +446,8 @@ public class PathBuilderLeg<T extends RaptorTripSchedule> {
                 slackProvider.alightSlack(leg.trip.pattern()),
                 durationInSec(),
                 leg.trip.transitReluctanceFactorIndex(),
-                toStop()
+                toStop(),
+                trip()
         );
     }
 

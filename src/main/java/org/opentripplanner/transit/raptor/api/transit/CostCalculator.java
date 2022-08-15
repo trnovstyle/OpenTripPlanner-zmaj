@@ -1,5 +1,7 @@
 package org.opentripplanner.transit.raptor.api.transit;
 
+import org.opentripplanner.model.Trip;
+
 /**
  * The responsibility is to calculate multi-criteria value (like the generalized cost).
  * <P/>
@@ -53,7 +55,8 @@ public interface CostCalculator {
             int alightSlack,
             int transitTime,
             int transitFactorIndex,
-            int toStop
+            int toStop,
+            RaptorTripSchedule trip
     );
 
     /**

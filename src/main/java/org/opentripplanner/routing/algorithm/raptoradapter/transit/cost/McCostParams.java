@@ -2,8 +2,13 @@ package org.opentripplanner.routing.algorithm.raptoradapter.transit.cost;
 
 
 import java.util.Objects;
+import java.util.Set;
+import java.util.function.DoubleFunction;
 import javax.annotation.Nullable;
+
+import org.opentripplanner.model.TransitMode;
 import org.opentripplanner.model.base.ToStringBuilder;
+import org.opentripplanner.routing.api.request.RequestFunctions;
 import org.opentripplanner.routing.api.request.RoutingRequest;
 import org.opentripplanner.transit.raptor.api.transit.RaptorTripSchedule;
 
@@ -19,6 +24,8 @@ public class McCostParams {
     private final int transferCost;
     private final double[] transitReluctanceFactors;
     private final double waitReluctanceFactor;
+    private final DoubleFunction<Double> unpreferredModeCost;
+    private final Set<TransitMode> unpreferredModes;
 
     /**
      * Default constructor defines default values. These defaults are
@@ -29,6 +36,8 @@ public class McCostParams {
         this.transferCost = 0;
         this.transitReluctanceFactors = null;
         this.waitReluctanceFactor = 1.0;
+        this.unpreferredModeCost = RequestFunctions.createLinearFunction(0.0, DEFAULT_TRANSIT_RELUCTANCE);
+        this.unpreferredModes = Set.of();
     }
 
     McCostParams(McCostParamsBuilder builder) {
@@ -36,6 +45,8 @@ public class McCostParams {
         this.transferCost = builder.transferCost();
         this.transitReluctanceFactors = builder.transitReluctanceFactors();
         this.waitReluctanceFactor = builder.waitReluctanceFactor();
+        this.unpreferredModeCost = builder.unpreferredModeCost();
+        this.unpreferredModes = builder.unpreferredModes();
     }
 
     public int boardCost() {
@@ -66,6 +77,14 @@ public class McCostParams {
         return waitReluctanceFactor;
     }
 
+    public DoubleFunction<Double> unpreferredModeCost() {
+        return unpreferredModeCost;
+    }
+
+    public Set<TransitMode> unpreferredModes() {
+        return unpreferredModes;
+    }
+
     @Override
     public String toString() {
         return ToStringBuilder.of(McCostParams.class)
@@ -73,6 +92,7 @@ public class McCostParams {
                 .addNum("transferCost", transferCost, 0)
                 .addNum("waitReluctanceFactor", waitReluctanceFactor, 1.0)
                 .addDoubles("transitReluctanceFactors",  transitReluctanceFactors, 1.0)
+                .addNum("modePenaltiesSize", unpreferredModes.size(), 0)
                 .toString();
     }
 

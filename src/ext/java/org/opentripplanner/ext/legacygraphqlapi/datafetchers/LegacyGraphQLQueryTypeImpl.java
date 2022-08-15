@@ -48,6 +48,7 @@ import org.opentripplanner.model.calendar.ServiceDate;
 import org.opentripplanner.routing.RoutingService;
 import org.opentripplanner.routing.alertpatch.EntitySelector;
 import org.opentripplanner.routing.alertpatch.TransitAlert;
+import org.opentripplanner.routing.api.request.RequestFunctions;
 import org.opentripplanner.routing.api.request.RoutingRequest;
 import org.opentripplanner.routing.api.response.RoutingResponse;
 import org.opentripplanner.routing.vehicle_parking.VehicleParking;

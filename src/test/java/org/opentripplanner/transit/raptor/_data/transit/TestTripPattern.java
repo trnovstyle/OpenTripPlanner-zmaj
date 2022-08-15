@@ -1,5 +1,6 @@
 package org.opentripplanner.transit.raptor._data.transit;
 
+import org.opentripplanner.model.TransitMode;
 import org.opentripplanner.model.base.ToStringBuilder;
 import org.opentripplanner.transit.raptor.api.transit.RaptorTripPattern;
 
@@ -120,7 +121,13 @@ public class TestTripPattern implements RaptorTripPattern {
             .toString();
   }
 
+  @Override
+  public TransitMode getTransitMode() {
+    return TransitMode.BUS;
+  }
+
   private boolean isNotRestricted(int index, int mask) {
     return restrictions == null || (restrictions[index] & mask) == 0;
   }
+
 }

@@ -1,6 +1,11 @@
 package org.opentripplanner.routing.algorithm.raptoradapter.transit.cost;
 
 
+import org.opentripplanner.model.TransitMode;
+
+import java.util.Set;
+import java.util.function.DoubleFunction;
+
 /**
  * Mutable version of the {@link McCostParams}.
  */
@@ -10,6 +15,8 @@ public class McCostParamsBuilder {
     private int transferCost;
     private double[] transitReluctanceFactors;
     private double waitReluctanceFactor;
+    private DoubleFunction<Double> unpreferredModeCost;
+    private Set<TransitMode> unpreferredModes;
 
 
     public McCostParamsBuilder() {
@@ -21,6 +28,8 @@ public class McCostParamsBuilder {
         this.transferCost = other.transferCost();
         this.transitReluctanceFactors = other.transitReluctanceFactors();
         this.waitReluctanceFactor = other.waitReluctanceFactor();
+        this.unpreferredModeCost = other.unpreferredModeCost();
+        this.unpreferredModes = other.unpreferredModes();
     }
 
     public int boardCost() {
@@ -59,7 +68,27 @@ public class McCostParamsBuilder {
         return this;
     }
 
+    public DoubleFunction<Double> unpreferredModeCost() {
+        return unpreferredModeCost;
+    }
+
+    public McCostParamsBuilder unpreferredModeCost(DoubleFunction<Double> unpreferredModeCost) {
+        this.unpreferredModeCost = unpreferredModeCost;
+        return this;
+    }
+
+    public Set<TransitMode> unpreferredModes() {
+        return unpreferredModes;
+    }
+
+    public McCostParamsBuilder unpreferredModes(Set<TransitMode> unpreferredModes) {
+        this.unpreferredModes = unpreferredModes;
+        return this;
+    }
+
     public McCostParams build() {
         return new McCostParams(this);
     }
+
+
 }

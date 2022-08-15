@@ -131,7 +131,8 @@ final public class McRangeRaptorWorkerState<T extends RaptorTripSchedule> implem
             alightSlack,
             alightTime - ride.boardTime,
             ride.trip.transitReluctanceFactorIndex(),
-            alightStop
+            alightStop,
+            ride.trip
         );
 
         arrivalsCache.add(

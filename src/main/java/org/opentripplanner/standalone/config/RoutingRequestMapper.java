@@ -91,6 +91,8 @@ public class RoutingRequestMapper {
         request.transferSlack = c.asInt("transferSlack", dft.transferSlack);
         request.setTransitReluctanceForMode(c.asEnumMap("transitReluctanceForMode", TransitMode.class, NodeAdapter::asDouble));
         request.turnReluctance = c.asDouble("turnReluctance", dft.turnReluctance);
+        request.unpreferredModeCost = c.asLinearFunction("unpreferredModeCost", dft.unpreferredModeCost);
+        request.unpreferredModes = c.asEnumSet("unpreferredModes", TransitMode.class);
         request.useVehicleRentalAvailabilityInformation = c.asBoolean("useBikeRentalAvailabilityInformation", dft.useVehicleRentalAvailabilityInformation);
         request.useVehicleParkingAvailabilityInformation = c.asBoolean("useVehicleParkingAvailabilityInformation", dft.useVehicleParkingAvailabilityInformation);
         request.useUnpreferredRoutesPenalty = c.asInt("useUnpreferredRoutesPenalty", dft.useUnpreferredRoutesPenalty);

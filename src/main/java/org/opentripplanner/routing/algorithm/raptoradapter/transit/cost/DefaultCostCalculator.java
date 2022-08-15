@@ -1,6 +1,8 @@
 package org.opentripplanner.routing.algorithm.raptoradapter.transit.cost;
 
 import javax.annotation.Nullable;
+
+import org.opentripplanner.model.Trip;
 import org.opentripplanner.model.transfer.TransferConstraint;
 import org.opentripplanner.transit.raptor.api.transit.CostCalculator;
 import org.opentripplanner.transit.raptor.api.transit.RaptorTransfer;
@@ -97,7 +99,8 @@ public final class DefaultCostCalculator implements CostCalculator {
     int alightSlack,
     int transitTime,
     int transitFactorIndex,
-    int toStop
+    int toStop,
+    RaptorTripSchedule trip
   ) {
     int cost =
       boardCost +

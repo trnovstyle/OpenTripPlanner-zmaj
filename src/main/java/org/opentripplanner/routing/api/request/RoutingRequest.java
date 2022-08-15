@@ -63,6 +63,7 @@ import org.opentripplanner.util.time.DateUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.function.DoubleFunction;
 /**
  * A trip planning request. Some parameters may not be honored by the trip planner for some or all
  * itineraries. For example, maxWalkDistance may be relaxed if the alternative is to not provide a
@@ -168,6 +169,9 @@ public class RoutingRequest implements AutoCloseable, Cloneable, Serializable {
      * The set of characteristics that the user wants to optimize for -- defaults to SAFE.
      */
     public BicycleOptimizeType bicycleOptimizeType = BicycleOptimizeType.SAFE;
+    public DoubleFunction<Double> unpreferredModeCost;
+
+    public Set<TransitMode> unpreferredModes = Set.of();
 
     /**
      * The epoch date/time in seconds that the trip should depart (or arrive, for requests where

@@ -3,7 +3,11 @@ package org.opentripplanner.routing.algorithm.raptoradapter.transit.cost;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.Test;
+import org.opentripplanner.model.FeedScopedId;
+import org.opentripplanner.model.Trip;
 import org.opentripplanner.transit.raptor._data.transit.TestTransfer;
+import org.opentripplanner.transit.raptor._data.transit.TestTripPattern;
+import org.opentripplanner.transit.raptor._data.transit.TestTripSchedule;
 
 public class DefaultCostCalculatorTest {
 
@@ -40,30 +44,35 @@ public class DefaultCostCalculatorTest {
 
   @Test
   public void transitArrivalCost() {
-    assertEquals(0, subject.transitArrivalCost(0, 0, 0, TRANSIT_RELUCTANCE_1, STOP_A), "Zero cost");
-    assertEquals(
-      1000,
-      subject.transitArrivalCost(1000, 0, 0, TRANSIT_RELUCTANCE_1, STOP_A),
-      "Board cost"
-    );
-    assertEquals(
-      50,
-      subject.transitArrivalCost(0, 1, 0, TRANSIT_RELUCTANCE_1, STOP_A),
+    TestTripSchedule trip = TestTripSchedule
+            .schedule(TestTripPattern.pattern("L31", STOP_A, STOP_B))
+            .arrivals("10:00 10:05")
+            .departures("10:01 10:06")
+            .build();
+
+        assertEquals(0, subject.transitArrivalCost(0, 0, 0, TRANSIT_RELUCTANCE_1, STOP_A, trip), "Zero cost");
+        assertEquals(1000, subject.transitArrivalCost(1000, 0, 0, TRANSIT_RELUCTANCE_1, STOP_A, trip), "Board cost");
+        assertEquals(50, subject.transitArrivalCost(0, 1, 0, TRANSIT_RELUCTANCE_1, STOP_A, trip), "Alight wait time cost");
+        assertEquals(100, subject.transitArrivalCost(0, 0, 1, TRANSIT_RELUCTANCE_1, STOP_A, trip), "Transit time cost");
+        assertEquals(25, subject.transitArrivalCost(0, 0, 0, TRANSIT_RELUCTANCE_1, STOP_B, trip), "Alight stop cost");
+        assertEquals(1175, subject.transitArrivalCost(1000, 1, 1, TRANSIT_RELUCTANCE_1, STOP_B, trip), "Total cost");
+    assertEquals(50,
+      subject.transitArrivalCost(0, 1, 0, TRANSIT_RELUCTANCE_1, STOP_A, trip),
       "Alight wait time cost"
     );
     assertEquals(
       100,
-      subject.transitArrivalCost(0, 0, 1, TRANSIT_RELUCTANCE_1, STOP_A),
+      subject.transitArrivalCost(0, 0, 1, TRANSIT_RELUCTANCE_1, STOP_A, trip),
       "Transit time cost"
     );
     assertEquals(
       25,
-      subject.transitArrivalCost(0, 0, 0, TRANSIT_RELUCTANCE_1, STOP_B),
+      subject.transitArrivalCost(0, 0, 0, TRANSIT_RELUCTANCE_1, STOP_B, trip),
       "Alight stop cost"
     );
     assertEquals(
       1175,
-      subject.transitArrivalCost(1000, 1, 1, TRANSIT_RELUCTANCE_1, STOP_B),
+      subject.transitArrivalCost(1000, 1, 1, TRANSIT_RELUCTANCE_1, STOP_B, trip),
       "Total cost"
     );
   }

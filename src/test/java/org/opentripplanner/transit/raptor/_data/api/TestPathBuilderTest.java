@@ -60,7 +60,8 @@ public class TestPathBuilderTest implements RaptorTestConstants {
       ALIGHT_SLACK,
       transitDuration,
       TRANSIT_RELUCTANCE_INDEX,
-      STOP_B
+      STOP_B,
+      transitLeg.trip()
     );
 
     int accessEgressCost = COST_CALCULATOR.costEgress(TestTransfer.walk(STOP_B, D2m + D1m));

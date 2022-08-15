@@ -11,6 +11,8 @@ import org.opentripplanner.routing.algorithm.raptoradapter.transit.RaptorTransfe
 import org.opentripplanner.routing.algorithm.raptoradapter.transit.TransitLayer;
 import org.opentripplanner.routing.algorithm.raptoradapter.transit.TripSchedule;
 import org.opentripplanner.routing.algorithm.raptoradapter.transit.cost.DefaultCostCalculator;
+import org.opentripplanner.routing.algorithm.raptoradapter.transit.cost.McCostParams;
+import org.opentripplanner.routing.algorithm.raptoradapter.transit.cost.UnpreferredModeCostCalculator;
 import org.opentripplanner.routing.algorithm.raptoradapter.transit.mappers.DateMapper;
 import org.opentripplanner.routing.algorithm.raptoradapter.transit.mappers.McCostParamsMapper;
 import org.opentripplanner.routing.api.request.RoutingRequest;
@@ -80,10 +82,18 @@ public class RaptorRoutingRequestTransitData implements RaptorTransitDataProvide
         filter
     );
     this.transfers = transitLayer.getRaptorTransfersForRequest(routingRequest);
-    this.generalizedCostCalculator = new DefaultCostCalculator(
-            McCostParamsMapper.map(routingRequest),
+    McCostParams mcCostParams = McCostParamsMapper.map(routingRequest);
+    var defaultCostCalulator = new DefaultCostCalculator(
+            mcCostParams,
             transitLayer.getStopIndex().stopBoardAlightCosts
     );
+
+    if(!mcCostParams.unpreferredModes().isEmpty()) {
+      this.generalizedCostCalculator = new UnpreferredModeCostCalculator(defaultCostCalulator, mcCostParams);
+    } else {
+      this.generalizedCostCalculator = defaultCostCalulator;
+    }
+
     this.validTransitDataStartTime = DateMapper.secondsSinceStartOfTime(
             this.transitSearchTimeZero,
         this.transitSearchTimeZero.minusDays(additionalPastSearchDays).toInstant()
