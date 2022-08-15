@@ -152,25 +152,40 @@ public class RoutingRequest implements AutoCloseable, Cloneable, Serializable {
      * // TODO OTP2 Street routing requests should eventually be split into its own request class.
      */
     public RequestModes modes = new RequestModes(
-        StreetMode.WALK,
-        StreetMode.WALK,
-        StreetMode.WALK,
-        StreetMode.WALK,
-        AllowedTransitMode.getAllTransitModes()
+            StreetMode.WALK,
+            StreetMode.WALK,
+            StreetMode.WALK,
+            StreetMode.WALK,
+            AllowedTransitMode.getAllTransitModes()
     );
 
     /**
      * The set of TraverseModes allowed when doing creating sub requests and doing street routing.
      * // TODO OTP2 Street routing requests should eventually be split into its own request class.
      */
-    public TraverseModeSet streetSubRequestModes = new TraverseModeSet(TraverseMode.WALK); // defaults in constructor overwrite this
+    public TraverseModeSet streetSubRequestModes = new TraverseModeSet(TraverseMode.WALK);
+    // defaults in constructor overwrite this
 
     /**
      * The set of characteristics that the user wants to optimize for -- defaults to SAFE.
      */
     public BicycleOptimizeType bicycleOptimizeType = BicycleOptimizeType.SAFE;
+    /**
+     * If defined with at least one mode set in 'unpreferredModes' this function will add a cost for
+     * transit as a linear function 'm + n*x', m and n are double numbers. This gives the
+     * possibility to add a cost even when the time is zero.
+     * <p>
+     * If set the cost will be added to the default transit cost, see
+     * {@link #transitReluctanceForMode}
+     * </p>
+     */
     public DoubleFunction<Double> unpreferredModeCost;
 
+    /**
+     * Array of transport modes that 'unpreferredModeCost' should be applied to and raise the cost
+     * accordingly. The mode names are strings of enumerator {@link TransitMode}, e.g. ["RAIL",
+     * "BUS"].
+     */
     public Set<TransitMode> unpreferredModes = Set.of();
 
     /**

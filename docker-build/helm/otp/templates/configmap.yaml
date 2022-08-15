@@ -9,7 +9,9 @@ data:
         "transferSlack": 180,
         "waitReluctance": 0.175,
         "walkReluctance": 5,
-        "maxDirectStreetDurationSeconds": 3700
+        "maxDirectStreetDurationSeconds": 3700,
+        "unpreferredModeCost": "840 + 1.5 x",
+        "unpreferredModes": ["RAIL"]
       },
       "transit": {
         "pagingSearchWindowAdjustments": ["24h", "0h"],
