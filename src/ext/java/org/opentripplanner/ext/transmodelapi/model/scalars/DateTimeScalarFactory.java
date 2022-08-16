@@ -45,6 +45,9 @@ public final class DateTimeScalarFactory {
           @Override
           public Long parseValue(Object input) {
             Instant instant;
+            if (input instanceof Long output) {
+              return output;
+            }
             try {
               TemporalAccessor temporalAccessor = PARSER.parseBest(
                 (CharSequence) input,
