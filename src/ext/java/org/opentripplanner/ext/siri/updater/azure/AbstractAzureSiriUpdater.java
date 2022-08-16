@@ -37,6 +37,9 @@ public abstract class AbstractAzureSiriUpdater implements GraphUpdater {
     protected final String topicName;
     private String subscriptionName;
     private final String serviceBusUrl;
+
+    private final boolean matchETOnStops;
+
     protected String feedId;
 
     /**
@@ -57,6 +60,7 @@ public abstract class AbstractAzureSiriUpdater implements GraphUpdater {
         this.dataInitializationUrl = config.getDataInitializationUrl();
         this.timeout = config.getTimeout();
         this.feedId = config.getFeedId();
+        this.matchETOnStops = config.isMatchETOnStops();
     }
 
     /**
@@ -78,7 +82,7 @@ public abstract class AbstractAzureSiriUpdater implements GraphUpdater {
 
     @Override
     public void setup(Graph graph) throws Exception {
-        snapshotSource = graph.getOrSetupTimetableSnapshotProvider(SiriTimetableSnapshotSource::new);
+        snapshotSource = graph.getOrSetupTimetableSnapshotProvider(tm -> new SiriTimetableSnapshotSource(tm, matchETOnStops));
     }
 
     @Override

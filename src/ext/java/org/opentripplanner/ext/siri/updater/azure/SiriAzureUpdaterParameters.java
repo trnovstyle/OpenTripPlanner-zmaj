@@ -8,6 +8,7 @@ public abstract class SiriAzureUpdaterParameters {
     private String dataInitializationUrl;
     private String feedId;
     private int timeout;
+    private boolean matchETOnStops;
 
     public SiriAzureUpdaterParameters(String type) {
         this.type = type;
@@ -63,5 +64,13 @@ public abstract class SiriAzureUpdaterParameters {
 
     public void setTimeout(int timeout) {
         this.timeout = timeout;
+    }
+
+    public boolean isMatchETOnStops() {
+        return matchETOnStops;
+    }
+
+    public void setMatchETOnStops(boolean matchETOnStops) {
+        this.matchETOnStops = matchETOnStops;
     }
 }

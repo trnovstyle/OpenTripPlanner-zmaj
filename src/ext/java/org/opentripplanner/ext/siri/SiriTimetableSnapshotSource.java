@@ -110,6 +110,13 @@ public class SiriTimetableSnapshotSource implements TimetableSnapshotProvider {
     /** Should expired realtime data be purged from the graph. */
     public boolean purgeExpiredData = true;
 
+    /**
+     * Normally ET messages are matched with corresponding trips based on ServiceJourney or DatedServiceJourney
+     * id from the message. In case OTP was not able to find corresponding trip additional search will be
+     * performed based on arrival-times/stop-patterns from the ET message.
+     */
+    private final boolean matchETOnStops;
+
     protected ServiceDate lastPurgeDate = null;
 
     protected long lastSnapshotTime = -1;
@@ -124,10 +131,15 @@ public class SiriTimetableSnapshotSource implements TimetableSnapshotProvider {
 
 
     public SiriTimetableSnapshotSource(final Graph graph) {
+        this(graph, true);
+    }
+
+    public SiriTimetableSnapshotSource(final Graph graph, boolean matchETOnStops) {
         timeZone = graph.getTimeZone();
         routingService = new RoutingService(graph);
         transitLayerUpdater = graph.transitLayerUpdater;
         siriFuzzyTripMatcher = new SiriFuzzyTripMatcher(routingService);
+        this.matchETOnStops = matchETOnStops;
     }
 
     /**
@@ -774,7 +786,7 @@ public class SiriTimetableSnapshotSource implements TimetableSnapshotProvider {
                     return false;
                 }
             }
-        } else {
+        } else if (matchETOnStops) {
             /*
                 No exact match found - search for trips based on arrival-times/stop-patterns
              */
