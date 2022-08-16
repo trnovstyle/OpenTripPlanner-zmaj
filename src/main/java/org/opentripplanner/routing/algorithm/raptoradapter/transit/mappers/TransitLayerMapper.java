@@ -18,7 +18,7 @@ import org.opentripplanner.routing.algorithm.raptoradapter.transit.Transfer;
 import org.opentripplanner.routing.algorithm.raptoradapter.transit.TransitLayer;
 import org.opentripplanner.routing.algorithm.raptoradapter.transit.TransitTuningParameters;
 import org.opentripplanner.routing.algorithm.raptoradapter.transit.TripPatternForDate;
-import org.opentripplanner.routing.algorithm.raptoradapter.transit.TripPatternWithRaptorStopIndexes;
+import org.opentripplanner.routing.algorithm.raptoradapter.transit.constrainedtransfer.ConstrainedTransfersForPatterns;
 import org.opentripplanner.routing.algorithm.raptoradapter.transit.constrainedtransfer.TransferIndexGenerator;
 import org.opentripplanner.routing.algorithm.raptoradapter.transit.cost.RaptorCostConverter;
 import org.opentripplanner.routing.algorithm.raptoradapter.transit.request.RaptorRequestTransferCache;
@@ -71,30 +71,25 @@ public class TransitLayerMapper {
 
   private TransitLayer map(TransitTuningParameters tuningParameters) {
     StopModelIndex stopIndex;
-    Map<TripPattern, TripPatternWithRaptorStopIndexes> newTripPatternForOld;
     HashMap<LocalDate, List<TripPatternForDate>> tripPatternsByStopByDate;
     List<List<Transfer>> transferByStopIndex;
+    ConstrainedTransfersForPatterns constrainedTransfers = null;
 
     LOG.info("Mapping transitLayer from Graph...");
 
     stopIndex = transitModel.getStopModel().getStopModelIndex();
 
     Collection<TripPattern> allTripPatterns = transitModel.getAllTripPatterns();
-    TripPatternMapper tripPatternMapper = new TripPatternMapper();
-    newTripPatternForOld = tripPatternMapper.mapOldTripPatternToRaptorTripPattern(allTripPatterns);
 
-    tripPatternsByStopByDate = mapTripPatterns(allTripPatterns, newTripPatternForOld);
+    tripPatternsByStopByDate = mapTripPatterns(allTripPatterns);
 
     transferByStopIndex = mapTransfers(stopIndex, transitModel);
 
     TransferIndexGenerator transferIndexGenerator = null;
     if (OTPFeature.TransferConstraints.isOn()) {
       transferIndexGenerator =
-        new TransferIndexGenerator(
-          transitModel.getTransferService().listAll(),
-          newTripPatternForOld.values()
-        );
-      transferIndexGenerator.generateTransfers();
+        new TransferIndexGenerator(transitModel.getTransferService().listAll(), allTripPatterns);
+      constrainedTransfers = transferIndexGenerator.generateTransfers();
     }
 
     var transferCache = new RaptorRequestTransferCache(tuningParameters.transferCacheMaxSize());
@@ -108,7 +103,7 @@ public class TransitLayerMapper {
       stopIndex,
       transitModel.getTimeZone(),
       transferCache,
-      tripPatternMapper,
+      constrainedTransfers,
       transferIndexGenerator,
       createStopTransferCosts(stopIndex, tuningParameters)
     );
@@ -121,12 +116,10 @@ public class TransitLayerMapper {
    * <p>
    */
   private HashMap<LocalDate, List<TripPatternForDate>> mapTripPatterns(
-    Collection<TripPattern> allTripPatterns,
-    Map<TripPattern, TripPatternWithRaptorStopIndexes> newTripPatternForOld
+    Collection<TripPattern> allTripPatterns
   ) {
     TripPatternForDateMapper tripPatternForDateMapper = new TripPatternForDateMapper(
-      transitModel.getTransitModelIndex().getServiceCodesRunningForDate(),
-      newTripPatternForOld
+      transitModel.getTransitModelIndex().getServiceCodesRunningForDate()
     );
 
     Set<LocalDate> allServiceDates = transitModel
