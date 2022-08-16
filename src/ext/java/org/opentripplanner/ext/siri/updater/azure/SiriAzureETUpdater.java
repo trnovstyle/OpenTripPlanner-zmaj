@@ -135,7 +135,11 @@ public class SiriAzureETUpdater extends AbstractAzureSiriUpdater {
                 || siri.getServiceDelivery().getEstimatedTimetableDeliveries() == null
                 || siri.getServiceDelivery().getEstimatedTimetableDeliveries().isEmpty()) {
 
-            LOG.warn("Empty Siri message {}: {}", id, message);
+            if (siri.getHeartbeatNotification() != null ) {
+                LOG.info("Received SIRI heartbeat message");
+            } else {
+                LOG.warn("Empty Siri message {}: {}", id, message);
+            }
             return new ArrayList<>();
         }
 
