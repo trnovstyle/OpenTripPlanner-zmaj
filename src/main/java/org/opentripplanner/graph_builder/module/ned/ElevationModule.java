@@ -41,6 +41,7 @@ import org.opentripplanner.routing.graph.Vertex;
 import org.opentripplanner.util.PolylineEncoder;
 import org.opentripplanner.util.geometry.GeometryUtils;
 import org.opentripplanner.util.logging.ProgressTracker;
+import org.opentripplanner.util.time.DurationUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -279,8 +280,8 @@ public class ElevationModule implements GraphBuilderModule {
     updateElevationMetadata(graph);
 
     LOG.info(
-      "Finished elevation processing in {}s",
-      Duration.between(start, Instant.now()).toSeconds()
+      "Finished elevation processing in {}",
+      DurationUtils.durationToStr(Duration.between(start, Instant.now()))
     );
   }
 
