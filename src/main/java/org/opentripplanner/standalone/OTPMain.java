@@ -169,6 +169,7 @@ public class OTPMain {
   private static void startOtpWebServer(CommandLineParameters params, ConstructApplication app) {
     // Index graph for travel search
     app.transitModel().index();
+    app.graph().setStopModel(app.transitModel().getStopModel());
     app.graph().index();
 
     // publishing the config version info make it available to the APIs

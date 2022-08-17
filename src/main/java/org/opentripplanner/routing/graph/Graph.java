@@ -68,7 +68,7 @@ public class Graph implements Serializable {
   public final transient Deduplicator deduplicator;
 
   public final Instant buildTime = Instant.now();
-  private final StopModel stopModel;
+  private StopModel stopModel;
 
   private final OpeningHoursCalendarService openingHoursCalendarService;
   private transient StreetVertexIndex streetIndex;
@@ -488,6 +488,10 @@ public class Graph implements Serializable {
 
   public void setLuceneIndex(LuceneIndex luceneIndex) {
     this.luceneIndex = luceneIndex;
+  }
+
+  public void setStopModel(StopModel stopModel) {
+    this.stopModel = stopModel;
   }
 
   private void readObject(ObjectInputStream inputStream)
