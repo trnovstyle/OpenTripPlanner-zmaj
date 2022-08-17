@@ -19,6 +19,7 @@ import org.opentripplanner.transit.raptor.util.LuceneBitSetIterator;
  * <p>
  *
  * @param <T> The TripSchedule type defined by the user of the raptor API.
+ *
  */
 public final class McStopArrivals<T extends RaptorTripSchedule> implements StopArrivals {
 
