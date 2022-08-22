@@ -37,17 +37,24 @@ public class RoutingResponseMapper {
     // Create response
     var tripPlan = TripPlanMapper.mapTripPlan(request, itineraries);
 
-    var factory = mapIntoPageCursorFactory(
-      request.getItinerariesSortOrder(),
-      transitSearchTimeZero,
-      searchParams,
-      searchWindowForNextSearch,
-      firstRemovedItinerary,
-      request.pageCursor == null ? null : request.pageCursor.type
-    );
+    PageCursor nextPageCursor = null;
+    PageCursor prevPageCursor = null;
 
-    PageCursor nextPageCursor = factory.nextPageCursor();
-    PageCursor prevPageCursor = factory.previousPageCursor();
+    try {
+      var factory = mapIntoPageCursorFactory(
+        request.getItinerariesSortOrder(),
+        transitSearchTimeZero,
+        searchParams,
+        searchWindowForNextSearch,
+        firstRemovedItinerary,
+        request.pageCursor == null ? null : request.pageCursor.type
+      );
+
+      nextPageCursor = factory.nextPageCursor();
+      prevPageCursor = factory.previousPageCursor();
+    } catch (Exception e) {
+      LOG.info("Unable to create PageCursorFactory", e);
+    }
 
     if (LOG.isDebugEnabled()) {
       logPagingInformation(request.pageCursor, prevPageCursor, nextPageCursor, routingErrors);
