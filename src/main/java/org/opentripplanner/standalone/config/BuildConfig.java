@@ -310,17 +310,25 @@ public class BuildConfig {
     public final DataOverlayConfig dataOverlay;
 
     /**
-     * This field is used for mapping routes geometry shapes.
-     * It determines max distance between shape points and their stop sequence.
-     * If mapper can not find any stops within this radius it will default to simple stop-to-stop geometry instead.
+     * This field is used for mapping routes geometry shapes. It determines max distance between
+     * shape points and their stop sequence. If mapper can not find any stops within this radius it
+     * will default to simple stop-to-stop geometry instead.
      */
     public final double maxStopToShapeSnapDistance;
+    /**
+     * Link stops (TransitStopVertex) to OSM transit stops (TransitStopStreetVertex). Default is
+     * true.
+     *
+     * @see org.opentripplanner.graph_builder.module.TransitToTaggedStopsModule
+     */
+    public final boolean stopEntriesLinking;
 
     /**
-     * Set all parameters from the given Jackson JSON tree, applying defaults.
-     * Supplying MissingNode.getInstance() will cause all the defaults to be applied.
-     * This could be done automatically with the "reflective query scraper" but it's less type safe and less clear.
-     * Until that class is more type safe, it seems simpler to just list out the parameters by name here.
+     * Set all parameters from the given Jackson JSON tree, applying defaults. Supplying
+     * MissingNode.getInstance() will cause all the defaults to be applied. This could be done
+     * automatically with the "reflective query scraper" but it's less type safe and less clear.
+     * Until that class is more type safe, it seems simpler to just list out the parameters by name
+     * here.
      */
     public BuildConfig(JsonNode node, String source, boolean logUnusedParams) {
         NodeAdapter c = new NodeAdapter(node, source);
@@ -363,6 +371,7 @@ public class BuildConfig {
         transitServiceEnd = c.asDateOrRelativePeriod( "transitServiceEnd", "P3Y");
         writeCachedElevations = c.asBoolean("writeCachedElevations", false);
         maxAreaNodes = c.asInt("maxAreaNodes", 500);
+        stopEntriesLinking = c.asBoolean("stopEntriesLinking", true);
 
         // List of complex parameters
         fareServiceFactory = DefaultFareServiceFactory.fromConfig(c.asRawNode("fares"));

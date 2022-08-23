@@ -157,7 +157,9 @@ public class GraphBuilder implements Runnable {
             if (config.matchBusRoutesToStreets) {
                 graphBuilder.addModule(new BusRouteStreetMatcher());
             }
-            graphBuilder.addModule(new TransitToTaggedStopsModule());
+            if (config.stopEntriesLinking) {
+                graphBuilder.addModule(new TransitToTaggedStopsModule());
+            }
         }
 
         // This module is outside the hasGTFS conditional block because it also links things like bike rental
