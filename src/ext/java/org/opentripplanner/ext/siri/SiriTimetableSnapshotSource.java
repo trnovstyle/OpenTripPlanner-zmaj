@@ -660,6 +660,7 @@ public class SiriTimetableSnapshotSource implements TimetableSnapshotProvider {
                     tripTimes,
                     graph.getTimeZone().toZoneId(),
                     i,
+                    isJourneyPredictionInaccurate,
                     recordedCall
             );
 
@@ -667,16 +668,13 @@ public class SiriTimetableSnapshotSource implements TimetableSnapshotProvider {
         }
         for (var estimatedCall : estimatedCalls) {
 
-            // Set flag for inaccurate prediction if either call OR journey has inaccurate-flag set.
-            boolean isCallPredictionInaccurate = estimatedCall.isPredictionInaccurate() != null && estimatedCall.isPredictionInaccurate();
-            tripTimes.setPredictionInaccurate(i, (isJourneyPredictionInaccurate | isCallPredictionInaccurate));
-
             TimetableHelper.applyUpdates(
                     departureDate,
                     aimedStopTimes,
                     tripTimes,
                     graph.getTimeZone().toZoneId(),
                     i,
+                    isJourneyPredictionInaccurate,
                     estimatedCall
             );
 
