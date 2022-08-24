@@ -3,6 +3,7 @@ package org.opentripplanner.transit.raptor.speed_test;
 import static org.opentripplanner.model.projectinfo.OtpProjectInfo.projectInfo;
 import static org.opentripplanner.standalone.configure.ConstructApplication.creatTransitLayerForRaptor;
 import static org.opentripplanner.transit.raptor.speed_test.model.timer.SpeedTestTimer.nanosToMillisecond;
+import static org.opentripplanner.transit.raptor.speed_test.support.AssertSpeedTestSetup.assertTestDateHasData;
 
 import java.io.File;
 import java.lang.ref.WeakReference;
@@ -13,7 +14,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.opentripplanner.TestOtpModel;
 import org.opentripplanner.datastore.OtpDataStore;
 import org.opentripplanner.routing.api.response.RoutingResponse;
 import org.opentripplanner.routing.framework.DebugTimingAggregator;
@@ -21,6 +21,7 @@ import org.opentripplanner.routing.graph.Graph;
 import org.opentripplanner.routing.graph.SerializedGraphObject;
 import org.opentripplanner.standalone.OtpStartupInfo;
 import org.opentripplanner.standalone.api.OtpServerRequestContext;
+import org.opentripplanner.standalone.config.BuildConfig;
 import org.opentripplanner.standalone.config.RouterConfig;
 import org.opentripplanner.standalone.server.DefaultServerRequestContext;
 import org.opentripplanner.transit.raptor.configure.RaptorConfig;
@@ -46,6 +47,8 @@ public class SpeedTest {
   private final Graph graph;
   private final TransitModel transitModel;
 
+  private final BuildConfig buildConfig;
+
   private final SpeedTestTimer timer = new SpeedTestTimer();
 
   private final SpeedTestCmdLineOpts opts;
@@ -60,11 +63,12 @@ public class SpeedTest {
   private SpeedTest(SpeedTestCmdLineOpts opts) {
     this.opts = opts;
     this.config = SpeedTestConfig.config(opts.rootDir());
-    TestOtpModel model = loadGraph(opts.rootDir(), config.graph);
+    var model = loadGraph(opts.rootDir(), config.graph);
     this.graph = model.graph();
     this.transitModel = model.transitModel();
+    this.buildConfig = model.buildConfig();
 
-    this.tcIO = new CsvFileIO(opts.rootDir(), TRAVEL_SEARCH_FILENAME);
+    this.tcIO = new CsvFileIO(opts.rootDir(), TRAVEL_SEARCH_FILENAME, config.feedId);
 
     // Read Test-case definitions and expected results from file
     this.testCaseInputs = filterTestCases(opts, tcIO.readTestCasesFromFile());
@@ -107,19 +111,21 @@ public class SpeedTest {
     }
   }
 
-  private static TestOtpModel loadGraph(File baseDir, URI path) {
+  private static LoadModel loadGraph(File baseDir, URI path) {
     File file = path == null
       ? OtpDataStore.graphFile(baseDir)
       : path.isAbsolute() ? new File(path) : new File(baseDir, path.getPath());
     SerializedGraphObject serializedGraphObject = SerializedGraphObject.load(file);
     Graph graph = serializedGraphObject.graph;
+
     if (graph == null) {
       throw new IllegalStateException();
     }
+
     TransitModel transitModel = serializedGraphObject.transitModel;
     transitModel.index();
-    graph.index();
-    return new TestOtpModel(graph, transitModel);
+    graph.index(transitModel.getStopModel());
+    return new LoadModel(graph, transitModel, serializedGraphObject.buildConfig);
   }
 
   /**
@@ -148,6 +154,8 @@ public class SpeedTest {
     System.err.println("Run Speed Test");
     final SpeedTestProfile[] speedTestProfiles = opts.profiles();
     final int nSamples = opts.numberOfTestsSamplesToRun();
+
+    assertTestDateHasData(transitModel, config, buildConfig);
 
     initProfileStatistics();
 
@@ -272,4 +280,6 @@ public class SpeedTest {
   private static boolean includeCategory(Collection<String> includeCategories, TestCaseInput c) {
     return includeCategories.contains(c.definition().category());
   }
+
+  record LoadModel(Graph graph, TransitModel transitModel, BuildConfig buildConfig) {}
 }

@@ -11,7 +11,7 @@ import org.opentripplanner.transit.model._data.TransitModelForTest;
 import org.opentripplanner.transit.model.framework.FeedScopedId;
 import org.opentripplanner.transit.model.network.StopPattern;
 import org.opentripplanner.transit.model.network.TripPattern;
-import org.opentripplanner.transit.model.site.Stop;
+import org.opentripplanner.transit.model.site.RegularStop;
 import org.opentripplanner.util.geometry.GeometryUtils;
 
 public class TripPatternTest {
@@ -88,14 +88,18 @@ public class TripPatternTest {
    * @return TripPattern with stopPattern
    */
   public TripPattern setupTripPattern(
-    Stop origin,
-    Stop destination,
+    RegularStop origin,
+    RegularStop destination,
     TripPattern originalTripPattern,
     List<LineString> geometry
   ) {
     var builder = StopPattern.create(2);
     builder.stops[0] = origin;
     builder.stops[1] = destination;
+    for (int i = 0; i < 2; i++) {
+      builder.pickups[i] = PickDrop.SCHEDULED;
+      builder.dropoffs[i] = PickDrop.SCHEDULED;
+    }
 
     var stopPattern = builder.build();
     var route = TransitModelForTest.route("R1").build();
@@ -116,7 +120,11 @@ public class TripPatternTest {
    * @param coordinate Coordinate to inject between stops
    * @return LineString with all coordinates
    */
-  private List<LineString> getLineStrings(Stop origin, Stop destination, Coordinate coordinate) {
+  private List<LineString> getLineStrings(
+    RegularStop origin,
+    RegularStop destination,
+    Coordinate coordinate
+  ) {
     var coordinates = new ArrayList<Coordinate>();
     // Add start and stop first and last
     coordinates.add(new Coordinate(origin.getLon(), origin.getLat()));

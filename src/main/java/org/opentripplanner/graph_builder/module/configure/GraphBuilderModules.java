@@ -12,6 +12,7 @@ import java.time.Duration;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
+import javax.annotation.Nullable;
 import javax.inject.Singleton;
 import org.opentripplanner.datastore.api.CompositeDataSource;
 import org.opentripplanner.datastore.api.DataSource;
@@ -52,7 +53,7 @@ public class GraphBuilderModules {
     GraphBuilderDataSources dataSources,
     BuildConfig config,
     Graph graph,
-    ZoneId zoneId,
+    @Nullable ZoneId zoneId,
     DataImportIssueStore issueStore
   ) {
     List<OpenStreetMapProvider> providers = new ArrayList<>();
@@ -83,10 +84,6 @@ public class GraphBuilderModules {
     for (DataSource gtfsData : dataSources.get(GTFS)) {
       GtfsBundle gtfsBundle = new GtfsBundle((CompositeDataSource) gtfsData);
 
-      if (config.parentStopLinking) {
-        gtfsBundle.linkStopsToParentStations = true;
-      }
-      gtfsBundle.parentStationTransfers = config.stationTransfers;
       gtfsBundle.subwayAccessTime = config.getSubwayAccessTimeSeconds();
       gtfsBundle.setMaxStopToShapeSnapDistance(config.maxStopToShapeSnapDistance);
       gtfsBundles.add(gtfsBundle);
