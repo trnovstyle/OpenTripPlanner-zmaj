@@ -2,10 +2,10 @@ package org.opentripplanner.transit.raptor.rangeraptor.standard.besttimes;
 
 import static org.opentripplanner.transit.raptor.util.IntUtils.intArray;
 
-import java.util.BitSet;
+import org.opentripplanner.transit.raptor.api.transit.IntIterator;
 import org.opentripplanner.transit.raptor.rangeraptor.internalapi.WorkerLifeCycle;
 import org.opentripplanner.transit.raptor.rangeraptor.transit.TransitCalculator;
-import org.opentripplanner.transit.raptor.util.BitSetIterator;
+import org.opentripplanner.util.index.FBitSet;
 import org.opentripplanner.util.lang.ToStringBuilder;
 
 /**
@@ -33,21 +33,24 @@ public final class BestTimes {
    * both transit arrivals and access-on-board arrivals.
    */
   private final int[] transitArrivalTimes;
-  private final BitSet reachedByTransitCurrentRound;
-  private final TransitCalculator<?> calculator;
-  /** Stops touched in the CURRENT round. */
-  private BitSet reachedCurrentRound;
+
   /** Stops touched by in LAST round. */
-  private BitSet reachedLastRound;
+  private FBitSet reachedLastRound;
+
+  /** Stops touched in the CURRENT round. */
+  private FBitSet reachedCurrentRound;
+
+  private final FBitSet reachedByTransitCurrentRound;
+  private final TransitCalculator<?> calculator;
 
   public BestTimes(int nStops, TransitCalculator<?> calculator, WorkerLifeCycle lifeCycle) {
     this.calculator = calculator;
     this.times = intArray(nStops, calculator.unreachedTime());
-    this.reachedCurrentRound = new BitSet(nStops);
-    this.reachedLastRound = new BitSet(nStops);
+    this.reachedCurrentRound = new FBitSet(nStops);
+    this.reachedLastRound = new FBitSet(nStops);
 
     this.transitArrivalTimes = intArray(nStops, calculator.unreachedTime());
-    this.reachedByTransitCurrentRound = new BitSet(nStops);
+    this.reachedByTransitCurrentRound = new FBitSet(nStops);
 
     // Attach to Worker life cycle
     lifeCycle.onSetupIteration(ignore -> setupIteration());
@@ -72,15 +75,15 @@ public final class BestTimes {
   /**
    * @return an iterator for all stops reached (overall best) in the last round.
    */
-  public BitSetIterator stopsReachedLastRound() {
-    return new BitSetIterator(reachedLastRound);
+  public IntIterator stopsReachedLastRound() {
+    return reachedLastRound.iterator();
   }
 
   /**
    * @return an iterator of all stops reached on-board in the current round.
    */
-  public BitSetIterator reachedByTransitCurrentRound() {
-    return new BitSetIterator(reachedByTransitCurrentRound);
+  public IntIterator reachedByTransitCurrentRound() {
+    return reachedByTransitCurrentRound.iterator();
   }
 
   /**
@@ -138,8 +141,8 @@ public final class BestTimes {
       .addIntArraySize("times", times, unreachedTime)
       .addIntArraySize("transitArrivalTimes", transitArrivalTimes, unreachedTime)
       .addNum("reachedCurrentRound", reachedCurrentRound.size())
-      .addBitSetSize("reachedByTransitCurrentRound", reachedByTransitCurrentRound)
-      .addBitSetSize("reachedLastRound", reachedLastRound)
+      .addNum("reachedByTransitCurrentRound", reachedByTransitCurrentRound.size())
+      .addNum("reachedLastRound", reachedLastRound.size())
       .toString();
   }
 
@@ -190,7 +193,7 @@ public final class BestTimes {
   }
 
   private void swapReachedCurrentAndLastRound() {
-    BitSet tmp = reachedLastRound;
+    var tmp = reachedLastRound;
     reachedLastRound = reachedCurrentRound;
     reachedCurrentRound = tmp;
   }

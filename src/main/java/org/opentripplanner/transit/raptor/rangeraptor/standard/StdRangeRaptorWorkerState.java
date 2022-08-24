@@ -13,7 +13,6 @@ import org.opentripplanner.transit.raptor.rangeraptor.standard.besttimes.StopArr
 import org.opentripplanner.transit.raptor.rangeraptor.standard.internalapi.ArrivedAtDestinationCheck;
 import org.opentripplanner.transit.raptor.rangeraptor.standard.internalapi.StopArrivalsState;
 import org.opentripplanner.transit.raptor.rangeraptor.transit.TransitCalculator;
-import org.opentripplanner.transit.raptor.util.BitSetIterator;
 
 /**
  * Tracks the state of a standard Range Raptor search, specifically the best arrival times at each
@@ -81,7 +80,7 @@ public final class StdRangeRaptorWorkerState<T extends RaptorTripSchedule>
   }
 
   @Override
-  public BitSetIterator stopsTouchedByTransitCurrentRound() {
+  public IntIterator stopsTouchedByTransitCurrentRound() {
     return bestTimes.reachedByTransitCurrentRound();
   }
 
