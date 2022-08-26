@@ -136,6 +136,10 @@ public class TripTimeOnDate {
             || tripTimes.getTrip().getTripAlteration().isCanceledOrReplaced();
     }
 
+    public boolean isPredictionInaccurate() {
+        return tripTimes.isPredictionInaccurate(stopIndex);
+    }
+
     public RealTimeState getRealtimeState() {
         return tripTimes.getRealTimeState();
     }

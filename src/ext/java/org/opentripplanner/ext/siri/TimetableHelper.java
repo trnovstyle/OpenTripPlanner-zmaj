@@ -145,6 +145,7 @@ public class TimetableHelper {
                             newTimes,
                             zoneId,
                             callCounter,
+                            isJourneyPredictionInaccurate,
                             recordedCall
                     );
 
@@ -177,16 +178,13 @@ public class TimetableHelper {
 
                     if (foundMatch) {
 
-                        // Set flag for inaccurate prediction if either call OR journey has inaccurate-flag set.
-                        boolean isCallPredictionInaccurate = estimatedCall.isPredictionInaccurate() != null && estimatedCall.isPredictionInaccurate();
-                        newTimes.setPredictionInaccurate(callCounter, (isJourneyPredictionInaccurate | isCallPredictionInaccurate));
-
                         applyUpdates(
                                 serviceDate,
                                 modifiedStopTimes,
                                 newTimes,
                                 zoneId,
                                 callCounter,
+                                isJourneyPredictionInaccurate,
                                 estimatedCall
                         );
 
@@ -759,12 +757,18 @@ public class TimetableHelper {
             TripTimes tripTimes,
             ZoneId zoneId,
             int index,
+            boolean isJourneyPredictionInaccurate,
             RecordedCall recordedCall
     ) {
         if (recordedCall.isCancellation() != null && recordedCall.isCancellation()) {
             stopTimes.get(index).cancel();
             tripTimes.setCancelled(index);
         }
+
+        // Set flag for inaccurate prediction if either call OR journey has inaccurate-flag set.
+        boolean isCallPredictionInaccurate = recordedCall.isPredictionInaccurate() != null && recordedCall.isPredictionInaccurate();
+        tripTimes.setPredictionInaccurate(index, (isJourneyPredictionInaccurate | isCallPredictionInaccurate));
+
 
         int arrivalTime = tripTimes.getArrivalTime(index);
         if (recordedCall.getActualArrivalTime() != null) {
@@ -821,12 +825,17 @@ public class TimetableHelper {
             TripTimes tripTimes,
             ZoneId zoneId,
             int index,
+            boolean isJourneyPredictionInaccurate,
             EstimatedCall estimatedCall
     ) {
         if (estimatedCall.isCancellation() != null && estimatedCall.isCancellation()) {
             stopTimes.get(index).cancel();
             tripTimes.setCancelled(index);
         }
+
+        // Set flag for inaccurate prediction if either call OR journey has inaccurate-flag set.
+        boolean isCallPredictionInaccurate = estimatedCall.isPredictionInaccurate() != null && estimatedCall.isPredictionInaccurate();
+        tripTimes.setPredictionInaccurate(index, (isJourneyPredictionInaccurate | isCallPredictionInaccurate));
 
         // Update dropoff-/pickuptype only if status is cancelled
         CallStatusEnumeration arrivalStatus = estimatedCall.getArrivalStatus();
