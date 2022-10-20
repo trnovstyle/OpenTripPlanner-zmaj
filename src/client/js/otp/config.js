@@ -17,15 +17,8 @@ otp.config = {
     //value is name of settings file for localization in locale subfolder
     //File should be loaded in index.html
     locales : {
-        'en': otp.locale.English,
-        'de': otp.locale.German,
-        'pl': otp.locale.Polish,
         'sl': otp.locale.Slovenian,
-        'fr': otp.locale.French,
-        'it': otp.locale.Italian,
-        'ca_ES': otp.locale.Catalan,
-	'es': otp.locale.Spanish,
-	'pt': otp.locale.Portuguese
+		'en': otp.locale.English
     },
 
     languageChooser : function() {
@@ -71,32 +64,6 @@ otp.config = {
 
     baseLayers: [
         {
-            name: 'Stamen Terrain',
-            tileUrl: 'http://tile.stamen.com/terrain/{z}/{x}/{y}.png',
-            attribution : 'Map tiles by <a href="http://stamen.com">Stamen Design</a>, under <a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a>. Data by <a href="http://openstreetmap.org">OpenStreetMap</a>, under <a href="http://www.openstreetmap.org/copyright">ODbL</a>.'
-        },
-        {
-            name: 'Carto Positron',
-            tileUrl: 'http://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
-            attribution : 'Map tiles by Carto/MapZen. Map data by <a href="http://openstreetmap.org">OpenStreetMap</a>, under <a href="http://www.openstreetmap.org/copyright">ODbL</a>.'
-        },
-        {
-            name: 'Transport Tiles',
-            tileUrl: 'http://{s}.tile.thunderforest.com/transport/{z}/{x}/{y}.png',
-            subdomains : ['a','b','c'],
-            attribution: 'Data from <a href="http://www.openstreetmap.org/" target="_blank">OpenStreetMap</a> and contributors. Tiles from <a href="http://www.thunderforest.com/transport/">Andy Allan</a>'
-        },
-        {
-            name: 'Stamen Toner Lite',
-            tileUrl: 'http://tile.stamen.com/toner-lite/{z}/{x}/{y}.png',
-            attribution : 'Map tiles by <a href="http://stamen.com">Stamen Design</a>, under <a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a>. Data by <a href="http://openstreetmap.org">OpenStreetMap</a>, under <a href="http://www.openstreetmap.org/copyright">ODbL</a>.'
-        },
-        {
-            name: 'Carto Dark Matter',
-            tileUrl: 'http://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
-            attribution : 'Map tiles by Carto/MapZen. Map data by <a href="http://openstreetmap.org">OpenStreetMap</a>, under <a href="http://www.openstreetmap.org/copyright">ODbL</a>.'
-        },
-        {
             name: 'OSM Standard Tiles',
             tileUrl: 'https://a.tile.openstreetmap.org/{z}/{x}/{y}.png',
             attribution : 'Map data and tiles © OpenStreetMap contributors'
@@ -110,29 +77,29 @@ otp.config = {
      * properties, when set, override that behavioir.
      */
      
-    // initLatLng : new L.LatLng(<lat>, <lng>),
-    // initZoom : 14,
-    // minZoom : 10,
-    // maxZoom : 20,
+    initLatLng : new L.LatLng(46.05, 14.5),
+    initZoom : 13,
+    minZoom : 9,
+    maxZoom : 19,
     
     /* Whether the map should be moved to contain the full itinerary when a result is received. */
-    zoomToFitResults    : false,
+    zoomToFitResults    : true,
 
     /**
      * Site name / description / branding display options
      */
 
-    siteName            : "My OTP Instance",
-    siteDescription     : "An OpenTripPlanner deployment.",
-    logoGraphic         : 'images/otp_logo_darkbg_40px.png',
+    siteName            : "Koncept ZMAJ",
+    siteDescription     : "Koncept ZMAJ – Zmogljive mestne avtobusne linije: povezan javni promet v Ljubljani",
+    logoGraphic         : 'images/ktpp.png',
     // bikeshareName    : "",
     //Enable this if you want to show frontend language chooser
     showLanguageChooser : true,
 
     showLogo            : true,
     showTitle           : true,
-    showModuleSelector  : true,
-    metric              : false,
+    showModuleSelector  : false,
+    metric              : true,
 
 
     /**
@@ -151,7 +118,7 @@ otp.config = {
         {
             id : 'planner',
             className : 'otp.modules.multimodal.MultimodalPlannerModule',
-            defaultBaseLayer : 'Stamen Terrain',
+            defaultBaseLayer : 'OSM Standard Tiles',
             isDefault: true
         },
         {
@@ -299,10 +266,10 @@ otp.config.modes = {
         "BUS,WALK"         : _tr("Bus Only"), 
     //TRANSLATORS: Travel by: mode of transport (Used in selection in Travel
     //Options widgets)
-        "TRAM,RAIL,SUBWAY,FUNICULAR,GONDOLA,WALK"       : _tr("Rail Only"), 
+        //"TRAM,RAIL,SUBWAY,FUNICULAR,GONDOLA,WALK"       : _tr("Rail Only"), 
     //TRANSLATORS: Travel by: mode of transport (Used in selection in Travel
     //Options widgets)
-        "AIRPLANE,WALK"       : _tr("Airplane Only"),
+        //"AIRPLANE,WALK"       : _tr("Airplane Only"),
     //TRANSLATORS: Travel by: mode of transport (Used in selection in Travel
     //Options widgets)
         "BICYCLE"             : _tr('Bicycle Only'),
@@ -314,13 +281,13 @@ otp.config.modes = {
         "WALK"                : _tr('Walk Only'),
     //TRANSLATORS: Travel by: mode of transport (Used in selection in Travel
     //Options widgets)
-        "CAR"                 : _tr('Drive Only'),
+        //"CAR"                 : _tr('Drive Only'),
     //TRANSLATORS: Travel by: mode of transport (Used in selection in Travel
     //Options widgets)
-    "CAR_PARK,WALK,TRANSIT"     : _tr('Park and Ride'),
+   // "CAR_PARK,WALK,TRANSIT"     : _tr('Park and Ride'),
     //TRANSLATORS: Travel by: mode of transport (Used in selection in Travel
     //Options widgets) http://en.wikipedia.org/wiki/Park_and_ride#Kiss_and_ride
-    "CAR,WALK,TRANSIT"          : _tr('Kiss and Ride'),
+    //"CAR,WALK,TRANSIT"          : _tr('Kiss and Ride'),
     //TRANSLATORS: Travel by: mode of transport (Used in selection in Travel
     //Options widgets) (Park bicycle at Public transit station and take a
     //transit

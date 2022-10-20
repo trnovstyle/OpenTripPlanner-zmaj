@@ -26,7 +26,7 @@ otp.locale.English = {
         name: 'English',
         //FALSE-imperial units are used
         //TRUE-Metric units are used
-        metric : false, 
+        metric : true, 
         //Name of localization file (*.po file) in src/client/i18n
         locale_short : "en",
         //Name of datepicker localization in
