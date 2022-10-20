@@ -10,15 +10,15 @@ otp.config = {
     //This is default locale when wanted locale isn't found
     //Locale language is set based on wanted language in url >
     //user cookie > language set in browser (Not accept-language) 
-    locale: otp.locale.English,
+    locale: otp.locale.Slovenian,
 
     //All avalible locales
     //key is translation name. Must be the same as po file or .json file
     //value is name of settings file for localization in locale subfolder
     //File should be loaded in index.html
     locales : {
-        'sl': otp.locale.Slovenian,
-		'en': otp.locale.English
+        'en': otp.locale.English,
+		'sl': otp.locale.Slovenian
     },
 
     languageChooser : function() {
@@ -98,7 +98,7 @@ otp.config = {
 
     showLogo            : true,
     showTitle           : true,
-    showModuleSelector  : false,
+    showModuleSelector  : true,
     metric              : true,
 
 
