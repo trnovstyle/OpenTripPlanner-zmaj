@@ -10,7 +10,7 @@ otp.config = {
     //This is default locale when wanted locale isn't found
     //Locale language is set based on wanted language in url >
     //user cookie > language set in browser (Not accept-language) 
-    locale: otp.locale.English,
+    locale: otp.locale.Slovenian,
 
     //All avalible locales
     //key is translation name. Must be the same as po file or .json file

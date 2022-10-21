@@ -26,7 +26,7 @@ otp.locale.English = {
         name: 'English',
         //FALSE-imperial units are used
         //TRUE-Metric units are used
-        metric : false, 
+        metric : true, 
         //Name of localization file (*.po file) in src/client/i18n
         locale_short : "en",
         //Name of datepicker localization in
@@ -53,13 +53,13 @@ otp.locale.English = {
      */
     infoWidgets : [
             {
-                title: 'About',
-                content: '<p>About this site</p>',
+                title: 'About ZMAJ',
+                content: '<p>The route planner is based on the concept "ZMAJ - Efficient city bus lines: connected public transport in Ljubljana", which was prepared in the spring of 2022 by a working group within the Coalition for Sustainable Transport Policy (KTPP).</p><p>The planner makes it possible to check the travel times with public passenger transport in Ljubljana, which would be possible if the envisaged concept was implemented. The concept is based on a system of rapid bus lines (BRT - Bus Rapid Transit). Its key elements are:<br />1 &ndash; New high-capacity bus lines, named ZMAJ A, B and C, with new 24 m long buses and high frequency running along the main arterial roads;<br />2 &ndash; Transfer stations Bavarski dvor, Emonika and Kolodvor to establish an excellent connection of the new railway and bus station to the local bus network;<br />3 &ndash;  Several tangential routes that provide fast connections between suburbs.</p><p>More information about the concept is available <a href="https://ipop.si/2022/05/11/koncept-zmaj-za-povezan-javni-promet-v-ljubljani/" target="_blank">on the website</a>.</p>',
                 //cssClass: 'otp-contactWidget',
             },
             {
                 title: 'Contact',
-                content: '<p>Comments? Contact us at...</p>'
+                content: '<p>The Coalition for Sustainable Transport Policy (KTPP) is an informal association of organisations and individuals that strives for a sustainable transport policy in Slovenia and Europe. It monitors and responds to current processes in Slovenian and European transport policy and at the same time increases mutual understanding about what is happening in the transport field. KTPP members are representatives of non-governmental organisations, scientific institutions, regional development agencies, municipalities, educational institutions and other interested individuals.</p><p>The operation of KTPP is supported by two substantive networks: PlanB for Slovenia, a network of non-governmental organisations for sustainable development, and Network for Space, a network of non-governmental organisations and local initiatives in the field of spatial planning.</p><p>You can reach us at <a href="mailto:info@prometnapolitika.si?subject=koncept%20ZMAJ">info@prometnapolitika.si</a></p><p>The ZMAJ concept was prepared by the KTPP working group: Nejc Geržinič, Marko Peterlin, Špela Berlot Veselko and Nela Halilović.</p><p>The route planner was prepared by Simon Koblar. Source code is available in the <a href="https://github.com/trnovstyle/OpenTripPlanner-zmaj" target="_blank">GitHub repository</a>.</p>'
             },
     ],
 
