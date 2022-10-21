@@ -84,10 +84,10 @@ otp.config = {
      * properties, when set, override that behavioir.
      */
      
-    // initLatLng : new L.LatLng(<lat>, <lng>),
-    // initZoom : 14,
-    // minZoom : 10,
-    // maxZoom : 20,
+    initLatLng : new L.LatLng(46.05, 14.5),
+    initZoom : 13,
+    minZoom : 9,
+    maxZoom : 19,
     
     /* Whether the map should be moved to contain the full itinerary when a result is received. */
     zoomToFitResults    : false,
@@ -96,8 +96,8 @@ otp.config = {
      * Site name / description / branding display options
      */
 
-    siteName            : "My OTP Instance",
-    siteDescription     : "An OpenTripPlanner deployment.",
+    siteName            : "Koncept ZMAJ",
+    siteDescription     : "Koncept ZMAJ",
     logoGraphic         : 'images/ktpp_logo.png',
     // bikeshareName    : "",
     //Enable this if you want to show frontend language chooser
