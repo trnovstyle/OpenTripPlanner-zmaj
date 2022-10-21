@@ -52,13 +52,13 @@ otp.locale.Slovenian = {
      */
     infoWidgets : [
             {
-                title: 'O strani',
-                content: '<p>Informacije o strani</p>',
+                title: 'O konceptu ZMAJ',
+                content: '<p>Načrtovalnik poti temelji na konceptu &quot;ZMAJ &ndash; Zmogljive mestne avtobusne linije: povezan javni promet v Ljubljani&quot;, ki ga je spomladi 2022 pripravila delovna skupina v okviru Koalicije za trajnostno prometno politiko (KTPP).</p><p>Načrtovalnik omogoča preveritev potovalnih časov z javnim potniškim prometom v Ljubljani, kakršni bi bili možni ob uveljavitvi predvidenega koncepta. Koncept temelji na sistemu hitrih avtobusnih linij (BRT &ndash; Bus Rapid Transit). Njegove ključne prvine so:<br />1 &ndash; Uvedba novih visoko zmogljivih linij LPP, poimenovanih ZMAJ A, B in C, z novimi avtobusi dolžine 24 m in visoko frekvenco, ki potekajo po glavnih mestnih vpadnicah<br />2 &ndash; Ureditev prestopnih postaj LPP Bavarski dvor, Emonika in Kolodvor za vzpostavitev odlične navezanosti nove železniške in avtobusne postaje na LPP omrežje;<br />3 &ndash; Uvedba več obodnih linij, ki omogočajo potovanja mimo mestnega središča.</p><p>Več informacij o konceptu je na voljo na <a href="https://ipop.si/2022/05/11/koncept-zmaj-za-povezan-javni-promet-v-ljubljani/" target="_blank">spletni strani</a>.</p>',
                 //cssClass: 'otp-contactWidget',
             },
             {
                 title: 'Kontakt',
-                content: '<p>Komentarji? Kontaktirate nas lahko...</p>'
+                content: '<p>Koalicija za trajnostno prometno politiko (KTPP) je neformalno združenje organizacij in posameznikov, ki si prizadeva za trajnostno prometno politiko v Sloveniji in Evropi. Spremlja in se odziva na aktualne procese v slovenski in evropski prometni politiki in hkrati povečuje medsebojno informiranost o dogajanju na prometnem področju. Člani KTPP so predstavniki nevladnih organizacij, znanstvenih institucij, regionalnih razvojnih agencij, občin, izobraževalnih inštitucij in ostalih zainteresiranih posameznikov.</p><p>Delovanje KTPP podpirata dve vsebinski mreži: PlanB za Slovenijo, mreža nevladnih organizacij za trajnostni razvoj ter Mreža za prostor, mreža nevladnih organizacij in lokalnih pobud na področju urejanja prostora.</p><p>Dosegljivi smo na <a href="mailto:info@prometnapolitika.si?subject=koncept%20ZMAJ">info@prometnapolitika.si</a></p><p>Koncept ZMAJ je pripravila delovna skupina KTPP: Nejc Geržinič, Marko Peterlin, Špela Berlot Veselko in Nela Halilović.</p><p>Načrtovalnik poti je pripravil Simon Koblar. Izvorna koda je dostopna v <a href="https://github.com/trnovstyle/OpenTripPlanner-zmaj" target="_blank">GitHub repozitoriju</a>.</p>'
             },
     ],
 
