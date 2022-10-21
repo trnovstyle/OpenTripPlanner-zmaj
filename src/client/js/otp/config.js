@@ -96,8 +96,8 @@ otp.config = {
      * Site name / description / branding display options
      */
 
-    siteName            : "My OTP Instance",
-    siteDescription     : "An OpenTripPlanner deployment.",
+    siteName            : "Koncept ZMAJ",
+    siteDescription     : "Koncept ZMAJ",
     logoGraphic         : 'images/ktpp_logo.png',
     // bikeshareName    : "",
     //Enable this if you want to show frontend language chooser
