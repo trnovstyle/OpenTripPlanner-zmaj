@@ -101,7 +101,7 @@
         "%(itinerary_link)s",
         ""
     ],
-    "We're sorry. The trip planner is temporarily unavailable. Please try again later.": "Opravičujemo se. Načrtovlanik trenutno ni na voljo. Prosimo poskusite kasneje.",
+    "We're sorry. The trip planner is temporarily unavailable. Please try again later.": "Opravičujemo se. Daljinar trenutno ni na voljo. Prosimo poskusite kasneje.",
     "Trip is not possible.  You might be trying to plan a trip outside the map data boundary.": "Pot ni mogoča. Mogoče poskušate načrtovati pot izven meja karte.",
     "No trip found. There may be no transit service within the maximum specified distance or at the specified time, or your start or end point might not be safely accessible.": "Pot ni mogoča. Do začetne ali končne točke ni mogoče varno priti (na primer), mogoče začenjate na lokalni cesti, ki je povezana samo na avtocesto.",
     "No transit times available. The date may be past or too far in the future or there may not be transit service for your trip at the time you chose.": "Podatki o voznih redih niso na voljo. Mogoče je datum preveč v preteklosti ali prihodnosti ali pa javni prevoz ne obstaja za pot, ki jo načrtujete.",
@@ -111,7 +111,7 @@
     "Destination is unknown.  Can you be a bit more descriptive?": "Konec poti ni znan. Prosimo bodite bolj natančni.",
     "Both origin and destination are unknown. Can you be a bit more descriptive?": "Začetek in konec sta neznana. Prosimo bodite bolj natančni.",
     "Both origin and destination are not wheelchair accessible": "Do začetka in konca ni mogoče priti z vozičkom.",
-    "Origin is within a trivial distance of the destination.": "Začetna in konča točka sta preblizu.",
+    "Origin is within a trivial distance of the destination.": "Začetek je trivialno oddaljen od konec.",
     "The trip planner is unsure of the location you want to start from. Please select from the following options, or be more specific.": "",
     "The trip planner is unsure of the destination you want to go to. Please select from the following options, or be more specific.": "",
     "Both origin and destination are ambiguous. Please select from the following options, or be more specific.": "",
