@@ -87,7 +87,7 @@ otp.config = {
     initLatLng : new L.LatLng(46.05, 14.5),
     initZoom : 13,
     minZoom : 9,
-    maxZoom : 19,
+    maxZoom : 18,
     
     /* Whether the map should be moved to contain the full itinerary when a result is received. */
     zoomToFitResults    : false,
